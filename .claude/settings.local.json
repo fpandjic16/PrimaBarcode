@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gradlew.bat assembleDebug)",
+      "Bash(cmd.exe /c gradlew.bat assembleDebug)",
+      "Bash(python3 *)",
+      "Bash(powershell -Command \"Set-Content -Path 'C:\\\\Users\\\\Filip Pandic\\\\REPOS\\\\primabarcode\\\\app\\\\src\\\\main\\\\java\\\\com\\\\prima\\\\barcode\\\\ui\\\\screen\\\\DashboardScreen.kt' -Value 'package com.prima.barcode.ui.screen' -Encoding UTF8\")",
+      "Bash(/c/Users/Filip Pandic/AppData/Local/Python/pythoncore-3.14-64/python.exe *)",
+      "Bash(echo \"import os\")",
+      "Bash(echo \"path = r'C:\\\\\\\\Users\\\\\\\\Filip Pandic\\\\\\\\REPOS\\\\\\\\primabarcode\\\\\\\\app\\\\\\\\src\\\\\\\\main\\\\\\\\java\\\\\\\\com\\\\\\\\prima\\\\\\\\barcode\\\\\\\\ui\\\\\\\\screen\\\\\\\\DashboardScreen.kt'\")",
+      "Bash(echo \"existing = open\\(path, encoding='utf-8'\\).read\\(\\)\")",
+      "Bash(echo \"lines = []\")",
+      "Read(//tmp/**)",
+      "Bash(C:/Users/Filip Pandic/AppData/Local/Python/pythoncore-3.14-64/python.exe *)",
+      "Bash(cmd.exe /c \"where java 2>&1\")",
+      "Bash(cmd.exe /c \"echo %JAVA_HOME%\")",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:PATH = \"$env:JAVA_HOME\\\\bin;$env:PATH\"; cd \"C:\\\\Users\\\\Filip Pandic\\\\repos\\\\PrimaBarcode\"; .\\\\gradlew.bat :app:compileDebugKotlin --quiet 2>&1 | Select-Object -Last 30)"
+    ]
+  }
+}

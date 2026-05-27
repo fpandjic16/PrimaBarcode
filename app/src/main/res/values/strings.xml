@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PrimaBarcode</string>
+    <!-- Common -->
+    <string name="btn_ok">OK</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_apply">Apply</string>
+    <string name="btn_reset">Reset</string>
+    <string name="btn_download">Download</string>
+    <string name="btn_upload">Upload</string>
+    <string name="btn_create">Create</string>
+    <string name="btn_clear">Clear</string>
+    <string name="btn_retry_upload">Retry Upload</string>
+    <string name="btn_sign_in">Sign in</string>
+    <string name="btn_sign_in_sync">Sign in &amp; Sync</string>
+    <string name="btn_yes_insert">Yes, insert</string>
+    <!-- Dashboard -->
+    <string name="dashboard_today">TODAY</string>
+    <string name="dashboard_scans">scans</string>
+    <string name="dashboard_pill_ready">ready</string>
+    <string name="dashboard_pill_partial">partial</string>
+    <string name="dashboard_pill_error">error</string>
+    <!-- Main menu -->
+    <string name="main_documents_header">DOCUMENTS</string>
+    <string name="main_no_location">No location</string>
+    <!-- Document types -->
+    <string name="doctype_warehouse_shipment">Warehouse Shipment</string>
+    <string name="doctype_warehouse_receipt">Warehouse Receipt</string>
+    <string name="doctype_retail_shipment">Retail Shipment</string>
+    <string name="doctype_retail_receipt">Retail Whse. Receipt</string>
+    <string name="doctype_transport_sheet">Transport Sheet</string>
+    <string name="doctype_warehouse_shipment_desc">Outbound shipments from warehouse to store</string>
+    <string name="doctype_warehouse_receipt_desc">Inbound receipts from supplier to warehouse</string>
+    <string name="doctype_retail_shipment_desc">Outbound shipments from store to customer</string>
+    <string name="doctype_retail_receipt_desc">Returns and inbound from store to warehouse</string>
+    <string name="doctype_transport_sheet_desc">Inter-location transfer documents</string>
+    <!-- Doc list screen -->
+    <string name="doc_list_tab_orders">ORDERS</string>
+    <string name="doc_list_tab_recordings">RECORDINGS</string>
+    <string name="doc_list_tab_errors">ERRORS</string>
+    <string name="doc_list_empty">No documents</string>
+    <string name="doc_list_scan_placeholder">Scan document number…</string>
+    <string name="doc_list_create_title">Document not found</string>
+    <string name="doc_list_create_text">Document "%s" does not exist. Do you want to create it?</string>
+    <string name="doc_chip_error">Error</string>
+    <string name="doc_status_empty">Empty</string>
+    <string name="doc_status_partial">Partial</string>
+    <string name="doc_status_ready">Ready</string>
+    <string name="doc_status_over_qty">Over-qty</string>
+    <string name="doc_state_new">New</string>
+    <string name="doc_state_active">Active</string>
+    <string name="doc_state_done">Done</string>
+    <string name="doc_state_failed">Failed</string>
+    <string name="doc_qty_scanned">%1$s / %2$s qty scanned</string>
+    <!-- Document overview -->
+    <string name="overview_title">Dashboard</string>
+    <string name="overview_subtitle">Document overview</string>
+    <string name="overview_tab_errors">Errors</string>
+    <string name="overview_tab_my_location">My Location</string>
+    <string name="overview_tab_all">All</string>
+    <string name="overview_no_issues">No issues</string>
+    <string name="overview_clear_errors">Clear errors</string>
+    <string name="overview_clear_errors_title">Clear all errors?</string>
+    <string name="overview_clear_errors_text_single">%d failed document will be removed from the local cache.</string>
+    <string name="overview_clear_errors_text_plural">%d failed documents will be removed from the local cache.</string>
+    <!-- Upload error -->
+    <string name="upload_error_subtitle">Upload error</string>
+    <string name="upload_error_header">Upload Failed</string>
+    <string name="upload_error_doc_section">Document</string>
+    <string name="upload_error_row_type">Type</string>
+    <string name="upload_error_row_source">Source</string>
+    <string name="upload_error_row_destination">Destination</string>
+    <string name="upload_error_row_rc">RC</string>
+    <string name="upload_error_row_lines">Lines</string>
+    <string name="upload_error_row_date">Date</string>
+    <string name="upload_error_details">Error Details</string>
+    <string name="upload_error_line_single">%d line</string>
+    <string name="upload_error_line_plural">%d lines</string>
+    <!-- Recording -->
+    <string name="recording_title">Recording</string>
+    <string name="recording_not_on_doc_badge">NOT ON DOCUMENT</string>
+    <string name="recording_not_on_doc">Not on document</string>
+    <string name="recording_not_listed">Not listed in this document. Quantity will be recorded separately and flagged for review.</string>
+    <string name="recording_will_be_added">WILL BE ADDED</string>
+    <string name="recording_type_a_value">Type a value</string>
+    <string name="recording_type_a_quantity">Type a quantity</string>
+    <string name="recording_remove">Remove</string>
+    <string name="recording_barcode_prefix">Barcode: </string>
+    <string name="status_chip_empty">EMPTY</string>
+    <string name="status_chip_partial">PARTIAL</string>
+    <string name="status_chip_exact">EXACT</string>
+    <string name="status_chip_over">OVER</string>
+    <string name="keypad_becomes_empty">becomes empty</string>
+    <string name="keypad_becomes_partial">becomes partial</string>
+    <string name="keypad_becomes_exact">becomes exact</string>
+    <string name="keypad_becomes_over">becomes over</string>
+    <string name="keypad_is_empty">empty</string>
+    <string name="keypad_is_partial">partial</string>
+    <string name="keypad_is_exact">exact</string>
+    <string name="keypad_is_over">over</string>
+    <!-- Multiplier -->
+    <string name="multiplier_title">Multiplier</string>
+    <string name="multiplier_subtitle">Quantity added per scan</string>
+    <string name="multiplier_custom">Custom quantity</string>
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">App preferences</string>
+    <string name="settings_sec_location_rc">Location &amp; RC</string>
+    <string name="settings_sec_doc_types">Document types</string>
+    <string name="settings_sec_appearance">Appearance</string>
+    <string name="settings_sec_scanning">Scanning</string>
+    <string name="settings_sec_sync">Sync</string>
+    <string name="settings_sec_ext_config">External System Configuration</string>
+    <string name="settings_sec_data">Data</string>
+    <string name="settings_sec_system_info">System info</string>
+    <string name="settings_sec_account">Account</string>
+    <string name="settings_no_location">No location selected</string>
+    <string name="settings_change">Change</string>
+    <string name="settings_text_size">Text size</string>
+    <string name="settings_text_size_desc">Applies to all text in the app</string>
+    <string name="settings_uppercase">Uppercase text</string>
+    <string name="settings_uppercase_desc">Display all UI labels in uppercase</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_desc">Restart required for full effect</string>
+    <string name="settings_continuous_scan">Continuous scanning</string>
+    <string name="settings_continuous_scan_desc">Camera stays open after each item scan</string>
+    <string name="settings_debounce">Debounce time</string>
+    <string name="settings_debounce_desc">Minimum ms between scans (continuous only)</string>
+    <string name="settings_haptic">Haptic feedback</string>
+    <string name="settings_haptic_desc">Vibrate on scan confirmation and errors</string>
+    <string name="settings_mute">Mute scan sounds</string>
+    <string name="settings_mute_desc">Silence all beeps from camera and hardware scanner</string>
+    <string name="settings_auto_collapse">Auto-collapse scan tape</string>
+    <string name="settings_auto_collapse_desc">Hide after 20 seconds of inactivity</string>
+    <string name="settings_warn_over">Warn on over-scan</string>
+    <string name="settings_warn_over_desc">Confirm when scanned quantity exceeds expected</string>
+    <string name="settings_last_scanned">Last scanned lines</string>
+    <string name="settings_last_scanned_desc">Lines shown in scan tape (0 = hidden)</string>
+    <string name="settings_live_mode">Live mode</string>
+    <string name="settings_live_mode_desc">Connect to external system instead of test data</string>
+    <string name="settings_auto_upload">Auto-upload completed docs</string>
+    <string name="settings_auto_upload_desc">Upload automatically when all lines are scanned</string>
+    <string name="settings_wifi_only">Sync on Wi-Fi only</string>
+    <string name="settings_wifi_only_desc">Don\'t use mobile data for sync</string>
+    <string name="settings_test_signin">Test sign-in</string>
+    <string name="settings_test_signin_desc">Verify credentials without downloading</string>
+    <string name="settings_server_endpoints">Server &amp; endpoints</string>
+    <string name="settings_server_endpoints_desc">OData base URL, domain, document page URLs</string>
+    <string name="settings_export">Export data</string>
+    <string name="settings_export_desc">Dump all tables to a JSON file on device</string>
+    <string name="settings_insert_test">Insert test data</string>
+    <string name="settings_insert_test_desc">Load sample documents from built-in test JSON</string>
+    <string name="settings_clear_cache">Clear cache</string>
+    <string name="settings_clear_cache_desc">Delete all credentials, documents, and recordings</string>
+    <string name="settings_app_version">App version</string>
+    <string name="settings_android">Android</string>
+    <string name="settings_sdk">SDK</string>
+    <string name="settings_db_schema">Database schema</string>
+    <string name="settings_sign_out">Sign out of External System</string>
+    <string name="settings_coming_soon">SOON</string>
+    <string name="dialog_clear_cache_title">Clear cache?</string>
+    <string name="dialog_clear_cache_text">This will permanently delete all stored credentials, documents, and recordings. This cannot be undone.</string>
+    <string name="dialog_insert_test_title">Insert test data?</string>
+    <string name="dialog_insert_test_text">This will delete all current documents and recordings, then load the built-in test dataset. Continue?</string>
+    <!-- Login -->
+    <string name="login_title">Sign in to External System</string>
+    <string name="login_domain">Windows domain</string>
+    <string name="login_username">Username</string>
+    <string name="login_password">Password</string>
+    <string name="login_show_password">Show password</string>
+    <string name="login_hide_password">Hide password</string>
+    <string name="login_footer">Credentials encrypted with AES-256-GCM · External System</string>
+    <string name="login_ttl_hours">%d hours</string>
+    <string name="login_ttl_days">%d days</string>
+    <string name="login_session_info">Session stored encrypted for %s</string>
+    <!-- Download filter -->
+    <string name="download_title">Download</string>
+    <string name="download_subtitle">Choose what to download from External System</string>
+    <string name="filter_document_date">DOCUMENT DATE</string>
+    <string name="filter_date_from">From</string>
+    <string name="filter_date_to">To</string>
+    <string name="filter_destination_code">DESTINATION CODE</string>
+    <string name="filter_source_code">SOURCE CODE</string>
+    <string name="filter_responsibility_center">RESPONSIBILITY CENTER</string>
+    <!-- Document filter -->
+    <string name="doc_filter_title">Filters</string>
+    <string name="doc_filter_subtitle">Narrow down the document list</string>
+    <string name="doc_filter_status">STATUS</string>
+    <string name="doc_filter_type">DOCUMENT TYPE</string>
+    <!-- Location / RC -->
+    <string name="lrc_title">Location &amp; RC</string>
+    <string name="lrc_select_subtitle">Select responsibility center and location</string>
+    <string name="lrc_synced_at">Synced %s</string>
+    <string name="lrc_section_rc">Responsibility Center</string>
+    <string name="lrc_section_location">Location</string>
+    <string name="lrc_no_locations">No locations for this RC</string>
+    <string name="lrc_rc_placeholder">Select responsibility center</string>
+    <string name="lrc_location_placeholder">Select location</string>
+    <string name="lrc_search_placeholder">Search…</string>
+    <string name="lrc_no_results">No results</string>
+    <!-- Ext system config -->
+    <string name="ext_config_title">External System Configuration</string>
+    <string name="ext_config_subtitle">Server connection &amp; endpoints</string>
+    <string name="ext_config_sec_connection">Connection</string>
+    <string name="ext_config_sec_session">Credential session</string>
+    <string name="ext_config_sec_endpoints">Document endpoints (OData page URLs)</string>
+    <string name="ext_config_sec_reference">Reference data</string>
+    <string name="ext_config_sec_recording">Recording sync</string>
+    <string name="ext_config_server_url">Server base URL</string>
+    <string name="ext_config_company_name">Company name</string>
+    <string name="ext_config_windows_domain">Windows domain</string>
+    <string name="ext_config_session_duration">Session duration</string>
+    <string name="ext_config_session_desc">Credentials are wiped from encrypted storage after this period</string>
+    <string name="ext_config_locations_url">Locations URL</string>
+    <string name="ext_config_rc_url">Responsibility Centers URL</string>
+    <string name="ext_config_recording_url">Recording sync URL</string>
+    <!-- Document recordings -->
+    <string name="doc_delete_recordings_title">Delete recordings?</string>
+    <string name="doc_delete_recordings_text">All recordings for %s will be deleted and the document will be reset to its initial state.</string>
+        <!-- Accessibility -->
+    <string name="cd_refresh">Refresh</string>
+    <string name="cd_settings">Settings</string>
+    <string name="cd_filter">Filter</string>
+    <string name="cd_clear">Clear</string>
+</resources>

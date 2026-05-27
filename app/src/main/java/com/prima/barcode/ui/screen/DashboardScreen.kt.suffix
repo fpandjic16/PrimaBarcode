@@ -1,0 +1,79 @@
+
+        if (visibleDocs.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Outlined.CheckCircle, null, tint = PrimaStatus.Exact, modifier = Modifier.size(40.dp))
+                    Spacer(Modifier.height(12.dp))
+                    Text("No issues", style = monoLabel.copy(color = PrimaPalette.Ink3))
+                }
+            }
+        } else {
+            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (selectedTab == 0) {
+                    item(key = "err_hdr") {
+                        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFFFFEAEA)).padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Outlined.Warning, null, tint = Color(0xFFCE3A3A), modifier = Modifier.size(16.dp))
+                            val n = errors.size
+                            Text("$n upload error" + if (n != 1) "s" else "", style = monoLabel.copy(color = Color(0xFFCE3A3A), fontWeight = FontWeight.Medium))
+                        }
+                    }
+                }
+                items(visibleDocs, key = { it.no }) { doc -> DashboardDocRow(doc = doc, onClick = { onDocTap(doc) }) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardDocRow(doc: Document, onClick: () -> Unit) {
+    val sizeOffset = LocalTextSizeOffset.current
+    val scanStatus = doc.scanStatus()
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color.White).border(1.dp, Color(0x18000000), RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Row(verticalAlignment = Alignment.Top) {
+            Column(Modifier.weight(1f)) {
+                Text(doc.no, style = monoLabel.copy(color = PrimaPalette.Ink, fontWeight = FontWeight.Bold, fontSize = (14 + sizeOffset).sp))
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    DashScanStatusChip(scanStatus)
+                    if (doc.state is DocState.UploadFailed) DashStateChip(doc.state)
+                }
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(doc.locationCode, style = monoLabel.copy(color = PrimaPalette.Ink3))
+                Text(dashDateFmt.format(doc.downloadedAt), style = monoLabel.copy(color = PrimaPalette.Ink3))
+            }
+        }
+        if (doc.lines.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            StatusProgressBar(segments = doc.lines.map { it.status }, height = 4.dp, gap = 2.dp)
+            Spacer(Modifier.height(4.dp))
+            Text("\${doc.linesExact} / \${doc.linesTotal} lines done", style = monoLabel.copy(color = PrimaPalette.Ink3))
+        }
+        if (doc.state is DocState.UploadFailed) {
+            Spacer(Modifier.height(6.dp))
+            Text("Error: \${doc.state.reason}", style = monoLabel.copy(color = Color(0xFFCE3A3A)))
+        }
+    }
+}
+
+@Composable
+private fun DashScanStatusChip(status: DocScanStatus) {
+    Box(Modifier.clip(RoundedCornerShape(6.dp)).background(status.bg).padding(horizontal = 8.dp, vertical = 3.dp)) {
+        Text(status.label, style = monoLabel.copy(color = status.color, fontWeight = FontWeight.Medium))
+    }
+}
+
+@Composable
+private fun DashStateChip(state: DocState) {
+    val (label, bg, fg) = when (state) {
+        DocState.Downloaded      -> Triple("New",      Color(0xFFE7DECF), PrimaPalette.Ink3)
+        DocState.InProgress      -> Triple("Active",   Color(0xFFC7943A), Color.White)
+        DocState.Completed       -> Triple("Done",     Color(0xFF2E8C5E), Color.White)
+        DocState.PendingUpload   -> Triple("Pending",  Color(0xFFC7943A), Color.White)
+        DocState.Uploaded        -> Triple("Uploaded", Color(0xFF2E8C5E), Color.White)
+        is DocState.UploadFailed -> Triple("Failed",   Color(0xFFCE3A3A), Color.White)
+    }
+    Box(Modifier.clip(RoundedCornerShape(6.dp)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp)) {
+        Text(label, style = monoLabel.copy(color = fg, fontWeight = FontWeight.Medium))
+    }
+}

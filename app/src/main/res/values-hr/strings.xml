@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PrimaBarcode</string>
+    <!-- Common -->
+    <string name="btn_ok">U redu</string>
+    <string name="btn_cancel">Odustani</string>
+    <string name="btn_save">Spremi</string>
+    <string name="btn_apply">Primijeni</string>
+    <string name="btn_reset">Poništi</string>
+    <string name="btn_download">Preuzmi</string>
+    <string name="btn_upload">Učitaj</string>
+    <string name="btn_create">Stvori</string>
+    <string name="btn_clear">Obriši</string>
+    <string name="btn_retry_upload">Pokušaj ponovo</string>
+    <string name="btn_sign_in">Prijavi se</string>
+    <string name="btn_sign_in_sync">Prijavi se i sinkroniziraj</string>
+    <string name="btn_yes_insert">Da, umetni</string>
+    <!-- Dashboard -->
+    <string name="dashboard_today">DANAS</string>
+    <string name="dashboard_scans">skenova</string>
+    <string name="dashboard_pill_ready">gotovo</string>
+    <string name="dashboard_pill_partial">djelomično</string>
+    <string name="dashboard_pill_error">greška</string>
+    <!-- Main menu -->
+    <string name="main_documents_header">DOKUMENTI</string>
+    <string name="main_no_location">Nema lokacije</string>
+    <!-- Document types -->
+    <string name="doctype_warehouse_shipment">Skladišna otprema</string>
+    <string name="doctype_warehouse_receipt">Skladišni primitak</string>
+    <string name="doctype_retail_shipment">Maloprodajna otprema</string>
+    <string name="doctype_retail_receipt">Maloprodajni primitak</string>
+    <string name="doctype_transport_sheet">Transportni list</string>
+    <string name="doctype_warehouse_shipment_desc">Izlazne pošiljke iz skladišta u prodavaonicu</string>
+    <string name="doctype_warehouse_receipt_desc">Ulazni primitci od dobavljača u skladište</string>
+    <string name="doctype_retail_shipment_desc">Izlazne pošiljke iz prodavaonice kupcu</string>
+    <string name="doctype_retail_receipt_desc">Povrati i ulaz iz prodavaonice u skladište</string>
+    <string name="doctype_transport_sheet_desc">Dokumenti međulokacijskih premještaja</string>
+    <!-- Doc list screen -->
+    <string name="doc_list_tab_orders">NARUDŽBE</string>
+    <string name="doc_list_tab_recordings">SNIMANJA</string>
+    <string name="doc_list_tab_errors">GREŠKE</string>
+    <string name="doc_list_empty">Nema dokumenata</string>
+    <string name="doc_list_scan_placeholder">Skeniraj broj dokumenta…</string>
+    <string name="doc_list_create_title">Dokument nije pronađen</string>
+    <string name="doc_list_create_text">Dokument "%s" ne postoji. Želite li ga stvoriti?</string>
+    <string name="doc_chip_error">Greška</string>
+    <string name="doc_status_empty">Prazno</string>
+    <string name="doc_status_partial">Djelomično</string>
+    <string name="doc_status_ready">Gotovo</string>
+    <string name="doc_status_over_qty">Prekoračenje</string>
+    <string name="doc_state_new">Novo</string>
+    <string name="doc_state_active">Aktivno</string>
+    <string name="doc_state_done">Završeno</string>
+    <string name="doc_state_failed">Neuspjelo</string>
+    <string name="doc_qty_scanned">%1$s / %2$s skenirano</string>
+    <!-- Document overview -->
+    <string name="overview_title">Pregled</string>
+    <string name="overview_subtitle">Pregled dokumenata</string>
+    <string name="overview_tab_errors">Greške</string>
+    <string name="overview_tab_my_location">Moja lokacija</string>
+    <string name="overview_tab_all">Sve</string>
+    <string name="overview_no_issues">Nema problema</string>
+    <string name="overview_clear_errors">Obriši greške</string>
+    <string name="overview_clear_errors_title">Obrisati sve greške?</string>
+    <string name="overview_clear_errors_text_single">%d neuspjeli dokument bit će uklonjen iz lokalne pohrane.</string>
+    <string name="overview_clear_errors_text_plural">%d neuspjelih dokumenata bit će uklonjeno iz lokalne pohrane.</string>
+    <!-- Upload error -->
+    <string name="upload_error_subtitle">Greška pri učitavanju</string>
+    <string name="upload_error_header">Učitavanje neuspješno</string>
+    <string name="upload_error_doc_section">Dokument</string>
+    <string name="upload_error_row_type">Vrsta</string>
+    <string name="upload_error_row_source">Izvor</string>
+    <string name="upload_error_row_destination">Odredište</string>
+    <string name="upload_error_row_rc">CC</string>
+    <string name="upload_error_row_lines">Redci</string>
+    <string name="upload_error_row_date">Datum</string>
+    <string name="upload_error_details">Detalji greške</string>
+    <string name="upload_error_line_single">%d redak</string>
+    <string name="upload_error_line_plural">%d redaka</string>
+    <!-- Recording -->
+    <string name="recording_title">Snimanje</string>
+    <string name="recording_not_on_doc_badge">NIJE NA DOKUMENTU</string>
+    <string name="recording_not_on_doc">Nije na dokumentu</string>
+    <string name="recording_not_listed">Nije navedeno u ovom dokumentu. Količina će biti evidentirana zasebno i označena za pregled.</string>
+    <string name="recording_will_be_added">BIT ĆE DODANO</string>
+    <string name="recording_type_a_value">Unesite vrijednost</string>
+    <string name="recording_type_a_quantity">Unesite količinu</string>
+    <string name="recording_remove">Ukloni</string>
+    <string name="recording_barcode_prefix">Barkod: </string>
+    <string name="status_chip_empty">PRAZNO</string>
+    <string name="status_chip_partial">DJELOMIČNO</string>
+    <string name="status_chip_exact">TOČNO</string>
+    <string name="status_chip_over">PREKORAČENJE</string>
+    <string name="keypad_becomes_empty">postaje prazno</string>
+    <string name="keypad_becomes_partial">postaje djelomično</string>
+    <string name="keypad_becomes_exact">postaje točno</string>
+    <string name="keypad_becomes_over">postaje prekoračenje</string>
+    <string name="keypad_is_empty">prazno</string>
+    <string name="keypad_is_partial">djelomično</string>
+    <string name="keypad_is_exact">točno</string>
+    <string name="keypad_is_over">prekoračenje</string>
+    <!-- Multiplier -->
+    <string name="multiplier_title">Množitelj</string>
+    <string name="multiplier_subtitle">Količina dodana po skeniranju</string>
+    <string name="multiplier_custom">Prilagoađena količina</string>
+    <!-- Settings -->
+    <string name="settings_title">Postavke</string>
+    <string name="settings_subtitle">Postavke aplikacije</string>
+    <string name="settings_sec_location_rc">Lokacija i CC</string>
+    <string name="settings_sec_doc_types">Vrste dokumenata</string>
+    <string name="settings_sec_appearance">Izgled</string>
+    <string name="settings_sec_scanning">Skeniranje</string>
+    <string name="settings_sec_sync">Sinkronizacija</string>
+    <string name="settings_sec_ext_config">Konfiguracija vanjskog sustava</string>
+    <string name="settings_sec_data">Podaci</string>
+    <string name="settings_sec_system_info">Informacije o sustavu</string>
+    <string name="settings_sec_account">Korisnički račun</string>
+    <string name="settings_no_location">Nije odabrana lokacija</string>
+    <string name="settings_change">Promijeni</string>
+    <string name="settings_text_size">Veličina teksta</string>
+    <string name="settings_text_size_desc">Primjenjuje se na sav tekst u aplikaciji</string>
+    <string name="settings_uppercase">Tekst velikim slovima</string>
+    <string name="settings_uppercase_desc">Prikaži sve oznake sučelja velikim slovima</string>
+    <string name="settings_language">Jezik</string>
+    <string name="settings_language_desc">Potrebno je ponovo pokrenuti za puni učinak</string>
+    <string name="settings_continuous_scan">Kontinuirano skeniranje</string>
+    <string name="settings_continuous_scan_desc">Kamera ostaje otvorena nakon svakog skeniranja</string>
+    <string name="settings_debounce">Vrijeme čekanja</string>
+    <string name="settings_debounce_desc">Minimalno ms između skeniranja (samo kontinuirano)</string>
+    <string name="settings_haptic">Haptička povratna informacija</string>
+    <string name="settings_haptic_desc">Vibrira pri potvrdi i greškama skeniranja</string>
+    <string name="settings_mute">Isključi zvukove skeniranja</string>
+    <string name="settings_mute_desc">Utišaj sve zvučne signale kamere i hardverskog skenera</string>
+    <string name="settings_auto_collapse">Automatsko sklapanje vrpce skeniranja</string>
+    <string name="settings_auto_collapse_desc">Sakrij nakon 20 sekundi neaktivnosti</string>
+    <string name="settings_warn_over">Upozori pri prekoračenju</string>
+    <string name="settings_warn_over_desc">Potvrdi kada skenirana količina premašuje očekivanu</string>
+    <string name="settings_last_scanned">Zadnji skenirani redci</string>
+    <string name="settings_last_scanned_desc">Redci prikazani u vrpci skeniranja (0 = skriveno)</string>
+    <string name="settings_live_mode">Stvarni način rada</string>
+    <string name="settings_live_mode_desc">Spoji se na vanjski sustav umjesto testnih podataka</string>
+    <string name="settings_auto_upload">Automatsko učitavanje završenih dok.</string>
+    <string name="settings_auto_upload_desc">Učitaj automatski kada su skenirani svi redci</string>
+    <string name="settings_wifi_only">Sinkroniziraj samo putem Wi-Fi</string>
+    <string name="settings_wifi_only_desc">Ne koristi mobilne podatke za sinkronizaciju</string>
+    <string name="settings_test_signin">Testna prijava</string>
+    <string name="settings_test_signin_desc">Provjeri vjerodajnice bez preuzimanja</string>
+    <string name="settings_server_endpoints">Poslužitelj i krajnje točke</string>
+    <string name="settings_server_endpoints_desc">OData osnovni URL, domena, URL-ovi stranica dokumenata</string>
+    <string name="settings_export">Izvezi podatke</string>
+    <string name="settings_export_desc">Ispiši sve tablice u JSON datoteku na uređaju</string>
+    <string name="settings_insert_test">Umetni testne podatke</string>
+    <string name="settings_insert_test_desc">Učitaj uzorke dokumenata iz ugrađenog testnog JSON-a</string>
+    <string name="settings_clear_cache">Obriši predmemoriju</string>
+    <string name="settings_clear_cache_desc">Izbriši sve vjerodajnice, dokumente i snimanja</string>
+    <string name="settings_app_version">Verzija aplikacije</string>
+    <string name="settings_android">Android</string>
+    <string name="settings_sdk">SDK</string>
+    <string name="settings_db_schema">Shema baze podataka</string>
+    <string name="settings_sign_out">Odjavi se iz vanjskog sustava</string>
+    <string name="settings_coming_soon">USKORO</string>
+    <string name="dialog_clear_cache_title">Obrisati predmemoriju?</string>
+    <string name="dialog_clear_cache_text">Ovo će trajno izbrisati sve pohranjene vjerodajnice, dokumente i snimanja. Ova radnja se ne može poništiti.</string>
+    <string name="dialog_insert_test_title">Umetnuti testne podatke?</string>
+    <string name="dialog_insert_test_text">Ovo će izbrisati sve trenutne dokumente i snimanja, a zatim učitati ugrađeni testni skup podataka. Nastaviti?</string>
+    <!-- Login -->
+    <string name="login_title">Prijava u vanjski sustav</string>
+    <string name="login_domain">Windows domena</string>
+    <string name="login_username">Korisničko ime</string>
+    <string name="login_password">Lozinka</string>
+    <string name="login_show_password">Prikaži lozinku</string>
+    <string name="login_hide_password">Sakrij lozinku</string>
+    <string name="login_footer">Vjerodajnice šifrirane s AES-256-GCM · Vanjski sustav</string>
+    <string name="login_ttl_hours">%d sati</string>
+    <string name="login_ttl_days">%d dana</string>
+    <string name="login_session_info">Sesija pohranjena šifrirano za %s</string>
+    <!-- Download filter -->
+    <string name="download_title">Preuzimanje</string>
+    <string name="download_subtitle">Odaberite što preuzeti iz vanjskog sustava</string>
+    <string name="filter_document_date">DATUM DOKUMENTA</string>
+    <string name="filter_date_from">Od</string>
+    <string name="filter_date_to">Do</string>
+    <string name="filter_destination_code">KOD ODREDIŠTA</string>
+    <string name="filter_source_code">KOD IZVORA</string>
+    <string name="filter_responsibility_center">CENTAR ODGOVORNOSTI</string>
+    <!-- Document filter -->
+    <string name="doc_filter_title">Filteri</string>
+    <string name="doc_filter_subtitle">Suzite popis dokumenata</string>
+    <string name="doc_filter_status">STATUS</string>
+    <string name="doc_filter_type">VRSTA DOKUMENTA</string>
+    <!-- Location / RC -->
+    <string name="lrc_title">Lokacija i CC</string>
+    <string name="lrc_select_subtitle">Odaberite centar odgovornosti i lokaciju</string>
+    <string name="lrc_synced_at">Sinkronizirano %s</string>
+    <string name="lrc_section_rc">Centar odgovornosti</string>
+    <string name="lrc_section_location">Lokacija</string>
+    <string name="lrc_no_locations">Nema lokacija za ovaj CC</string>
+    <string name="lrc_rc_placeholder">Odaberite centar odgovornosti</string>
+    <string name="lrc_location_placeholder">Odaberite lokaciju</string>
+    <string name="lrc_search_placeholder">Pretraži…</string>
+    <string name="lrc_no_results">Nema rezultata</string>
+    <!-- Ext system config -->
+    <string name="ext_config_title">Konfiguracija vanjskog sustava</string>
+    <string name="ext_config_subtitle">Veza s poslužiteljem i krajnje točke</string>
+    <string name="ext_config_sec_connection">Veza</string>
+    <string name="ext_config_sec_session">Sesija vjerodajnica</string>
+    <string name="ext_config_sec_endpoints">Krajnje točke dokumenata (OData URL-ovi stranica)</string>
+    <string name="ext_config_sec_reference">Referentni podaci</string>
+    <string name="ext_config_sec_recording">Sinkronizacija snimanja</string>
+    <string name="ext_config_server_url">Osnovni URL poslužitelja</string>
+    <string name="ext_config_company_name">Naziv tvrtke</string>
+    <string name="ext_config_windows_domain">Windows domena</string>
+    <string name="ext_config_session_duration">Trajanje sesije</string>
+    <string name="ext_config_session_desc">Vjerodajnice se brišu iz šifrirane pohrane nakon ovog razdoblja</string>
+    <string name="ext_config_locations_url">URL lokacija</string>
+    <string name="ext_config_rc_url">URL centara odgovornosti</string>
+    <string name="ext_config_recording_url">URL sinkronizacije snimanja</string>
+    <!-- Document recordings -->
+    <string name="doc_delete_recordings_title">Obrisati snimanja?</string>
+    <string name="doc_delete_recordings_text">Sva snimanja za %s bit ce izbrisana i dokument ce biti vracen u pocetno stanje.</string>
+        <!-- Accessibility -->
+    <string name="cd_refresh">Osvježi</string>
+    <string name="cd_settings">Postavke</string>
+    <string name="cd_filter">Filter</string>
+    <string name="cd_clear">Obriši</string>
+</resources>
