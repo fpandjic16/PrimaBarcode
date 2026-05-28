@@ -86,6 +86,7 @@
     <string name="recording_type_a_value">Type a value</string>
     <string name="recording_type_a_quantity">Type a quantity</string>
     <string name="recording_remove">Remove</string>
+    <string name="recording_uom_prefix">UoM: </string>
     <string name="recording_barcode_prefix">Barcode: </string>
     <string name="status_chip_empty">EMPTY</string>
     <string name="status_chip_partial">PARTIAL</string>

@@ -434,6 +434,20 @@ private fun PrimaBarcodeApp(
                 onBack = { nav.popBackStack() },
                 onDocTap = { selected -> nav.navigate("recording/${selected.documentNo}/${selected.type.key}") },
                 onClearErrors = { appVm.clearErrorDocs() },
+                onUpload = { docs ->
+                    processingMessage = "Uploading..."
+                    if (liveMode) {
+                        appVm.uploadToExtSystem(docs) { failures ->
+                            processingMessage = null
+                            if (failures > 0) showSyncErrorDialog = true
+                        }
+                    } else {
+                        appVm.testImportDocs(docs) { failures ->
+                            processingMessage = null
+                            if (failures > 0) showSyncErrorDialog = true
+                        }
+                    }
+                },
                 onErrorTap = { doc -> nav.navigate("upload_error/${doc.documentNo}") },
                 filter = overviewFilter,
                 onOpenFilter = { src, rc ->

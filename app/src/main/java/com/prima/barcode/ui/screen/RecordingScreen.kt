@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material.icons.automirrored.outlined.Backspace
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -100,6 +101,7 @@ fun RecordingScreen(
     var scanErrorFlash by remember { mutableStateOf(false) }
     var unknownBarcode by remember { mutableStateOf<String?>(null) }
     var unknownTypedQty by remember { mutableStateOf("") }
+    var localScanned by remember(activeLineNo) { mutableStateOf<Double?>(null) }
     var extraEditedQty by remember { mutableStateOf(0.0) }
     var typedExtraQty by remember { mutableStateOf("") }
     val sizeOffset = LocalTextSizeOffset.current
@@ -236,17 +238,19 @@ fun RecordingScreen(
                     onExtraTap = { editingExtra = it; extraEditedQty = it.quantity; view = RecordingView.EXTRA_LINE },
                 )
                 RecordingView.ACTIVE_LINE -> activeLine?.let { line ->
+                    val displayLine = localScanned?.let { line.copy(scanned = it) } ?: line
                     ActiveLineContent(
-                        line = line,
-                        onIncrement = { onLineUpdate(line.lineNo, (line.scanned + 1.0).coerceAtLeast(0.0)) },
-                        onDecrement = { onLineUpdate(line.lineNo, (line.scanned - 1.0).coerceAtLeast(0.0)) },
+                        line = displayLine,
+                        onIncrement = { localScanned = ((localScanned ?: line.scanned) + 1.0).coerceAtLeast(0.0) },
+                        onDecrement = { localScanned = ((localScanned ?: line.scanned) - 1.0).coerceAtLeast(0.0) },
                         onTypeQuantity = { typedQty = ""; view = RecordingView.KEYPAD },
-                        onApply = { view = RecordingView.OVERVIEW; activeLineNo = null },
+                        onApply = { onLineUpdate(line.lineNo, localScanned ?: line.scanned); view = RecordingView.OVERVIEW; activeLineNo = null },
                     )
                 }
                 RecordingView.KEYPAD -> activeLine?.let { line ->
+                    val displayLine = localScanned?.let { line.copy(scanned = it) } ?: line
                     KeypadContent(
-                        line = line,
+                        line = displayLine,
                         typed = typedQty,
                         onKey = { k ->
                             when (k) {
@@ -262,10 +266,12 @@ fun RecordingScreen(
                         },
                         onConfirm = {
                             onLineUpdate(line.lineNo, typedQty.toDoubleOrNull()?.coerceAtLeast(0.0) ?: line.scanned)
+                            localScanned = null
                             view = RecordingView.ACTIVE_LINE
                         },
                         onConfirmRequired = {
                             onLineUpdate(line.lineNo, line.expected)
+                            localScanned = null
                             view = RecordingView.ACTIVE_LINE
                         },
                     )
@@ -519,18 +525,10 @@ private fun ActiveLineContent(
             }
             Spacer(Modifier.height(8.dp))
 
-            Text(
-                line.item.no,
-                style = monoLabel.copy(
-                    color = PrimaPalette.Ink3,
-                    fontSize = (15 + sizeOffset).sp,
-                    textDecoration = TextDecoration.Underline,
-                ),
-            )
-            Text(
-                stringResource(R.string.recording_barcode_prefix) + line.barcodeNo,
-                style = monoLabel.copy(color = PrimaPalette.Ink4, fontSize = (13 + sizeOffset).sp),
-            )
+            val metaStyle = monoLabel.copy(color = PrimaPalette.Ink3, fontSize = (13 + sizeOffset).sp)
+            Text(line.item.no, style = metaStyle)
+            Text(stringResource(R.string.recording_uom_prefix) + line.unitOfMeasureCode, style = metaStyle)
+            Text(stringResource(R.string.recording_barcode_prefix) + line.barcodeNo, style = metaStyle)
             Spacer(Modifier.height(4.dp))
 
             Text(
@@ -564,11 +562,7 @@ private fun ActiveLineContent(
                         line.expected.formatQty(),
                         style = monoCounter.copy(color = statusColor.copy(alpha = 0.55f), fontSize = (48 + sizeOffset).sp),
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        line.unitOfMeasureCode,
-                        style = monoLabel.copy(color = statusColor.copy(alpha = 0.40f), fontSize = (13 + sizeOffset).sp),
-                    )
+
                 }
             }
 
@@ -703,7 +697,7 @@ private fun KeypadContent(
                             typed.ifEmpty { line.scanned.formatQty() },
                             style = monoCounter.copy(
                                 color = if (typed.isEmpty()) previewColor.copy(alpha = 0.38f) else previewColor,
-                                fontSize = (78 + sizeOffset).sp,
+                                fontSize = (76 + sizeOffset).sp,
                                 fontWeight = FontWeight.Medium,
                             ),
                         )
@@ -718,12 +712,12 @@ private fun KeypadContent(
                     }
                     Text(
                         "/",
-                        style = monoCounter.copy(color = previewColor.copy(alpha = 0.35f), fontSize = (78 + sizeOffset).sp),
+                        style = monoCounter.copy(color = previewColor.copy(alpha = 0.35f), fontSize = (76 + sizeOffset).sp),
                         modifier = Modifier.padding(horizontal = 5.dp),
                     )
                     Text(
                         line.expected.formatQty(),
-                        style = monoCounter.copy(color = previewColor.copy(alpha = 0.55f), fontSize = (78 + sizeOffset).sp),
+                        style = monoCounter.copy(color = previewColor.copy(alpha = 0.55f), fontSize = (76 + sizeOffset).sp),
                     )
                 }
                 Text(
@@ -777,10 +771,19 @@ private fun KeypadContent(
                                 .clickable { onKey(key) },
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(
-                                if (key == "X") "âŚ«" else if (key == ".") "," else key,
-                                style = monoCounter.copy(color = PrimaPalette.Ink, fontSize = (26 + sizeOffset).sp, fontWeight = FontWeight.Medium),
-                            )
+                            if (key == "X") {
+                                Icon(
+                                    Icons.AutoMirrored.Outlined.Backspace,
+                                    contentDescription = null,
+                                    tint = PrimaPalette.Ink,
+                                    modifier = Modifier.size((26 + sizeOffset).dp),
+                                )
+                            } else {
+                                Text(
+                                    if (key == ".") "," else key,
+                                    style = monoCounter.copy(color = PrimaPalette.Ink, fontSize = (26 + sizeOffset).sp, fontWeight = FontWeight.Medium),
+                                )
+                            }
                         }
                     }
                 }
@@ -788,37 +791,20 @@ private fun KeypadContent(
         }
         Spacer(Modifier.height(14.dp))
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(LineStatus.EXACT.color)
-                .clickable(onClick = onConfirmRequired),
-            contentAlignment = Alignment.Center,
-        ) {
-            Row(
-                modifier = Modifier.padding(vertical = 18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    "Set to ${line.expected.formatQty()}",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White,
-                        fontSize = (20 + sizeOffset).sp,
-                    ),
-                )
-                Icon(Icons.Outlined.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
-            }
+        val btnText = if (typed.isEmpty()) "Set to ${line.expected.formatQty()}" else "Set to $typed"
+        val btnColor = when {
+            typed.isEmpty()  -> LineStatus.EXACT.color
+            confirmEnabled   -> previewColor
+            else             -> PrimaPalette.CreamAlt
         }
-        Spacer(Modifier.height(8.dp))
+        val btnEnabled = typed.isEmpty() || confirmEnabled
+        val btnAction: () -> Unit = if (typed.isEmpty()) onConfirmRequired else onConfirm
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(if (confirmEnabled) previewColor else PrimaPalette.CreamAlt)
-                .clickable(enabled = confirmEnabled, onClick = onConfirm),
+                .background(btnColor)
+                .clickable(enabled = btnEnabled, onClick = btnAction),
             contentAlignment = Alignment.Center,
         ) {
             Row(
@@ -827,14 +813,14 @@ private fun KeypadContent(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    if (confirmEnabled) "Set to $typed" else stringResource(R.string.recording_type_a_value),
+                    btnText,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Medium,
-                        color = if (confirmEnabled) Color.White else PrimaPalette.Ink4,
+                        color = if (btnEnabled) Color.White else PrimaPalette.Ink4,
                         fontSize = (20 + sizeOffset).sp,
                     ),
                 )
-                if (confirmEnabled) {
+                if (btnEnabled) {
                     Icon(Icons.Outlined.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
                 }
             }

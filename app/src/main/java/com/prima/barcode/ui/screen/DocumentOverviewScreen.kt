@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -54,6 +55,7 @@ fun DocumentOverviewScreen(
     onBack: () -> Unit,
     onDocTap: (Document) -> Unit,
     onClearErrors: () -> Unit,
+    onUpload: (List<Document>) -> Unit = {},
     onErrorTap: (Document) -> Unit = {},
     filter: DocumentFilter = DocumentFilter(),
     onOpenFilter: (lockedSourceCode: String?, lockedRcCode: String?) -> Unit = { _, _ -> },
@@ -86,6 +88,9 @@ fun DocumentOverviewScreen(
         stringResource(R.string.overview_tab_all) to filtered.size,
     )
     val visibleDocs = when (selectedTab) { 0 -> errors; 1 -> atLocation; else -> filtered }
+    val uploadableDocs = remember(visibleDocs) {
+        visibleDocs.filter { doc -> doc.lines.any { it.scanned > 0.0 } || doc.extraLines.isNotEmpty() }
+    }
     val listState = rememberLazyListState()
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
@@ -170,17 +175,40 @@ fun DocumentOverviewScreen(
                 }
             }
         }
-        if (selectedTab == 0 && errors.isNotEmpty()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-            ) {
-                OutlinedButton(
-                    onClick = { showClearErrorsDialog = true },
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                ) { Text(stringResource(R.string.overview_clear_errors), style = monoLabel.copy(fontWeight = FontWeight.Medium)) }
+        when {
+            selectedTab == 0 && errors.isNotEmpty() -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                ) {
+                    OutlinedButton(
+                        onClick = { showClearErrorsDialog = true },
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                    ) { Text(stringResource(R.string.overview_clear_errors), style = monoLabel.copy(fontWeight = FontWeight.Medium)) }
+                }
+            }
+            selectedTab != 0 && uploadableDocs.isNotEmpty() -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth().height(64.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(PrimaPalette.Coral)
+                            .clickable { onUpload(uploadableDocs) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Outlined.CloudUpload, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                            Text(stringResource(R.string.btn_upload).uppercased, style = monoLabel.copy(color = Color.White, fontWeight = FontWeight.Medium))
+                        }
+                    }
+                }
             }
         }
     }

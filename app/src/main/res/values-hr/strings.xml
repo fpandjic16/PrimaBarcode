@@ -86,6 +86,7 @@
     <string name="recording_type_a_value">Unesite vrijednost</string>
     <string name="recording_type_a_quantity">Unesite količinu</string>
     <string name="recording_remove">Ukloni</string>
+    <string name="recording_uom_prefix">JM: </string>
     <string name="recording_barcode_prefix">Barkod: </string>
     <string name="status_chip_empty">PRAZNO</string>
     <string name="status_chip_partial">DJELOMIČNO</string>
