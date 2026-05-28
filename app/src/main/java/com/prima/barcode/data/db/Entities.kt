@@ -37,6 +37,7 @@ data class DocumentLineEntity(
     val expected: Double,
     val destinationCode: String,
     val sourceCode: String,
+    val unitOfMeasureCode: String,
 )
 
 @Entity(
@@ -57,6 +58,7 @@ data class RecordingEntity(
     val userId: String,
     val destinationCode: String,
     val sourceCode: String,
+    val unitOfMeasureCode: String,
 )
 
 @Entity(tableName = "locations")

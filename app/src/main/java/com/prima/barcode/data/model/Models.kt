@@ -8,7 +8,6 @@ data class User(
     val displayName: String,
     val initials: String,
     val role: String?  = null,
-    val shift: String? = null,
 )
 
 data class ResponsibilityCenter(
@@ -23,12 +22,14 @@ data class Location(
     val rc: String,
 )
 
-enum class DocumentType(val key: String, val display: String, val filterByRc: Boolean) {
-    WAREHOUSE_SHIPMENT("WHSE_SHIP", "Warehouse Shipment",    true),
-    WAREHOUSE_RECEIPT( "WHSE_RCPT", "Warehouse Receipt",     true),
-    RETAIL_SHIPMENT(   "RT_SHIP",   "Retail Shipment",       false),
-    RETAIL_RECEIPT(    "RT_RCPT",   "Retail Whse. Receipt",  false),
-    TRANSPORT_SHEET(   "TRANSPORT", "Transport Sheet",       true),
+enum class DocTypeFilterMode { LOCATION, RESPONSIBILITY_CENTER }
+
+enum class DocumentType(val key: String, val display: String) {
+    WAREHOUSE_SHIPMENT("WHSE_SHIP", "Warehouse Shipment"),
+    WAREHOUSE_RECEIPT( "WHSE_RCPT", "Warehouse Receipt"),
+    RETAIL_SHIPMENT(   "RT_SHIP",   "Retail Shipment"),
+    RETAIL_RECEIPT(    "RT_RCPT",   "Retail Whse. Receipt"),
+    TRANSPORT_SHEET(   "TRANSPORT", "Transport Sheet"),
 }
 
 data class Item(
@@ -45,6 +46,7 @@ data class Line(
     val scanned: Double,
     val destinationCode: String,
     val sourceCode: String,
+    val unitOfMeasureCode: String,
 ) {
     val status: LineStatus get() = LineStatus.of(scanned, expected)
 }
@@ -53,6 +55,7 @@ data class ExtraLine(
     val recordingLineNo: Int,
     val barcodeNo: String,
     val quantity: Double,
+    val unitOfMeasureCode: String,
 )
 
 data class Document(

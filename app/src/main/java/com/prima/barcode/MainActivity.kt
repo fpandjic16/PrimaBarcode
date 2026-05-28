@@ -46,6 +46,7 @@ import androidx.navigation.navArgument
 import com.prima.barcode.data.auth.AppSettings
 import com.prima.barcode.data.barcode.DataWedgeManager
 import com.prima.barcode.data.model.DocState
+import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.DocumentFilter
 import com.prima.barcode.data.model.DownloadFilter
@@ -96,6 +97,7 @@ class MainActivity : AppCompatActivity() {
             var muteSound        by remember { mutableStateOf(initialSettings.muteSound) }
             var liveMode         by remember { mutableStateOf(initialSettings.liveMode) }
             var disabledDocTypes by remember { mutableStateOf(initialSettings.disabledDocTypes) }
+            var docTypeFilters    by remember { mutableStateOf(initialSettings.docTypeFilters) }
             var locationCode     by remember { mutableStateOf(initialSettings.lastLocationCode) }
             var rcCode           by remember { mutableStateOf(initialSettings.lastRcCode) }
 
@@ -112,6 +114,7 @@ class MainActivity : AppCompatActivity() {
                 lastRcCode       = rcCode,
                 liveMode         = liveMode,
                 disabledDocTypes = disabledDocTypes,
+                docTypeFilters   = docTypeFilters,
             )
 
             PrimaBarcodeTheme(textSizeOffset = textSize.spOffset, uppercaseEnabled = uppercaseText) {
@@ -144,6 +147,8 @@ class MainActivity : AppCompatActivity() {
                     onLiveModeChange          = { liveMode = it; appVm.saveSettings(buildSettings().copy(liveMode = it)) },
                     disabledDocTypes          = disabledDocTypes,
                     onDisabledDocTypesChange  = { disabledDocTypes = it; appVm.saveSettings(buildSettings().copy(disabledDocTypes = it)) },
+                    docTypeFilters            = docTypeFilters,
+                    onDocTypeFiltersChange    = { docTypeFilters = it; appVm.saveSettings(buildSettings().copy(docTypeFilters = it)) },
                 )
             }
         }
@@ -179,6 +184,8 @@ private fun PrimaBarcodeApp(
     onLiveModeChange: (Boolean) -> Unit,
     disabledDocTypes: Set<String>,
     onDisabledDocTypesChange: (Set<String>) -> Unit,
+    docTypeFilters: Map<String, DocTypeFilterMode>,
+    onDocTypeFiltersChange: (Map<String, DocTypeFilterMode>) -> Unit,
 ) {
     val nav = rememberNavController()
     val appVm: AppViewModel = hiltViewModel()
@@ -219,8 +226,10 @@ private fun PrimaBarcodeApp(
     val documents by appVm.documents.collectAsState()
 
     val filteredDocs = documents.filter { doc ->
-        if (doc.type.filterByRc) doc.rcCode == rc.code
-        else location != null && doc.sourceCode == location.code
+        when (docTypeFilters[doc.type.key] ?: DocTypeFilterMode.LOCATION) {
+            DocTypeFilterMode.LOCATION -> location != null && doc.sourceCode == location.code
+            DocTypeFilterMode.RESPONSIBILITY_CENTER -> doc.rcCode == rc.code
+        }
     }
 
     val docTypes = DocumentType.entries.map { type ->
@@ -320,6 +329,8 @@ private fun PrimaBarcodeApp(
                 },
                 disabledDocTypes = disabledDocTypes,
                 onDisabledDocTypesChange = onDisabledDocTypesChange,
+                docTypeFilters = docTypeFilters,
+                onDocTypeFiltersChange = onDocTypeFiltersChange,
             )
         }
         composable("settings") {
@@ -361,8 +372,10 @@ private fun PrimaBarcodeApp(
         composable("docs") {
             val typeDocs = documents.filter { doc ->
                 doc.type == selectedDocType &&
-                    (if (selectedDocType.filterByRc) doc.rcCode == rc.code
-                     else location != null && doc.sourceCode == location.code)
+                    when (docTypeFilters[selectedDocType.key] ?: DocTypeFilterMode.LOCATION) {
+                        DocTypeFilterMode.LOCATION -> location != null && doc.sourceCode == location.code
+                        DocTypeFilterMode.RESPONSIBILITY_CENTER -> doc.rcCode == rc.code
+                    }
             }
             DocumentListScreen(
                 docType = selectedDocType,

@@ -564,6 +564,11 @@ private fun ActiveLineContent(
                         line.expected.formatQty(),
                         style = monoCounter.copy(color = statusColor.copy(alpha = 0.55f), fontSize = (48 + sizeOffset).sp),
                     )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        line.unitOfMeasureCode,
+                        style = monoLabel.copy(color = statusColor.copy(alpha = 0.40f), fontSize = (13 + sizeOffset).sp),
+                    )
                 }
             }
 
@@ -721,6 +726,11 @@ private fun KeypadContent(
                         style = monoCounter.copy(color = previewColor.copy(alpha = 0.55f), fontSize = (78 + sizeOffset).sp),
                     )
                 }
+                Text(
+                    line.unitOfMeasureCode,
+                    style = monoLabel.copy(color = previewColor.copy(alpha = 0.45f), fontSize = (13 + sizeOffset).sp),
+                    modifier = Modifier.padding(top = 4.dp),
+                )
                 Spacer(Modifier.height(14.dp))
                 Row(
                     modifier = Modifier

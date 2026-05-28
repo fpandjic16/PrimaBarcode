@@ -15,6 +15,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.prima.barcode.data.auth.ExtSystemConfig
+import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.theme.PrimaPalette
@@ -46,6 +47,8 @@ fun ExtSystemConfigScreen(
     onSave: (ExtSystemConfig) -> Unit,
     disabledDocTypes: Set<String> = emptySet(),
     onDisabledDocTypesChange: (Set<String>) -> Unit = {},
+    docTypeFilters: Map<String, DocTypeFilterMode> = emptyMap(),
+    onDocTypeFiltersChange: (Map<String, DocTypeFilterMode>) -> Unit = {},
 ) {
     var serverBaseUrl             by remember { mutableStateOf(initial.serverBaseUrl) }
     var domain                   by remember { mutableStateOf(initial.domain) }
@@ -175,6 +178,33 @@ fun ExtSystemConfigScreen(
                                 value = endpointUrls[type] ?: "",
                                 onValueChange = { endpointUrls[type] = it },
                             )
+                            ConfigDivider()
+                            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                                Text(
+                                    "Filter by",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Medium, color = PrimaPalette.Ink,
+                                    ),
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                                    listOf(DocTypeFilterMode.LOCATION, DocTypeFilterMode.RESPONSIBILITY_CENTER).forEachIndexed { idx, mode ->
+                                        SegmentedButton(
+                                            selected = (docTypeFilters[type.key] ?: DocTypeFilterMode.LOCATION) == mode,
+                                            onClick = { onDocTypeFiltersChange(docTypeFilters + (type.key to mode)) },
+                                            shape = SegmentedButtonDefaults.itemShape(idx, 2),
+                                        ) {
+                                            Text(
+                                                when (mode) {
+                                                    DocTypeFilterMode.LOCATION -> "Location"
+                                                    DocTypeFilterMode.RESPONSIBILITY_CENTER -> "Responsibility Center"
+                                                },
+                                                style = monoLabel,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     if (type != DocumentType.entries.last()) ConfigDivider()

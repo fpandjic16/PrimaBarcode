@@ -89,6 +89,7 @@ class DocumentRepositoryImpl @Inject constructor(
                             userId = doc.ownerUserId,
                             destinationCode = line.destinationCode,
                             sourceCode = line.sourceCode,
+                            unitOfMeasureCode = line.unitOfMeasureCode,
                         )
                     )
                 }
@@ -121,6 +122,7 @@ class DocumentRepositoryImpl @Inject constructor(
                     userId = userId,
                     destinationCode = line.destinationCode,
                     sourceCode = line.sourceCode,
+                    unitOfMeasureCode = line.unitOfMeasureCode,
                 )
             )
             advanceToInProgressIfNeeded(documentNo, type)
@@ -156,6 +158,7 @@ class DocumentRepositoryImpl @Inject constructor(
                         userId = header.ownerUserId,
                         destinationCode = line.destinationCode,
                         sourceCode = line.sourceCode,
+                        unitOfMeasureCode = line.unitOfMeasureCode,
                     )
                 )
             }
@@ -182,6 +185,7 @@ class DocumentRepositoryImpl @Inject constructor(
                     userId = userId,
                     destinationCode = header.destinationCode,
                     sourceCode = header.sourceCode,
+                    unitOfMeasureCode = "",
                 )
             )
             advanceToInProgressIfNeeded(documentNo, type)

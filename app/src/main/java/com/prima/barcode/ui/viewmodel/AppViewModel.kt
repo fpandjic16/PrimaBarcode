@@ -144,14 +144,15 @@ class AppViewModel @Inject constructor(
                             val first = rows.first()
                             val lines = rows.map { row ->
                                 Line(
-                                    documentNo      = docNo,
-                                    lineNo          = row.lineNo,
-                                    item            = Item(row.itemNo, row.description),
-                                    barcodeNo       = row.barcodeNo,
-                                    expected        = row.qtyOutstanding,
-                                    scanned         = 0.0,
-                                    destinationCode = row.destinationCode,
-                                    sourceCode      = row.sourceCode,
+                                    documentNo        = docNo,
+                                    lineNo            = row.lineNo,
+                                    item              = Item(row.itemNo, row.description),
+                                    barcodeNo         = row.barcodeNo,
+                                    expected          = row.qtyOutstanding,
+                                    scanned           = 0.0,
+                                    destinationCode   = row.destinationCode,
+                                    sourceCode        = row.sourceCode,
+                                    unitOfMeasureCode = row.unitOfMeasureCode,
                                 )
                             }
                             val doc = Document(
@@ -361,8 +362,10 @@ class AppViewModel @Inject constructor(
         val now    = Instant.now()
 
         fun line(docNo: String, no: Int, itemNo: String, name: String,
-                 barcode: String, expected: Double, src: String, dst: String) =
-            Line(docNo, no, Item(itemNo, name), barcode, expected, 0.0, dst, src)
+                 barcode: String, expected: Double, src: String, dst: String): Line {
+            val uom = if (expected == kotlin.math.floor(expected)) "KOM" else "M"
+            return Line(docNo, no, Item(itemNo, name), barcode, expected, 0.0, dst, src, uom)
+        }
 
         suspend fun scan(docNo: String, type: DocumentType, lineNo: Int,
                          barcode: String, qty: Double) =

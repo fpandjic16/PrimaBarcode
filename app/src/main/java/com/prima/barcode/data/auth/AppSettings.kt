@@ -1,5 +1,6 @@
 package com.prima.barcode.data.auth
 
+import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.ui.theme.Language
 import com.prima.barcode.ui.theme.TextSize
 
@@ -16,4 +17,5 @@ data class AppSettings(
     val lastRcCode: String = "",
     val liveMode: Boolean = false,
     val disabledDocTypes: Set<String> = emptySet(),
+    val docTypeFilters: Map<String, DocTypeFilterMode> = emptyMap(),
 )

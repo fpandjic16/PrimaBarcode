@@ -42,6 +42,7 @@ fun DocumentLineEntity.toDomain(scanned: Double): Line = Line(
     scanned = scanned,
     destinationCode = destinationCode,
     sourceCode = sourceCode,
+    unitOfMeasureCode = unitOfMeasureCode,
 )
 
 fun DocumentHeaderWithLines.toDomain(): Document = Document(
@@ -62,6 +63,7 @@ fun DocumentHeaderWithLines.toDomain(): Document = Document(
             recordingLineNo = recording.recordingLineNo,
             barcodeNo = recording.barcodeNo,
             quantity = recording.quantity,
+            unitOfMeasureCode = recording.unitOfMeasureCode,
         )
     },
     state = document.docState.toDocState(),
@@ -91,6 +93,7 @@ fun Line.toEntity(type: String): DocumentLineEntity = DocumentLineEntity(
     expected = expected,
     destinationCode = destinationCode,
     sourceCode = sourceCode,
+    unitOfMeasureCode = unitOfMeasureCode,
 )
 
 // ── Location / RC mappers ─────────────────────────────────────────────────────

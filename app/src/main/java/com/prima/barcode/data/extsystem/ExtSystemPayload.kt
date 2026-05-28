@@ -85,6 +85,7 @@ data class NavDocumentLine(
     @SerializedName("Description")           val description:     String  = "",
     @SerializedName("No_2")                  val barcodeNo:       String  = "",
     @SerializedName("Qty_Outstanding")       val qtyOutstanding:  Double  = 0.0,
+    @SerializedName("Unit_of_Measure_Code")  val unitOfMeasureCode: String = "",
 )
 
 data class NavLocation(

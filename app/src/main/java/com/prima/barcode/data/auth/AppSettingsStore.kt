@@ -1,6 +1,7 @@
 package com.prima.barcode.data.auth
 
 import android.content.Context
+import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.ui.theme.Language
 import com.prima.barcode.ui.theme.TextSize
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,6 +26,14 @@ class AppSettingsStore @Inject constructor(@ApplicationContext private val conte
         lastRcCode       = prefs.getString("lastRcCode", "") ?: "",
         liveMode         = prefs.getBoolean("liveMode", false),
         disabledDocTypes = prefs.getString("disabledDocTypes", "")?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
+        docTypeFilters = prefs.getString("docTypeFilters", "")
+            ?.split(",")?.filter { it.isNotEmpty() }
+            ?.mapNotNull { entry ->
+                val parts = entry.split(":")
+                if (parts.size != 2) return@mapNotNull null
+                val mode = DocTypeFilterMode.entries.firstOrNull { it.name == parts[1] } ?: return@mapNotNull null
+                parts[0] to mode
+            }?.toMap() ?: emptyMap(),
     )
 
     fun clear() = prefs.edit().clear().apply()
@@ -43,6 +52,7 @@ class AppSettingsStore @Inject constructor(@ApplicationContext private val conte
             .putString ("lastRcCode",         settings.lastRcCode)
             .putBoolean("liveMode",           settings.liveMode)
             .putString ("disabledDocTypes",   settings.disabledDocTypes.joinToString(","))
+            .putString ("docTypeFilters",     settings.docTypeFilters.entries.joinToString(",") { "${it.key}:${it.value.name}" })
             .apply()
     }
 }
