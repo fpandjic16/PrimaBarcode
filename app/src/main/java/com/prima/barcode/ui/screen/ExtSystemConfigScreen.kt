@@ -1,7 +1,10 @@
 package com.prima.barcode.ui.screen
 
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.prima.barcode.data.auth.ExtSystemConfig
 import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.data.model.DocumentType
@@ -45,13 +50,20 @@ private fun DocumentType.localizedDisplay(): String = when (this) {
 fun ExtSystemConfigScreen(
     initial: ExtSystemConfig,
     onSave: (ExtSystemConfig) -> Unit,
+    onDiscard: () -> Unit = {},
+    loadDefaults: () -> ExtSystemConfig? = { null },
     disabledDocTypes: Set<String> = emptySet(),
     onDisabledDocTypesChange: (Set<String>) -> Unit = {},
     docTypeFilters: Map<String, DocTypeFilterMode> = emptyMap(),
     onDocTypeFiltersChange: (Map<String, DocTypeFilterMode>) -> Unit = {},
+    onTestConnection: (
+        serverBaseUrl: String,
+        username: String,
+        password: String,
+        onResult: (success: Boolean, message: String) -> Unit,
+    ) -> Unit = { _, _, _, cb -> cb(false, "Test connection is not wired up") },
 ) {
     var serverBaseUrl             by remember { mutableStateOf(initial.serverBaseUrl) }
-    var domain                   by remember { mutableStateOf(initial.domain) }
     var ttlHours                 by remember { mutableIntStateOf(initial.credentialTtlHours) }
     val endpointUrls = remember {
         mutableStateMapOf<DocumentType, String>().also { map ->
@@ -62,9 +74,15 @@ fun ExtSystemConfigScreen(
     var locationsUrl              by remember { mutableStateOf(initial.locationsUrl) }
     var responsibilityCentersUrl  by remember { mutableStateOf(initial.responsibilityCentersUrl) }
 
+    var showLoginSheet by remember { mutableStateOf(false) }
+    var testing        by remember { mutableStateOf(false) }
+    var testResult     by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
     fun buildConfig() = ExtSystemConfig(
         serverBaseUrl            = serverBaseUrl.trim(),
-        domain                   = domain.trim(),
         credentialTtlHours       = ttlHours,
         endpointUrls             = endpointUrls.toMap(),
         recordingSyncUrl         = recordingSyncUrl.trim(),
@@ -72,22 +90,57 @@ fun ExtSystemConfigScreen(
         responsibilityCentersUrl = responsibilityCentersUrl.trim(),
     )
 
+    fun applyConfig(c: ExtSystemConfig) {
+        serverBaseUrl = c.serverBaseUrl
+        ttlHours = c.credentialTtlHours
+        DocumentType.entries.forEach { endpointUrls[it] = c.endpointFor(it) }
+        recordingSyncUrl = c.recordingSyncUrl
+        locationsUrl = c.locationsUrl
+        responsibilityCentersUrl = c.responsibilityCentersUrl
+    }
+
+    fun attemptExit() {
+        if (buildConfig() != initial) showExitDialog = true else onDiscard()
+    }
+
+    BackHandler { attemptExit() }
+
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
             title    = stringResource(R.string.ext_config_title),
             subtitle = stringResource(R.string.ext_config_subtitle),
-            onBack   = { onSave(buildConfig()) },
-            actions  = {
-                TextButton(onClick = { onSave(buildConfig()) }) {
-                    Text(stringResource(R.string.btn_save), color = Color.White, fontWeight = FontWeight.SemiBold)
-                }
-            },
+            onBack   = { attemptExit() },
         )
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 40.dp),
         ) {
+            // ── Insert default parameters ─────────────────────────────────────
+            item {
+                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+                    Button(
+                        onClick = {
+                            val defaults = loadDefaults()
+                            if (defaults != null) {
+                                applyConfig(defaults)
+                                Toast.makeText(context, "Default parameters inserted", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Could not load ext_system_defaults.json", Toast.LENGTH_LONG).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                    ) {
+                        Text("Insert default parameters", fontWeight = FontWeight.SemiBold)
+                    }
+                    Text(
+                        "Fills every field below from the bundled ext_system_defaults.json.",
+                        style = monoLabel.copy(color = PrimaPalette.Ink3),
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            }
+
             // ── Connection ────────────────────────────────────────────────────
             item { ConfigSectionHeader(stringResource(R.string.ext_config_sec_connection)) }
             item {
@@ -100,12 +153,20 @@ fun ExtSystemConfigScreen(
                         keyboardType = KeyboardType.Uri,
                     )
                     ConfigDivider()
-                    ConfigField(
-                        label = stringResource(R.string.ext_config_windows_domain),
-                        hint  = "PRIMA",
-                        value = domain,
-                        onValueChange = { domain = it },
-                    )
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                        OutlinedButton(
+                            onClick = { showLoginSheet = true },
+                            enabled = serverBaseUrl.isNotBlank() && !testing,
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                        ) {
+                            Text("Test connection", fontWeight = FontWeight.SemiBold)
+                        }
+                        Text(
+                            "Signs in with your Windows credentials and runs an authenticated request against the server URL.",
+                            style = monoLabel.copy(color = PrimaPalette.Ink3),
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                    }
                 }
             }
 
@@ -161,6 +222,8 @@ fun ExtSystemConfigScreen(
                             Switch(
                                 checked = enabled,
                                 onCheckedChange = { on ->
+                                    // Disabling a doc type clears its endpoint URL (not just hides the field)
+                                    if (!on) endpointUrls[type] = ""
                                     onDisabledDocTypesChange(
                                         if (on) disabledDocTypes - type.key else disabledDocTypes + type.key
                                     )
@@ -245,6 +308,75 @@ fun ExtSystemConfigScreen(
                 }
             }
         }
+    }
+
+    if (showLoginSheet) {
+        LoginSheet(
+            credentialTtlHours = ttlHours,
+            ctaLabel           = "Test connection",
+            onDismiss          = { showLoginSheet = false },
+            onSubmit           = { u, p ->
+                showLoginSheet = false
+                testing = true
+                onTestConnection(serverBaseUrl.trim(), u, p) { ok, msg ->
+                    testing = false
+                    testResult = ok to msg
+                }
+            },
+        )
+    }
+
+    if (showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitDialog = false },
+            title = { Text("Save changes?", fontWeight = FontWeight.Bold) },
+            text = { Text("Save the external system configuration before leaving?") },
+            confirmButton = {
+                Button(onClick = { showExitDialog = false; onSave(buildConfig()) }) {
+                    Text("Yes", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showExitDialog = false; onDiscard() }) {
+                    Text("No")
+                }
+            },
+        )
+    }
+
+    if (testing) {
+        Dialog(
+            onDismissRequest = {},
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+        ) {
+            Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                Row(
+                    modifier = Modifier.padding(24.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.5.dp)
+                    Spacer(Modifier.width(16.dp))
+                    Text("Testing connection…", fontWeight = FontWeight.Medium)
+                }
+            }
+        }
+    }
+
+    testResult?.let { (ok, message) ->
+        AlertDialog(
+            onDismissRequest = { testResult = null },
+            title = {
+                Text(
+                    if (ok) "Connection OK" else "Connection failed",
+                    fontWeight = FontWeight.Bold,
+                    color = if (ok) PrimaPalette.Teal else Color(0xFFCE3A3A),
+                )
+            },
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(onClick = { testResult = null }) { Text("OK") }
+            },
+        )
     }
 }
 

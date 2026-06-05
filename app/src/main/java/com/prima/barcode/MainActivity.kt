@@ -45,6 +45,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.prima.barcode.data.auth.AppSettings
 import com.prima.barcode.data.barcode.DataWedgeManager
+import com.prima.barcode.data.extsystem.ExtSystemResult
 import com.prima.barcode.data.model.DocState
 import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.data.model.Document
@@ -215,6 +216,9 @@ private fun PrimaBarcodeApp(
     LaunchedEffect(muteSound) {
         DataWedgeManager.setAudioFeedback(context, muteSound)
     }
+    LaunchedEffect(autoScan, debounceTime) {
+        DataWedgeManager.setContinuousScan(context, autoScan, debounceTime)
+    }
 
     if (rc == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -308,7 +312,6 @@ private fun PrimaBarcodeApp(
                 isRefreshing = isRefreshing,
                 lastSyncedAt = lastSyncedAt,
                 hasCredentials = appVm.extSystemCredentialStore.isValid(),
-                navDomain = appVm.extSystemConfig.domain,
                 credentialTtlHours = appVm.extSystemConfig.credentialTtlHours,
                 onSelect = { rc, loc ->
                     onRcCodeChange(rc)
@@ -316,7 +319,7 @@ private fun PrimaBarcodeApp(
                     nav.popBackStack()
                 },
                 onRefresh = { appVm.downloadLocations(liveMode = liveMode) },
-                onSaveCredentials = { d, u, p -> appVm.saveCredentials(d, u, p) },
+                onSaveCredentials = { u, p -> appVm.saveCredentials(u, p) },
                 onBack = { nav.popBackStack() },
             )
         }
@@ -327,10 +330,23 @@ private fun PrimaBarcodeApp(
                     appVm.saveExtSystemConfig(config)
                     nav.popBackStack()
                 },
+                onDiscard = { nav.popBackStack() },
+                loadDefaults = { appVm.loadExtSystemDefaults() },
                 disabledDocTypes = disabledDocTypes,
                 onDisabledDocTypesChange = onDisabledDocTypesChange,
                 docTypeFilters = docTypeFilters,
                 onDocTypeFiltersChange = onDocTypeFiltersChange,
+                onTestConnection = { serverUrl, username, password, cb ->
+                    appVm.testExtSystemConnection(serverUrl, username, password) { result ->
+                        when (result) {
+                            is ExtSystemResult.Success -> cb(true, "NTLM authentication succeeded and the server responded.")
+                            is ExtSystemResult.Failure -> cb(
+                                false,
+                                if (result.code > 0) "HTTP ${result.code}: ${result.message}" else result.message,
+                            )
+                        }
+                    }
+                },
             )
         }
         composable("settings") {
@@ -348,6 +364,8 @@ private fun PrimaBarcodeApp(
                 onLastScannedLinesChange = onLastScannedLinesChange,
                 autoScan = autoScan,
                 onAutoScanChange = onAutoScanChange,
+                debounceTime = debounceTime,
+                onDebounceTimeChange = onDebounceTimeChange,
                 hapticEnabled = hapticEnabled,
                 onHapticEnabledChange = onHapticEnabledChange,
                 muteSound = muteSound,
@@ -361,9 +379,6 @@ private fun PrimaBarcodeApp(
                 onBack = { nav.popBackStack() },
                 onChangeLocation = { nav.navigate("location_rc_pick") },
                 onOpenExtSystemConfig = { nav.navigate("ext_system_config") },
-                credentialTtlHours = appVm.extSystemConfig.credentialTtlHours,
-                navDomain = appVm.extSystemConfig.domain,
-                onSaveCredentials = { d, u, p -> appVm.saveCredentials(d, u, p) },
                 liveMode = liveMode,
                 onLiveModeChange = onLiveModeChange,
                 onSignOut = {},

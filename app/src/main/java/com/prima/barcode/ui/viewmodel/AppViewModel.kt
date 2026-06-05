@@ -9,6 +9,7 @@ import com.prima.barcode.data.auth.AppSettingsStore
 import com.prima.barcode.data.auth.ExtSystemConfig
 import com.prima.barcode.data.auth.ExtSystemConfigStore
 import com.prima.barcode.data.auth.ExtSystemCredentialStore
+import com.prima.barcode.data.auth.ExtSystemCredentials
 import com.prima.barcode.data.db.LocationDao
 import com.prima.barcode.data.db.LocationEntity
 import com.prima.barcode.data.db.ResponsibilityCenterEntity
@@ -223,14 +224,74 @@ class AppViewModel @Inject constructor(
         _extSystemConfig.value = config
     }
 
-    fun saveCredentials(domain: String, username: String, password: String) {
+    fun saveCredentials(username: String, password: String) {
+        // The domain travels inside the username (user@domain or DOMAIN\user).
         extSystemCredentialStore.save(username, password, extSystemConfig.credentialTtlHours)
-        if (domain != extSystemConfig.domain) saveExtSystemConfig(extSystemConfig.copy(domain = domain))
     }
 
     fun saveCredentialTtl(hours: Int) {
         saveExtSystemConfig(extSystemConfig.copy(credentialTtlHours = hours))
     }
+
+    /**
+     * Performs an authenticated NTLM GET against [serverBaseUrl] to verify that the
+     * server is reachable and the supplied Windows credentials are accepted.
+     * The username carries the domain (user@domain or DOMAIN\user). On success the
+     * credentials are persisted so subsequent download/upload can reuse them.
+     * The password is never logged.
+     */
+    fun testExtSystemConnection(
+        serverBaseUrl: String,
+        username: String,
+        password: String,
+        persistOnSuccess: Boolean = true,
+        onResult: (ExtSystemResult<Unit>) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val url = serverBaseUrl.trim()
+            if (url.isBlank()) {
+                onResult(ExtSystemResult.Failure("Server URL is empty")); return@launch
+            }
+            val config = extSystemConfig.copy(serverBaseUrl = url)
+            val creds  = ExtSystemCredentials(username.trim(), password)
+            extSystemClient.configure(config, creds)
+            val result = extSystemClient.testConnection(url)
+            if (result is ExtSystemResult.Success && persistOnSuccess) {
+                saveCredentials(username.trim(), password)
+            }
+            onResult(result)
+        }
+    }
+
+    /**
+     * Loads predefined external-system parameters from the bundled, hand-editable
+     * asset `ext_system_defaults.json`. Returns null if the asset is missing or
+     * malformed. Does not persist — the caller fills the editable form fields.
+     */
+    fun loadExtSystemDefaults(): ExtSystemConfig? = runCatching {
+        val json = appContext.assets.open("ext_system_defaults.json")
+            .bufferedReader(Charsets.UTF_8).use { it.readText() }
+        val dto = gson.fromJson(json, ExtSystemDefaultsDto::class.java)
+        ExtSystemConfig(
+            serverBaseUrl            = dto.serverBaseUrl.orEmpty(),
+            credentialTtlHours       = dto.credentialTtlHours ?: 24,
+            endpointUrls             = DocumentType.entries.associateWith { type ->
+                dto.endpoints?.get(type.name).orEmpty()
+            },
+            locationsUrl             = dto.locationsUrl.orEmpty(),
+            responsibilityCentersUrl = dto.responsibilityCentersUrl.orEmpty(),
+            recordingSyncUrl         = dto.recordingSyncUrl.orEmpty(),
+        )
+    }.onFailure { Timber.w(it, "Failed to load ext_system_defaults.json") }.getOrNull()
+
+    private data class ExtSystemDefaultsDto(
+        val serverBaseUrl: String? = null,
+        val credentialTtlHours: Int? = null,
+        val endpoints: Map<String, String>? = null,
+        val locationsUrl: String? = null,
+        val responsibilityCentersUrl: String? = null,
+        val recordingSyncUrl: String? = null,
+    )
 
     fun uploadToExtSystem(
         docs: List<Document>,
