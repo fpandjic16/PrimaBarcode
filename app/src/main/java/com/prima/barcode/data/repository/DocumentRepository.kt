@@ -171,23 +171,30 @@ class DocumentRepositoryImpl @Inject constructor(
     override suspend fun addExtraLine(documentNo: String, type: String, barcodeNo: String, userId: String, quantity: Double) {
         db.withTransaction {
             val header = db.documentHeaderDao().getByKey(documentNo, type) ?: return@withTransaction
-            val nextNo = db.recordingDao().getNextRecordingLineNo(documentNo, type, 0)
-            db.recordingDao().insert(
-                RecordingEntity(
-                    documentNo = documentNo,
-                    type = type,
-                    documentLine = 0,
-                    recordingLineNo = nextNo,
-                    barcodeNo = barcodeNo,
-                    quantity = quantity,
-                    creationDateTime = Instant.now().toEpochMilli(),
-                    format = null,
-                    userId = userId,
-                    destinationCode = header.destinationCode,
-                    sourceCode = header.sourceCode,
-                    unitOfMeasureCode = "",
+            // Same not-on-document barcode scanned again → accumulate into the existing
+            // extra line so one row shows the running total, instead of many rows.
+            val existing = db.recordingDao().getExtraByBarcode(documentNo, type, barcodeNo)
+            if (existing != null) {
+                db.recordingDao().updateQuantity(documentNo, type, 0, existing.recordingLineNo, existing.quantity + quantity)
+            } else {
+                val nextNo = db.recordingDao().getNextRecordingLineNo(documentNo, type, 0)
+                db.recordingDao().insert(
+                    RecordingEntity(
+                        documentNo = documentNo,
+                        type = type,
+                        documentLine = 0,
+                        recordingLineNo = nextNo,
+                        barcodeNo = barcodeNo,
+                        quantity = quantity,
+                        creationDateTime = Instant.now().toEpochMilli(),
+                        format = null,
+                        userId = userId,
+                        destinationCode = header.destinationCode,
+                        sourceCode = header.sourceCode,
+                        unitOfMeasureCode = "",
+                    )
                 )
-            )
+            }
             advanceToInProgressIfNeeded(documentNo, type)
             regressFromCompletedIfNeeded(documentNo, type)
         }

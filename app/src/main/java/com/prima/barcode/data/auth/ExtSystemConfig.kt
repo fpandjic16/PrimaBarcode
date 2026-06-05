@@ -4,7 +4,6 @@ import com.prima.barcode.data.model.DocumentType
 
 data class ExtSystemConfig(
     val serverBaseUrl: String = "",
-    val domain: String = "",
     val credentialTtlHours: Int = 24,
     val endpointUrls: Map<DocumentType, String> = emptyMap(),
     val recordingSyncUrl: String = "",

@@ -57,7 +57,7 @@ fun Document.scanStatus(): LineStatus {
     if (lines.isEmpty()) return LineStatus.EMPTY
     val s = lines.map { it.status }
     return when {
-        s.all { it == LineStatus.EMPTY }                          -> LineStatus.EMPTY
+        s.all { it == LineStatus.EMPTY } && extraLines.isEmpty()  -> LineStatus.EMPTY
         s.any { it == LineStatus.OVER }                           -> LineStatus.OVER
         s.all { it == LineStatus.EXACT } && extraLines.isEmpty()  -> LineStatus.EXACT
         else                                                      -> LineStatus.PARTIAL

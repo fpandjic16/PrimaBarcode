@@ -234,8 +234,8 @@ fun RecordingScreen(
             when (view) {
                 RecordingView.OVERVIEW -> OverviewContent(
                     doc = doc,
-                    onLineTap = { line -> activeLineNo = line.lineNo; view = RecordingView.ACTIVE_LINE },
-                    onExtraTap = { editingExtra = it; extraEditedQty = it.quantity; view = RecordingView.EXTRA_LINE },
+                    onLineTap = { line -> activeLineNo = line.lineNo; localScanned = null; typedQty = ""; view = RecordingView.KEYPAD },
+                    onExtraTap = { editingExtra = it; extraEditedQty = it.quantity; typedExtraQty = ""; view = RecordingView.EXTRA_KEYPAD },
                 )
                 RecordingView.ACTIVE_LINE -> activeLine?.let { line ->
                     val displayLine = localScanned?.let { line.copy(scanned = it) } ?: line
@@ -267,12 +267,14 @@ fun RecordingScreen(
                         onConfirm = {
                             onLineUpdate(line.lineNo, typedQty.toDoubleOrNull()?.coerceAtLeast(0.0) ?: line.scanned)
                             localScanned = null
-                            view = RecordingView.ACTIVE_LINE
+                            activeLineNo = null
+                            view = RecordingView.OVERVIEW
                         },
                         onConfirmRequired = {
                             onLineUpdate(line.lineNo, line.expected)
                             localScanned = null
-                            view = RecordingView.ACTIVE_LINE
+                            activeLineNo = null
+                            view = RecordingView.OVERVIEW
                         },
                     )
                 }
@@ -334,8 +336,10 @@ fun RecordingScreen(
                         },
                         onConfirm = {
                             val qty = typedExtraQty.toDoubleOrNull()?.coerceAtLeast(0.0) ?: extraEditedQty
-                            extraEditedQty = qty
-                            view = RecordingView.EXTRA_LINE
+                            if (qty <= 0.0) onExtraLineDelete(extra.recordingLineNo)
+                            else onExtraLineUpdate(extra.recordingLineNo, qty)
+                            editingExtra = null
+                            view = RecordingView.OVERVIEW
                         },
                     )
                 }

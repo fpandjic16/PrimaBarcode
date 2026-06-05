@@ -24,19 +24,21 @@ class ExtSystemODataClient @Inject constructor() {
 
     private val gson = Gson()
     private var httpClient: HttpClient? = null
-    private var clientKey: Triple<String, String, String>? = null  // domain, user, pass
+    private var clientKey: Pair<String, String>? = null  // rawUsername, pass
 
     fun configure(config: ExtSystemConfig, creds: ExtSystemCredentials): ExtSystemODataClient {
-        val key = Triple(config.domain, creds.username, creds.password)
+        val key = creds.username to creds.password
         if (clientKey != key) {
             httpClient?.close()
-            httpClient = buildClient(config.domain, creds.username, creds.password)
+            httpClient = buildClient(creds.username, creds.password)
             clientKey = key
         }
         return this
     }
 
-    private fun buildClient(domain: String, username: String, password: String): HttpClient {
+    private fun buildClient(rawUsername: String, password: String): HttpClient {
+        // Domain travels inside the username as DOMAIN\user or user@domain.
+        val (domain, username) = parseDomainUser(rawUsername)
         val okHttp = OkHttpClient.Builder()
             .authenticator(NtlmAuthenticator(domain, username, password))
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -109,5 +111,20 @@ class ExtSystemODataClient @Inject constructor() {
         httpClient?.close()
         httpClient = null
         clientKey = null
+    }
+
+    companion object {
+        /**
+         * Splits a NAV login into (domain, bareUsername). Accepts `DOMAIN\user`
+         * and `user@domain`; returns an empty domain when none is present.
+         */
+        fun parseDomainUser(raw: String): Pair<String, String> {
+            val trimmed = raw.trim()
+            return when {
+                '\\' in trimmed -> trimmed.substringBefore('\\') to trimmed.substringAfter('\\')
+                '@'  in trimmed -> trimmed.substringAfter('@')  to trimmed.substringBefore('@')
+                else            -> "" to trimmed
+            }
+        }
     }
 }

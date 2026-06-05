@@ -66,16 +66,12 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onChangeLocation: () -> Unit,
     onOpenExtSystemConfig: () -> Unit = {},
-    credentialTtlHours: Int = 24,
-    navDomain: String = "",
-    onSaveCredentials: (domain: String, username: String, password: String) -> Unit = { _, _, _ -> },
     onSignOut: () -> Unit,
 ) {
     var autoCollapseTape by remember { mutableStateOf(true) }
     var confirmOnOver by remember { mutableStateOf(true) }
     var autoUpload by remember { mutableStateOf(false) }
     var syncOnWifiOnly by remember { mutableStateOf(true) }
-    var loginSheetOpen by remember { mutableStateOf(false) }
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var showInsertTestDataDialog by remember { mutableStateOf(false) }
 
@@ -265,7 +261,7 @@ fun SettingsScreen(
                             Text(
                                 stringResource(R.string.settings_debounce),
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = if (autoScan) PrimaPalette.Ink else PrimaPalette.Ink3,
+                                    color = PrimaPalette.Ink,
                                     fontWeight = FontWeight.Normal,
                                 ),
                             )
@@ -287,26 +283,16 @@ fun SettingsScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(
-                                        when {
-                                            !autoScan  -> PrimaPalette.CreamAlt
-                                            selected   -> PrimaPalette.Slate
-                                            else       -> PrimaPalette.CreamAlt
-                                        }
-                                    )
-                                    .clickable(enabled = autoScan) { onDebounceTimeChange(ms) }
+                                    .background(if (selected) PrimaPalette.Slate else PrimaPalette.CreamAlt)
+                                    .clickable { onDebounceTimeChange(ms) }
                                     .padding(vertical = 8.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
                                     if (ms >= 1000) "${ms / 1000}s" else "${ms}ms",
                                     style = monoLabel.copy(
-                                        color = when {
-                                            !autoScan -> PrimaPalette.Ink3
-                                            selected  -> Color.White
-                                            else      -> PrimaPalette.Ink2
-                                        },
-                                        fontWeight = if (selected && autoScan) FontWeight.Medium else FontWeight.Normal,
+                                        color = if (selected) Color.White else PrimaPalette.Ink2,
+                                        fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
                                     ),
                                 )
                             }
@@ -429,36 +415,6 @@ fun SettingsScreen(
                         checked = syncOnWifiOnly,
                         onCheckedChange = { syncOnWifiOnly = it },
                     )
-                    SettingsDivider()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { loginSheetOpen = true }
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        SettingsIcon(Icons.Outlined.Sync)
-                        Spacer(Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                stringResource(R.string.settings_test_signin),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = PrimaPalette.Ink,
-                                    fontWeight = FontWeight.Normal,
-                                ),
-                            )
-                            Text(
-                                stringResource(R.string.settings_test_signin_desc),
-                                style = monoLabel.copy(color = PrimaPalette.Ink3),
-                            )
-                        }
-                        Icon(
-                            Icons.Outlined.ChevronRight,
-                            contentDescription = null,
-                            tint = PrimaPalette.Ink4,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
                 }
             }
 
@@ -794,15 +750,6 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(onClick = { showInsertTestDataDialog = false }) { Text(stringResource(R.string.btn_cancel)) }
             },
-        )
-    }
-
-    if (loginSheetOpen) {
-        LoginSheet(
-            initialDomain = navDomain,
-            credentialTtlHours = credentialTtlHours,
-            onSubmit = { d, u, p -> onSaveCredentials(d, u, p); loginSheetOpen = false },
-            onDismiss = { loginSheetOpen = false },
         )
     }
 }

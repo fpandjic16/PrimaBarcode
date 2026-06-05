@@ -19,13 +19,11 @@ import com.prima.barcode.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginSheet(
-    initialDomain: String = "",
     credentialTtlHours: Int = 24,
-    onSubmit: (domain: String, username: String, password: String) -> Unit,
+    onSubmit: (username: String, password: String) -> Unit,
     onDismiss: () -> Unit,
     ctaLabel: String = "Sign in",
 ) {
-    var domain   by remember { mutableStateOf(initialDomain) }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var visible  by remember { mutableStateOf(false) }
@@ -47,18 +45,10 @@ fun LoginSheet(
             Spacer(Modifier.height(20.dp))
 
             OutlinedTextField(
-                value = domain,
-                onValueChange = { domain = it },
-                label = { Text(stringResource(R.string.login_domain)) },
-                placeholder = { Text("e.g. PRIMA") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(10.dp))
-            OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
                 label = { Text(stringResource(R.string.login_username)) },
+                placeholder = { Text("e.g. user@prima") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -83,9 +73,9 @@ fun LoginSheet(
             Spacer(Modifier.height(20.dp))
 
             Button(
-                onClick = { onSubmit(domain.trim(), username.trim(), password) },
+                onClick = { onSubmit(username.trim(), password) },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
-                enabled = domain.isNotBlank() && username.isNotBlank() && password.isNotBlank(),
+                enabled = username.isNotBlank() && password.isNotBlank(),
             ) {
                 Text(ctaLabel, fontWeight = FontWeight.SemiBold)
             }

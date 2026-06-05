@@ -177,7 +177,7 @@ fun DownloadFilterScreen(
 
     if (showLogin) {
         LoginSheet(
-            onSubmit = { username, password, _ ->
+            onSubmit = { username, password ->
                 showLogin = false
                 onConfirm(currentFilter(), username, password)
             },

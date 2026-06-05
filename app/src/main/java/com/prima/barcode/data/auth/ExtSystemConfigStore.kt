@@ -13,7 +13,6 @@ class ExtSystemConfigStore @Inject constructor(@ApplicationContext private val c
 
     fun get(): ExtSystemConfig = ExtSystemConfig(
         serverBaseUrl      = prefs.getString("serverBaseUrl", "") ?: "",
-        domain             = prefs.getString("domain", "") ?: "",
         credentialTtlHours = prefs.getInt("credentialTtlHours", 24),
         endpointUrls       = DocumentType.entries.associateWith { type ->
             prefs.getString("endpoint_${type.key}", "") ?: ""
@@ -28,7 +27,6 @@ class ExtSystemConfigStore @Inject constructor(@ApplicationContext private val c
     fun save(config: ExtSystemConfig) {
         val ed = prefs.edit()
             .putString("serverBaseUrl",      config.serverBaseUrl)
-            .putString("domain",             config.domain)
             .putInt   ("credentialTtlHours", config.credentialTtlHours)
             .putString("recordingSyncUrl",          config.recordingSyncUrl)
             .putString("locationsUrl",              config.locationsUrl)
