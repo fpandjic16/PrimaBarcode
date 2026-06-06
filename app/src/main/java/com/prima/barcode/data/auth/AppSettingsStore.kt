@@ -21,7 +21,10 @@ class AppSettingsStore @Inject constructor(@ApplicationContext private val conte
         autoScan         = prefs.getBoolean("autoScan", false),
         debounceTime     = prefs.getInt("debounceTime", 500),
         hapticEnabled    = prefs.getBoolean("hapticEnabled", true),
-        muteSound        = prefs.getBoolean("muteSound", false),
+        warnOnOver          = prefs.getBoolean("warnOnOver", true),
+        warnNotOnDocument   = prefs.getBoolean("warnNotOnDocument", true),
+        autoUploadCompleted = prefs.getBoolean("autoUploadCompleted", false),
+        backgroundSync      = prefs.getBoolean("backgroundSync", false),
         lastLocationCode = prefs.getString("lastLocationCode", "") ?: "",
         lastRcCode       = prefs.getString("lastRcCode", "") ?: "",
         liveMode         = prefs.getBoolean("liveMode", false),
@@ -47,7 +50,10 @@ class AppSettingsStore @Inject constructor(@ApplicationContext private val conte
             .putBoolean("autoScan",           settings.autoScan)
             .putInt    ("debounceTime",        settings.debounceTime)
             .putBoolean("hapticEnabled",      settings.hapticEnabled)
-            .putBoolean("muteSound",          settings.muteSound)
+            .putBoolean("warnOnOver",          settings.warnOnOver)
+            .putBoolean("warnNotOnDocument",   settings.warnNotOnDocument)
+            .putBoolean("autoUploadCompleted", settings.autoUploadCompleted)
+            .putBoolean("backgroundSync",      settings.backgroundSync)
             .putString ("lastLocationCode",   settings.lastLocationCode)
             .putString ("lastRcCode",         settings.lastRcCode)
             .putBoolean("liveMode",           settings.liveMode)

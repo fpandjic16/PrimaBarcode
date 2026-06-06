@@ -59,6 +59,7 @@ fun MainMenuScreen(
     shiftErrors: Int = 0,
     shiftReady: Int = 0,
     shiftPartial: Int = 0,
+    shiftOver: Int = 0,
     onChangeLocationRc: () -> Unit,
     onOpenSettings: () -> Unit,
     onTypeTap: (DocumentType) -> Unit,
@@ -89,6 +90,7 @@ fun MainMenuScreen(
                     errors = shiftErrors,
                     readyForUpload = shiftReady,
                     partial = shiftPartial,
+                    over = shiftOver,
                     onDocumentOverview = onDocumentOverview,
                 )
             }

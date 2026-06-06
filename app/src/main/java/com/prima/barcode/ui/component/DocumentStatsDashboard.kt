@@ -27,6 +27,7 @@ fun DocumentStatsDashboard(
     errors: Int,
     readyForUpload: Int = 0,
     partial: Int = 0,
+    over: Int = 0,
     onDocumentOverview: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -70,6 +71,7 @@ fun DocumentStatsDashboard(
             ) {
                 DocStatLine(count = readyForUpload, label = stringResource(R.string.dashboard_pill_ready),   color = Color(0xFF2E8C5E))
                 DocStatLine(count = partial,        label = stringResource(R.string.dashboard_pill_partial), color = Color(0xFFC7943A))
+                DocStatLine(count = over,           label = "Over",                                          color = Color(0xFF2D6CE0))
                 DocStatLine(count = errors,         label = stringResource(R.string.dashboard_pill_error),   color = Color(0xFFCE3A3A))
             }
         }

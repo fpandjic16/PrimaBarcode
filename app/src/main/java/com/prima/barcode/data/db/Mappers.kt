@@ -16,12 +16,14 @@ fun DocState.toDbString(): String = when (this) {
     DocState.Downloaded      -> "Downloaded"
     DocState.InProgress      -> "InProgress"
     DocState.Completed       -> "Completed"
+    DocState.PendingUpload   -> "PendingUpload"
     is DocState.UploadFailed -> "UploadFailed:${reason}"
 }
 
 fun String.toDocState(): DocState = when {
     this == "InProgress"        -> DocState.InProgress
     this == "Completed"         -> DocState.Completed
+    this == "PendingUpload"     -> DocState.PendingUpload
     startsWith("UploadFailed:") -> DocState.UploadFailed(removePrefix("UploadFailed:"))
     else                        -> DocState.Downloaded
 }

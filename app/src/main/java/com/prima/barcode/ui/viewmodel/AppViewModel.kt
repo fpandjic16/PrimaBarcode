@@ -229,10 +229,6 @@ class AppViewModel @Inject constructor(
         extSystemCredentialStore.save(username, password, extSystemConfig.credentialTtlHours)
     }
 
-    fun saveCredentialTtl(hours: Int) {
-        saveExtSystemConfig(extSystemConfig.copy(credentialTtlHours = hours))
-    }
-
     /**
      * Performs an authenticated NTLM GET against [serverBaseUrl] to verify that the
      * server is reachable and the supplied Windows credentials are accepted.
@@ -293,32 +289,54 @@ class AppViewModel @Inject constructor(
         val recordingSyncUrl: String? = null,
     )
 
+    /** Uploads each doc; on success deletes it, on failure marks UploadFailed. Returns failure count. */
+    private suspend fun runUpload(docs: List<Document>): Int {
+        val config = extSystemConfig
+        val creds  = extSystemCredentialStore.get()
+        if (!config.isConfigured || creds == null) {
+            docs.forEach {
+                repository.updateDocState(it.documentNo, it.type.key,
+                    DocState.UploadFailed("External system not configured or not signed in"))
+            }
+            return docs.size
+        }
+        val url = config.recordingSyncUrl.ifBlank {
+            "${config.serverBaseUrl.trimEnd('/')}/OData/WMS_RecordingSync"
+        }
+        extSystemClient.configure(config, creds)
+        var failures = 0
+        for (doc in docs) {
+            val singlePayload = listOf(doc).toUploadPayload()
+            val result = extSystemClient.upload(url, singlePayload)
+            when (result) {
+                is ExtSystemResult.Success -> repository.deleteDocument(doc.documentNo, doc.type.key)
+                is ExtSystemResult.Failure -> {
+                    repository.updateDocState(doc.documentNo, doc.type.key,
+                        DocState.UploadFailed(result.message))
+                    failures++
+                }
+            }
+        }
+        return failures
+    }
+
+    /** Blocking upload path — the caller shows a progress dialog and reacts in [onComplete]. */
     fun uploadToExtSystem(
         docs: List<Document>,
         onComplete: (failureCount: Int) -> Unit = {},
     ) {
+        viewModelScope.launch { onComplete(runUpload(docs)) }
+    }
+
+    /**
+     * Background upload path. Marks each doc [DocState.PendingUpload] immediately so the UI can
+     * return control, then uploads in the background. On success the doc is deleted; on failure
+     * it becomes UploadFailed. The documents Flow reflects these transitions reactively.
+     */
+    fun uploadInBackground(docs: List<Document>) {
         viewModelScope.launch {
-            val config = extSystemConfig
-            val creds  = extSystemCredentialStore.get()
-            if (!config.isConfigured || creds == null) { onComplete(docs.size); return@launch }
-            val url = config.recordingSyncUrl.ifBlank {
-                "${config.serverBaseUrl.trimEnd('/')}/OData/WMS_RecordingSync"
-            }
-            extSystemClient.configure(config, creds)
-            var failures = 0
-            for (doc in docs) {
-                val singlePayload = listOf(doc).toUploadPayload()
-                val result = extSystemClient.upload(url, singlePayload)
-                when (result) {
-                    is ExtSystemResult.Success -> repository.deleteDocument(doc.documentNo, doc.type.key)
-                    is ExtSystemResult.Failure -> {
-                        repository.updateDocState(doc.documentNo, doc.type.key,
-                            DocState.UploadFailed(result.message))
-                        failures++
-                    }
-                }
-            }
-            onComplete(failures)
+            docs.forEach { repository.updateDocState(it.documentNo, it.type.key, DocState.PendingUpload) }
+            runUpload(docs)
         }
     }
 
@@ -348,10 +366,6 @@ class AppViewModel @Inject constructor(
             seedSampleData()
             onComplete()
         }
-    }
-
-    fun testImport(onComplete: (failureCount: Int) -> Unit = {}) {
-        viewModelScope.launch { onComplete(runTestImport()) }
     }
 
     fun testImportDocs(docs: List<Document>, onComplete: (failureCount: Int) -> Unit = {}) {

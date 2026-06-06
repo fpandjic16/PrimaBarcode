@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.prima.barcode.data.model.DocState
+import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.DocumentFilter
 import com.prima.barcode.data.model.LineStatus
@@ -59,6 +60,7 @@ fun DocumentOverviewScreen(
     onErrorTap: (Document) -> Unit = {},
     filter: DocumentFilter = DocumentFilter(),
     onOpenFilter: (lockedSourceCode: String?, lockedRcCode: String?) -> Unit = { _, _ -> },
+    docTypeFilters: Map<String, DocTypeFilterMode> = emptyMap(),
     initialTab: Int = 0,
 ) {
     var selectedTab by remember { mutableIntStateOf(initialTab) }
@@ -78,8 +80,13 @@ fun DocumentOverviewScreen(
         }
     }
     val errors     = remember(filtered) { filtered.filter { it.state is DocState.UploadFailed } }
-    val atLocation = remember(filtered, locationCode, rcCode) {
-        filtered.filter { it.sourceCode == locationCode || it.rcCode == rcCode }
+    val atLocation = remember(filtered, locationCode, rcCode, docTypeFilters) {
+        filtered.filter { doc ->
+            when (docTypeFilters[doc.type.key] ?: DocTypeFilterMode.LOCATION) {
+                DocTypeFilterMode.LOCATION -> doc.sourceCode == locationCode
+                DocTypeFilterMode.RESPONSIBILITY_CENTER -> doc.rcCode == rcCode
+            }
+        }
     }
 
     val tabs = listOf(
