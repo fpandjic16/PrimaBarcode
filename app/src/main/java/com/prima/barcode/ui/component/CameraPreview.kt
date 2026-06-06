@@ -41,7 +41,6 @@ fun CameraPreview(
     continuous: Boolean,
     onBarcode: (String) -> Unit,
     onClose: () -> Unit,
-    muteSound: Boolean = false,
     debounceMs: Int = 500,
     modifier: Modifier = Modifier,
 ) {
@@ -52,7 +51,6 @@ fun CameraPreview(
     val latestOnBarcode = rememberUpdatedState(onBarcode)
     val latestOnClose = rememberUpdatedState(onClose)
     val latestContinuous = rememberUpdatedState(continuous)
-    val latestMuteSound = rememberUpdatedState(muteSound)
     val latestDebounceMs = rememberUpdatedState(debounceMs)
 
     DisposableEffect(lifecycleOwner) {
@@ -81,7 +79,7 @@ fun CameraPreview(
                             if (now - lastScanMs < latestDebounceMs.value) return@BarcodeAnalyzer
                             lastScanMs = now
                             mainExecutor.execute {
-                                if (!latestMuteSound.value) runCatching { toneGen?.startTone(ToneGenerator.TONE_PROP_BEEP, 80) }
+                                runCatching { toneGen?.startTone(ToneGenerator.TONE_PROP_BEEP, 80) }
                                 latestOnBarcode.value(barcode)
                                 if (!latestContinuous.value) latestOnClose.value()
                             }

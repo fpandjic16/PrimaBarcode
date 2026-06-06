@@ -56,8 +56,14 @@ fun SettingsScreen(
     onDebounceTimeChange: (Int) -> Unit = {},
     hapticEnabled: Boolean = true,
     onHapticEnabledChange: (Boolean) -> Unit = {},
-    muteSound: Boolean = false,
-    onMuteSoundChange: (Boolean) -> Unit = {},
+    warnOnOver: Boolean = true,
+    onWarnOnOverChange: (Boolean) -> Unit = {},
+    warnNotOnDocument: Boolean = true,
+    onWarnNotOnDocumentChange: (Boolean) -> Unit = {},
+    autoUploadCompleted: Boolean = false,
+    onAutoUploadChange: (Boolean) -> Unit = {},
+    backgroundSync: Boolean = false,
+    onBackgroundSyncChange: (Boolean) -> Unit = {},
     liveMode: Boolean = false,
     onLiveModeChange: (Boolean) -> Unit = {},
     onExport: () -> Unit = {},
@@ -68,10 +74,6 @@ fun SettingsScreen(
     onOpenExtSystemConfig: () -> Unit = {},
     onSignOut: () -> Unit,
 ) {
-    var autoCollapseTape by remember { mutableStateOf(true) }
-    var confirmOnOver by remember { mutableStateOf(true) }
-    var autoUpload by remember { mutableStateOf(false) }
-    var syncOnWifiOnly by remember { mutableStateOf(true) }
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var showInsertTestDataDialog by remember { mutableStateOf(false) }
 
@@ -308,29 +310,19 @@ fun SettingsScreen(
                     )
                     SettingsDivider()
                     ToggleRow(
-                        icon = Icons.Outlined.VolumeOff,
-                        label = stringResource(R.string.settings_mute),
-                        description = stringResource(R.string.settings_mute_desc),
-                        checked = muteSound,
-                        onCheckedChange = onMuteSoundChange,
-                    )
-                    SettingsDivider()
-                    ToggleRow(
-                        icon = Icons.Outlined.ViewStream,
-                        label = stringResource(R.string.settings_auto_collapse),
-                        comingSoon = true,
-                        description = stringResource(R.string.settings_auto_collapse_desc),
-                        checked = autoCollapseTape,
-                        onCheckedChange = { autoCollapseTape = it },
-                    )
-                    SettingsDivider()
-                    ToggleRow(
                         icon = Icons.Outlined.Warning,
                         label = stringResource(R.string.settings_warn_over),
-                        comingSoon = true,
                         description = stringResource(R.string.settings_warn_over_desc),
-                        checked = confirmOnOver,
-                        onCheckedChange = { confirmOnOver = it },
+                        checked = warnOnOver,
+                        onCheckedChange = onWarnOnOverChange,
+                    )
+                    SettingsDivider()
+                    ToggleRow(
+                        icon = Icons.Outlined.ErrorOutline,
+                        label = "Warn on not on document",
+                        description = "Warn when scanning items that aren't on the document.",
+                        checked = warnNotOnDocument,
+                        onCheckedChange = onWarnNotOnDocumentChange,
                     )
                     SettingsDivider()
                     Row(
@@ -401,19 +393,17 @@ fun SettingsScreen(
                     ToggleRow(
                         icon = Icons.Outlined.CloudUpload,
                         label = stringResource(R.string.settings_auto_upload),
-                        comingSoon = true,
                         description = stringResource(R.string.settings_auto_upload_desc),
-                        checked = autoUpload,
-                        onCheckedChange = { autoUpload = it },
+                        checked = autoUploadCompleted,
+                        onCheckedChange = onAutoUploadChange,
                     )
                     SettingsDivider()
                     ToggleRow(
-                        icon = Icons.Outlined.Wifi,
-                        label = stringResource(R.string.settings_wifi_only),
-                        comingSoon = true,
-                        description = stringResource(R.string.settings_wifi_only_desc),
-                        checked = syncOnWifiOnly,
-                        onCheckedChange = { syncOnWifiOnly = it },
+                        icon = Icons.Outlined.Sync,
+                        label = "Enable background sync",
+                        description = "Upload in the background so you can keep working while documents are sent.",
+                        checked = backgroundSync,
+                        onCheckedChange = onBackgroundSyncChange,
                     )
                 }
             }

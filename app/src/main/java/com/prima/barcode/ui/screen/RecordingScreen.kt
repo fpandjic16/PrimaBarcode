@@ -40,6 +40,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.BackHandler
+import com.prima.barcode.data.model.DocState
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.ExtraLine
 import com.prima.barcode.data.model.Line
@@ -47,6 +49,7 @@ import com.prima.barcode.data.model.LineStatus
 import com.prima.barcode.data.model.TapeEntry
 import com.prima.barcode.data.model.color
 import com.prima.barcode.data.model.formatQty
+import com.prima.barcode.data.model.scanStatus
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.component.ScanBar
 import com.prima.barcode.ui.component.ScanTape
@@ -87,16 +90,16 @@ fun RecordingScreen(
     lastScannedLines: Int = 5,
     autoScan: Boolean = false,
     hapticEnabled: Boolean = true,
-    muteSound: Boolean = false,
     debounceTime: Int = 500,
+    warnOnOver: Boolean = true,
+    warnNotOnDocument: Boolean = true,
+    autoUploadCompleted: Boolean = false,
 ) {
-    var multiplier by remember { mutableStateOf(1.0) }
     var view by remember { mutableStateOf(RecordingView.OVERVIEW) }
     var activeLineNo by remember { mutableStateOf<Int?>(null) }
     val activeLine = activeLineNo?.let { no -> doc.lines.find { it.lineNo == no } }
     var typedQty by remember { mutableStateOf("") }
     var editingExtra by remember { mutableStateOf<ExtraLine?>(null) }
-    var multiplierSheetOpen by remember { mutableStateOf(false) }
     var tape by remember { mutableStateOf(emptyList<TapeEntry>()) }
     var scanErrorFlash by remember { mutableStateOf(false) }
     var unknownBarcode by remember { mutableStateOf<String?>(null) }
@@ -104,6 +107,9 @@ fun RecordingScreen(
     var localScanned by remember(activeLineNo) { mutableStateOf<Double?>(null) }
     var extraEditedQty by remember { mutableStateOf(0.0) }
     var typedExtraQty by remember { mutableStateOf("") }
+    var overScanWarning by remember { mutableStateOf<OverScanInfo?>(null) }
+    var notOnDocWarning by remember { mutableStateOf<String?>(null) }
+    var showAutoUploadDialog by remember { mutableStateOf(false) }
     val sizeOffset = LocalTextSizeOffset.current
     val showUpload = doc.lines.any { it.scanned > 0.0 } || doc.extraLines.isNotEmpty()
     val context = LocalContext.current
@@ -124,21 +130,24 @@ fun RecordingScreen(
             scanErrorFlash = true
             if (hapticEnabled) hapticEngine.error()
             if (autoScan) {
-                onExtraLineAdd(barcode, multiplier)
-                tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, null, multiplier, Instant.now(), null)) + tape
-                multiplier = 1.0
+                onExtraLineAdd(barcode, 1.0)
+                tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, null, 1.0, Instant.now(), null)) + tape
+                // Manually-created docs (no expected lines) are all "extra" — don't warn there.
+                if (warnNotOnDocument && doc.lines.isNotEmpty()) notOnDocWarning = barcode
             } else {
                 unknownBarcode = barcode
-                unknownTypedQty = multiplier.formatQty()
+                unknownTypedQty = ""
                 view = RecordingView.UNKNOWN_BARCODE
             }
         } else {
-            onScan(barcode, multiplier)
-            val newScanned = matchedLine.scanned + multiplier
+            onScan(barcode, 1.0)
+            val newScanned = matchedLine.scanned + 1.0
             val newStatus = LineStatus.of(newScanned, matchedLine.expected)
             if (!wasExact && newStatus == LineStatus.EXACT && hapticEnabled) hapticEngine.confirm()
-            tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, matchedLine.item.name, multiplier, Instant.now(), newStatus)) + tape
-            multiplier = 1.0
+            tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, matchedLine.item.name, 1.0, Instant.now(), newStatus)) + tape
+            if (warnOnOver && newStatus == LineStatus.OVER) {
+                overScanWarning = OverScanInfo(matchedLine.item.no, matchedLine.item.name, barcode, matchedLine.expected, newScanned)
+            }
         }
     }
 
@@ -159,14 +168,26 @@ fun RecordingScreen(
         label = "scanBarBg",
     )
 
+    fun handleBack() {
+        when (view) {
+            RecordingView.OVERVIEW ->
+                if (autoUploadCompleted && doc.scanStatus() == LineStatus.EXACT && doc.state !is DocState.UploadFailed)
+                    showAutoUploadDialog = true
+                else onBack()
+            RecordingView.ACTIVE_LINE -> { view = RecordingView.OVERVIEW; activeLineNo = null }
+            RecordingView.KEYPAD -> view = RecordingView.ACTIVE_LINE
+            RecordingView.UNKNOWN_BARCODE -> { view = RecordingView.OVERVIEW; unknownBarcode = null }
+            RecordingView.EXTRA_LINE -> { view = RecordingView.OVERVIEW; editingExtra = null }
+            RecordingView.EXTRA_KEYPAD -> view = RecordingView.EXTRA_LINE
+        }
+    }
+
+    BackHandler { handleBack() }
+
     Box(modifier = Modifier.fillMaxSize()) {
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
-            title = when (view) {
-                RecordingView.OVERVIEW -> stringResource(R.string.recording_title)
-                RecordingView.ACTIVE_LINE, RecordingView.KEYPAD -> doc.documentNo
-                else -> stringResource(R.string.recording_not_on_doc)
-            },
+            title = if (view == RecordingView.OVERVIEW) stringResource(R.string.recording_title) else doc.documentNo,
             subtitle = when (view) {
                 RecordingView.OVERVIEW -> "${doc.documentNo} · ${doc.linesExact}/${doc.linesTotal} lines"
                 RecordingView.ACTIVE_LINE -> activeLine?.let { "${it.item.no} · line ${it.lineNo}" } ?: ""
@@ -174,16 +195,7 @@ fun RecordingScreen(
                 RecordingView.UNKNOWN_BARCODE -> unknownBarcode ?: ""
                 RecordingView.EXTRA_LINE, RecordingView.EXTRA_KEYPAD -> editingExtra?.barcodeNo ?: ""
             },
-            onBack = {
-                when (view) {
-                    RecordingView.OVERVIEW -> onBack()
-                    RecordingView.ACTIVE_LINE -> { view = RecordingView.OVERVIEW; activeLineNo = null }
-                    RecordingView.KEYPAD -> view = RecordingView.ACTIVE_LINE
-                    RecordingView.UNKNOWN_BARCODE -> { view = RecordingView.OVERVIEW; unknownBarcode = null }
-                    RecordingView.EXTRA_LINE -> { view = RecordingView.OVERVIEW; editingExtra = null }
-                    RecordingView.EXTRA_KEYPAD -> view = RecordingView.EXTRA_LINE
-                }
-            },
+            onBack = { handleBack() },
             actions = {
                 if (showUpload && view == RecordingView.OVERVIEW) {
                     Button(
@@ -217,7 +229,7 @@ fun RecordingScreen(
                     )
                     val allDone = doc.linesExact == doc.linesTotal && doc.linesTotal > 0
                     Text(
-                        "${doc.linesExact}/${doc.linesTotal}",
+                        "${doc.scannedQty.formatQty()}/${doc.expectedQty.formatQty()}",
                         style = monoLabel.copy(
                             color = if (allDone) LineStatus.EXACT.color else Color.White,
                             fontWeight = FontWeight.Medium,
@@ -234,12 +246,12 @@ fun RecordingScreen(
             when (view) {
                 RecordingView.OVERVIEW -> OverviewContent(
                     doc = doc,
-                    onLineTap = { line -> activeLineNo = line.lineNo; localScanned = null; typedQty = ""; view = RecordingView.KEYPAD },
-                    onExtraTap = { editingExtra = it; extraEditedQty = it.quantity; typedExtraQty = ""; view = RecordingView.EXTRA_KEYPAD },
+                    onLineTap = { line -> activeLineNo = line.lineNo; localScanned = null; typedQty = ""; view = RecordingView.ACTIVE_LINE },
+                    onExtraTap = { editingExtra = it; extraEditedQty = it.quantity; typedExtraQty = ""; view = RecordingView.EXTRA_LINE },
                 )
                 RecordingView.ACTIVE_LINE -> activeLine?.let { line ->
                     val displayLine = localScanned?.let { line.copy(scanned = it) } ?: line
-                    ActiveLineContent(
+                    ItemQtyDetails(
                         line = displayLine,
                         onIncrement = { localScanned = ((localScanned ?: line.scanned) + 1.0).coerceAtLeast(0.0) },
                         onDecrement = { localScanned = ((localScanned ?: line.scanned) - 1.0).coerceAtLeast(0.0) },
@@ -249,7 +261,7 @@ fun RecordingScreen(
                 }
                 RecordingView.KEYPAD -> activeLine?.let { line ->
                     val displayLine = localScanned?.let { line.copy(scanned = it) } ?: line
-                    KeypadContent(
+                    ItemQtyExtraDetails(
                         line = displayLine,
                         typed = typedQty,
                         onKey = { k ->
@@ -260,12 +272,16 @@ fun RecordingScreen(
                                 else -> {
                                     val next = typedQty + k
                                     val cleaned = if (next.startsWith("0") && next.length > 1 && next[1] != '.') next.trimStart('0').ifEmpty { "0" } else next
-                                    if (cleaned.replace(".", "").length <= 6) typedQty = cleaned
+                                    if (cleaned.substringAfter('.', "").length <= 5) typedQty = cleaned
                                 }
                             }
                         },
                         onConfirm = {
-                            onLineUpdate(line.lineNo, typedQty.toDoubleOrNull()?.coerceAtLeast(0.0) ?: line.scanned)
+                            val qty = typedQty.toDoubleOrNull()?.coerceAtLeast(0.0) ?: line.scanned
+                            onLineUpdate(line.lineNo, qty)
+                            if (warnOnOver && qty > line.expected) {
+                                overScanWarning = OverScanInfo(line.item.no, line.item.name, line.barcodeNo, line.expected, qty)
+                            }
                             localScanned = null
                             activeLineNo = null
                             view = RecordingView.OVERVIEW
@@ -290,21 +306,21 @@ fun RecordingScreen(
                                 else -> {
                                     val next = unknownTypedQty + k
                                     val cleaned = if (next.startsWith("0") && next.length > 1 && next[1] != '.') next.trimStart('0').ifEmpty { "0" } else next
-                                    if (cleaned.replace(".", "").length <= 6) unknownTypedQty = cleaned
+                                    if (cleaned.substringAfter('.', "").length <= 5) unknownTypedQty = cleaned
                                 }
                             }
                         },
                         onConfirm = {
-                            val qty = unknownTypedQty.toDoubleOrNull()?.coerceAtLeast(0.001) ?: multiplier
+                            val qty = unknownTypedQty.toDoubleOrNull()?.coerceAtLeast(0.001) ?: 1.0
                             onExtraLineAdd(barcode, qty)
                             tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, null, qty, Instant.now(), null)) + tape
-                            multiplier = 1.0; unknownBarcode = null
+                            unknownBarcode = null
                             view = RecordingView.OVERVIEW
                         },
                     )
                 }
                 RecordingView.EXTRA_LINE -> editingExtra?.let { extra ->
-                    ExtraLineContent(
+                    ItemQtyNotOnDocDetails(
                         extra = extra,
                         editedQty = extraEditedQty,
                         onIncrement = { extraEditedQty += 1.0 },
@@ -319,7 +335,7 @@ fun RecordingScreen(
                     )
                 }
                 RecordingView.EXTRA_KEYPAD -> editingExtra?.let { extra ->
-                    ExtraKeypadContent(
+                    ItemQtyNotOnDocExtraDetails(
                         extra = extra,
                         typed = typedExtraQty,
                         onKey = { k ->
@@ -330,7 +346,7 @@ fun RecordingScreen(
                                 else -> {
                                     val next = typedExtraQty + k
                                     val cleaned = if (next.startsWith("0") && next.length > 1 && next[1] != '.') next.trimStart('0').ifEmpty { "0" } else next
-                                    if (cleaned.replace(".", "").length <= 6) typedExtraQty = cleaned
+                                    if (cleaned.substringAfter('.', "").length <= 5) typedExtraQty = cleaned
                                 }
                             }
                         },
@@ -349,8 +365,6 @@ fun RecordingScreen(
         if (view == RecordingView.OVERVIEW) {
             ScanTape(tape = tape, maxLines = lastScannedLines)
             ScanBar(
-                multiplier = multiplier,
-                onMultiplierClick = { multiplierSheetOpen = true },
                 onScan = { handleScan(it) },
                 onCameraTap = {
                     if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
@@ -366,18 +380,63 @@ fun RecordingScreen(
             continuous = autoScan,
             onBarcode = { barcode -> handleScan(barcode) },
             onClose = { cameraOpen = false },
-            muteSound = muteSound,
             debounceMs = debounceTime,
         )
     }
     } // end Box
 
 
-    if (multiplierSheetOpen) {
-        MultiplierSheet(current = multiplier, onSelect = { multiplier = it; multiplierSheetOpen = false }, onDismiss = { multiplierSheetOpen = false })
+    overScanWarning?.let { info ->
+        AlertDialog(
+            onDismissRequest = { overScanWarning = null },
+            title = { Text("Over-scanned", fontWeight = FontWeight.Bold, color = LineStatus.OVER.color) },
+            text = {
+                Text(
+                    "Item ${info.itemNo} – ${info.itemName}\n" +
+                    "Barcode: ${info.barcode}\n" +
+                    "Requested: ${info.expected.formatQty()}\n" +
+                    "Scanned: ${info.scanned.formatQty()}"
+                )
+            },
+            confirmButton = {
+                Button(onClick = { overScanWarning = null }) { Text("OK", fontWeight = FontWeight.SemiBold) }
+            },
+        )
     }
 
+    notOnDocWarning?.let { barcode ->
+        AlertDialog(
+            onDismissRequest = { notOnDocWarning = null },
+            title = { Text("Not on document", fontWeight = FontWeight.Bold, color = Color(0xFFC7943A)) },
+            text = { Text("Barcode $barcode is not on this document. It was recorded as an extra line.") },
+            confirmButton = {
+                Button(onClick = { notOnDocWarning = null }) { Text("OK", fontWeight = FontWeight.SemiBold) }
+            },
+        )
+    }
+
+    if (showAutoUploadDialog) {
+        AlertDialog(
+            onDismissRequest = { showAutoUploadDialog = false },
+            title = { Text("Document finished", fontWeight = FontWeight.Bold) },
+            text = { Text("This document looks finished. Upload it now?") },
+            confirmButton = {
+                Button(onClick = { showAutoUploadDialog = false; onUpload() }) { Text("Yes", fontWeight = FontWeight.SemiBold) }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showAutoUploadDialog = false; onBack() }) { Text("No") }
+            },
+        )
+    }
 }
+
+private data class OverScanInfo(
+    val itemNo: String,
+    val itemName: String,
+    val barcode: String,
+    val expected: Double,
+    val scanned: Double,
+)
 
 @Composable
 private fun OverviewContent(
@@ -493,7 +552,7 @@ private fun StatusChip(status: LineStatus, sizeOffset: Int) {
 
 
 @Composable
-private fun ActiveLineContent(
+private fun ItemQtyDetails(
     line: Line,
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
@@ -542,8 +601,6 @@ private fun ActiveLineContent(
                     color = PrimaPalette.Ink,
                     fontSize = (17 + sizeOffset).sp,
                 ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
             )
 
             Box(
@@ -556,15 +613,15 @@ private fun ActiveLineContent(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         line.scanned.formatQty(),
-                        style = monoCounter.copy(color = statusColor, fontSize = (48 + sizeOffset).sp, fontWeight = FontWeight.Medium),
+                        style = monoCounter.copy(color = statusColor, fontSize = (40 + sizeOffset).sp, fontWeight = FontWeight.Medium),
                     )
                     Text(
                         "/",
-                        style = monoCounter.copy(color = statusColor.copy(alpha = 0.35f), fontSize = (48 + sizeOffset).sp),
+                        style = monoCounter.copy(color = statusColor.copy(alpha = 0.35f), fontSize = (40 + sizeOffset).sp),
                     )
                     Text(
                         line.expected.formatQty(),
-                        style = monoCounter.copy(color = statusColor.copy(alpha = 0.55f), fontSize = (48 + sizeOffset).sp),
+                        style = monoCounter.copy(color = statusColor.copy(alpha = 0.55f), fontSize = (40 + sizeOffset).sp),
                     )
 
                 }
@@ -632,7 +689,7 @@ private fun ActiveLineContent(
 
 
 @Composable
-private fun KeypadContent(
+private fun ItemQtyExtraDetails(
     line: Line,
     typed: String,
     onKey: (String) -> Unit,
@@ -667,23 +724,6 @@ private fun KeypadContent(
             .background(PrimaPalette.Cream)
             .padding(horizontal = 22.dp, vertical = 16.dp),
     ) {
-        Text(
-            stringResource(R.string.recording_barcode_prefix) + line.barcodeNo,
-            style = monoLabel.copy(color = PrimaPalette.Ink4, fontSize = (13 + sizeOffset).sp),
-        )
-        Spacer(Modifier.height(2.dp))
-        Text(
-            line.item.name,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.Medium,
-                color = PrimaPalette.Ink,
-                fontSize = (17 + sizeOffset).sp,
-            ),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(Modifier.height(10.dp))
-
         // Hero card
         Box(
             modifier = Modifier
@@ -696,38 +736,30 @@ private fun KeypadContent(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(
-                            typed.ifEmpty { line.scanned.formatQty() },
-                            style = monoCounter.copy(
-                                color = if (typed.isEmpty()) previewColor.copy(alpha = 0.38f) else previewColor,
-                                fontSize = (76 + sizeOffset).sp,
-                                fontWeight = FontWeight.Medium,
-                            ),
-                        )
-                        Box(
-                            modifier = Modifier
-                                .padding(start = 3.dp, bottom = 8.dp)
-                                .width(3.dp).height(46.dp)
-                                .alpha(if (caretVisible) 1f else 0f)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(PrimaPalette.Coral),
-                        )
-                    }
                     Text(
-                        "/",
-                        style = monoCounter.copy(color = previewColor.copy(alpha = 0.35f), fontSize = (76 + sizeOffset).sp),
-                        modifier = Modifier.padding(horizontal = 5.dp),
+                        typed.ifEmpty { line.scanned.formatQty() },
+                        style = monoCounter.copy(
+                            color = if (typed.isEmpty()) previewColor.copy(alpha = 0.38f) else previewColor,
+                            fontSize = (40 + sizeOffset).sp,
+                            fontWeight = FontWeight.Medium,
+                        ),
                     )
-                    Text(
-                        line.expected.formatQty(),
-                        style = monoCounter.copy(color = previewColor.copy(alpha = 0.55f), fontSize = (76 + sizeOffset).sp),
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 3.dp, bottom = 5.dp)
+                            .width(3.dp).height(30.dp)
+                            .alpha(if (caretVisible) 1f else 0f)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(PrimaPalette.Coral),
                     )
                 }
                 Text(
-                    line.unitOfMeasureCode,
-                    style = monoLabel.copy(color = previewColor.copy(alpha = 0.45f), fontSize = (13 + sizeOffset).sp),
-                    modifier = Modifier.padding(top = 4.dp),
+                    "/",
+                    style = monoCounter.copy(color = previewColor.copy(alpha = 0.35f), fontSize = (40 + sizeOffset).sp),
+                )
+                Text(
+                    line.expected.formatQty(),
+                    style = monoCounter.copy(color = previewColor.copy(alpha = 0.55f), fontSize = (40 + sizeOffset).sp),
                 )
                 Spacer(Modifier.height(14.dp))
                 Row(
@@ -812,7 +844,7 @@ private fun KeypadContent(
             contentAlignment = Alignment.Center,
         ) {
             Row(
-                modifier = Modifier.padding(vertical = 18.dp),
+                modifier = Modifier.padding(vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -821,11 +853,11 @@ private fun KeypadContent(
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Medium,
                         color = if (btnEnabled) Color.White else PrimaPalette.Ink4,
-                        fontSize = (20 + sizeOffset).sp,
+                        fontSize = (18 + sizeOffset).sp,
                     ),
                 )
                 if (btnEnabled) {
-                    Icon(Icons.Outlined.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Outlined.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
                 }
             }
         }
@@ -836,7 +868,7 @@ private fun KeypadContent(
 
 
 @Composable
-private fun ExtraLineContent(
+private fun ItemQtyNotOnDocDetails(
     extra: ExtraLine,
     editedQty: Double,
     onIncrement: () -> Unit,
@@ -933,7 +965,7 @@ private fun ExtraLineContent(
                     editedQty.formatQty(),
                     style = monoCounter.copy(
                         color = if (isZero) Color(0xFFCE3A3A) else orange,
-                        fontSize = (80 + sizeOffset).sp,
+                        fontSize = (77 + sizeOffset).sp,
                         fontWeight = FontWeight.Medium,
                     ),
                 )
@@ -973,7 +1005,7 @@ private fun ExtraLineContent(
 
 
 @Composable
-private fun ExtraKeypadContent(
+private fun ItemQtyNotOnDocExtraDetails(
     extra: ExtraLine,
     typed: String,
     onKey: (String) -> Unit,
@@ -995,16 +1027,6 @@ private fun ExtraKeypadContent(
             .background(PrimaPalette.Cream)
             .padding(horizontal = 22.dp, vertical = 16.dp),
     ) {
-        Text(
-            stringResource(R.string.recording_not_on_doc),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.Medium,
-                color = orange,
-                fontSize = (14 + sizeOffset).sp,
-            ),
-        )
-        Spacer(Modifier.height(10.dp))
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1020,14 +1042,14 @@ private fun ExtraKeypadContent(
                         typed.ifEmpty { extra.quantity.formatQty() },
                         style = monoCounter.copy(
                             color = if (typed.isEmpty()) orange.copy(alpha = 0.38f) else orange,
-                            fontSize = (80 + sizeOffset).sp,
+                            fontSize = (40 + sizeOffset).sp,
                             fontWeight = FontWeight.Medium,
                         ),
                     )
                     Box(
                         modifier = Modifier
-                            .padding(start = 3.dp, bottom = 8.dp)
-                            .width(3.dp).height(46.dp)
+                            .padding(start = 3.dp, bottom = 5.dp)
+                            .width(3.dp).height(30.dp)
                             .alpha(if (caretVisible) 1f else 0f)
                             .clip(RoundedCornerShape(2.dp))
                             .background(PrimaPalette.Coral),
@@ -1184,7 +1206,7 @@ private fun UnknownBarcodeContent(
                         typed.ifEmpty { "0" },
                         style = monoCounter.copy(
                             color = if (typed.isEmpty()) Color(0xFFC7943A).copy(alpha = 0.38f) else Color(0xFFC7943A),
-                            fontSize = (80 + sizeOffset).sp,
+                            fontSize = (77 + sizeOffset).sp,
                             fontWeight = FontWeight.Medium,
                         ),
                     )
@@ -1297,130 +1319,6 @@ private fun ExtraLineRow(extra: ExtraLine, onClick: () -> Unit) {
         }
         Spacer(Modifier.width(8.dp))
         Text("x${extra.quantity.formatQty()}", style = monoCounter.copy(color = Color(0xFFC7943A)))
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MultiplierSheet(
-    current: Double,
-    onSelect: (Double) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val sizeOffset = LocalTextSizeOffset.current
-    val presets = listOf(1.0, 2.0, 3.0, 4.0, 5.0, 10.0)
-    var customInput by remember { mutableStateOf(if (current !in presets) current.formatQty() else "") }
-
-    fun commit() {
-        val v = customInput.trim().toDoubleOrNull()
-        if (v != null && v > 0) onSelect(v)
-    }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true, confirmValueChange = { it != SheetValue.Hidden }),
-        dragHandle = null,
-        containerColor = PrimaPalette.Cream,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(horizontal = 22.dp)
-                .padding(top = 24.dp, bottom = 36.dp),
-        ) {
-            Text(
-                stringResource(R.string.multiplier_title),
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Medium,
-                    color = PrimaPalette.Ink,
-                    fontSize = (22 + sizeOffset).sp,
-                ),
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                stringResource(R.string.multiplier_subtitle),
-                style = monoLabel.copy(color = PrimaPalette.Ink3, fontSize = (13 + sizeOffset).sp),
-            )
-            Spacer(Modifier.height(20.dp))
-
-            val presetRows = presets.chunked(3)
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                presetRows.forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        row.forEach { opt ->
-                            val selected = opt == current && customInput.isEmpty()
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f).height(66.dp)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .border(1.dp, Color(0x18000000), RoundedCornerShape(14.dp))
-                                    .background(if (selected) PrimaPalette.Coral else Color.White)
-                                    .clickable { customInput = ""; onSelect(opt) },
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    "×${opt.formatQty()}",
-                                    style = monoCounter.copy(
-                                        color = if (selected) Color.White else PrimaPalette.Ink,
-                                        fontSize = (22 + sizeOffset).sp,
-                                        fontWeight = FontWeight.Medium,
-                                    ),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            Spacer(Modifier.height(14.dp))
-
-            OutlinedTextField(
-                value = customInput,
-                onValueChange = { customInput = it.filter { c -> c.isDigit() || c == '.' } },
-                label = { Text(stringResource(R.string.multiplier_custom)) },
-                placeholder = { Text("e.g. 2.5") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { commit() }),
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = PrimaPalette.Coral,
-                    focusedLabelColor = PrimaPalette.Coral,
-                ),
-            )
-
-            if (customInput.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth().height(64.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(PrimaPalette.Coral)
-                        .clickable { commit() },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Text(
-                            "Set to ×${customInput}",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = (18 + sizeOffset).sp,
-                            ),
-                        )
-                        Icon(Icons.Outlined.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                    }
-                }
-            }
-        }
     }
 }
 

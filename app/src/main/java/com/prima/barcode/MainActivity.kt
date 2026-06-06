@@ -95,7 +95,10 @@ class MainActivity : AppCompatActivity() {
             var autoScan         by remember { mutableStateOf(initialSettings.autoScan) }
             var debounceTime     by remember { mutableStateOf(initialSettings.debounceTime) }
             var hapticEnabled     by remember { mutableStateOf(initialSettings.hapticEnabled) }
-            var muteSound        by remember { mutableStateOf(initialSettings.muteSound) }
+            var warnOnOver       by remember { mutableStateOf(initialSettings.warnOnOver) }
+            var warnNotOnDocument by remember { mutableStateOf(initialSettings.warnNotOnDocument) }
+            var autoUploadCompleted by remember { mutableStateOf(initialSettings.autoUploadCompleted) }
+            var backgroundSync   by remember { mutableStateOf(initialSettings.backgroundSync) }
             var liveMode         by remember { mutableStateOf(initialSettings.liveMode) }
             var disabledDocTypes by remember { mutableStateOf(initialSettings.disabledDocTypes) }
             var docTypeFilters    by remember { mutableStateOf(initialSettings.docTypeFilters) }
@@ -110,7 +113,10 @@ class MainActivity : AppCompatActivity() {
                 autoScan         = autoScan,
                 debounceTime     = debounceTime,
                 hapticEnabled    = hapticEnabled,
-                muteSound        = muteSound,
+                warnOnOver          = warnOnOver,
+                warnNotOnDocument   = warnNotOnDocument,
+                autoUploadCompleted = autoUploadCompleted,
+                backgroundSync      = backgroundSync,
                 lastLocationCode = locationCode,
                 lastRcCode       = rcCode,
                 liveMode         = liveMode,
@@ -142,8 +148,14 @@ class MainActivity : AppCompatActivity() {
                     onDebounceTimeChange      = { debounceTime = it; appVm.saveSettings(buildSettings().copy(debounceTime = it)) },
                     hapticEnabled             = hapticEnabled,
                     onHapticEnabledChange     = { hapticEnabled = it; appVm.saveSettings(buildSettings().copy(hapticEnabled = it)) },
-                    muteSound                 = muteSound,
-                    onMuteSoundChange         = { muteSound = it; appVm.saveSettings(buildSettings().copy(muteSound = it)) },
+                    warnOnOver                = warnOnOver,
+                    onWarnOnOverChange        = { warnOnOver = it; appVm.saveSettings(buildSettings().copy(warnOnOver = it)) },
+                    warnNotOnDocument         = warnNotOnDocument,
+                    onWarnNotOnDocumentChange = { warnNotOnDocument = it; appVm.saveSettings(buildSettings().copy(warnNotOnDocument = it)) },
+                    autoUploadCompleted       = autoUploadCompleted,
+                    onAutoUploadChange        = { autoUploadCompleted = it; appVm.saveSettings(buildSettings().copy(autoUploadCompleted = it)) },
+                    backgroundSync            = backgroundSync,
+                    onBackgroundSyncChange    = { backgroundSync = it; appVm.saveSettings(buildSettings().copy(backgroundSync = it)) },
                     liveMode                  = liveMode,
                     onLiveModeChange          = { liveMode = it; appVm.saveSettings(buildSettings().copy(liveMode = it)) },
                     disabledDocTypes          = disabledDocTypes,
@@ -179,8 +191,14 @@ private fun PrimaBarcodeApp(
     onDebounceTimeChange: (Int) -> Unit,
     hapticEnabled: Boolean,
     onHapticEnabledChange: (Boolean) -> Unit,
-    muteSound: Boolean,
-    onMuteSoundChange: (Boolean) -> Unit,
+    warnOnOver: Boolean,
+    onWarnOnOverChange: (Boolean) -> Unit,
+    warnNotOnDocument: Boolean,
+    onWarnNotOnDocumentChange: (Boolean) -> Unit,
+    autoUploadCompleted: Boolean,
+    onAutoUploadChange: (Boolean) -> Unit,
+    backgroundSync: Boolean,
+    onBackgroundSyncChange: (Boolean) -> Unit,
     liveMode: Boolean,
     onLiveModeChange: (Boolean) -> Unit,
     disabledDocTypes: Set<String>,
@@ -212,9 +230,6 @@ private fun PrimaBarcodeApp(
                 locations.find { it.rc == rc.code }?.let { onLocationCodeChange(it.code) }
             }
         }
-    }
-    LaunchedEffect(muteSound) {
-        DataWedgeManager.setAudioFeedback(context, muteSound)
     }
     LaunchedEffect(autoScan, debounceTime) {
         DataWedgeManager.setContinuousScan(context, autoScan, debounceTime)
@@ -260,8 +275,9 @@ private fun PrimaBarcodeApp(
 
     val shiftScans  = filteredDocs.sumOf { d -> d.lines.sumOf { it.scanned } + d.extraLines.sumOf { it.quantity } }.toInt()
     val errorDocs   = filteredDocs.filter { it.state is DocState.UploadFailed }
-    val readyDocs   = filteredDocs.filter { it.state == DocState.Completed }
-    val partialDocs = filteredDocs.filter { it.state == DocState.InProgress && it.lines.any { l -> l.scanned > 0.0 } }
+    val readyDocs   = filteredDocs.filter { it.state !is DocState.UploadFailed && it.scanStatus() == LineStatus.EXACT }
+    val partialDocs = filteredDocs.filter { it.state !is DocState.UploadFailed && it.scanStatus() == LineStatus.PARTIAL }
+    val overDocs    = filteredDocs.filter { it.state !is DocState.UploadFailed && it.scanStatus() == LineStatus.OVER }
     var selectedDocType by remember { mutableStateOf(DocumentType.WAREHOUSE_SHIPMENT) }
     var docFilter by remember { mutableStateOf(DocumentFilter()) }
     var overviewFilter by remember { mutableStateOf(DocumentFilter()) }
@@ -291,6 +307,7 @@ private fun PrimaBarcodeApp(
                 shiftErrors = errorDocs.size,
                 shiftReady = readyDocs.size,
                 shiftPartial = partialDocs.size,
+                shiftOver = overDocs.size,
                 onChangeLocationRc = { nav.navigate("location_rc_pick") },
                 onOpenSettings = { nav.navigate("settings") },
                 onTypeTap = { type ->
@@ -368,8 +385,14 @@ private fun PrimaBarcodeApp(
                 onDebounceTimeChange = onDebounceTimeChange,
                 hapticEnabled = hapticEnabled,
                 onHapticEnabledChange = onHapticEnabledChange,
-                muteSound = muteSound,
-                onMuteSoundChange = onMuteSoundChange,
+                warnOnOver = warnOnOver,
+                onWarnOnOverChange = onWarnOnOverChange,
+                warnNotOnDocument = warnNotOnDocument,
+                onWarnNotOnDocumentChange = onWarnNotOnDocumentChange,
+                autoUploadCompleted = autoUploadCompleted,
+                onAutoUploadChange = onAutoUploadChange,
+                backgroundSync = backgroundSync,
+                onBackgroundSyncChange = onBackgroundSyncChange,
                 onExport = {
                     val ts = exportTimestampFmt.format(Instant.now())
                     exportLauncher.launch("prima_export_${ts}.json")
@@ -400,19 +423,17 @@ private fun PrimaBarcodeApp(
                 onDocTap = { selected -> nav.navigate("recording/${selected.documentNo}/${selected.type.key}") },
                 onDownload = { nav.navigate("download_filter") },
                 onUpload = { docs ->
-                    processingMessage = "Uploading..."
-                    if (liveMode) {
-                        appVm.uploadToExtSystem(docs) { failures ->
-                            processingMessage = null
-                            nav.popBackStack("main", false)
-                            if (failures > 0) showSyncErrorDialog = true
-                        }
+                    if (liveMode && backgroundSync) {
+                        appVm.uploadInBackground(docs)
+                        nav.popBackStack("main", false)
                     } else {
-                        appVm.testImportDocs(docs) { failures ->
+                        processingMessage = "Uploading..."
+                        val cb: (Int) -> Unit = { failures ->
                             processingMessage = null
                             nav.popBackStack("main", false)
                             if (failures > 0) showSyncErrorDialog = true
                         }
+                        if (liveMode) appVm.uploadToExtSystem(docs, cb) else appVm.testImportDocs(docs, cb)
                     }
                 },
                 onErrorTap = { doc -> nav.navigate("upload_error/${doc.documentNo}") },
@@ -450,17 +471,15 @@ private fun PrimaBarcodeApp(
                 onDocTap = { selected -> nav.navigate("recording/${selected.documentNo}/${selected.type.key}") },
                 onClearErrors = { appVm.clearErrorDocs() },
                 onUpload = { docs ->
-                    processingMessage = "Uploading..."
-                    if (liveMode) {
-                        appVm.uploadToExtSystem(docs) { failures ->
-                            processingMessage = null
-                            if (failures > 0) showSyncErrorDialog = true
-                        }
+                    if (liveMode && backgroundSync) {
+                        appVm.uploadInBackground(docs)
                     } else {
-                        appVm.testImportDocs(docs) { failures ->
+                        processingMessage = "Uploading..."
+                        val cb: (Int) -> Unit = { failures ->
                             processingMessage = null
                             if (failures > 0) showSyncErrorDialog = true
                         }
+                        if (liveMode) appVm.uploadToExtSystem(docs, cb) else appVm.testImportDocs(docs, cb)
                     }
                 },
                 onErrorTap = { doc -> nav.navigate("upload_error/${doc.documentNo}") },
@@ -470,6 +489,7 @@ private fun PrimaBarcodeApp(
                     overviewLockedRc = rc
                     nav.navigate("overview_filter")
                 },
+                docTypeFilters = docTypeFilters,
                 initialTab = initialTab,
             )
         }
@@ -539,26 +559,26 @@ private fun PrimaBarcodeApp(
                     onExtraLineUpdate = { recordingLineNo, quantity -> vm.updateExtraLineQuantity(recordingLineNo, quantity) },
                     onExtraLineDelete = { recordingLineNo -> vm.deleteExtraLine(recordingLineNo) },
                     onUpload = {
-                        processingMessage = "Uploading..."
-                        if (liveMode) {
-                            appVm.uploadToExtSystem(listOf(currentDoc)) { failures ->
-                                processingMessage = null
-                                nav.popBackStack("main", false)
-                                if (failures > 0) showSyncErrorDialog = true
-                            }
+                        if (liveMode && backgroundSync) {
+                            appVm.uploadInBackground(listOf(currentDoc))
+                            nav.popBackStack("main", false)
                         } else {
-                            appVm.testImportDocs(listOf(currentDoc)) { failures ->
+                            processingMessage = "Uploading..."
+                            val cb: (Int) -> Unit = { failures ->
                                 processingMessage = null
                                 nav.popBackStack("main", false)
                                 if (failures > 0) showSyncErrorDialog = true
                             }
+                            if (liveMode) appVm.uploadToExtSystem(listOf(currentDoc), cb) else appVm.testImportDocs(listOf(currentDoc), cb)
                         }
                     },
                     lastScannedLines = lastScannedLines,
                     autoScan = autoScan,
                     hapticEnabled = hapticEnabled,
-                    muteSound = muteSound,
                     debounceTime = debounceTime,
+                    warnOnOver = warnOnOver,
+                    warnNotOnDocument = warnNotOnDocument,
+                    autoUploadCompleted = autoUploadCompleted,
                 )
             }
         }
@@ -573,17 +593,16 @@ private fun PrimaBarcodeApp(
                     document = currentDoc,
                     onBack = { nav.popBackStack() },
                     onRetryUpload = {
-                        processingMessage = "Uploading..."
-                        if (liveMode) {
-                            appVm.uploadToExtSystem(listOf(currentDoc)) { failures ->
-                                processingMessage = null
-                                if (failures > 0) { showSyncErrorDialog = true } else { nav.popBackStack() }
-                            }
+                        if (liveMode && backgroundSync) {
+                            appVm.uploadInBackground(listOf(currentDoc))
+                            nav.popBackStack()
                         } else {
-                            appVm.testImportDocs(listOf(currentDoc)) { failures ->
+                            processingMessage = "Uploading..."
+                            val cb: (Int) -> Unit = { failures ->
                                 processingMessage = null
                                 if (failures > 0) { showSyncErrorDialog = true } else { nav.popBackStack() }
                             }
+                            if (liveMode) appVm.uploadToExtSystem(listOf(currentDoc), cb) else appVm.testImportDocs(listOf(currentDoc), cb)
                         }
                     },
                 )

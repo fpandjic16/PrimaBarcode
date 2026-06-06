@@ -73,29 +73,17 @@ data class Document(
 ) {
     val linesExact: Int get() = lines.count { it.status == LineStatus.EXACT }
     val linesTotal: Int get() = lines.size
+    val scannedQty: Double get() = lines.sumOf { it.scanned }
+    val expectedQty: Double get() = lines.sumOf { it.expected }
 }
 
 sealed interface DocState {
     data object Downloaded   : DocState
     data object InProgress   : DocState
     data object Completed    : DocState
+    data object PendingUpload : DocState
     data class  UploadFailed(val reason: String) : DocState
 }
-
-sealed interface SyncState {
-    data object Offline                              : SyncState
-    data object Idle                                 : SyncState
-    data class  Pending(val count: Int)              : SyncState
-    data class  Syncing(val progress: Float)         : SyncState
-    data class  Error(val failures: List<SyncError>) : SyncState
-}
-
-data class SyncError(
-    val documentNo: String,
-    val reason: String,
-    val detail: String,
-    val at: Instant,
-)
 
 data class TapeEntry(
     val id: String,

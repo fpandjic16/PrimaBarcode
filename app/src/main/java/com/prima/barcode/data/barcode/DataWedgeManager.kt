@@ -49,32 +49,6 @@ object DataWedgeManager {
         Timber.d("DataWedge profile configured")
     }
 
-    fun setAudioFeedback(context: Context, muted: Boolean) {
-        val appBundle = Bundle().apply {
-            putString("PACKAGE_NAME", context.packageName)
-            putStringArray("ACTIVITY_LIST", arrayOf("*"))
-        }
-        val barcodePlugin = Bundle().apply {
-            putString("PLUGIN_NAME",  "BARCODE")
-            putString("RESET_CONFIG", "false")
-            putBundle("PARAM_LIST", Bundle().apply {
-                // Empty string disables the decode beep; non-empty restores default notification sound
-                putString("decode_audio_feedback_uri",
-                    if (muted) "" else "content://media/internal/audio/media/0")
-            })
-        }
-        context.sendBroadcast(Intent(DW_ACTION).apply {
-            putExtra("com.symbol.datawedge.api.SET_CONFIG", Bundle().apply {
-                putString("PROFILE_NAME",    "PrimaBarcode")
-                putString("PROFILE_ENABLED", "true")
-                putString("CONFIG_MODE",     "UPDATE")
-                putParcelableArray("APP_LIST", arrayOf(appBundle))
-                putParcelableArrayList("PLUGIN_CONFIG", ArrayList<Bundle>().apply { add(barcodePlugin) })
-            })
-        })
-        Timber.d("DataWedge audio feedback set: muted=$muted")
-    }
-
     /**
      * Toggles the hardware scanner's trigger mode between single-shot and continuous read.
      *
