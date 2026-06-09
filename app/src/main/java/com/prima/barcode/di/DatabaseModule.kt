@@ -30,7 +30,8 @@ abstract class DatabaseModule {
                 context,
                 PrimaDatabase::class.java,
                 "prima_barcode.db",
-            ).fallbackToDestructiveMigration().build()
+            ).addMigrations(PrimaDatabase.MIGRATION_10_11, PrimaDatabase.MIGRATION_11_12, PrimaDatabase.MIGRATION_12_13)
+                .fallbackToDestructiveMigration(dropAllTables = true).build()
 
         @Provides
         @Singleton

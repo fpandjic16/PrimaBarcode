@@ -37,7 +37,7 @@ fun Document.toUploadPayload(): ExtSystemUploadDocument {
             barcodeNo       = line.barcodeNo,
             quantity        = line.scanned.toString(),
             creationDateTime = creationDateTime.toString(),
-            userId          = ownerUserId,
+            userId          = "",
         ))
     }.filter { it.quantity != "0.0" }
 
@@ -49,7 +49,7 @@ fun Document.toUploadPayload(): ExtSystemUploadDocument {
             barcodeNo       = extra.barcodeNo,
             quantity        = extra.quantity.toString(),
             creationDateTime = creationDateTime.toString(),
-            userId          = ownerUserId,
+            userId          = "",
         )
     }
 
@@ -86,6 +86,24 @@ data class NavDocumentLine(
     @SerializedName("No_2")                  val barcodeNo:       String  = "",
     @SerializedName("Qty_Outstanding")       val qtyOutstanding:  Double  = 0.0,
     @SerializedName("Unit_of_Measure_Code")  val unitOfMeasureCode: String = "",
+)
+
+// BEMFOrder page: one record per document line, header fields repeated on every row.
+data class NavBarcodeEntriesDownload(
+    @SerializedName("Document_Type")         val documentType:      String  = "",
+    @SerializedName("Document_No")           val documentNo:        String,
+    @SerializedName("Line_No")               val lineNo:            Int     = 0,
+    @SerializedName("Source_No")             val sourceCode:        String  = "",
+    @SerializedName("Retail_Location")       val retailLocation:    String  = "",
+    @SerializedName("Destination_No")        val destinationNo:     String  = "",
+    @SerializedName("Document_Date")         val documentDate:      String? = null,
+    @SerializedName("Responsibility_Center") val rcCode:            String  = "",
+    @SerializedName("Item_No")               val itemNo:            String  = "",
+    @SerializedName("Item_Description")      val description:       String  = "",
+    @SerializedName("Item_Qty")              val qtyOutstanding:    Double  = 0.0,
+    @SerializedName("Scanning_Qty")          val scanningQty:       Double  = 1.0,
+    @SerializedName("Item_UoM")              val unitOfMeasureCode: String  = "",
+    @SerializedName("Barcode")               val barcodeNo:         String  = "",
 )
 
 data class NavLocation(

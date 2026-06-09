@@ -9,7 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AppSettingsStore @Inject constructor(@ApplicationContext private val context: Context) {
+class AppSettingsStore @Inject constructor(@param:ApplicationContext private val context: Context) {
 
     private val prefs by lazy { context.getSharedPreferences("app_settings", Context.MODE_PRIVATE) }
 
@@ -37,6 +37,7 @@ class AppSettingsStore @Inject constructor(@ApplicationContext private val conte
                 val mode = DocTypeFilterMode.entries.firstOrNull { it.name == parts[1] } ?: return@mapNotNull null
                 parts[0] to mode
             }?.toMap() ?: emptyMap(),
+        debuggerActive = prefs.getBoolean("debuggerActive", false),
     )
 
     fun clear() = prefs.edit().clear().apply()
@@ -59,6 +60,7 @@ class AppSettingsStore @Inject constructor(@ApplicationContext private val conte
             .putBoolean("liveMode",           settings.liveMode)
             .putString ("disabledDocTypes",   settings.disabledDocTypes.joinToString(","))
             .putString ("docTypeFilters",     settings.docTypeFilters.entries.joinToString(",") { "${it.key}:${it.value.name}" })
+            .putBoolean("debuggerActive",     settings.debuggerActive)
             .apply()
     }
 }

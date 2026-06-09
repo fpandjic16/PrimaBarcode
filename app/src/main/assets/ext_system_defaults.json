@@ -1,9 +1,16 @@
 {
-  "serverBaseUrl": "http://192.168.100.113:7048/NAVBARCODE/ODataV4/",
+  "serverBaseUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/",
   "credentialTtlHours": 24,
   "endpoints": {
-    "WAREHOUSE_SHIPMENT": "http://192.168.100.113:7048/NAVBARCODE/ODataV4/Company('Prima Commerce d.o.o.')/BEMFOrder?$filter=orderType eq 'SHIPMENT'",
-    "WAREHOUSE_RECEIPT": "",
+    "WAREHOUSE_SHIPMENT": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
+    "WAREHOUSE_RECEIPT": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
+    "RETAIL_SHIPMENT": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
+    "RETAIL_RECEIPT": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
+    "TRANSPORT_SHEET": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries"
+  },
+  "documentTypeCodes": {
+    "WAREHOUSE_SHIPMENT": "SHIPMENT",
+    "WAREHOUSE_RECEIPT": "RECEIPT",
     "RETAIL_SHIPMENT": "",
     "RETAIL_RECEIPT": "",
     "TRANSPORT_SHEET": ""

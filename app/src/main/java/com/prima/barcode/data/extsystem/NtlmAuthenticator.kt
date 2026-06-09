@@ -5,6 +5,7 @@ import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
+import timber.log.Timber
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.SecureRandom
@@ -24,25 +25,38 @@ class NtlmAuthenticator(
     private val password: String,
 ) : Authenticator {
 
+    @Volatile var phaseReached: Int = 0
+        internal set
+
+    fun resetPhase() { phaseReached = 0 }
+
     override fun authenticate(route: Route?, response: Response): Request? {
         val wwwAuth = response.header("WWW-Authenticate") ?: return null
+        Timber.d("NTLM: WWW-Authenticate = $wwwAuth")
         if (!wwwAuth.contains("NTLM", ignoreCase = true)) return null
-
-        // If we already sent a Type3 and still got 401 -> credentials wrong, stop retrying
-        val prev = response.request.header("Authorization") ?: ""
-        if (prev.startsWith("NTLM ") && prev.length > 20) return null
 
         val trimmed = wwwAuth.trim()
         return if (trimmed.equals("NTLM", ignoreCase = true) ||
                    !trimmed.startsWith("NTLM ", ignoreCase = true)) {
-            // Phase 1 — send Type 1 Negotiate
+            // Phase 1 — send Type 1 Negotiate.
+            // If the request already carries an NTLM token the full handshake already
+            // ran and the server is restarting negotiation → credentials wrong, stop.
+            if (response.request.header("Authorization")?.startsWith("NTLM ") == true) {
+                Timber.w("NTLM: full handshake already ran, stopping (bad credentials?)")
+                return null
+            }
+            phaseReached = 1
+            Timber.d("NTLM: → Phase 1 (Type1 Negotiate)")
             response.request.newBuilder()
                 .header("Authorization", "NTLM ${type1()}")
                 .build()
         } else {
             // Phase 2 — respond with Type 3 Authenticate
+            phaseReached = 2
+            Timber.d("NTLM: → Phase 2 (Type3 Authenticate)")
             val b64 = trimmed.substring(5).trim()
             runCatching { type3(Base64.decode(b64, Base64.DEFAULT)) }
+                .onFailure { Timber.e(it, "NTLM: Type3 construction failed") }
                 .getOrNull()
                 ?.let { response.request.newBuilder().header("Authorization", "NTLM $it").build() }
         }
@@ -99,8 +113,8 @@ class NtlmAuthenticator(
         val domBytes = domain.toByteArray(Charsets.UTF_16LE)
         val usrBytes = username.toByteArray(Charsets.UTF_16LE)
 
-        // Fixed header = 72 bytes (Type3 base)
-        val domOff = 72
+        // Fixed header = 64 bytes (Type3 base without Version field)
+        val domOff = 64
         val usrOff = domOff + domBytes.size
         val wsOff  = usrOff + usrBytes.size
         val lmOff  = wsOff
@@ -144,8 +158,8 @@ class NtlmAuthenticator(
     companion object {
         // "NTLMSSP\0" in ASCII
         private val SIG = byteArrayOf(0x4E,0x54,0x4C,0x4D,0x53,0x53,0x50,0x00)
-        // Flags: Unicode | OEM | RequestTarget | NTLM | ExtendedSecurity | 128-bit | 56-bit
-        private val FLAGS = 0x82810205L.toInt()
+        // Flags: 56-bit | TARGET_INFO | NTLM | REQUEST_TARGET | UNICODE
+        private val FLAGS = 0x80800205L.toInt()
     }
 }
 

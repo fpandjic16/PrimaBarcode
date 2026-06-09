@@ -13,7 +13,7 @@ import javax.inject.Singleton
 
 @Singleton
 class DatabaseExporter @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val db: PrimaDatabase,
 ) {
     private val gson = GsonBuilder().setPrettyPrinting().create()

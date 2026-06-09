@@ -21,4 +21,5 @@ data class AppSettings(
     val liveMode: Boolean = false,
     val disabledDocTypes: Set<String> = emptySet(),
     val docTypeFilters: Map<String, DocTypeFilterMode> = emptyMap(),
+    val debuggerActive: Boolean = false,
 )

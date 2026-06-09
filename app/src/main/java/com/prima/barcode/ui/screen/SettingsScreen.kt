@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -39,7 +41,7 @@ private const val DB_SCHEMA_VERSION = "7.0.0"
 
 @Composable
 fun SettingsScreen(
-    user: User,
+    user: User?,
     location: Location?,
     rc: ResponsibilityCenter,
     textSize: TextSize,
@@ -66,6 +68,8 @@ fun SettingsScreen(
     onBackgroundSyncChange: (Boolean) -> Unit = {},
     liveMode: Boolean = false,
     onLiveModeChange: (Boolean) -> Unit = {},
+    debuggerActive: Boolean = false,
+    onDebuggerActiveChange: (Boolean) -> Unit = {},
     onExport: () -> Unit = {},
     onClearCache: () -> Unit = {},
     onInsertTestData: () -> Unit = {},
@@ -90,41 +94,6 @@ fun SettingsScreen(
             contentPadding = PaddingValues(bottom = 32.dp),
             state = listState,
         ) {
-            // ── Location & RC ─────────────────────────────────────────────────
-            item { SectionHeader(stringResource(R.string.settings_sec_location_rc)) }
-
-            item {
-                Column(modifier = Modifier.fillMaxWidth().background(Color.White)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = onChangeLocation)
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        SettingsIcon(Icons.Outlined.LocationOn)
-                        Spacer(Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                location?.name ?: stringResource(R.string.settings_no_location),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (location != null) PrimaPalette.Ink else PrimaPalette.Ink3,
-                                ),
-                            )
-                            Text(
-                                rc.name + if (location != null) " · ${location.code}" else "",
-                                style = monoLabel.copy(color = PrimaPalette.Ink3),
-                            )
-                        }
-                        Text(
-                            stringResource(R.string.settings_change).uppercased,
-                            style = monoLabel.copy(color = PrimaPalette.Coral, fontWeight = FontWeight.Medium),
-                        )
-                    }
-                }
-            }
-
             // ── Appearance ────────────────────────────────────────────────────
             item { SectionHeader(stringResource(R.string.settings_sec_appearance)) }
 
@@ -187,15 +156,18 @@ fun SettingsScreen(
                         onCheckedChange = onUppercaseTextChange,
                     )
                     SettingsDivider()
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                    var langMenuOpen by remember { mutableStateOf(false) }
+                    Box {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { langMenuOpen = true }
+                                .padding(horizontal = 20.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
                             SettingsIcon(Icons.Outlined.Language)
                             Spacer(Modifier.width(14.dp))
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     stringResource(R.string.settings_language),
                                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -208,30 +180,23 @@ fun SettingsScreen(
                                     style = monoLabel.copy(color = PrimaPalette.Ink3),
                                 )
                             }
+                            Text(
+                                language.label,
+                                style = monoLabel.copy(color = PrimaPalette.Ink3, fontWeight = FontWeight.Medium),
+                            )
                         }
-                        Spacer(Modifier.height(10.dp))
-                        Row(
-                            modifier = Modifier.padding(start = 54.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        DropdownMenu(
+                            expanded = langMenuOpen,
+                            onDismissRequest = { langMenuOpen = false },
                         ) {
                             Language.entries.forEach { lang ->
-                                val selected = lang == language
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (selected) PrimaPalette.Slate else PrimaPalette.CreamAlt)
-                                        .clickable { onLanguageChange(lang) }
-                                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        lang.label,
-                                        style = monoLabel.copy(
-                                            color = if (selected) Color.White else PrimaPalette.Ink2,
-                                            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-                                        ),
-                                    )
-                                }
+                                DropdownMenuItem(
+                                    text = { Text(lang.label) },
+                                    onClick = { onLanguageChange(lang); langMenuOpen = false },
+                                    leadingIcon = if (lang == language) {
+                                        { Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                                    } else null,
+                                )
                             }
                         }
                     }
@@ -325,13 +290,15 @@ fun SettingsScreen(
                         onCheckedChange = onWarnNotOnDocumentChange,
                     )
                     SettingsDivider()
+                    var lastScannedExpanded by remember { mutableStateOf(false) }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable { lastScannedExpanded = !lastScannedExpanded }
                             .padding(horizontal = 20.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        SettingsIcon(Icons.Outlined.List)
+                        SettingsIcon(Icons.AutoMirrored.Outlined.List)
                         Spacer(Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -346,31 +313,37 @@ fun SettingsScreen(
                                 style = monoLabel.copy(color = PrimaPalette.Ink3),
                             )
                         }
+                        Text(
+                            lastScannedLines.toString(),
+                            style = monoLabel.copy(color = PrimaPalette.Ink3, fontWeight = FontWeight.Medium),
+                        )
                     }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 74.dp, end = 20.dp, bottom = 14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        (0..5).forEach { n ->
-                            val selected = n == lastScannedLines
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (selected) PrimaPalette.Slate else PrimaPalette.CreamAlt)
-                                    .clickable { onLastScannedLinesChange(n) }
-                                    .padding(vertical = 8.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    n.toString(),
-                                    style = monoLabel.copy(
-                                        color = if (selected) Color.White else PrimaPalette.Ink2,
-                                        fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-                                    ),
-                                )
+                    if (lastScannedExpanded) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 74.dp, end = 20.dp, bottom = 14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            (0..5).forEach { n ->
+                                val selected = n == lastScannedLines
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (selected) PrimaPalette.Slate else PrimaPalette.CreamAlt)
+                                        .clickable { onLastScannedLinesChange(n); lastScannedExpanded = false }
+                                        .padding(vertical = 8.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        n.toString(),
+                                        style = monoLabel.copy(
+                                            color = if (selected) Color.White else PrimaPalette.Ink2,
+                                            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+                                        ),
+                                    )
+                                }
                             }
                         }
                     }
@@ -445,11 +418,19 @@ fun SettingsScreen(
                 }
             }
 
-            // ── Data ──────────────────────────────────────────────────────────
-            item { SectionHeader(stringResource(R.string.settings_sec_data)) }
+            // ── Debug ─────────────────────────────────────────────────────────
+            item { SectionHeader(stringResource(R.string.settings_sec_debug)) }
 
             item {
                 Column(modifier = Modifier.fillMaxWidth().background(Color.White)) {
+                    ToggleRow(
+                        icon = Icons.Outlined.BugReport,
+                        label = stringResource(R.string.settings_debugger_active),
+                        description = stringResource(R.string.settings_debugger_active_desc),
+                        checked = debuggerActive,
+                        onCheckedChange = onDebuggerActiveChange,
+                    )
+                    SettingsDivider()
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -659,27 +640,29 @@ fun SettingsScreen(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(PrimaPalette.SlateAlt),
+                                .background(if (user != null) PrimaPalette.SlateAlt else Color(0xFFBBBBBB)),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                user.initials,
+                                user?.initials ?: "?",
                                 style = monoLabel.copy(color = Color.White, fontWeight = FontWeight.Medium),
                             )
                         }
                         Spacer(Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                user.displayName,
+                                user?.displayName ?: stringResource(R.string.settings_not_signed_in),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Medium,
-                                    color = PrimaPalette.Ink,
+                                    color = if (user != null) PrimaPalette.Ink else PrimaPalette.Ink3,
                                 ),
                             )
-                            Text(
-                                user.username,
-                                style = monoLabel.copy(color = PrimaPalette.Ink3),
-                            )
+                            if (user != null) {
+                                Text(
+                                    user.username,
+                                    style = monoLabel.copy(color = PrimaPalette.Ink3),
+                                )
+                            }
                         }
                     }
                     SettingsDivider()
@@ -692,7 +675,7 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         Icon(
-                            Icons.Outlined.Logout,
+                            Icons.AutoMirrored.Outlined.Logout,
                             contentDescription = null,
                             tint = SignOutRed,
                             modifier = Modifier.size(20.dp),

@@ -7,7 +7,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ExtSystemConfigStore @Inject constructor(@ApplicationContext private val context: Context) {
+class ExtSystemConfigStore @Inject constructor(@param:ApplicationContext private val context: Context) {
 
     private val prefs by lazy { context.getSharedPreferences("ext_system_config", Context.MODE_PRIVATE) }
 
@@ -16,6 +16,9 @@ class ExtSystemConfigStore @Inject constructor(@ApplicationContext private val c
         credentialTtlHours = prefs.getInt("credentialTtlHours", 24),
         endpointUrls       = DocumentType.entries.associateWith { type ->
             prefs.getString("endpoint_${type.key}", "") ?: ""
+        },
+        documentTypeCodes = DocumentType.entries.associateWith { type ->
+            prefs.getString("doc_type_code_${type.key}", "") ?: ""
         },
         recordingSyncUrl            = prefs.getString("recordingSyncUrl", "") ?: "",
         locationsUrl               = prefs.getString("locationsUrl", "") ?: "",
@@ -33,6 +36,9 @@ class ExtSystemConfigStore @Inject constructor(@ApplicationContext private val c
             .putString("responsibilityCentersUrl",  config.responsibilityCentersUrl)
         config.endpointUrls.forEach { (type, url) ->
             ed.putString("endpoint_${type.key}", url)
+        }
+        config.documentTypeCodes.forEach { (type, code) ->
+            ed.putString("doc_type_code_${type.key}", code)
         }
         ed.apply()
     }

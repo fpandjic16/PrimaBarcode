@@ -59,6 +59,7 @@ private fun Instant.toLocalDate(): LocalDate =
 fun DocumentListScreen(
     docType: DocumentType,
     locationCode: String,
+    docTypeCode: String = "",
     documents: List<Document>,
     onBack: () -> Unit,
     onDocTap: (Document) -> Unit,
@@ -120,7 +121,7 @@ fun DocumentListScreen(
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
             title = docType.display,
-            subtitle = "${docType.key} · $locationCode",
+            subtitle = if (docTypeCode.isNotBlank()) "$locationCode · $docTypeCode" else locationCode,
             onBack = onBack,
             actions = {
                 IconButton(onClick = onOpenFilter) {
@@ -167,6 +168,7 @@ fun DocumentListScreen(
                     onClick = { selectedTab = index },
                     text = {
                         Row(
+                            modifier = if (index == 1) Modifier.padding(horizontal = 1.dp) else Modifier,
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {

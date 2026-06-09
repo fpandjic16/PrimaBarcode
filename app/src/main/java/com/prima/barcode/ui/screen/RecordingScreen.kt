@@ -80,6 +80,7 @@ private enum class RecordingView { OVERVIEW, ACTIVE_LINE, KEYPAD, UNKNOWN_BARCOD
 @Composable
 fun RecordingScreen(
     doc: Document,
+    docTypeCode: String = "",
     onBack: () -> Unit,
     onScan: (barcode: String, multiplier: Double) -> Unit,
     onLineUpdate: (lineNo: Int, newScanned: Double) -> Unit,
@@ -140,11 +141,12 @@ fun RecordingScreen(
                 view = RecordingView.UNKNOWN_BARCODE
             }
         } else {
-            onScan(barcode, 1.0)
-            val newScanned = matchedLine.scanned + 1.0
+            val qty = matchedLine.scanningQty
+            onScan(barcode, qty)
+            val newScanned = matchedLine.scanned + qty
             val newStatus = LineStatus.of(newScanned, matchedLine.expected)
             if (!wasExact && newStatus == LineStatus.EXACT && hapticEnabled) hapticEngine.confirm()
-            tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, matchedLine.item.name, 1.0, Instant.now(), newStatus)) + tape
+            tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, matchedLine.item.name, qty, Instant.now(), newStatus)) + tape
             if (warnOnOver && newStatus == LineStatus.OVER) {
                 overScanWarning = OverScanInfo(matchedLine.item.no, matchedLine.item.name, barcode, matchedLine.expected, newScanned)
             }
@@ -189,7 +191,10 @@ fun RecordingScreen(
         PrimaTopBar(
             title = if (view == RecordingView.OVERVIEW) stringResource(R.string.recording_title) else doc.documentNo,
             subtitle = when (view) {
-                RecordingView.OVERVIEW -> "${doc.documentNo} · ${doc.linesExact}/${doc.linesTotal} lines"
+                RecordingView.OVERVIEW -> buildString {
+                    append("${doc.documentNo} · ${doc.linesExact}/${doc.linesTotal} lines")
+                    if (docTypeCode.isNotBlank()) append(" · $docTypeCode")
+                }
                 RecordingView.ACTIVE_LINE -> activeLine?.let { "${it.item.no} · line ${it.lineNo}" } ?: ""
                 RecordingView.KEYPAD -> activeLine?.item?.name ?: ""
                 RecordingView.UNKNOWN_BARCODE -> unknownBarcode ?: ""
@@ -253,10 +258,10 @@ fun RecordingScreen(
                     val displayLine = localScanned?.let { line.copy(scanned = it) } ?: line
                     ItemQtyDetails(
                         line = displayLine,
-                        onIncrement = { localScanned = ((localScanned ?: line.scanned) + 1.0).coerceAtLeast(0.0) },
-                        onDecrement = { localScanned = ((localScanned ?: line.scanned) - 1.0).coerceAtLeast(0.0) },
+                        onIncrement = { if (hapticEnabled) hapticEngine.bump(); localScanned = ((localScanned ?: line.scanned) + 1.0).coerceAtLeast(0.0) },
+                        onDecrement = { if (hapticEnabled) hapticEngine.bump(); localScanned = ((localScanned ?: line.scanned) - 1.0).coerceAtLeast(0.0) },
                         onTypeQuantity = { typedQty = ""; view = RecordingView.KEYPAD },
-                        onApply = { onLineUpdate(line.lineNo, localScanned ?: line.scanned); view = RecordingView.OVERVIEW; activeLineNo = null },
+                        onApply = { if (hapticEnabled) hapticEngine.confirm(); onLineUpdate(line.lineNo, localScanned ?: line.scanned); view = RecordingView.OVERVIEW; activeLineNo = null },
                     )
                 }
                 RecordingView.KEYPAD -> activeLine?.let { line ->
@@ -265,6 +270,7 @@ fun RecordingScreen(
                         line = displayLine,
                         typed = typedQty,
                         onKey = { k ->
+                            if (hapticEnabled) hapticEngine.tick()
                             when (k) {
                                 "C" -> typedQty = ""
                                 "X" -> typedQty = typedQty.dropLast(1)
@@ -277,6 +283,7 @@ fun RecordingScreen(
                             }
                         },
                         onConfirm = {
+                            if (hapticEnabled) hapticEngine.confirm()
                             val qty = typedQty.toDoubleOrNull()?.coerceAtLeast(0.0) ?: line.scanned
                             onLineUpdate(line.lineNo, qty)
                             if (warnOnOver && qty > line.expected) {
@@ -287,6 +294,7 @@ fun RecordingScreen(
                             view = RecordingView.OVERVIEW
                         },
                         onConfirmRequired = {
+                            if (hapticEnabled) hapticEngine.confirm()
                             onLineUpdate(line.lineNo, line.expected)
                             localScanned = null
                             activeLineNo = null
@@ -299,6 +307,7 @@ fun RecordingScreen(
                         barcode = barcode,
                         typed = unknownTypedQty,
                         onKey = { k ->
+                            if (hapticEnabled) hapticEngine.tick()
                             when (k) {
                                 "C" -> unknownTypedQty = ""
                                 "X" -> unknownTypedQty = unknownTypedQty.dropLast(1)
@@ -311,6 +320,7 @@ fun RecordingScreen(
                             }
                         },
                         onConfirm = {
+                            if (hapticEnabled) hapticEngine.confirm()
                             val qty = unknownTypedQty.toDoubleOrNull()?.coerceAtLeast(0.001) ?: 1.0
                             onExtraLineAdd(barcode, qty)
                             tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, null, qty, Instant.now(), null)) + tape
@@ -323,10 +333,11 @@ fun RecordingScreen(
                     ItemQtyNotOnDocDetails(
                         extra = extra,
                         editedQty = extraEditedQty,
-                        onIncrement = { extraEditedQty += 1.0 },
-                        onDecrement = { extraEditedQty = (extraEditedQty - 1.0).coerceAtLeast(0.0) },
+                        onIncrement = { if (hapticEnabled) hapticEngine.bump(); extraEditedQty += 1.0 },
+                        onDecrement = { if (hapticEnabled) hapticEngine.bump(); extraEditedQty = (extraEditedQty - 1.0).coerceAtLeast(0.0) },
                         onTypeQuantity = { typedExtraQty = ""; view = RecordingView.EXTRA_KEYPAD },
                         onApply = { qty ->
+                            if (hapticEnabled) hapticEngine.confirm()
                             if (qty <= 0.0) onExtraLineDelete(extra.recordingLineNo)
                             else onExtraLineUpdate(extra.recordingLineNo, qty)
                             editingExtra = null
@@ -339,6 +350,7 @@ fun RecordingScreen(
                         extra = extra,
                         typed = typedExtraQty,
                         onKey = { k ->
+                            if (hapticEnabled) hapticEngine.tick()
                             when (k) {
                                 "C" -> typedExtraQty = ""
                                 "X" -> typedExtraQty = typedExtraQty.dropLast(1)
@@ -351,6 +363,7 @@ fun RecordingScreen(
                             }
                         },
                         onConfirm = {
+                            if (hapticEnabled) hapticEngine.confirm()
                             val qty = typedExtraQty.toDoubleOrNull()?.coerceAtLeast(0.0) ?: extraEditedQty
                             if (qty <= 0.0) onExtraLineDelete(extra.recordingLineNo)
                             else onExtraLineUpdate(extra.recordingLineNo, qty)

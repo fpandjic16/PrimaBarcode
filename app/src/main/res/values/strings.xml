@@ -16,8 +16,7 @@
     <string name="btn_sign_in_sync">Sign in &amp; Sync</string>
     <string name="btn_yes_insert">Yes, insert</string>
     <!-- Dashboard -->
-    <string name="dashboard_today">TODAY</string>
-    <string name="dashboard_scans">scans</string>
+    <string name="dashboard_today">TODAY (lines scanned)</string>
     <string name="dashboard_pill_ready">ready</string>
     <string name="dashboard_pill_partial">partial</string>
     <string name="dashboard_pill_error">error</string>
@@ -114,6 +113,9 @@
     <string name="settings_sec_sync">Sync</string>
     <string name="settings_sec_ext_config">External System Configuration</string>
     <string name="settings_sec_data">Data</string>
+    <string name="settings_sec_debug">Debug</string>
+    <string name="settings_debugger_active">Debugger active</string>
+    <string name="settings_debugger_active_desc">Show full request URLs before connecting</string>
     <string name="settings_sec_system_info">System info</string>
     <string name="settings_sec_account">Account</string>
     <string name="settings_no_location">No location selected</string>
@@ -158,6 +160,7 @@
     <string name="settings_android">Android</string>
     <string name="settings_sdk">SDK</string>
     <string name="settings_db_schema">Database schema</string>
+    <string name="settings_not_signed_in">Not signed in</string>
     <string name="settings_sign_out">Sign out of External System</string>
     <string name="settings_coming_soon">SOON</string>
     <string name="dialog_clear_cache_title">Clear cache?</string>
@@ -176,6 +179,7 @@
     <string name="login_ttl_days">%d days</string>
     <string name="login_session_info">Session stored encrypted for %s</string>
     <!-- Download filter -->
+    <string name="download_error_title">Download failed</string>
     <string name="download_title">Download</string>
     <string name="download_subtitle">Choose what to download from External System</string>
     <string name="filter_document_date">DOCUMENT DATE</string>
@@ -216,6 +220,14 @@
     <string name="ext_config_locations_url">Locations URL</string>
     <string name="ext_config_rc_url">Responsibility Centers URL</string>
     <string name="ext_config_recording_url">Recording sync URL</string>
+    <string name="ext_config_load_title">Load configuration</string>
+    <string name="ext_config_load_desc">Load built-in production defaults or import a custom JSON file from the device.</string>
+    <string name="ext_config_load_builtin">Load built-in defaults</string>
+    <string name="ext_config_load_from_file">Import from file</string>
+    <string name="ext_config_import_success">Configuration imported</string>
+    <string name="ext_config_doc_type_code">Document Type Code</string>
+    <string name="ext_config_import_parse_error">Could not parse JSON file</string>
+    <string name="ext_config_import_read_error">Could not read file</string>
     <!-- Document recordings -->
     <string name="doc_delete_recordings_title">Delete recordings?</string>
     <string name="doc_delete_recordings_text">All recordings for %s will be deleted and the document will be reset to its initial state.</string>

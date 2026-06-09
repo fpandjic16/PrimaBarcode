@@ -6,6 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,6 +88,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        hideNavBar()
         DataWedgeManager.configure(this)
         setContent {
             val appVm: AppViewModel = hiltViewModel()
@@ -102,6 +107,7 @@ class MainActivity : AppCompatActivity() {
             var liveMode         by remember { mutableStateOf(initialSettings.liveMode) }
             var disabledDocTypes by remember { mutableStateOf(initialSettings.disabledDocTypes) }
             var docTypeFilters    by remember { mutableStateOf(initialSettings.docTypeFilters) }
+            var debuggerActive   by remember { mutableStateOf(initialSettings.debuggerActive) }
             var locationCode     by remember { mutableStateOf(initialSettings.lastLocationCode) }
             var rcCode           by remember { mutableStateOf(initialSettings.lastRcCode) }
 
@@ -122,6 +128,7 @@ class MainActivity : AppCompatActivity() {
                 liveMode         = liveMode,
                 disabledDocTypes = disabledDocTypes,
                 docTypeFilters   = docTypeFilters,
+                debuggerActive   = debuggerActive,
             )
 
             PrimaBarcodeTheme(textSizeOffset = textSize.spOffset, uppercaseEnabled = uppercaseText) {
@@ -162,8 +169,22 @@ class MainActivity : AppCompatActivity() {
                     onDisabledDocTypesChange  = { disabledDocTypes = it; appVm.saveSettings(buildSettings().copy(disabledDocTypes = it)) },
                     docTypeFilters            = docTypeFilters,
                     onDocTypeFiltersChange    = { docTypeFilters = it; appVm.saveSettings(buildSettings().copy(docTypeFilters = it)) },
+                    debuggerActive            = debuggerActive,
+                    onDebuggerActiveChange    = { debuggerActive = it; appVm.saveSettings(buildSettings().copy(debuggerActive = it)) },
                 )
             }
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) hideNavBar()
+    }
+
+    private fun hideNavBar() {
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.navigationBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 }
@@ -205,12 +226,23 @@ private fun PrimaBarcodeApp(
     onDisabledDocTypesChange: (Set<String>) -> Unit,
     docTypeFilters: Map<String, DocTypeFilterMode>,
     onDocTypeFiltersChange: (Map<String, DocTypeFilterMode>) -> Unit,
+    debuggerActive: Boolean,
+    onDebuggerActiveChange: (Boolean) -> Unit,
 ) {
     val nav = rememberNavController()
     val appVm: AppViewModel = hiltViewModel()
     val context = LocalContext.current
 
-    val user = User(id = "1", username = "fpandic", displayName = "Filip Pandic", initials = "FP")
+    val credentials by appVm.credentials.collectAsState()
+    val user: User? = credentials?.let { creds ->
+        val plain = creds.username.substringAfterLast('\\').substringBefore('@')
+        User(
+            id          = creds.username,
+            username    = creds.username,
+            displayName = plain,
+            initials    = plain.take(2).uppercase(),
+        )
+    }
 
     val locations by appVm.locations.collectAsState()
     val rcs by appVm.responsibilityCenters.collectAsState()
@@ -273,7 +305,7 @@ private fun PrimaBarcodeApp(
         )
     }.filter { it.type.key !in disabledDocTypes }
 
-    val shiftScans  = filteredDocs.sumOf { d -> d.lines.sumOf { it.scanned } + d.extraLines.sumOf { it.quantity } }.toInt()
+    val shiftScans  = filteredDocs.sumOf { d -> d.lines.count { it.scanned > 0 } + d.extraLines.size }
     val errorDocs   = filteredDocs.filter { it.state is DocState.UploadFailed }
     val readyDocs   = filteredDocs.filter { it.state !is DocState.UploadFailed && it.scanStatus() == LineStatus.EXACT }
     val partialDocs = filteredDocs.filter { it.state !is DocState.UploadFailed && it.scanStatus() == LineStatus.PARTIAL }
@@ -283,8 +315,22 @@ private fun PrimaBarcodeApp(
     var overviewFilter by remember { mutableStateOf(DocumentFilter()) }
     var overviewLockedSource by remember { mutableStateOf<String?>(null) }
     var overviewLockedRc     by remember { mutableStateOf<String?>(null) }
-    var showSyncErrorDialog by remember { mutableStateOf(false) }
+    var showSyncErrorDialog     by remember { mutableStateOf(false) }
+    var showDownloadErrorDialog by remember { mutableStateOf(false) }
+    var downloadErrorMessage    by remember { mutableStateOf("") }
     var processingMessage by remember { mutableStateOf<String?>(null) }
+
+    var debugUrls     by remember { mutableStateOf<List<String>>(emptyList()) }
+    var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var showDebugDialog by remember { mutableStateOf(false) }
+
+    fun launchWithDebug(urls: List<String>, action: () -> Unit) {
+        if (debuggerActive && liveMode && urls.isNotEmpty()) {
+            debugUrls = urls; pendingAction = action; showDebugDialog = true
+        } else {
+            action()
+        }
+    }
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -335,7 +381,11 @@ private fun PrimaBarcodeApp(
                     onLocationCodeChange(loc)
                     nav.popBackStack()
                 },
-                onRefresh = { appVm.downloadLocations(liveMode = liveMode) },
+                onRefresh = {
+                    launchWithDebug(
+                        listOf(appVm.getLocationsUrl(), appVm.getRcUrl()).filter { it.isNotBlank() }
+                    ) { appVm.downloadLocations(liveMode = liveMode) }
+                },
                 onSaveCredentials = { u, p -> appVm.saveCredentials(u, p) },
                 onBack = { nav.popBackStack() },
             )
@@ -354,16 +404,19 @@ private fun PrimaBarcodeApp(
                 docTypeFilters = docTypeFilters,
                 onDocTypeFiltersChange = onDocTypeFiltersChange,
                 onTestConnection = { serverUrl, username, password, cb ->
-                    appVm.testExtSystemConnection(serverUrl, username, password) { result ->
-                        when (result) {
-                            is ExtSystemResult.Success -> cb(true, "NTLM authentication succeeded and the server responded.")
-                            is ExtSystemResult.Failure -> cb(
-                                false,
-                                if (result.code > 0) "HTTP ${result.code}: ${result.message}" else result.message,
-                            )
+                    launchWithDebug(listOf(serverUrl.trim())) {
+                        appVm.testExtSystemConnection(serverUrl, username, password) { result ->
+                            when (result) {
+                                is ExtSystemResult.Success -> cb(true, "NTLM authentication succeeded and the server responded.")
+                                is ExtSystemResult.Failure -> cb(
+                                    false,
+                                    if (result.code > 0) "HTTP ${result.code}: ${result.message}" else result.message,
+                                )
+                            }
                         }
                     }
                 },
+                onImportJson = { json -> appVm.parseExtSystemConfigJson(json) },
             )
         }
         composable("settings") {
@@ -404,7 +457,9 @@ private fun PrimaBarcodeApp(
                 onOpenExtSystemConfig = { nav.navigate("ext_system_config") },
                 liveMode = liveMode,
                 onLiveModeChange = onLiveModeChange,
-                onSignOut = {},
+                debuggerActive = debuggerActive,
+                onDebuggerActiveChange = onDebuggerActiveChange,
+                onSignOut = { appVm.signOut() },
             )
         }
         composable("docs") {
@@ -418,22 +473,29 @@ private fun PrimaBarcodeApp(
             DocumentListScreen(
                 docType = selectedDocType,
                 locationCode = location?.code ?: "",
+                docTypeCode = appVm.extSystemConfig.docTypeCodeFor(selectedDocType),
                 documents = typeDocs,
                 onBack = { nav.popBackStack() },
                 onDocTap = { selected -> nav.navigate("recording/${selected.documentNo}/${selected.type.key}") },
                 onDownload = { nav.navigate("download_filter") },
                 onUpload = { docs ->
                     if (liveMode && backgroundSync) {
-                        appVm.uploadInBackground(docs)
-                        nav.popBackStack("main", false)
+                        launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
+                            appVm.uploadInBackground(docs)
+                            nav.popBackStack("main", false)
+                        }
                     } else {
-                        processingMessage = "Uploading..."
                         val cb: (Int) -> Unit = { failures ->
                             processingMessage = null
                             nav.popBackStack("main", false)
                             if (failures > 0) showSyncErrorDialog = true
                         }
-                        if (liveMode) appVm.uploadToExtSystem(docs, cb) else appVm.testImportDocs(docs, cb)
+                        if (liveMode) {
+                            launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
+                                processingMessage = "Uploading..."
+                                appVm.uploadToExtSystem(docs, cb)
+                            }
+                        } else appVm.testImportDocs(docs, cb)
                     }
                 },
                 onErrorTap = { doc -> nav.navigate("upload_error/${doc.documentNo}") },
@@ -444,7 +506,6 @@ private fun PrimaBarcodeApp(
                         destinationCode  = "",
                         sourceCode       = srcCode,
                         rcCode           = rc.code,
-                        ownerUserId      = user.id,
                         creationDateTime = Instant.now(),
                         lines            = emptyList(),
                         state            = DocState.Downloaded,
@@ -472,14 +533,20 @@ private fun PrimaBarcodeApp(
                 onClearErrors = { appVm.clearErrorDocs() },
                 onUpload = { docs ->
                     if (liveMode && backgroundSync) {
-                        appVm.uploadInBackground(docs)
+                        launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
+                            appVm.uploadInBackground(docs)
+                        }
                     } else {
-                        processingMessage = "Uploading..."
                         val cb: (Int) -> Unit = { failures ->
                             processingMessage = null
                             if (failures > 0) showSyncErrorDialog = true
                         }
-                        if (liveMode) appVm.uploadToExtSystem(docs, cb) else appVm.testImportDocs(docs, cb)
+                        if (liveMode) {
+                            launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
+                                processingMessage = "Uploading..."
+                                appVm.uploadToExtSystem(docs, cb)
+                            }
+                        } else appVm.testImportDocs(docs, cb)
                     }
                 },
                 onErrorTap = { doc -> nav.navigate("upload_error/${doc.documentNo}") },
@@ -497,6 +564,8 @@ private fun PrimaBarcodeApp(
             DocumentFilterScreen(
                 initialFilter = docFilter,
                 showDocTypeFilter = false,
+                locations = locations,
+                rcs = rcs,
                 onApply = { newFilter ->
                     docFilter = newFilter
                     nav.popBackStack()
@@ -509,6 +578,8 @@ private fun PrimaBarcodeApp(
                 initialFilter = overviewFilter,
                 lockedSourceCode = overviewLockedSource,
                 lockedRcCode = overviewLockedRc,
+                locations = locations,
+                rcs = rcs,
                 onApply = { newFilter ->
                     overviewFilter = newFilter
                     nav.popBackStack()
@@ -518,13 +589,23 @@ private fun PrimaBarcodeApp(
         }
         composable("download_filter") {
             DownloadFilterScreen(
-                hasCredentials = liveMode && appVm.extSystemCredentialStore.isValid(),
-                onConfirm = { _, _, _ ->
-                    processingMessage = "Downloading..."
+                hasCredentials = !liveMode || appVm.extSystemCredentialStore.isValid(),
+                locations = locations,
+                rcs = rcs,
+                onConfirm = { filter, username, password ->
+                    if (username != null && password != null) appVm.saveCredentials(username, password)
                     if (liveMode) {
-                        appVm.realDownloadDocuments { _ ->
-                            processingMessage = null
-                            nav.popBackStack()
+                        val urls = appVm.buildDownloadUrls(filter).map { (type, url) -> "$type: $url" }
+                        launchWithDebug(urls) {
+                            processingMessage = "Downloading..."
+                            appVm.realDownloadDocuments(filter) { failures, errors ->
+                                processingMessage = null
+                                nav.popBackStack()
+                                if (failures > 0) {
+                                    downloadErrorMessage = errors.firstOrNull() ?: ""
+                                    showDownloadErrorDialog = true
+                                }
+                            }
                         }
                     } else {
                         appVm.testDownload {
@@ -548,28 +629,35 @@ private fun PrimaBarcodeApp(
             doc?.let { currentDoc ->
                 RecordingScreen(
                     doc = currentDoc,
+                    docTypeCode = appVm.extSystemConfig.docTypeCodeFor(currentDoc.type),
                     onBack = { nav.popBackStack() },
                     onScan = { barcode, multiplier ->
                         currentDoc.lines.find { it.barcodeNo == barcode }?.let { line ->
-                            vm.recordScan(line.lineNo, barcode, user.id, multiplier)
+                            vm.recordScan(line.lineNo, barcode, user?.id.orEmpty(), multiplier)
                         }
                     },
                     onLineUpdate = { lineNo, newScanned -> vm.setLineScanned(lineNo, newScanned) },
-                    onExtraLineAdd = { barcodeNo, quantity -> vm.addExtraLine(barcodeNo, user.id, quantity) },
+                    onExtraLineAdd = { barcodeNo, quantity -> vm.addExtraLine(barcodeNo, user?.id.orEmpty(), quantity) },
                     onExtraLineUpdate = { recordingLineNo, quantity -> vm.updateExtraLineQuantity(recordingLineNo, quantity) },
                     onExtraLineDelete = { recordingLineNo -> vm.deleteExtraLine(recordingLineNo) },
                     onUpload = {
                         if (liveMode && backgroundSync) {
-                            appVm.uploadInBackground(listOf(currentDoc))
-                            nav.popBackStack("main", false)
+                            launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
+                                appVm.uploadInBackground(listOf(currentDoc))
+                                nav.popBackStack("main", false)
+                            }
                         } else {
-                            processingMessage = "Uploading..."
                             val cb: (Int) -> Unit = { failures ->
                                 processingMessage = null
                                 nav.popBackStack("main", false)
                                 if (failures > 0) showSyncErrorDialog = true
                             }
-                            if (liveMode) appVm.uploadToExtSystem(listOf(currentDoc), cb) else appVm.testImportDocs(listOf(currentDoc), cb)
+                            if (liveMode) {
+                                launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
+                                    processingMessage = "Uploading..."
+                                    appVm.uploadToExtSystem(listOf(currentDoc), cb)
+                                }
+                            } else appVm.testImportDocs(listOf(currentDoc), cb)
                         }
                     },
                     lastScannedLines = lastScannedLines,
@@ -594,15 +682,21 @@ private fun PrimaBarcodeApp(
                     onBack = { nav.popBackStack() },
                     onRetryUpload = {
                         if (liveMode && backgroundSync) {
-                            appVm.uploadInBackground(listOf(currentDoc))
-                            nav.popBackStack()
+                            launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
+                                appVm.uploadInBackground(listOf(currentDoc))
+                                nav.popBackStack()
+                            }
                         } else {
-                            processingMessage = "Uploading..."
                             val cb: (Int) -> Unit = { failures ->
                                 processingMessage = null
                                 if (failures > 0) { showSyncErrorDialog = true } else { nav.popBackStack() }
                             }
-                            if (liveMode) appVm.uploadToExtSystem(listOf(currentDoc), cb) else appVm.testImportDocs(listOf(currentDoc), cb)
+                            if (liveMode) {
+                                launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
+                                    processingMessage = "Uploading..."
+                                    appVm.uploadToExtSystem(listOf(currentDoc), cb)
+                                }
+                            } else appVm.testImportDocs(listOf(currentDoc), cb)
                         }
                     },
                 )
@@ -626,6 +720,43 @@ private fun PrimaBarcodeApp(
                 }
             }
         }
+    }
+
+    if (showDownloadErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showDownloadErrorDialog = false },
+            title = { Text(stringResource(R.string.download_error_title), fontWeight = FontWeight.Bold) },
+            text  = { Text(downloadErrorMessage) },
+            confirmButton = {
+                Button(
+                    onClick = { showDownloadErrorDialog = false },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                ) { Text(stringResource(R.string.btn_ok), fontWeight = FontWeight.Bold) }
+            },
+        )
+    }
+
+    if (showDebugDialog) {
+        AlertDialog(
+            onDismissRequest = { showDebugDialog = false },
+            title = { Text("Debug — Request URLs", fontWeight = FontWeight.Bold) },
+            text = { Text(debugUrls.joinToString("\n\n")) },
+            confirmButton = {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(
+                        onClick = { showDebugDialog = false; pendingAction?.invoke() },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                    ) { Text("Proceed", fontWeight = FontWeight.Bold) }
+                    OutlinedButton(
+                        onClick = { showDebugDialog = false },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                    ) { Text(stringResource(R.string.btn_cancel)) }
+                }
+            },
+        )
     }
 
     if (showSyncErrorDialog) {

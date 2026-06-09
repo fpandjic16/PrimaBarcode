@@ -16,8 +16,7 @@
     <string name="btn_sign_in_sync">Prijavi se i sinkroniziraj</string>
     <string name="btn_yes_insert">Da, umetni</string>
     <!-- Dashboard -->
-    <string name="dashboard_today">DANAS</string>
-    <string name="dashboard_scans">skenova</string>
+    <string name="dashboard_today">DANAS (skenirane linije)</string>
     <string name="dashboard_pill_ready">gotovo</string>
     <string name="dashboard_pill_partial">djelomično</string>
     <string name="dashboard_pill_error">greška</string>
@@ -114,6 +113,9 @@
     <string name="settings_sec_sync">Sinkronizacija</string>
     <string name="settings_sec_ext_config">Konfiguracija vanjskog sustava</string>
     <string name="settings_sec_data">Podaci</string>
+    <string name="settings_sec_debug">Debug</string>
+    <string name="settings_debugger_active">Debugger aktivan</string>
+    <string name="settings_debugger_active_desc">Prikaži pune URL-ove zahtjeva prije spajanja</string>
     <string name="settings_sec_system_info">Informacije o sustavu</string>
     <string name="settings_sec_account">Korisnički račun</string>
     <string name="settings_no_location">Nije odabrana lokacija</string>
@@ -158,6 +160,7 @@
     <string name="settings_android">Android</string>
     <string name="settings_sdk">SDK</string>
     <string name="settings_db_schema">Shema baze podataka</string>
+    <string name="settings_not_signed_in">Nije prijavljeno</string>
     <string name="settings_sign_out">Odjavi se iz vanjskog sustava</string>
     <string name="settings_coming_soon">USKORO</string>
     <string name="dialog_clear_cache_title">Obrisati predmemoriju?</string>
@@ -176,6 +179,7 @@
     <string name="login_ttl_days">%d dana</string>
     <string name="login_session_info">Sesija pohranjena šifrirano za %s</string>
     <!-- Download filter -->
+    <string name="download_error_title">Preuzimanje nije uspjelo</string>
     <string name="download_title">Preuzimanje</string>
     <string name="download_subtitle">Odaberite što preuzeti iz vanjskog sustava</string>
     <string name="filter_document_date">DATUM DOKUMENTA</string>
@@ -216,6 +220,14 @@
     <string name="ext_config_locations_url">URL lokacija</string>
     <string name="ext_config_rc_url">URL centara odgovornosti</string>
     <string name="ext_config_recording_url">URL sinkronizacije snimanja</string>
+    <string name="ext_config_load_title">Učitaj konfiguraciju</string>
+    <string name="ext_config_load_desc">Učitajte ugrađene zadane vrijednosti ili uvezite JSON datoteku s uređaja.</string>
+    <string name="ext_config_load_builtin">Učitaj ugrađene zadane vrijednosti</string>
+    <string name="ext_config_load_from_file">Uvezi iz datoteke</string>
+    <string name="ext_config_import_success">Konfiguracija uvezena</string>
+    <string name="ext_config_doc_type_code">Šifra vrste dokumenta</string>
+    <string name="ext_config_import_parse_error">JSON datoteka nije valjana</string>
+    <string name="ext_config_import_read_error">Datoteka se ne može pročitati</string>
     <!-- Document recordings -->
     <string name="doc_delete_recordings_title">Obrisati snimanja?</string>
     <string name="doc_delete_recordings_text">Sva snimanja za %s bit ce izbrisana i dokument ce biti vracen u pocetno stanje.</string>

@@ -45,6 +45,7 @@ fun DocumentLineEntity.toDomain(scanned: Double): Line = Line(
     destinationCode = destinationCode,
     sourceCode = sourceCode,
     unitOfMeasureCode = unitOfMeasureCode,
+    scanningQty = scanningQty,
 )
 
 fun DocumentHeaderWithLines.toDomain(): Document = Document(
@@ -53,7 +54,6 @@ fun DocumentHeaderWithLines.toDomain(): Document = Document(
     destinationCode = document.destinationCode,
     sourceCode = document.sourceCode,
     rcCode = document.rcCode,
-    ownerUserId = document.ownerUserId,
     creationDateTime = Instant.ofEpochMilli(document.creationDateTime),
     documentDate = document.documentDate?.let { Instant.ofEpochMilli(it) },
     lines = lines.sortedBy { it.lineNo }.map { lineEntity ->
@@ -79,7 +79,6 @@ fun Document.toEntity(): DocumentHeaderEntity = DocumentHeaderEntity(
     destinationCode = destinationCode,
     sourceCode = sourceCode,
     rcCode = rcCode,
-    ownerUserId = ownerUserId,
     creationDateTime = creationDateTime.toEpochMilli(),
     documentDate = documentDate?.toEpochMilli(),
     docState = state.toDbString(),
@@ -96,6 +95,7 @@ fun Line.toEntity(type: String): DocumentLineEntity = DocumentLineEntity(
     destinationCode = destinationCode,
     sourceCode = sourceCode,
     unitOfMeasureCode = unitOfMeasureCode,
+    scanningQty = scanningQty,
 )
 
 // ── Location / RC mappers ─────────────────────────────────────────────────────

@@ -8,8 +8,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +26,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import com.prima.barcode.data.model.DocumentFilter
 import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.LineStatus
+import com.prima.barcode.data.model.Location
+import com.prima.barcode.data.model.ResponsibilityCenter
 import com.prima.barcode.data.model.bgColor
 import com.prima.barcode.data.model.color
 import com.prima.barcode.ui.component.PrimaTopBar
@@ -68,6 +72,8 @@ fun DocumentFilterScreen(
     lockedSourceCode: String? = null,
     lockedRcCode: String? = null,
     showDocTypeFilter: Boolean = true,
+    locations: List<Location> = emptyList(),
+    rcs: List<ResponsibilityCenter> = emptyList(),
     onApply: (DocumentFilter) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -216,22 +222,30 @@ fun DocumentFilterScreen(
 
             // ── Source code ───────────────────────────────────────────────────────
             FilterSection(label = stringResource(R.string.filter_source_code)) {
-                FilterTextField(
-                    value         = sourceCode,
-                    onValueChange = { if (lockedSourceCode == null) sourceCode = it },
-                    placeholder   = "e.g. CS175",
-                    enabled       = lockedSourceCode == null,
-                )
+                if (lockedSourceCode != null) {
+                    FilterLockedField(value = lockedSourceCode)
+                } else {
+                    FilterDropdown(
+                        placeholder   = "e.g. CS175",
+                        value         = sourceCode,
+                        options       = locations.map { it.code },
+                        onValueChange = { sourceCode = it },
+                    )
+                }
             }
 
             // ── Responsibility center ─────────────────────────────────────────────
             FilterSection(label = stringResource(R.string.filter_responsibility_center)) {
-                FilterTextField(
-                    value         = rcCode,
-                    onValueChange = { if (lockedRcCode == null) rcCode = it },
-                    placeholder   = "e.g. CENT_SKL",
-                    enabled       = lockedRcCode == null,
-                )
+                if (lockedRcCode != null) {
+                    FilterLockedField(value = lockedRcCode)
+                } else {
+                    FilterDropdown(
+                        placeholder   = "e.g. CENT_SKL",
+                        value         = rcCode,
+                        options       = rcs.map { it.code },
+                        onValueChange = { rcCode = it },
+                    )
+                }
             }
         }
 
@@ -381,4 +395,80 @@ private fun FilterTextField(
             }
         },
     )
+}
+
+@Composable
+private fun FilterLockedField(value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White)
+            .border(1.dp, Color(0x18000000), RoundedCornerShape(8.dp))
+            .padding(horizontal = 10.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = value,
+            style = monoLabel.copy(color = Color(0xFF888888)),
+            modifier = Modifier.weight(1f),
+        )
+        Icon(Icons.Outlined.Lock, null, tint = Color(0xFFBBBBBB), modifier = Modifier.size(14.dp))
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilterDropdown(
+    placeholder: String,
+    value: String,
+    options: List<String>,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.White)
+                .border(1.dp, Color(0x28000000), RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = value.ifEmpty { placeholder },
+                style = monoLabel.copy(color = if (value.isNotEmpty()) PrimaPalette.Ink else PrimaPalette.Ink3),
+                modifier = Modifier.weight(1f),
+            )
+            if (value.isNotEmpty()) {
+                Icon(
+                    Icons.Outlined.Clear,
+                    contentDescription = null,
+                    tint = PrimaPalette.Ink3,
+                    modifier = Modifier.size(14.dp).clickable { onValueChange(""); expanded = false },
+                )
+            } else {
+                Icon(Icons.Outlined.ArrowDropDown, null, tint = PrimaPalette.Ink3, modifier = Modifier.size(16.dp))
+            }
+        }
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text("— Any —", style = monoLabel) },
+                onClick = { onValueChange(""); expanded = false },
+            )
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option, style = monoLabel) },
+                    onClick = { onValueChange(option); expanded = false },
+                )
+            }
+        }
+    }
 }

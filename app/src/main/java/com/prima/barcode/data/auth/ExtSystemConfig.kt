@@ -6,11 +6,13 @@ data class ExtSystemConfig(
     val serverBaseUrl: String = "",
     val credentialTtlHours: Int = 24,
     val endpointUrls: Map<DocumentType, String> = emptyMap(),
+    val documentTypeCodes: Map<DocumentType, String> = emptyMap(),
     val recordingSyncUrl: String = "",
     val locationsUrl: String = "",
     val responsibilityCentersUrl: String = "",
 ) {
     fun endpointFor(type: DocumentType): String = endpointUrls[type] ?: ""
+    fun docTypeCodeFor(type: DocumentType): String = documentTypeCodes[type] ?: ""
     val isConfigured: Boolean get() = serverBaseUrl.isNotBlank()
 }
 

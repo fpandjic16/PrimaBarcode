@@ -51,7 +51,7 @@ data class DocTypeSummary(
 
 @Composable
 fun MainMenuScreen(
-    user: User,
+    user: User?,
     location: Location?,
     rc: ResponsibilityCenter,
     docTypes: List<DocTypeSummary>,
@@ -69,7 +69,7 @@ fun MainMenuScreen(
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
             title = "Prima Barcode",
-            subtitle = user.displayName,
+            subtitle = user?.displayName.orEmpty(),
             actions = {
                 IconButton(onClick = onOpenSettings, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Outlined.Settings, "Settings", tint = Color.White, modifier = Modifier.size(28.dp))

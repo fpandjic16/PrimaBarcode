@@ -48,22 +48,14 @@ fun DocumentStatsDashboard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.dashboard_today), style = monoLabel.copy(color = Color(0x88FFFFFF)))
                 Spacer(Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        totalScans.toString(),
-                        fontSize = 32.sp,
-                        fontFamily = GeistMono,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White,
-                        lineHeight = 32.sp,
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        stringResource(R.string.dashboard_scans),
-                        style = monoLabel.copy(color = Color(0x88FFFFFF)),
-                        modifier = Modifier.padding(bottom = 4.dp),
-                    )
-                }
+                Text(
+                    totalScans.toString(),
+                    fontSize = 32.sp,
+                    fontFamily = GeistMono,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White,
+                    lineHeight = 32.sp,
+                )
             }
             Column(
                 horizontalAlignment = Alignment.End,

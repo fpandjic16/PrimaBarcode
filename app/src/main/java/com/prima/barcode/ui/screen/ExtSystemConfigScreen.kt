@@ -2,6 +2,8 @@ package com.prima.barcode.ui.screen
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.platform.LocalContext
@@ -62,12 +64,18 @@ fun ExtSystemConfigScreen(
         password: String,
         onResult: (success: Boolean, message: String) -> Unit,
     ) -> Unit = { _, _, _, cb -> cb(false, "Test connection is not wired up") },
+    onImportJson: ((json: String) -> ExtSystemConfig?)? = null,
 ) {
     var serverBaseUrl             by remember { mutableStateOf(initial.serverBaseUrl) }
     var ttlHours                 by remember { mutableIntStateOf(initial.credentialTtlHours) }
     val endpointUrls = remember {
         mutableStateMapOf<DocumentType, String>().also { map ->
             DocumentType.entries.forEach { map[it] = initial.endpointFor(it) }
+        }
+    }
+    val documentTypeCodes = remember {
+        mutableStateMapOf<DocumentType, String>().also { map ->
+            DocumentType.entries.forEach { map[it] = initial.docTypeCodeFor(it) }
         }
     }
     var recordingSyncUrl          by remember { mutableStateOf(initial.recordingSyncUrl) }
@@ -78,6 +86,7 @@ fun ExtSystemConfigScreen(
     var testing        by remember { mutableStateOf(false) }
     var testResult     by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
     var showExitDialog by remember { mutableStateOf(false) }
+    var showLoadDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -85,6 +94,7 @@ fun ExtSystemConfigScreen(
         serverBaseUrl            = serverBaseUrl.trim(),
         credentialTtlHours       = ttlHours,
         endpointUrls             = endpointUrls.toMap(),
+        documentTypeCodes        = documentTypeCodes.toMap(),
         recordingSyncUrl         = recordingSyncUrl.trim(),
         locationsUrl             = locationsUrl.trim(),
         responsibilityCentersUrl = responsibilityCentersUrl.trim(),
@@ -94,6 +104,7 @@ fun ExtSystemConfigScreen(
         serverBaseUrl = c.serverBaseUrl
         ttlHours = c.credentialTtlHours
         DocumentType.entries.forEach { endpointUrls[it] = c.endpointFor(it) }
+        DocumentType.entries.forEach { documentTypeCodes[it] = c.docTypeCodeFor(it) }
         recordingSyncUrl = c.recordingSyncUrl
         locationsUrl = c.locationsUrl
         responsibilityCentersUrl = c.responsibilityCentersUrl
@@ -101,6 +112,26 @@ fun ExtSystemConfigScreen(
 
     fun attemptExit() {
         if (buildConfig() != initial) showExitDialog = true else onDiscard()
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null && onImportJson != null) {
+            val json = runCatching {
+                context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+            }.getOrNull()
+            when {
+                json == null -> Toast.makeText(context, context.getString(R.string.ext_config_import_read_error), Toast.LENGTH_LONG).show()
+                else -> {
+                    val config = onImportJson(json)
+                    if (config != null) {
+                        applyConfig(config)
+                        Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, context.getString(R.string.ext_config_import_parse_error), Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
     }
 
     BackHandler { attemptExit() }
@@ -116,25 +147,17 @@ fun ExtSystemConfigScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 40.dp),
         ) {
-            // ── Insert default parameters ─────────────────────────────────────
+            // ── Load configuration ────────────────────────────────────────────
             item {
                 Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
                     Button(
-                        onClick = {
-                            val defaults = loadDefaults()
-                            if (defaults != null) {
-                                applyConfig(defaults)
-                                Toast.makeText(context, "Default parameters inserted", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, "Could not load ext_system_defaults.json", Toast.LENGTH_LONG).show()
-                            }
-                        },
+                        onClick = { showLoadDialog = true },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                     ) {
-                        Text("Insert default parameters", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.ext_config_load_title), fontWeight = FontWeight.SemiBold)
                     }
                     Text(
-                        "Fills every field below from the bundled ext_system_defaults.json.",
+                        stringResource(R.string.ext_config_load_desc),
                         style = monoLabel.copy(color = PrimaPalette.Ink3),
                         modifier = Modifier.padding(top = 6.dp),
                     )
@@ -242,6 +265,13 @@ fun ExtSystemConfigScreen(
                                 onValueChange = { endpointUrls[type] = it },
                             )
                             ConfigDivider()
+                            ConfigField(
+                                label = stringResource(R.string.ext_config_doc_type_code),
+                                hint  = "e.g. WHSE_SHIP (max 20 chars)",
+                                value = documentTypeCodes[type] ?: "",
+                                onValueChange = { if (it.length <= 20) documentTypeCodes[type] = it },
+                            )
+                            ConfigDivider()
                             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                                 Text(
                                     "Filter by",
@@ -324,6 +354,50 @@ fun ExtSystemConfigScreen(
                 }
             },
         )
+    }
+
+    if (showLoadDialog) {
+        Dialog(onDismissRequest = { showLoadDialog = false }) {
+            Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(stringResource(R.string.ext_config_load_title), fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(4.dp))
+                    Button(
+                        onClick = {
+                            showLoadDialog = false
+                            val defaults = loadDefaults()
+                            if (defaults != null) {
+                                applyConfig(defaults)
+                                Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Could not load ext_system_defaults.json", Toast.LENGTH_LONG).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.ext_config_load_builtin), fontWeight = FontWeight.SemiBold)
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            showLoadDialog = false
+                            importLauncher.launch("application/json")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.ext_config_load_from_file), fontWeight = FontWeight.SemiBold)
+                    }
+                    TextButton(
+                        onClick = { showLoadDialog = false },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                }
+            }
+        }
     }
 
     if (showExitDialog) {

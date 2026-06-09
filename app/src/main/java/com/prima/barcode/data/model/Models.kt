@@ -47,6 +47,7 @@ data class Line(
     val destinationCode: String,
     val sourceCode: String,
     val unitOfMeasureCode: String,
+    val scanningQty: Double = 1.0,
 ) {
     val status: LineStatus get() = LineStatus.of(scanned, expected)
 }
@@ -64,7 +65,6 @@ data class Document(
     val destinationCode: String,
     val sourceCode: String,
     val rcCode: String,
-    val ownerUserId: String,
     val creationDateTime: Instant,
     val documentDate: Instant? = null,
     val lines: List<Line>,

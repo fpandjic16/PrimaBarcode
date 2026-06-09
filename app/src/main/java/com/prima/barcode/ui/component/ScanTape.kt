@@ -22,7 +22,6 @@ import com.prima.barcode.data.model.color
 import com.prima.barcode.data.model.formatQty
 import com.prima.barcode.ui.theme.PrimaPalette
 import com.prima.barcode.ui.theme.monoLabel
-import kotlinx.coroutines.delay
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -42,13 +41,7 @@ fun ScanTape(
 ) {
     if (maxLines == 0 || tape.isEmpty()) return
 
-    var expanded by remember { mutableStateOf(true) }
-
-    LaunchedEffect(tape) {
-        expanded = true
-        delay(20_000)
-        expanded = false
-    }
+    var expanded by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier

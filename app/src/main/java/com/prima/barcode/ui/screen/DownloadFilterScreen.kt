@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material3.*
@@ -22,6 +23,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import com.prima.barcode.data.model.DownloadFilter
+import com.prima.barcode.data.model.Location
+import com.prima.barcode.data.model.ResponsibilityCenter
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.component.verticalScrollbar
 import com.prima.barcode.ui.theme.PrimaPalette
@@ -43,6 +46,8 @@ private enum class DlDateTarget { FROM, TO }
 @Composable
 fun DownloadFilterScreen(
     hasCredentials: Boolean = false,
+    locations: List<Location> = emptyList(),
+    rcs: List<ResponsibilityCenter> = emptyList(),
     onConfirm: (filter: DownloadFilter, username: String?, password: String?) -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -55,6 +60,10 @@ fun DownloadFilterScreen(
     var rcCode          by remember { mutableStateOf("") }
     var dateTarget      by remember { mutableStateOf<DlDateTarget?>(null) }
     var showLogin       by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (!hasCredentials) showLogin = true
+    }
 
     fun currentFilter() = DownloadFilter(
         dateFrom        = dateFrom,
@@ -114,11 +123,21 @@ fun DownloadFilterScreen(
             }
 
             DlFilterSection(label = stringResource(R.string.filter_source_code)) {
-                DlTextField(value = sourceCode, onValueChange = { sourceCode = it }, placeholder = "e.g. CS175")
+                DlDropdown(
+                    placeholder   = "e.g. CS175",
+                    value         = sourceCode,
+                    options       = locations.map { it.code },
+                    onValueChange = { sourceCode = it },
+                )
             }
 
             DlFilterSection(label = stringResource(R.string.filter_responsibility_center)) {
-                DlTextField(value = rcCode, onValueChange = { rcCode = it }, placeholder = "e.g. CENT_SKL")
+                DlDropdown(
+                    placeholder   = "e.g. CENT_SKL",
+                    value         = rcCode,
+                    options       = rcs.map { it.code },
+                    onValueChange = { rcCode = it },
+                )
             }
         }
 
@@ -254,4 +273,60 @@ private fun DlTextField(
             }
         },
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DlDropdown(
+    placeholder: String,
+    value: String,
+    options: List<String>,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.White)
+                .border(1.dp, Color(0x28000000), RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = value.ifEmpty { placeholder },
+                style = monoLabel.copy(color = if (value.isNotEmpty()) PrimaPalette.Ink else PrimaPalette.Ink3),
+                modifier = Modifier.weight(1f),
+            )
+            if (value.isNotEmpty()) {
+                Icon(
+                    Icons.Outlined.Clear,
+                    contentDescription = null,
+                    tint = PrimaPalette.Ink3,
+                    modifier = Modifier.size(14.dp).clickable { onValueChange(""); expanded = false },
+                )
+            } else {
+                Icon(Icons.Outlined.ArrowDropDown, null, tint = PrimaPalette.Ink3, modifier = Modifier.size(16.dp))
+            }
+        }
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text("— Any —", style = monoLabel) },
+                onClick = { onValueChange(""); expanded = false },
+            )
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option, style = monoLabel) },
+                    onClick = { onValueChange(option); expanded = false },
+                )
+            }
+        }
+    }
 }

@@ -18,7 +18,7 @@ import javax.inject.Singleton
  *  - Domain is stored separately in ExtSystemConfigStore (not sensitive)
  */
 @Singleton
-class ExtSystemCredentialStore @Inject constructor(@ApplicationContext private val context: Context) {
+class ExtSystemCredentialStore @Inject constructor(@param:ApplicationContext private val context: Context) {
 
     private val masterKey by lazy {
         MasterKey.Builder(context)

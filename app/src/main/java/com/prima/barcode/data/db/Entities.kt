@@ -15,7 +15,6 @@ data class DocumentHeaderEntity(
     val destinationCode: String,
     val sourceCode: String,
     val rcCode: String,
-    val ownerUserId: String,
     val creationDateTime: Long,
     val documentDate: Long?,
     val docState: String,
@@ -38,6 +37,7 @@ data class DocumentLineEntity(
     val destinationCode: String,
     val sourceCode: String,
     val unitOfMeasureCode: String,
+    val scanningQty: Double = 1.0,
 )
 
 @Entity(
@@ -53,7 +53,7 @@ data class RecordingEntity(
     val recordingLineNo: Int,
     val barcodeNo: String,
     val quantity: Double,
-    val creationDateTime: Long,
+    val creationDateTime: String,
     val format: String?,
     val userId: String,
     val destinationCode: String,

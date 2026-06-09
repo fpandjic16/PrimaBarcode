@@ -10,6 +10,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import okhttp3.OkHttpClient
 import timber.log.Timber
+import java.net.Proxy
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,6 +26,7 @@ class ExtSystemODataClient @Inject constructor() {
     private val gson = Gson()
     private var httpClient: HttpClient? = null
     private var clientKey: Pair<String, String>? = null  // rawUsername, pass
+    private var ntlmAuth: NtlmAuthenticator? = null
 
     fun configure(config: ExtSystemConfig, creds: ExtSystemCredentials): ExtSystemODataClient {
         val key = creds.username to creds.password
@@ -39,8 +41,11 @@ class ExtSystemODataClient @Inject constructor() {
     private fun buildClient(rawUsername: String, password: String): HttpClient {
         // Domain travels inside the username as DOMAIN\user or user@domain.
         val (domain, username) = parseDomainUser(rawUsername)
+        val auth = NtlmAuthenticator(domain, username, password)
+        ntlmAuth = auth
         val okHttp = OkHttpClient.Builder()
-            .authenticator(NtlmAuthenticator(domain, username, password))
+            .proxy(Proxy.NO_PROXY)  // bypass system proxy; NAV is always on local LAN
+            .authenticator(auth)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
@@ -54,10 +59,25 @@ class ExtSystemODataClient @Inject constructor() {
 
     suspend fun testConnection(baseUrl: String): ExtSystemResult<Unit> {
         val client = httpClient ?: return ExtSystemResult.Failure("Client not configured")
+        ntlmAuth?.resetPhase()
         return runCatching {
             val response = client.get(baseUrl) { accept(ContentType.Application.Json) }
             if (response.status.isSuccess()) ExtSystemResult.Success(Unit)
-            else ExtSystemResult.Failure(response.status.description, response.status.value)
+            else {
+                val phase = ntlmAuth?.phaseReached ?: 0
+                Timber.w("testConnection: HTTP ${response.status.value}, NTLM phase=$phase")
+                val msg = when {
+                    response.status.value == 401 && phase == 0 ->
+                        "Server did not issue an NTLM challenge. Verify Windows Authentication is enabled on this NAV OData endpoint."
+                    response.status.value == 401 ->
+                        "NTLM handshake completed (phase $phase) but server rejected the credentials. Check domain\\username and password."
+                    else -> {
+                        val body = runCatching { response.bodyAsText() }.getOrDefault("")
+                        "HTTP ${response.status.value}: $body".take(300)
+                    }
+                }
+                ExtSystemResult.Failure(msg, response.status.value)
+            }
         }.getOrElse {
             Timber.e(it, "OData connection test failed")
             ExtSystemResult.Failure(it.message ?: "Unknown error")
@@ -89,20 +109,30 @@ class ExtSystemODataClient @Inject constructor() {
     suspend fun downloadRaw(url: String): ExtSystemResult<String> {
         val client = httpClient ?: return ExtSystemResult.Failure("Client not configured")
         return runCatching {
-            val response = client.get(url) {
-                accept(ContentType.Application.Json)
-                // OData minimal metadata reduces payload size
-                header("Accept", "application/json;odata=nometadata")
+            val allValues = com.google.gson.JsonArray()
+            var nextUrl: String? = url
+            while (nextUrl != null) {
+                val response = client.get(nextUrl) {
+                    accept(ContentType.Application.Json)
+                    header("Accept", "application/json;odata=nometadata")
+                }
+                if (!response.status.isSuccess()) {
+                    val body = runCatching { response.bodyAsText() }.getOrDefault("")
+                    Timber.w("NAV download failed [${response.status.value}]: $body")
+                    return ExtSystemResult.Failure(
+                        "HTTP ${response.status.value}: ${response.status.description}",
+                        response.status.value,
+                    )
+                }
+                val page = com.google.gson.JsonParser.parseString(response.bodyAsText()).asJsonObject
+                page.getAsJsonArray("value")?.forEach { allValues.add(it) }
+                nextUrl = page.get("@odata.nextLink")?.takeIf { !it.isJsonNull }?.asString
+                Timber.d("OData page: ${allValues.size()} rows total, more=${nextUrl != null}")
             }
-            if (response.status.isSuccess()) {
-                ExtSystemResult.Success(response.bodyAsText())
-            } else {
-                val body = runCatching { response.bodyAsText() }.getOrDefault("")
-                Timber.w("NAV download failed [${"$"}{response.status.value}]: ${"$"}body")
-                ExtSystemResult.Failure("HTTP ${"$"}{response.status.value}: ${"$"}{response.status.description}", response.status.value)
-            }
+            val merged = com.google.gson.JsonObject().apply { add("value", allValues) }
+            ExtSystemResult.Success(gson.toJson(merged))
         }.getOrElse {
-            Timber.e(it, "NAV download error: ${"$"}url")
+            Timber.e(it, "NAV download error: $url")
             ExtSystemResult.Failure(it.message ?: "Network error")
         }
     }
@@ -111,6 +141,7 @@ class ExtSystemODataClient @Inject constructor() {
         httpClient?.close()
         httpClient = null
         clientKey = null
+        ntlmAuth = null
     }
 
     companion object {
