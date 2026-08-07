@@ -132,6 +132,29 @@ class MainActivity : AppCompatActivity() {
                 debuggerActive   = debuggerActive,
             )
 
+            // Bulk-applies settings saved (and confirmed) from the Settings screen —
+            // called once on exit-confirm, not per-field, since Settings now buffers
+            // edits locally instead of auto-saving each change.
+            fun applySettings(s: AppSettings) {
+                if (language != s.language) {
+                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(s.language.tag))
+                }
+                textSize = s.textSize
+                uppercaseText = s.uppercaseText
+                language = s.language
+                lastScannedLines = s.lastScannedLines
+                autoScan = s.autoScan
+                debounceTime = s.debounceTime
+                hapticEnabled = s.hapticEnabled
+                warnOnOver = s.warnOnOver
+                warnNotOnDocument = s.warnNotOnDocument
+                askQtyForUnknownBarcode = s.askQtyForUnknownBarcode
+                autoUploadCompleted = s.autoUploadCompleted
+                backgroundSync = s.backgroundSync
+                debuggerActive = s.debuggerActive
+                appVm.saveSettings(s)
+            }
+
             PrimaBarcodeTheme(textSizeOffset = textSize.spOffset, uppercaseEnabled = uppercaseText) {
                 PrimaBarcodeApp(
                     locationCode              = locationCode,
@@ -139,39 +162,23 @@ class MainActivity : AppCompatActivity() {
                     onLocationCodeChange      = { code -> locationCode = code; appVm.saveSettings(buildSettings().copy(lastLocationCode = code)) },
                     onRcCodeChange            = { code -> rcCode = code; appVm.saveSettings(buildSettings().copy(lastRcCode = code)) },
                     textSize                  = textSize,
-                    onTextSizeChange          = { textSize = it; appVm.saveSettings(buildSettings().copy(textSize = it)) },
                     uppercaseText             = uppercaseText,
-                    onUppercaseTextChange     = { uppercaseText = it; appVm.saveSettings(buildSettings().copy(uppercaseText = it)) },
                     language                  = language,
-                    onLanguageChange          = { lang ->
-                        language = lang
-                        appVm.saveSettings(buildSettings().copy(language = lang))
-                        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(lang.tag))
-                    },
                     lastScannedLines          = lastScannedLines,
-                    onLastScannedLinesChange  = { lastScannedLines = it; appVm.saveSettings(buildSettings().copy(lastScannedLines = it)) },
                     autoScan                  = autoScan,
-                    onAutoScanChange          = { autoScan = it; appVm.saveSettings(buildSettings().copy(autoScan = it)) },
                     debounceTime              = debounceTime,
-                    onDebounceTimeChange      = { debounceTime = it; appVm.saveSettings(buildSettings().copy(debounceTime = it)) },
                     hapticEnabled             = hapticEnabled,
-                    onHapticEnabledChange     = { hapticEnabled = it; appVm.saveSettings(buildSettings().copy(hapticEnabled = it)) },
                     warnOnOver                = warnOnOver,
-                    onWarnOnOverChange        = { warnOnOver = it; appVm.saveSettings(buildSettings().copy(warnOnOver = it)) },
                     warnNotOnDocument         = warnNotOnDocument,
-                    onWarnNotOnDocumentChange = { warnNotOnDocument = it; appVm.saveSettings(buildSettings().copy(warnNotOnDocument = it)) },
-                    askQtyForUnknownBarcode         = askQtyForUnknownBarcode,
-                    onAskQtyForUnknownBarcodeChange = { askQtyForUnknownBarcode = it; appVm.saveSettings(buildSettings().copy(askQtyForUnknownBarcode = it)) },
+                    askQtyForUnknownBarcode   = askQtyForUnknownBarcode,
                     autoUploadCompleted       = autoUploadCompleted,
-                    onAutoUploadChange        = { autoUploadCompleted = it; appVm.saveSettings(buildSettings().copy(autoUploadCompleted = it)) },
                     backgroundSync            = backgroundSync,
-                    onBackgroundSyncChange    = { backgroundSync = it; appVm.saveSettings(buildSettings().copy(backgroundSync = it)) },
                     disabledDocTypes          = disabledDocTypes,
                     onDisabledDocTypesChange  = { disabledDocTypes = it; appVm.saveSettings(buildSettings().copy(disabledDocTypes = it)) },
                     docTypeFilters            = docTypeFilters,
                     onDocTypeFiltersChange    = { docTypeFilters = it; appVm.saveSettings(buildSettings().copy(docTypeFilters = it)) },
                     debuggerActive            = debuggerActive,
-                    onDebuggerActiveChange    = { debuggerActive = it; appVm.saveSettings(buildSettings().copy(debuggerActive = it)) },
+                    onSettingsSaved           = { s -> applySettings(s) },
                 )
             }
         }
@@ -200,35 +207,23 @@ private fun PrimaBarcodeApp(
     onLocationCodeChange: (String) -> Unit,
     onRcCodeChange: (String) -> Unit,
     textSize: TextSize,
-    onTextSizeChange: (TextSize) -> Unit,
     uppercaseText: Boolean,
-    onUppercaseTextChange: (Boolean) -> Unit,
     language: Language,
-    onLanguageChange: (Language) -> Unit,
     lastScannedLines: Int,
-    onLastScannedLinesChange: (Int) -> Unit,
     autoScan: Boolean,
-    onAutoScanChange: (Boolean) -> Unit,
     debounceTime: Int,
-    onDebounceTimeChange: (Int) -> Unit,
     hapticEnabled: Boolean,
-    onHapticEnabledChange: (Boolean) -> Unit,
     warnOnOver: Boolean,
-    onWarnOnOverChange: (Boolean) -> Unit,
     warnNotOnDocument: Boolean,
-    onWarnNotOnDocumentChange: (Boolean) -> Unit,
     askQtyForUnknownBarcode: Boolean,
-    onAskQtyForUnknownBarcodeChange: (Boolean) -> Unit,
     autoUploadCompleted: Boolean,
-    onAutoUploadChange: (Boolean) -> Unit,
     backgroundSync: Boolean,
-    onBackgroundSyncChange: (Boolean) -> Unit,
     disabledDocTypes: Set<String>,
     onDisabledDocTypesChange: (Set<String>) -> Unit,
     docTypeFilters: Map<String, DocTypeFilterMode>,
     onDocTypeFiltersChange: (Map<String, DocTypeFilterMode>) -> Unit,
     debuggerActive: Boolean,
-    onDebuggerActiveChange: (Boolean) -> Unit,
+    onSettingsSaved: (AppSettings) -> Unit,
 ) {
     val nav = rememberNavController()
     val appVm: AppViewModel = hiltViewModel()
@@ -421,6 +416,7 @@ private fun PrimaBarcodeApp(
                 },
                 onDiscard = { nav.popBackStack() },
                 loadDefaults = { appVm.loadExtSystemDefaults() },
+                getDefaultsJsonText = { appVm.getExtSystemDefaultsJsonText() },
                 disabledDocTypes = disabledDocTypes,
                 onDisabledDocTypesChange = onDisabledDocTypesChange,
                 docTypeFilters = docTypeFilters,
@@ -446,34 +442,36 @@ private fun PrimaBarcodeApp(
             )
         }
         composable("settings") {
+            val initialSettingsSnapshot = AppSettings(
+                textSize = textSize,
+                uppercaseText = uppercaseText,
+                language = language,
+                lastScannedLines = lastScannedLines,
+                autoScan = autoScan,
+                debounceTime = debounceTime,
+                hapticEnabled = hapticEnabled,
+                warnOnOver = warnOnOver,
+                warnNotOnDocument = warnNotOnDocument,
+                askQtyForUnknownBarcode = askQtyForUnknownBarcode,
+                autoUploadCompleted = autoUploadCompleted,
+                backgroundSync = backgroundSync,
+                lastLocationCode = locationCode,
+                lastRcCode = rcCode,
+                disabledDocTypes = disabledDocTypes,
+                docTypeFilters = docTypeFilters,
+                debuggerActive = debuggerActive,
+            )
             SettingsScreen(
                 user = user,
                 location = location,
                 rc = rc,
-                textSize = textSize,
-                onTextSizeChange = onTextSizeChange,
-                uppercaseText = uppercaseText,
-                onUppercaseTextChange = onUppercaseTextChange,
-                language = language,
-                onLanguageChange = onLanguageChange,
-                lastScannedLines = lastScannedLines,
-                onLastScannedLinesChange = onLastScannedLinesChange,
-                autoScan = autoScan,
-                onAutoScanChange = onAutoScanChange,
-                debounceTime = debounceTime,
-                onDebounceTimeChange = onDebounceTimeChange,
-                hapticEnabled = hapticEnabled,
-                onHapticEnabledChange = onHapticEnabledChange,
-                warnOnOver = warnOnOver,
-                onWarnOnOverChange = onWarnOnOverChange,
-                warnNotOnDocument = warnNotOnDocument,
-                onWarnNotOnDocumentChange = onWarnNotOnDocumentChange,
-                askQtyForUnknownBarcode = askQtyForUnknownBarcode,
-                onAskQtyForUnknownBarcodeChange = onAskQtyForUnknownBarcodeChange,
-                autoUploadCompleted = autoUploadCompleted,
-                onAutoUploadChange = onAutoUploadChange,
-                backgroundSync = backgroundSync,
-                onBackgroundSyncChange = onBackgroundSyncChange,
+                initial = initialSettingsSnapshot,
+                onSave = { s -> onSettingsSaved(s); nav.popBackStack() },
+                onDiscard = { nav.popBackStack() },
+                onSaveExtSystemConfig = { config -> appVm.saveExtSystemConfig(config) },
+                loadExtSystemConfigDefaults = { appVm.loadExtSystemDefaults() },
+                parseExtSystemConfigJson = { json -> appVm.parseExtSystemConfigJson(json) },
+                getExtSystemDefaultsJsonText = { appVm.getExtSystemDefaultsJsonText() },
                 onExport = {
                     val ts = exportTimestampFmt.format(Instant.now())
                     exportLauncher.launch("prima_export_${ts}.json")
@@ -481,11 +479,8 @@ private fun PrimaBarcodeApp(
                 onClearCache = { appVm.clearCache() },
                 onDeleteAllDocuments = { appVm.deleteAllDocuments() },
                 onInsertTestData = { appVm.insertTestData() },
-                onBack = { nav.popBackStack() },
                 onChangeLocation = { nav.navigate("location_rc_pick") },
                 onOpenExtSystemConfig = { nav.navigate("ext_system_config") },
-                debuggerActive = debuggerActive,
-                onDebuggerActiveChange = onDebuggerActiveChange,
                 onSignOut = { appVm.signOut() },
                 onSignInTap = { requireCredentials {} },
             )

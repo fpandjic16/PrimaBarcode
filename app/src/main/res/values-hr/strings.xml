@@ -222,6 +222,7 @@
     <string name="ext_config_load_title">Učitaj konfiguraciju</string>
     <string name="ext_config_load_desc">Učitajte ugrađene zadane vrijednosti ili uvezite JSON datoteku s uređaja.</string>
     <string name="ext_config_load_builtin">Učitaj ugrađene zadane vrijednosti</string>
+    <string name="ext_config_download_builtin">Preuzmi ugrađene zadane vrijednosti</string>
     <string name="ext_config_load_from_file">Uvezi iz datoteke</string>
     <string name="ext_config_import_success">Konfiguracija uvezena</string>
     <string name="ext_config_doc_type_code">Šifra vrste dokumenta</string>

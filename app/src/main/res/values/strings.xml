@@ -222,6 +222,7 @@
     <string name="ext_config_load_title">Load configuration</string>
     <string name="ext_config_load_desc">Load built-in production defaults or import a custom JSON file from the device.</string>
     <string name="ext_config_load_builtin">Load built-in defaults</string>
+    <string name="ext_config_download_builtin">Download built-in defaults</string>
     <string name="ext_config_load_from_file">Import from file</string>
     <string name="ext_config_import_success">Configuration imported</string>
     <string name="ext_config_doc_type_code">Document Type Code</string>

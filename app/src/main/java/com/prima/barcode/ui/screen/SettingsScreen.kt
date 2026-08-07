@@ -1,5 +1,9 @@
 ﻿package com.prima.barcode.ui.screen
 
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,6 +25,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import com.prima.barcode.data.auth.AppSettings
+import com.prima.barcode.data.auth.ExtSystemConfig
 import com.prima.barcode.data.model.Location
 import com.prima.barcode.data.model.ResponsibilityCenter
 import com.prima.barcode.data.model.User
@@ -44,51 +51,101 @@ fun SettingsScreen(
     user: User?,
     location: Location?,
     rc: ResponsibilityCenter?,
-    textSize: TextSize,
-    onTextSizeChange: (TextSize) -> Unit,
-    uppercaseText: Boolean = false,
-    onUppercaseTextChange: (Boolean) -> Unit = {},
-    language: Language = Language.ENGLISH,
-    onLanguageChange: (Language) -> Unit = {},
-    lastScannedLines: Int = 5,
-    onLastScannedLinesChange: (Int) -> Unit = {},
-    autoScan: Boolean = false,
-    onAutoScanChange: (Boolean) -> Unit = {},
-    debounceTime: Int = 500,
-    onDebounceTimeChange: (Int) -> Unit = {},
-    hapticEnabled: Boolean = true,
-    onHapticEnabledChange: (Boolean) -> Unit = {},
-    warnOnOver: Boolean = true,
-    onWarnOnOverChange: (Boolean) -> Unit = {},
-    warnNotOnDocument: Boolean = true,
-    onWarnNotOnDocumentChange: (Boolean) -> Unit = {},
-    askQtyForUnknownBarcode: Boolean = true,
-    onAskQtyForUnknownBarcodeChange: (Boolean) -> Unit = {},
-    autoUploadCompleted: Boolean = false,
-    onAutoUploadChange: (Boolean) -> Unit = {},
-    backgroundSync: Boolean = false,
-    onBackgroundSyncChange: (Boolean) -> Unit = {},
-    debuggerActive: Boolean = false,
-    onDebuggerActiveChange: (Boolean) -> Unit = {},
+    initial: AppSettings,
+    onSave: (AppSettings) -> Unit,
+    onDiscard: () -> Unit = {},
+    onSaveExtSystemConfig: (ExtSystemConfig) -> Unit = {},
+    loadExtSystemConfigDefaults: () -> ExtSystemConfig? = { null },
+    parseExtSystemConfigJson: (String) -> ExtSystemConfig? = { null },
+    getExtSystemDefaultsJsonText: () -> String? = { null },
     onExport: () -> Unit = {},
     onClearCache: () -> Unit = {},
     onDeleteAllDocuments: () -> Unit = {},
     onInsertTestData: () -> Unit = {},
-    onBack: () -> Unit,
     onChangeLocation: () -> Unit,
     onOpenExtSystemConfig: () -> Unit = {},
     onSignOut: () -> Unit,
     onSignInTap: () -> Unit = {},
 ) {
+    var textSize by remember { mutableStateOf(initial.textSize) }
+    var uppercaseText by remember { mutableStateOf(initial.uppercaseText) }
+    var language by remember { mutableStateOf(initial.language) }
+    var lastScannedLines by remember { mutableStateOf(initial.lastScannedLines) }
+    var autoScan by remember { mutableStateOf(initial.autoScan) }
+    var debounceTime by remember { mutableStateOf(initial.debounceTime) }
+    var hapticEnabled by remember { mutableStateOf(initial.hapticEnabled) }
+    var warnOnOver by remember { mutableStateOf(initial.warnOnOver) }
+    var warnNotOnDocument by remember { mutableStateOf(initial.warnNotOnDocument) }
+    var askQtyForUnknownBarcode by remember { mutableStateOf(initial.askQtyForUnknownBarcode) }
+    var autoUploadCompleted by remember { mutableStateOf(initial.autoUploadCompleted) }
+    var backgroundSync by remember { mutableStateOf(initial.backgroundSync) }
+    var debuggerActive by remember { mutableStateOf(initial.debuggerActive) }
+
+    fun buildSettings() = initial.copy(
+        textSize = textSize,
+        uppercaseText = uppercaseText,
+        language = language,
+        lastScannedLines = lastScannedLines,
+        autoScan = autoScan,
+        debounceTime = debounceTime,
+        hapticEnabled = hapticEnabled,
+        warnOnOver = warnOnOver,
+        warnNotOnDocument = warnNotOnDocument,
+        askQtyForUnknownBarcode = askQtyForUnknownBarcode,
+        autoUploadCompleted = autoUploadCompleted,
+        backgroundSync = backgroundSync,
+        debuggerActive = debuggerActive,
+    )
+
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var showDeleteAllDocumentsDialog by remember { mutableStateOf(false) }
     var showInsertTestDataDialog by remember { mutableStateOf(false) }
+    var showInsertSystemDefaultsDialog by remember { mutableStateOf(false) }
+    var pendingExtSystemConfig by remember { mutableStateOf<ExtSystemConfig?>(null) }
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    fun attemptExit() {
+        if (buildSettings() != initial || pendingExtSystemConfig != null) showExitDialog = true else onDiscard()
+    }
+
+    BackHandler { attemptExit() }
+
+    val context = LocalContext.current
+
+    val importExtSystemDefaultsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            val json = runCatching {
+                context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+            }.getOrNull()
+            val parsed = json?.let { parseExtSystemConfigJson(it) }
+            if (parsed != null) {
+                pendingExtSystemConfig = parsed
+                Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, context.getString(R.string.ext_config_import_parse_error), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    val downloadExtSystemDefaultsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            val text = getExtSystemDefaultsJsonText()
+            val written = text != null && runCatching {
+                context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
+            }.isSuccess
+            if (written) {
+                Toast.makeText(context, "Defaults saved", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Could not save ext_system_defaults.json", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
             title = stringResource(R.string.settings_title),
             subtitle = stringResource(R.string.settings_subtitle),
-            onBack = onBack,
+            onBack = { attemptExit() },
         )
 
         val listState = rememberLazyListState()
@@ -136,7 +193,7 @@ fun SettingsScreen(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(if (selected) PrimaPalette.Slate else PrimaPalette.CreamAlt)
-                                    .clickable { onTextSizeChange(size) }
+                                    .clickable { textSize = size }
                                     .padding(horizontal = 14.dp, vertical = 8.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -156,7 +213,7 @@ fun SettingsScreen(
                         label = stringResource(R.string.settings_uppercase),
                         description = stringResource(R.string.settings_uppercase_desc),
                         checked = uppercaseText,
-                        onCheckedChange = onUppercaseTextChange,
+                        onCheckedChange = { uppercaseText = it },
                     )
                     SettingsDivider()
                     var langMenuOpen by remember { mutableStateOf(false) }
@@ -195,7 +252,7 @@ fun SettingsScreen(
                             Language.entries.forEach { lang ->
                                 DropdownMenuItem(
                                     text = { Text(lang.label) },
-                                    onClick = { onLanguageChange(lang); langMenuOpen = false },
+                                    onClick = { language = lang; langMenuOpen = false },
                                     leadingIcon = if (lang == language) {
                                         { Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                                     } else null,
@@ -216,7 +273,7 @@ fun SettingsScreen(
                         label = stringResource(R.string.settings_continuous_scan),
                         description = stringResource(R.string.settings_continuous_scan_desc),
                         checked = autoScan,
-                        onCheckedChange = onAutoScanChange,
+                        onCheckedChange = { autoScan = it },
                     )
                     SettingsDivider()
                     Row(
@@ -254,7 +311,7 @@ fun SettingsScreen(
                                     .weight(1f)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(if (selected) PrimaPalette.Slate else PrimaPalette.CreamAlt)
-                                    .clickable { onDebounceTimeChange(ms) }
+                                    .clickable { debounceTime = ms }
                                     .padding(vertical = 8.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -274,7 +331,7 @@ fun SettingsScreen(
                         label = stringResource(R.string.settings_haptic),
                         description = stringResource(R.string.settings_haptic_desc),
                         checked = hapticEnabled,
-                        onCheckedChange = onHapticEnabledChange,
+                        onCheckedChange = { hapticEnabled = it },
                     )
                     SettingsDivider()
                     ToggleRow(
@@ -282,7 +339,7 @@ fun SettingsScreen(
                         label = stringResource(R.string.settings_warn_over),
                         description = stringResource(R.string.settings_warn_over_desc),
                         checked = warnOnOver,
-                        onCheckedChange = onWarnOnOverChange,
+                        onCheckedChange = { warnOnOver = it },
                     )
                     SettingsDivider()
                     ToggleRow(
@@ -290,7 +347,7 @@ fun SettingsScreen(
                         label = "Warn on not on document",
                         description = "Warn when scanning items that aren't on the document.",
                         checked = warnNotOnDocument,
-                        onCheckedChange = onWarnNotOnDocumentChange,
+                        onCheckedChange = { warnNotOnDocument = it },
                     )
                     SettingsDivider()
                     ToggleRow(
@@ -298,7 +355,7 @@ fun SettingsScreen(
                         label = "Ask for Qty for unknown barcode",
                         description = "Show a quantity screen when scanning a barcode that's not on the document. When off, it's recorded with Qty = 1 automatically.",
                         checked = askQtyForUnknownBarcode,
-                        onCheckedChange = onAskQtyForUnknownBarcodeChange,
+                        onCheckedChange = { askQtyForUnknownBarcode = it },
                     )
                     SettingsDivider()
                     var lastScannedExpanded by remember { mutableStateOf(false) }
@@ -343,7 +400,7 @@ fun SettingsScreen(
                                         .weight(1f)
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(if (selected) PrimaPalette.Slate else PrimaPalette.CreamAlt)
-                                        .clickable { onLastScannedLinesChange(n); lastScannedExpanded = false }
+                                        .clickable { lastScannedLines = n; lastScannedExpanded = false }
                                         .padding(vertical = 8.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
@@ -371,7 +428,7 @@ fun SettingsScreen(
                         label = stringResource(R.string.settings_auto_upload),
                         description = stringResource(R.string.settings_auto_upload_desc),
                         checked = autoUploadCompleted,
-                        onCheckedChange = onAutoUploadChange,
+                        onCheckedChange = { autoUploadCompleted = it },
                     )
                     SettingsDivider()
                     ToggleRow(
@@ -379,7 +436,7 @@ fun SettingsScreen(
                         label = "Enable background sync",
                         description = "Upload in the background so you can keep working while documents are sent.",
                         checked = backgroundSync,
-                        onCheckedChange = onBackgroundSyncChange,
+                        onCheckedChange = { backgroundSync = it },
                     )
                 }
             }
@@ -431,7 +488,7 @@ fun SettingsScreen(
                         label = stringResource(R.string.settings_debugger_active),
                         description = stringResource(R.string.settings_debugger_active_desc),
                         checked = debuggerActive,
-                        onCheckedChange = onDebuggerActiveChange,
+                        onCheckedChange = { debuggerActive = it },
                     )
                     SettingsDivider()
                     Row(
@@ -483,6 +540,36 @@ fun SettingsScreen(
                             )
                             Text(
                                 stringResource(R.string.settings_insert_test_desc),
+                                style = monoLabel.copy(color = PrimaPalette.Ink3),
+                            )
+                        }
+                        Icon(
+                            Icons.Outlined.ChevronRight,
+                            contentDescription = null,
+                            tint = PrimaPalette.Ink4,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                    SettingsDivider()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showInsertSystemDefaultsDialog = true }
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        SettingsIcon(Icons.Outlined.SettingsSuggest)
+                        Spacer(Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Insert system defaults" + if (pendingExtSystemConfig != null) " (pending)" else "",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = PrimaPalette.Ink,
+                                    fontWeight = FontWeight.Normal,
+                                ),
+                            )
+                            Text(
+                                "Load, download, or import default external system settings. Applies when you save.",
                                 style = monoLabel.copy(color = PrimaPalette.Ink3),
                             )
                         }
@@ -729,6 +816,59 @@ fun SettingsScreen(
         }
     }
 
+    if (showInsertSystemDefaultsDialog) {
+        Dialog(onDismissRequest = { showInsertSystemDefaultsDialog = false }) {
+            Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text("Insert system defaults", fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(4.dp))
+                    Button(
+                        onClick = {
+                            showInsertSystemDefaultsDialog = false
+                            val defaults = loadExtSystemConfigDefaults()
+                            if (defaults != null) {
+                                pendingExtSystemConfig = defaults
+                                Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Could not load ext_system_defaults.json", Toast.LENGTH_LONG).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.ext_config_load_builtin), fontWeight = FontWeight.SemiBold)
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            showInsertSystemDefaultsDialog = false
+                            downloadExtSystemDefaultsLauncher.launch("ext_system_defaults.json")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.ext_config_download_builtin), fontWeight = FontWeight.SemiBold)
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            showInsertSystemDefaultsDialog = false
+                            importExtSystemDefaultsLauncher.launch("application/json")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.ext_config_load_from_file), fontWeight = FontWeight.SemiBold)
+                    }
+                    TextButton(
+                        onClick = { showInsertSystemDefaultsDialog = false },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                }
+            }
+        }
+    }
+
     if (showClearCacheDialog) {
         AlertDialog(
             onDismissRequest = { showClearCacheDialog = false },
@@ -775,6 +915,26 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showInsertTestDataDialog = false }) { Text(stringResource(R.string.btn_cancel)) }
+            },
+        )
+    }
+
+    if (showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitDialog = false },
+            title = { Text("Save changes?", fontWeight = FontWeight.Bold) },
+            text = { Text("Save your settings before leaving?") },
+            confirmButton = {
+                Button(onClick = {
+                    showExitDialog = false
+                    onSave(buildSettings())
+                    pendingExtSystemConfig?.let { onSaveExtSystemConfig(it) }
+                }) {
+                    Text("Yes", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showExitDialog = false; onDiscard() }) { Text("No") }
             },
         )
     }

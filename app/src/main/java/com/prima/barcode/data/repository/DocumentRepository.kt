@@ -25,7 +25,6 @@ interface DocumentRepository {
         barcodeNo: String,
         userId: String,
         quantity: Double,
-        format: String?,
     )
     suspend fun undoLastScan(documentNo: String, type: String, lineNo: Int)
     suspend fun setLineScanned(documentNo: String, type: String, lineNo: Int, scanned: Double, userId: String)
@@ -91,7 +90,6 @@ class DocumentRepositoryImpl @Inject constructor(
                             barcodeNo = line.barcodeNo,
                             quantity = line.scanned,
                             creationDateTime = doc.creationDateTime.toString(),
-                            format = null,
                             userId = "",
                             destinationCode = line.destinationCode,
                             sourceCode = line.sourceCode,
@@ -161,7 +159,6 @@ class DocumentRepositoryImpl @Inject constructor(
                         barcodeNo = extra.barcodeNo,
                         quantity = allocation,
                         creationDateTime = extra.creationDateTime,
-                        format = extra.format,
                         userId = extra.userId,
                         destinationCode = line.destinationCode,
                         sourceCode = line.sourceCode,
@@ -201,7 +198,6 @@ class DocumentRepositoryImpl @Inject constructor(
         barcodeNo: String,
         userId: String,
         quantity: Double,
-        format: String?,
     ) {
         db.withTransaction {
             val line = db.documentLineDao().getByKey(documentNo, type, lineNo) ?: return@withTransaction
@@ -216,7 +212,6 @@ class DocumentRepositoryImpl @Inject constructor(
                     barcodeNo = barcodeNo,
                     quantity = quantity,
                     creationDateTime = Instant.now().toString(),
-                    format = format,
                     userId = userId,
                     destinationCode = line.destinationCode,
                     sourceCode = line.sourceCode,
@@ -253,7 +248,6 @@ class DocumentRepositoryImpl @Inject constructor(
                         barcodeNo = line.barcodeNo,
                         quantity = scanned,
                         creationDateTime = Instant.now().toString(),
-                        format = null,
                         userId = userId,
                         destinationCode = line.destinationCode,
                         sourceCode = line.sourceCode,
@@ -287,7 +281,6 @@ class DocumentRepositoryImpl @Inject constructor(
                         barcodeNo = barcodeNo,
                         quantity = quantity,
                         creationDateTime = Instant.now().toString(),
-                        format = null,
                         userId = userId,
                         destinationCode = header.destinationCode,
                         sourceCode = header.sourceCode,

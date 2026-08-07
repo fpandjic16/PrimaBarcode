@@ -26,7 +26,7 @@ class RecordingViewModel @Inject constructor(
 
     fun recordScan(lineNo: Int, barcodeNo: String, userId: String, quantity: Double) {
         viewModelScope.launch {
-            repository.recordScan(documentNo, type, lineNo, barcodeNo, userId, quantity, null)
+            repository.recordScan(documentNo, type, lineNo, barcodeNo, userId, quantity)
         }
     }
 

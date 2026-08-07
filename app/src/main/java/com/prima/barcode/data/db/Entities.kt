@@ -55,7 +55,6 @@ data class RecordingEntity(
     val barcodeNo: String,
     val quantity: Double,
     val creationDateTime: String,
-    val format: String?,
     val userId: String,
     val destinationCode: String,
     val sourceCode: String,

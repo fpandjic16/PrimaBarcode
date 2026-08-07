@@ -55,6 +55,7 @@ fun ExtSystemConfigScreen(
     onSave: (ExtSystemConfig) -> Unit,
     onDiscard: () -> Unit = {},
     loadDefaults: () -> ExtSystemConfig? = { null },
+    getDefaultsJsonText: () -> String? = { null },
     disabledDocTypes: Set<String> = emptySet(),
     onDisabledDocTypesChange: (Set<String>) -> Unit = {},
     docTypeFilters: Map<String, DocTypeFilterMode> = emptyMap(),
@@ -126,6 +127,20 @@ fun ExtSystemConfigScreen(
                         Toast.makeText(context, context.getString(R.string.ext_config_import_parse_error), Toast.LENGTH_LONG).show()
                     }
                 }
+            }
+        }
+    }
+
+    val downloadLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            val text = getDefaultsJsonText()
+            val written = text != null && runCatching {
+                context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
+            }.isSuccess
+            if (written) {
+                Toast.makeText(context, "Defaults saved", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Could not save ext_system_defaults.json", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -372,6 +387,15 @@ fun ExtSystemConfigScreen(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(stringResource(R.string.ext_config_load_builtin), fontWeight = FontWeight.SemiBold)
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            showLoadDialog = false
+                            downloadLauncher.launch("ext_system_defaults.json")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.ext_config_download_builtin), fontWeight = FontWeight.SemiBold)
                     }
                     OutlinedButton(
                         onClick = {

@@ -13,7 +13,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         LocationEntity::class,
         ResponsibilityCenterEntity::class,
     ],
-    version = 15,
+    version = 16,
     exportSchema = true,
 )
 abstract class PrimaDatabase : RoomDatabase() {
@@ -106,6 +106,39 @@ abstract class PrimaDatabase : RoomDatabase() {
                           AND documentHeader.type = recordings.type
                     )
                 """.trimIndent())
+            }
+        }
+
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE recordings_new (
+                        documentNo TEXT NOT NULL,
+                        type TEXT NOT NULL,
+                        documentLine INTEGER NOT NULL,
+                        recordingLineNo INTEGER NOT NULL,
+                        barcodeNo TEXT NOT NULL,
+                        quantity REAL NOT NULL,
+                        creationDateTime TEXT NOT NULL,
+                        userId TEXT NOT NULL,
+                        destinationCode TEXT NOT NULL,
+                        sourceCode TEXT NOT NULL,
+                        unitOfMeasureCode TEXT NOT NULL,
+                        rcCode TEXT NOT NULL,
+                        PRIMARY KEY(documentNo, type, documentLine, recordingLineNo),
+                        FOREIGN KEY(documentNo, type) REFERENCES documentHeader(documentNo, type) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    INSERT INTO recordings_new
+                    SELECT documentNo, type, documentLine, recordingLineNo, barcodeNo, quantity,
+                           creationDateTime, userId, destinationCode, sourceCode, unitOfMeasureCode, rcCode
+                    FROM recordings
+                """.trimIndent())
+                db.execSQL("DROP TABLE recordings")
+                db.execSQL("ALTER TABLE recordings_new RENAME TO recordings")
+                db.execSQL("CREATE INDEX index_recordings_documentNo_type ON recordings(documentNo, type)")
+                db.execSQL("CREATE INDEX index_recordings_documentLine ON recordings(documentLine)")
             }
         }
     }

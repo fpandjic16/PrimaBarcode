@@ -330,6 +330,12 @@ class AppViewModel @Inject constructor(
      .getOrNull()
      ?.let { parseExtSystemConfigJson(it) }
 
+    /** Raw text of the bundled `ext_system_defaults.json` asset, for "download as file". */
+    fun getExtSystemDefaultsJsonText(): String? = runCatching {
+        appContext.assets.open("ext_system_defaults.json")
+            .bufferedReader(Charsets.UTF_8).use { it.readText() }
+    }.onFailure { Timber.w(it, "Failed to read ext_system_defaults.json") }.getOrNull()
+
     private data class ExtSystemDefaultsDto(
         val serverBaseUrl: String? = null,
         val credentialTtlHours: Int? = null,
