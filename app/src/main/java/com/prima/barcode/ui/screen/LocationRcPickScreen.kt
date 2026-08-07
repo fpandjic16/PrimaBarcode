@@ -62,10 +62,12 @@ fun LocationRcPickScreen(
         availableRcs.find { it.code == selectedRcCode }
     }
     val locationsForRc = remember(selectedRcCode, availableLocations) {
-        availableLocations.filter { it.rc == selectedRcCode }
+        val base = if (selectedRcCode.isBlank()) availableLocations
+                   else availableLocations.filter { it.rc == selectedRcCode }
+        base.sortedBy { it.code }
     }
-    val selectedLocation = remember(selectedLocationCode, locationsForRc) {
-        locationsForRc.find { it.code == selectedLocationCode }
+    val selectedLocation = remember(selectedLocationCode, availableLocations) {
+        availableLocations.find { it.code == selectedLocationCode }
     }
 
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
@@ -124,32 +126,30 @@ fun LocationRcPickScreen(
                 )
             }
 
-            if (selectedRcCode.isNotEmpty()) {
-                LrcSectionHeader(stringResource(R.string.lrc_section_location))
-                Column(modifier = Modifier.fillMaxWidth().background(Color.White)) {
-                    LrcSelectionRow(
-                        avatar = {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(if (selectedLocation != null) PrimaPalette.Teal else PrimaPalette.CreamAlt),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    Icons.Outlined.LocationOn,
-                                    contentDescription = null,
-                                    tint = if (selectedLocation != null) Color.White else PrimaPalette.Ink3,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            }
-                        },
-                        title = selectedLocation?.name ?: stringResource(R.string.lrc_location_placeholder),
-                        subtitle = selectedLocation?.code,
-                        hasValue = selectedLocation != null,
-                        onClick = { showLocationSheet = true },
-                    )
-                }
+            LrcSectionHeader(stringResource(R.string.lrc_section_location))
+            Column(modifier = Modifier.fillMaxWidth().background(Color.White)) {
+                LrcSelectionRow(
+                    avatar = {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (selectedLocation != null) PrimaPalette.Teal else PrimaPalette.CreamAlt),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                Icons.Outlined.LocationOn,
+                                contentDescription = null,
+                                tint = if (selectedLocation != null) Color.White else PrimaPalette.Ink3,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    },
+                    title = selectedLocation?.name ?: stringResource(R.string.lrc_location_placeholder),
+                    subtitle = selectedLocation?.code,
+                    hasValue = selectedLocation != null,
+                    onClick = { showLocationSheet = true },
+                )
             }
         }
 
@@ -162,7 +162,7 @@ fun LocationRcPickScreen(
             Button(
                 onClick = { onSelect(selectedRcCode, selectedLocationCode) },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
-                enabled = selectedRcCode.isNotEmpty(),
+                enabled = true,
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaPalette.Slate),
             ) {
                 Text(stringResource(R.string.btn_apply), fontWeight = FontWeight.Medium)
@@ -181,6 +181,10 @@ fun LocationRcPickScreen(
                 }
                 showRcSheet = false
             },
+            onClear = {
+                selectedRcCode = ""
+                showRcSheet = false
+            },
             onDismiss = { showRcSheet = false },
         )
     }
@@ -191,6 +195,7 @@ fun LocationRcPickScreen(
             selectedLocationCode = selectedLocationCode,
             onSelect = { loc ->
                 selectedLocationCode = loc.code
+                if (loc.rc.isNotBlank()) selectedRcCode = loc.rc
                 showLocationSheet = false
             },
             onDismiss = { showLocationSheet = false },
@@ -213,10 +218,11 @@ fun LocationRcPickScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RcPickerSheet(
+internal fun RcPickerSheet(
     availableRcs: List<ResponsibilityCenter>,
     selectedRcCode: String,
     onSelect: (ResponsibilityCenter) -> Unit,
+    onClear: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
@@ -242,24 +248,38 @@ private fun RcPickerSheet(
                 onValueChange = { query = it },
                 placeholder = stringResource(R.string.lrc_search_placeholder),
             )
-            if (filtered.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(32.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(stringResource(R.string.lrc_no_results), style = monoLabel.copy(color = PrimaPalette.Ink3))
+            val listState = rememberLazyListState()
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .verticalScrollbar(listState),
+                contentPadding = PaddingValues(bottom = 32.dp),
+                state = listState,
+            ) {
+                if (query.isBlank()) {
+                    item(key = "__clear__") {
+                        RcClearRow(
+                            selected = selectedRcCode.isBlank(),
+                            onClick = onClear,
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 72.dp),
+                            color = Color(0x0A000000),
+                        )
+                    }
                 }
-            } else {
-                val listState = rememberLazyListState()
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .verticalScrollbar(listState),
-                    contentPadding = PaddingValues(bottom = 32.dp),
-                    state = listState,
-                ) {
+                if (filtered.isEmpty()) {
+                    item(key = "__empty__") {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(stringResource(R.string.lrc_no_results), style = monoLabel.copy(color = PrimaPalette.Ink3))
+                        }
+                    }
+                } else {
                     itemsIndexed(filtered, key = { _, rc -> rc.code }) { index, rc ->
                         RcSelectRow(
                             rc = rc,
@@ -281,7 +301,7 @@ private fun RcPickerSheet(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LocationPickerSheet(
+internal fun LocationPickerSheet(
     locations: List<Location>,
     selectedLocationCode: String,
     onSelect: (Location) -> Unit,
@@ -371,7 +391,7 @@ private fun LrcSheetHeader(title: String) {
 }
 
 @Composable
-private fun LrcSearchField(value: String, onValueChange: (String) -> Unit, placeholder: String) {
+internal fun LrcSearchField(value: String, onValueChange: (String) -> Unit, placeholder: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -405,12 +425,13 @@ private fun LrcSearchField(value: String, onValueChange: (String) -> Unit, place
 }
 
 @Composable
-private fun LrcSelectionRow(
+internal fun LrcSelectionRow(
     avatar: @Composable () -> Unit,
     title: String,
     subtitle: String?,
     hasValue: Boolean,
     onClick: () -> Unit,
+    showChevron: Boolean = true,
 ) {
     Row(
         modifier = Modifier
@@ -433,12 +454,14 @@ private fun LrcSelectionRow(
                 Text(subtitle, style = monoLabel.copy(color = PrimaPalette.Ink3))
             }
         }
-        Icon(
-            Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-            contentDescription = null,
-            tint = PrimaPalette.Ink3,
-            modifier = Modifier.size(22.dp),
-        )
+        if (showChevron) {
+            Icon(
+                Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                contentDescription = null,
+                tint = PrimaPalette.Ink3,
+                modifier = Modifier.size(22.dp),
+            )
+        }
     }
 }
 
@@ -454,7 +477,51 @@ private fun LrcSectionHeader(title: String) {
 }
 
 @Composable
-private fun RcSelectRow(rc: ResponsibilityCenter, selected: Boolean, onClick: () -> Unit) {
+internal fun RcClearRow(selected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(if (selected) PrimaPalette.Slate else PrimaPalette.CreamAlt),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                "—",
+                style = monoLabel.copy(
+                    color = if (selected) Color.White else PrimaPalette.Ink3,
+                    fontWeight = FontWeight.Medium,
+                ),
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Text(
+            stringResource(R.string.lrc_rc_any),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.Medium,
+                color = if (selected) PrimaPalette.Ink else PrimaPalette.Ink2,
+            ),
+        )
+        if (selected) {
+            Icon(
+                Icons.Outlined.Check,
+                contentDescription = null,
+                tint = PrimaPalette.Slate,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun RcSelectRow(rc: ResponsibilityCenter, selected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -500,7 +567,7 @@ private fun RcSelectRow(rc: ResponsibilityCenter, selected: Boolean, onClick: ()
 }
 
 @Composable
-private fun LocationSelectRow(location: Location, selected: Boolean, onClick: () -> Unit) {
+internal fun LocationSelectRow(location: Location, selected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -525,13 +592,13 @@ private fun LocationSelectRow(location: Location, selected: Boolean, onClick: ()
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                location.name,
+                location.code,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Medium,
                     color = PrimaPalette.Ink,
                 ),
             )
-            Text(location.code, style = monoLabel.copy(color = PrimaPalette.Ink3))
+            Text(location.name, style = monoLabel.copy(color = PrimaPalette.Ink3))
         }
         if (selected) {
             Icon(

@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.prima.barcode.data.auth.ExtSystemConfig
+import com.prima.barcode.data.auth.ExtSystemCredentials
 import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.ui.component.PrimaTopBar
@@ -58,29 +59,26 @@ fun ExtSystemConfigScreen(
     onDisabledDocTypesChange: (Set<String>) -> Unit = {},
     docTypeFilters: Map<String, DocTypeFilterMode> = emptyMap(),
     onDocTypeFiltersChange: (Map<String, DocTypeFilterMode>) -> Unit = {},
+    savedCredentials: ExtSystemCredentials? = null,
     onTestConnection: (
         serverBaseUrl: String,
         username: String,
         password: String,
-        onResult: (success: Boolean, message: String) -> Unit,
+        // onResult with message == null means "cancelled" — reset the testing state without showing a result dialog.
+        onResult: (success: Boolean, message: String?) -> Unit,
     ) -> Unit = { _, _, _, cb -> cb(false, "Test connection is not wired up") },
     onImportJson: ((json: String) -> ExtSystemConfig?)? = null,
 ) {
     var serverBaseUrl             by remember { mutableStateOf(initial.serverBaseUrl) }
     var ttlHours                 by remember { mutableIntStateOf(initial.credentialTtlHours) }
-    val endpointUrls = remember {
-        mutableStateMapOf<DocumentType, String>().also { map ->
-            DocumentType.entries.forEach { map[it] = initial.endpointFor(it) }
-        }
-    }
+    var documentLinesUrl         by remember { mutableStateOf(initial.documentLinesUrl) }
     val documentTypeCodes = remember {
         mutableStateMapOf<DocumentType, String>().also { map ->
             DocumentType.entries.forEach { map[it] = initial.docTypeCodeFor(it) }
         }
     }
-    var recordingSyncUrl          by remember { mutableStateOf(initial.recordingSyncUrl) }
-    var locationsUrl              by remember { mutableStateOf(initial.locationsUrl) }
-    var responsibilityCentersUrl  by remember { mutableStateOf(initial.responsibilityCentersUrl) }
+    var recordingSyncUrl by remember { mutableStateOf(initial.recordingSyncUrl) }
+    var locationsUrl     by remember { mutableStateOf(initial.locationsUrl) }
 
     var showLoginSheet by remember { mutableStateOf(false) }
     var testing        by remember { mutableStateOf(false) }
@@ -93,21 +91,19 @@ fun ExtSystemConfigScreen(
     fun buildConfig() = ExtSystemConfig(
         serverBaseUrl            = serverBaseUrl.trim(),
         credentialTtlHours       = ttlHours,
-        endpointUrls             = endpointUrls.toMap(),
+        documentLinesUrl         = documentLinesUrl.trim(),
         documentTypeCodes        = documentTypeCodes.toMap(),
-        recordingSyncUrl         = recordingSyncUrl.trim(),
-        locationsUrl             = locationsUrl.trim(),
-        responsibilityCentersUrl = responsibilityCentersUrl.trim(),
+        recordingSyncUrl = recordingSyncUrl.trim(),
+        locationsUrl     = locationsUrl.trim(),
     )
 
     fun applyConfig(c: ExtSystemConfig) {
         serverBaseUrl = c.serverBaseUrl
         ttlHours = c.credentialTtlHours
-        DocumentType.entries.forEach { endpointUrls[it] = c.endpointFor(it) }
+        documentLinesUrl = c.documentLinesUrl
         DocumentType.entries.forEach { documentTypeCodes[it] = c.docTypeCodeFor(it) }
         recordingSyncUrl = c.recordingSyncUrl
         locationsUrl = c.locationsUrl
-        responsibilityCentersUrl = c.responsibilityCentersUrl
     }
 
     fun attemptExit() {
@@ -224,6 +220,16 @@ fun ExtSystemConfigScreen(
 
             // ── Document endpoints ────────────────────────────────────────────
             item { ConfigSectionHeader(stringResource(R.string.ext_config_sec_endpoints)) }
+            item {
+                ConfigCard {
+                    ConfigField(
+                        label = stringResource(R.string.ext_config_document_lines_url),
+                        hint  = "e.g. /OData/Company('Name')/Barcode_App_Entry",
+                        value = documentLinesUrl,
+                        onValueChange = { documentLinesUrl = it },
+                    )
+                }
+            }
             for (type in DocumentType.entries) {
                 item(key = type.key) {
                     val enabled = type.key !in disabledDocTypes
@@ -245,8 +251,6 @@ fun ExtSystemConfigScreen(
                             Switch(
                                 checked = enabled,
                                 onCheckedChange = { on ->
-                                    // Disabling a doc type clears its endpoint URL (not just hides the field)
-                                    if (!on) endpointUrls[type] = ""
                                     onDisabledDocTypesChange(
                                         if (on) disabledDocTypes - type.key else disabledDocTypes + type.key
                                     )
@@ -259,17 +263,11 @@ fun ExtSystemConfigScreen(
                         }
                         if (enabled) {
                             ConfigField(
-                                label = "URL",
-                                hint  = "e.g. /OData/Company('Name')/WMS_Lines",
-                                value = endpointUrls[type] ?: "",
-                                onValueChange = { endpointUrls[type] = it },
-                            )
-                            ConfigDivider()
-                            ConfigField(
                                 label = stringResource(R.string.ext_config_doc_type_code),
                                 hint  = "e.g. WHSE_SHIP (max 20 chars)",
                                 value = documentTypeCodes[type] ?: "",
-                                onValueChange = { if (it.length <= 20) documentTypeCodes[type] = it },
+                                onValueChange = {},
+                                readOnly = true,
                             )
                             ConfigDivider()
                             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
@@ -314,13 +312,6 @@ fun ExtSystemConfigScreen(
                         value = locationsUrl,
                         onValueChange = { locationsUrl = it },
                     )
-                    ConfigDivider()
-                    ConfigField(
-                        label = stringResource(R.string.ext_config_rc_url),
-                        hint  = "e.g. /OData/Company('Name')/WMS_ResponsibilityCenters",
-                        value = responsibilityCentersUrl,
-                        onValueChange = { responsibilityCentersUrl = it },
-                    )
                 }
             }
 
@@ -344,13 +335,15 @@ fun ExtSystemConfigScreen(
         LoginSheet(
             credentialTtlHours = ttlHours,
             ctaLabel           = "Test connection",
+            initialUsername    = savedCredentials?.username ?: "",
+            initialPassword    = savedCredentials?.password ?: "",
             onDismiss          = { showLoginSheet = false },
             onSubmit           = { u, p ->
                 showLoginSheet = false
                 testing = true
                 onTestConnection(serverBaseUrl.trim(), u, p) { ok, msg ->
                     testing = false
-                    testResult = ok to msg
+                    if (msg != null) testResult = ok to msg
                 }
             },
         )
@@ -483,6 +476,7 @@ private fun ConfigField(
     onValueChange: (String) -> Unit,
     keyboardType: KeyboardType = KeyboardType.Text,
     imeAction: ImeAction = ImeAction.Next,
+    readOnly: Boolean = false,
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
         Text(
@@ -497,10 +491,17 @@ private fun ConfigField(
             onValueChange = onValueChange,
             placeholder = { Text(hint, style = monoLabel.copy(color = PrimaPalette.Ink4)) },
             singleLine = true,
+            readOnly = readOnly,
             modifier = Modifier.fillMaxWidth(),
-            textStyle = monoLabel.copy(color = PrimaPalette.Ink),
+            textStyle = monoLabel.copy(color = if (readOnly) PrimaPalette.Ink3 else PrimaPalette.Ink),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
             shape = RoundedCornerShape(8.dp),
+            colors = if (readOnly) OutlinedTextFieldDefaults.colors(
+                focusedBorderColor   = Color(0x28000000),
+                unfocusedBorderColor = Color(0x28000000),
+                focusedContainerColor   = Color(0x08000000),
+                unfocusedContainerColor = Color(0x08000000),
+            ) else OutlinedTextFieldDefaults.colors(),
         )
     }
 }

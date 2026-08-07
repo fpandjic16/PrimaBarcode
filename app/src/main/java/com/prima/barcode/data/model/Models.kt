@@ -65,6 +65,7 @@ data class Document(
     val destinationCode: String,
     val sourceCode: String,
     val rcCode: String,
+    val isSourceRetail: Boolean = false,
     val creationDateTime: Instant,
     val documentDate: Instant? = null,
     val lines: List<Line>,
@@ -75,6 +76,7 @@ data class Document(
     val linesTotal: Int get() = lines.size
     val scannedQty: Double get() = lines.sumOf { it.scanned }
     val expectedQty: Double get() = lines.sumOf { it.expected }
+    val hasProgress: Boolean get() = lines.any { it.scanned > 0.0 } || extraLines.isNotEmpty()
 }
 
 sealed interface DocState {

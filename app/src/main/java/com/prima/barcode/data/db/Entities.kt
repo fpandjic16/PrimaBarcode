@@ -15,6 +15,7 @@ data class DocumentHeaderEntity(
     val destinationCode: String,
     val sourceCode: String,
     val rcCode: String,
+    val isSourceRetail: Boolean,
     val creationDateTime: Long,
     val documentDate: Long?,
     val docState: String,
@@ -59,6 +60,7 @@ data class RecordingEntity(
     val destinationCode: String,
     val sourceCode: String,
     val unitOfMeasureCode: String,
+    val rcCode: String,
 )
 
 @Entity(tableName = "locations")

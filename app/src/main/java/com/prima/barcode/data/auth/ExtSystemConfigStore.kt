@@ -14,15 +14,12 @@ class ExtSystemConfigStore @Inject constructor(@param:ApplicationContext private
     fun get(): ExtSystemConfig = ExtSystemConfig(
         serverBaseUrl      = prefs.getString("serverBaseUrl", "") ?: "",
         credentialTtlHours = prefs.getInt("credentialTtlHours", 24),
-        endpointUrls       = DocumentType.entries.associateWith { type ->
-            prefs.getString("endpoint_${type.key}", "") ?: ""
-        },
+        documentLinesUrl   = prefs.getString("documentLinesUrl", "") ?: "",
         documentTypeCodes = DocumentType.entries.associateWith { type ->
             prefs.getString("doc_type_code_${type.key}", "") ?: ""
         },
-        recordingSyncUrl            = prefs.getString("recordingSyncUrl", "") ?: "",
-        locationsUrl               = prefs.getString("locationsUrl", "") ?: "",
-        responsibilityCentersUrl   = prefs.getString("responsibilityCentersUrl", "") ?: "",
+        recordingSyncUrl = prefs.getString("recordingSyncUrl", "") ?: "",
+        locationsUrl     = prefs.getString("locationsUrl", "") ?: "",
     )
 
     fun clear() = prefs.edit().clear().apply()
@@ -31,12 +28,9 @@ class ExtSystemConfigStore @Inject constructor(@param:ApplicationContext private
         val ed = prefs.edit()
             .putString("serverBaseUrl",      config.serverBaseUrl)
             .putInt   ("credentialTtlHours", config.credentialTtlHours)
-            .putString("recordingSyncUrl",          config.recordingSyncUrl)
-            .putString("locationsUrl",              config.locationsUrl)
-            .putString("responsibilityCentersUrl",  config.responsibilityCentersUrl)
-        config.endpointUrls.forEach { (type, url) ->
-            ed.putString("endpoint_${type.key}", url)
-        }
+            .putString("documentLinesUrl", config.documentLinesUrl)
+            .putString("recordingSyncUrl", config.recordingSyncUrl)
+            .putString("locationsUrl",     config.locationsUrl)
         config.documentTypeCodes.forEach { (type, code) ->
             ed.putString("doc_type_code_${type.key}", code)
         }

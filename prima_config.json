@@ -1,13 +1,7 @@
 {
   "serverBaseUrl": "",
   "credentialTtlHours": 24,
-  "endpoints": {
-    "WAREHOUSE_SHIPMENT": "",
-    "WAREHOUSE_RECEIPT": "",
-    "RETAIL_SHIPMENT": "",
-    "RETAIL_RECEIPT": "",
-    "TRANSPORT_SHEET": ""
-  },
+  "documentLinesUrl": "",
   "documentTypeCodes": {
     "WAREHOUSE_SHIPMENT": "",
     "WAREHOUSE_RECEIPT": "",
@@ -16,6 +10,5 @@
     "TRANSPORT_SHEET": ""
   },
   "locationsUrl": "",
-  "responsibilityCentersUrl": "",
   "recordingSyncUrl": ""
 }

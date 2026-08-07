@@ -67,6 +67,7 @@ fun DocumentListScreen(
     onUpload: (List<Document>) -> Unit,
     onErrorTap: (Document) -> Unit = {},
     onCreateDoc: (docNo: String, locationCode: String) -> Unit = { _, _ -> },
+    canCreateDoc: Boolean = true,
     onDeleteRecordings: (Document) -> Unit = {},
     onClearErrors: () -> Unit = {},
     filter: DocumentFilter = DocumentFilter(),
@@ -78,7 +79,7 @@ fun DocumentListScreen(
     var showClearErrorsDialog by remember { mutableStateOf(false) }
     val filtered = remember(documents, locationCode, filter) {
         documents.filter { doc ->
-            if (doc.sourceCode != locationCode) return@filter false
+            if (doc.sourceCode != locationCode && !doc.hasProgress) return@filter false
             val docDate = (doc.documentDate ?: doc.creationDateTime).toLocalDate()
             val dateOk  = (filter.dateFrom == null || !docDate.isBefore(filter.dateFrom)) &&
                           (filter.dateTo   == null || !docDate.isAfter(filter.dateTo))
@@ -302,10 +303,19 @@ fun DocumentListScreen(
             title = { Text(stringResource(R.string.doc_list_create_title)) },
             text = { Text(stringResource(R.string.doc_list_create_text, no)) },
             confirmButton = {
-                Button(onClick = {
-                    onCreateDoc(no, locationCode)
-                    createDocNo = null
-                }) { Text(stringResource(R.string.btn_create)) }
+                Column(horizontalAlignment = Alignment.End) {
+                    Button(
+                        onClick = { onCreateDoc(no, locationCode); createDocNo = null },
+                        enabled = canCreateDoc,
+                    ) { Text(stringResource(R.string.btn_create)) }
+                    if (!canCreateDoc) {
+                        Text(
+                            stringResource(R.string.doc_create_blocked_hint),
+                            style = monoLabel.copy(color = PrimaPalette.Ink3),
+                            modifier = Modifier.padding(top = 4.dp, end = 4.dp),
+                        )
+                    }
+                }
             },
             dismissButton = {
                 OutlinedButton(onClick = { createDocNo = null }) { Text(stringResource(R.string.btn_cancel)) }

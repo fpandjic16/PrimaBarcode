@@ -17,7 +17,7 @@ import com.prima.barcode.data.db.toDomain
 import com.prima.barcode.data.export.DatabaseExporter
 import com.prima.barcode.data.extsystem.ExtSystemODataClient
 import com.prima.barcode.data.extsystem.ExtSystemResult
-import com.prima.barcode.data.extsystem.toUploadPayload
+import com.prima.barcode.data.extsystem.toNavRecording
 import com.prima.barcode.data.model.DocState
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.DocumentType
@@ -36,11 +36,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.prima.barcode.data.extsystem.NavBarcodeEntriesDownload
-import com.prima.barcode.data.extsystem.NavDocumentLine
+import com.prima.barcode.data.extsystem.NavBarcodeAppEntry
 import com.prima.barcode.data.extsystem.NavLocation
 import com.prima.barcode.data.extsystem.NavODataList
-import com.prima.barcode.data.extsystem.NavResponsibilityCenter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -87,61 +85,45 @@ class AppViewModel @Inject constructor(
     private val _lastLocationSyncAt = MutableStateFlow<Instant?>(null)
     val lastLocationSyncAt: StateFlow<Instant?> get() = _lastLocationSyncAt
 
-    fun downloadLocations(liveMode: Boolean = false, onComplete: () -> Unit = {}) {
+    fun downloadLocations(onComplete: (error: String?) -> Unit = {}) {
         viewModelScope.launch {
             _isRefreshingLocations.value = true
-            if (liveMode) {
-                realDownloadLocations()
-            } else {
-                delay(1500)
-                locationDao.clearLocations()
-                locationDao.clearRcs()
-                seedSampleLocations()
-            }
-            _lastLocationSyncAt.value = Instant.now()
+            val error = realDownloadLocations()
+            if (error == null) _lastLocationSyncAt.value = Instant.now()
             _isRefreshingLocations.value = false
-            onComplete()
+            onComplete(error)
         }
     }
 
-    private suspend fun realDownloadLocations() {
+    /** Returns null on success, or an error message on failure. */
+    private suspend fun realDownloadLocations(): String? {
         val config = extSystemConfig
-        val creds  = extSystemCredentialStore.get() ?: return
-        if (!config.isConfigured) return
+        val creds  = extSystemCredentialStore.get() ?: return "Not signed in"
+        if (!config.isConfigured) return "External system not configured"
+        if (config.locationsUrl.isBlank()) return "Locations URL not configured"
         extSystemClient.configure(config, creds)
-        if (config.locationsUrl.isNotBlank()) {
-            val result = extSystemClient.downloadRaw(config.locationsUrl)
-            if (result is ExtSystemResult.Success) {
+        return when (val result = extSystemClient.downloadRaw(config.locationsUrl)) {
+            is ExtSystemResult.Success -> {
                 val typeToken = object : TypeToken<NavODataList<NavLocation>>() {}.type
                 val odata = gson.fromJson<NavODataList<NavLocation>>(result.data, typeToken)
+                val rcCodes = odata.value.map { it.rcCode }.filter { it.isNotBlank() }.distinct()
+                locationDao.clearRcs()
+                locationDao.upsertRcs(rcCodes.map { ResponsibilityCenterEntity(it, it, null) })
                 locationDao.clearLocations()
                 locationDao.upsertLocations(odata.value.map { LocationEntity(it.code, it.name, it.rcCode) })
+                null
             }
-        }
-        if (config.responsibilityCentersUrl.isNotBlank()) {
-            val result = extSystemClient.downloadRaw(config.responsibilityCentersUrl)
-            if (result is ExtSystemResult.Success) {
-                val typeToken = object : TypeToken<NavODataList<NavResponsibilityCenter>>() {}.type
-                val odata = gson.fromJson<NavODataList<NavResponsibilityCenter>>(result.data, typeToken)
-                locationDao.clearRcs()
-                locationDao.upsertRcs(odata.value.map { ResponsibilityCenterEntity(it.code, it.name, it.short) })
-            }
+            is ExtSystemResult.Failure -> result.message
         }
     }
 
-    private fun buildODataFilterString(type: DocumentType, filter: DownloadFilter, typeCode: String): String? {
+    private fun buildODataFilterString(filter: DownloadFilter, typeCode: String): String? {
         val clauses = mutableListOf<String>()
         if (typeCode.isNotBlank()) clauses.add("Document_Type eq '$typeCode'")
         filter.dateFrom?.let { clauses.add("Document_Date ge $it") }
         filter.dateTo?.let { clauses.add("Document_Date le $it") }
-        if (filter.destinationCode.isNotBlank()) {
-            val field = if (type == DocumentType.WAREHOUSE_SHIPMENT) "Retail_Location" else "Bin_Code"
-            clauses.add("$field eq '${filter.destinationCode}'")
-        }
-        if (filter.sourceCode.isNotBlank()) {
-            val field = if (type == DocumentType.WAREHOUSE_SHIPMENT) "Source_No" else "Location_Code"
-            clauses.add("$field eq '${filter.sourceCode}'")
-        }
+        if (filter.destinationCode.isNotBlank()) clauses.add("Destination_No eq '${filter.destinationCode}'")
+        if (filter.sourceCode.isNotBlank()) clauses.add("Source_No eq '${filter.sourceCode}'")
         if (filter.rcCode.isNotBlank()) clauses.add("Responsibility_Center eq '${filter.rcCode}'")
         return if (clauses.isEmpty()) null else clauses.joinToString(" and ")
     }
@@ -152,26 +134,24 @@ class AppViewModel @Inject constructor(
         return "$url${sep}\$filter=$encoded"
     }
 
-    fun buildDownloadUrls(filter: DownloadFilter): List<Pair<String, String>> {
+    fun buildDownloadUrls(filter: DownloadFilter, docType: DocumentType? = null): List<Pair<String, String>> {
         val config = extSystemConfig
-        return DocumentType.entries.mapNotNull { type ->
-            val url = config.endpointFor(type)
-            if (url.isBlank()) return@mapNotNull null
+        if (config.documentLinesUrl.isBlank()) return emptyList()
+        val types = if (docType != null) listOf(docType) else DocumentType.entries
+        return types.map { type ->
             val typeCode = config.docTypeCodeFor(type)
-            val filterStr = buildODataFilterString(type, filter, typeCode)
-            val finalUrl = if (filterStr != null) appendODataFilter(url, filterStr) else url
+            val filterStr = buildODataFilterString(filter, typeCode)
+            val finalUrl = if (filterStr != null) appendODataFilter(config.documentLinesUrl, filterStr) else config.documentLinesUrl
             type.display to finalUrl
         }
     }
 
     fun getLocationsUrl(): String = extSystemConfig.locationsUrl
-    fun getRcUrl(): String = extSystemConfig.responsibilityCentersUrl
-    fun getRecordingSyncUrl(): String = extSystemConfig.recordingSyncUrl.ifBlank {
-        "${extSystemConfig.serverBaseUrl.trimEnd('/')}/OData/WMS_RecordingSync"
-    }
+    fun getRecordingSyncUrl(): String = extSystemConfig.recordingSyncUrl
 
     fun realDownloadDocuments(
         filter: DownloadFilter = DownloadFilter(),
+        docType: DocumentType? = null,
         onComplete: (failureCount: Int, errors: List<String>) -> Unit = { _, _ -> },
     ) {
         viewModelScope.launch {
@@ -179,90 +159,59 @@ class AppViewModel @Inject constructor(
             val creds  = extSystemCredentialStore.get()
             if (!config.isConfigured || creds == null) {
                 val msg = if (creds == null) "Not signed in" else "External system not configured"
-                onComplete(DocumentType.entries.size, listOf(msg))
+                onComplete(1, listOf(msg))
+                return@launch
+            }
+            if (config.documentLinesUrl.isBlank()) {
+                onComplete(1, listOf("Document lines URL not configured"))
                 return@launch
             }
             extSystemClient.configure(config, creds)
-            repository.clearAll()
+            val typesToDownload = if (docType != null) listOf(docType) else DocumentType.entries
             var failures = 0
             val errorMessages = mutableListOf<String>()
-            for (type in DocumentType.entries) {
-                val url = config.endpointFor(type)
-                if (url.isBlank()) continue
+            for (type in typesToDownload) {
                 val typeCode = config.docTypeCodeFor(type)
-                val filterStr = buildODataFilterString(type, filter, typeCode)
-                val finalUrl = if (filterStr != null) appendODataFilter(url, filterStr) else url
+                val filterStr = buildODataFilterString(filter, typeCode)
+                val finalUrl = if (filterStr != null) appendODataFilter(config.documentLinesUrl, filterStr) else config.documentLinesUrl
                 val result = extSystemClient.downloadRaw(finalUrl)
                 when (result) {
                     is ExtSystemResult.Success -> {
                         val now = Instant.now()
-                        if (type == DocumentType.WAREHOUSE_SHIPMENT) {
-                            val typeToken = object : TypeToken<NavODataList<NavBarcodeEntriesDownload>>() {}.type
-                            val odata = gson.fromJson<NavODataList<NavBarcodeEntriesDownload>>(result.data, typeToken)
-                            odata.value.groupBy { it.documentNo }.forEach { (docNo, rows) ->
-                                val first = rows.first()
-                                val lines = rows.filter { it.lineNo > 0 }.map { row ->
-                                    Line(
-                                        documentNo        = docNo,
-                                        lineNo            = row.lineNo,
-                                        item              = Item(row.itemNo, row.description),
-                                        barcodeNo         = row.barcodeNo,
-                                        expected          = row.qtyOutstanding,
-                                        scanned           = 0.0,
-                                        destinationCode   = row.retailLocation,
-                                        sourceCode        = row.sourceCode,
-                                        unitOfMeasureCode = row.unitOfMeasureCode,
-                                        scanningQty       = row.scanningQty,
-                                    )
-                                }
-                                repository.upsertDocument(Document(
-                                    documentNo       = docNo,
-                                    type             = type,
-                                    destinationCode  = first.destinationNo,
-                                    sourceCode       = first.sourceCode,
-                                    rcCode           = first.rcCode,
-                                    creationDateTime = now,
-                                    documentDate     = runCatching {
-                                        first.documentDate?.let { Instant.parse("${it}T00:00:00Z") } ?: now
-                                    }.getOrDefault(now),
-                                    lines            = lines,
-                                    state            = DocState.Downloaded,
-                                ))
+                        val typeToken = object : TypeToken<NavODataList<NavBarcodeAppEntry>>() {}.type
+                        val odata = gson.fromJson<NavODataList<NavBarcodeAppEntry>>(result.data, typeToken)
+                        val documents = odata.value.groupBy { it.documentNo }.map { (docNo, rows) ->
+                            val first = rows.first()
+                            val lines = rows.filter { it.lineNo > 0 }.map { row ->
+                                Line(
+                                    documentNo        = docNo,
+                                    lineNo            = row.lineNo,
+                                    item              = Item(row.itemNo, row.description),
+                                    barcodeNo         = row.barcodeNo,
+                                    expected          = row.qtyOutstanding,
+                                    scanned           = 0.0,
+                                    destinationCode   = row.destinationCode,
+                                    sourceCode        = row.sourceCode,
+                                    unitOfMeasureCode = row.unitOfMeasureCode,
+                                    scanningQty       = row.scanningQty,
+                                )
                             }
-                        } else {
-                            val typeToken = object : TypeToken<NavODataList<NavDocumentLine>>() {}.type
-                            val odata = gson.fromJson<NavODataList<NavDocumentLine>>(result.data, typeToken)
-                            odata.value.groupBy { it.documentNo }.forEach { (docNo, rows) ->
-                                val first = rows.first()
-                                val lines = rows.map { row ->
-                                    Line(
-                                        documentNo        = docNo,
-                                        lineNo            = row.lineNo,
-                                        item              = Item(row.itemNo, row.description),
-                                        barcodeNo         = row.barcodeNo,
-                                        expected          = row.qtyOutstanding,
-                                        scanned           = 0.0,
-                                        destinationCode   = row.destinationCode,
-                                        sourceCode        = row.sourceCode,
-                                        unitOfMeasureCode = row.unitOfMeasureCode,
-                                        scanningQty       = 1.0,
-                                    )
-                                }
-                                repository.upsertDocument(Document(
-                                    documentNo       = docNo,
-                                    type             = type,
-                                    destinationCode  = first.destinationCode,
-                                    sourceCode       = first.sourceCode,
-                                    rcCode           = first.rcCode,
-                                    creationDateTime = now,
-                                    documentDate     = runCatching {
-                                        first.documentDate?.let { Instant.parse(it + "T00:00:00Z") } ?: now
-                                    }.getOrDefault(now),
-                                    lines            = lines,
-                                    state            = DocState.Downloaded,
-                                ))
-                            }
+                            Document(
+                                documentNo       = docNo,
+                                type             = type,
+                                destinationCode  = first.destinationCode,
+                                sourceCode       = first.sourceCode,
+                                rcCode           = first.rcCode,
+                                isSourceRetail   = first.isRetailLocation,
+                                creationDateTime = now,
+                                documentDate     = runCatching {
+                                    first.documentDate?.let { Instant.parse("${it}T00:00:00Z") } ?: now
+                                }.getOrDefault(now),
+                                lines            = lines,
+                                state            = DocState.Downloaded,
+                            )
                         }
+                        repository.replaceDownloadedDocuments(type, documents)
                     }
                     is ExtSystemResult.Failure -> {
                         Timber.w("Failed to download ${type.display}: ${result.message}")
@@ -329,15 +278,15 @@ class AppViewModel @Inject constructor(
     /**
      * Performs an authenticated NTLM GET against [serverBaseUrl] to verify that the
      * server is reachable and the supplied Windows credentials are accepted.
-     * The username carries the domain (user@domain or DOMAIN\user). On success the
-     * credentials are persisted so subsequent download/upload can reuse them.
+     * The username carries the domain (user@domain or DOMAIN\user). Credentials are
+     * persisted regardless of outcome, so a failed test (e.g. a server-side error)
+     * doesn't force the user to retype them for the next attempt.
      * The password is never logged.
      */
     fun testExtSystemConnection(
         serverBaseUrl: String,
         username: String,
         password: String,
-        persistOnSuccess: Boolean = true,
         onResult: (ExtSystemResult<Unit>) -> Unit,
     ) {
         viewModelScope.launch {
@@ -345,13 +294,11 @@ class AppViewModel @Inject constructor(
             if (url.isBlank()) {
                 onResult(ExtSystemResult.Failure("Server URL is empty")); return@launch
             }
+            saveCredentials(username.trim(), password)
             val config = extSystemConfig.copy(serverBaseUrl = url)
             val creds  = ExtSystemCredentials(username.trim(), password)
             extSystemClient.configure(config, creds)
             val result = extSystemClient.testConnection(url)
-            if (result is ExtSystemResult.Success && persistOnSuccess) {
-                saveCredentials(username.trim(), password)
-            }
             onResult(result)
         }
     }
@@ -366,15 +313,12 @@ class AppViewModel @Inject constructor(
         ExtSystemConfig(
             serverBaseUrl            = dto.serverBaseUrl.orEmpty(),
             credentialTtlHours       = dto.credentialTtlHours ?: 24,
-            endpointUrls             = DocumentType.entries.associateWith { type ->
-                dto.endpoints?.get(type.name).orEmpty()
-            },
+            documentLinesUrl         = dto.documentLinesUrl.orEmpty(),
             documentTypeCodes        = DocumentType.entries.associateWith { type ->
                 dto.documentTypeCodes?.get(type.name).orEmpty()
             },
-            locationsUrl             = dto.locationsUrl.orEmpty(),
-            responsibilityCentersUrl = dto.responsibilityCentersUrl.orEmpty(),
-            recordingSyncUrl         = dto.recordingSyncUrl.orEmpty(),
+            locationsUrl     = dto.locationsUrl.orEmpty(),
+            recordingSyncUrl = dto.recordingSyncUrl.orEmpty(),
         )
     }.onFailure { Timber.w(it, "parseExtSystemConfigJson failed") }.getOrNull()
 
@@ -389,10 +333,9 @@ class AppViewModel @Inject constructor(
     private data class ExtSystemDefaultsDto(
         val serverBaseUrl: String? = null,
         val credentialTtlHours: Int? = null,
-        val endpoints: Map<String, String>? = null,
+        val documentLinesUrl: String? = null,
         val documentTypeCodes: Map<String, String>? = null,
         val locationsUrl: String? = null,
-        val responsibilityCentersUrl: String? = null,
         val recordingSyncUrl: String? = null,
     )
 
@@ -407,21 +350,40 @@ class AppViewModel @Inject constructor(
             }
             return docs.size
         }
-        val url = config.recordingSyncUrl.ifBlank {
-            "${config.serverBaseUrl.trimEnd('/')}/OData/WMS_RecordingSync"
+        if (config.recordingSyncUrl.isBlank()) {
+            docs.forEach {
+                repository.updateDocState(it.documentNo, it.type.key,
+                    DocState.UploadFailed("Recording sync URL not configured"))
+            }
+            return docs.size
         }
+        val url = config.recordingSyncUrl
         extSystemClient.configure(config, creds)
         var failures = 0
         for (doc in docs) {
-            val singlePayload = listOf(doc).toUploadPayload()
-            val result = extSystemClient.upload(url, singlePayload)
-            when (result) {
-                is ExtSystemResult.Success -> repository.deleteDocument(doc.documentNo, doc.type.key)
-                is ExtSystemResult.Failure -> {
-                    repository.updateDocState(doc.documentNo, doc.type.key,
-                        DocState.UploadFailed(result.message))
-                    failures++
+            val docTypeCode = config.docTypeCodeFor(doc.type)
+            val rows = repository.getRecordings(doc.documentNo, doc.type.key)
+            var failureMessage: String? = null
+            for (row in rows) {
+                val recordingGuid = java.util.UUID.randomUUID().toString()
+                val result = extSystemClient.uploadRecording(url, row.toNavRecording(docTypeCode, recordingGuid))
+                when (result) {
+                    // Delete each row as it's confirmed uploaded, so a retry after a
+                    // partial failure only resends what NAV hasn't received yet.
+                    is ExtSystemResult.Success -> repository.deleteRecording(
+                        doc.documentNo, doc.type.key, row.documentLine, row.recordingLineNo,
+                    )
+                    is ExtSystemResult.Failure -> {
+                        failureMessage = result.message
+                        break
+                    }
                 }
+            }
+            if (failureMessage != null) {
+                repository.updateDocState(doc.documentNo, doc.type.key, DocState.UploadFailed(failureMessage))
+                failures++
+            } else {
+                repository.deleteDocument(doc.documentNo, doc.type.key)
             }
         }
         return failures
@@ -460,6 +422,12 @@ class AppViewModel @Inject constructor(
             appSettingsStore.clear()
             extSystemConfigStore.clear()
             extSystemCredentialStore.clear()
+        }
+    }
+
+    fun deleteAllDocuments() {
+        viewModelScope.launch {
+            repository.clearAll()
         }
     }
 

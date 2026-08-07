@@ -25,4 +25,7 @@ interface DocumentLineDao {
 
     @Upsert
     suspend fun upsertAll(lines: List<DocumentLineEntity>)
+
+    @Query("DELETE FROM documentLine WHERE documentNo = :documentNo AND type = :type")
+    suspend fun deleteAllForDoc(documentNo: String, type: String)
 }

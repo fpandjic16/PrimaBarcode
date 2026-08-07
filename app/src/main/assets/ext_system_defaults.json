@@ -1,21 +1,14 @@
 {
   "serverBaseUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/",
-  "credentialTtlHours": 24,
-  "endpoints": {
-    "WAREHOUSE_SHIPMENT": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
-    "WAREHOUSE_RECEIPT": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
-    "RETAIL_SHIPMENT": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
-    "RETAIL_RECEIPT": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
-    "TRANSPORT_SHEET": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries"
-  },
+  "credentialTtlHours": 168,
+  "documentLinesUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
   "documentTypeCodes": {
     "WAREHOUSE_SHIPMENT": "SHIPMENT",
     "WAREHOUSE_RECEIPT": "RECEIPT",
-    "RETAIL_SHIPMENT": "",
-    "RETAIL_RECEIPT": "",
-    "TRANSPORT_SHEET": ""
+    "RETAIL_SHIPMENT": "RETAILSHPT",
+    "RETAIL_RECEIPT": "RETAILRCPT",
+    "TRANSPORT_SHEET": "TRANSPORT"
   },
-  "locationsUrl": "",
-  "responsibilityCentersUrl": "",
-  "recordingSyncUrl": ""
+  "locationsUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/LocationList",
+  "recordingSyncUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppRecordings"
 }

@@ -30,9 +30,9 @@ class RecordingViewModel @Inject constructor(
         }
     }
 
-    fun setLineScanned(lineNo: Int, scanned: Double) {
+    fun setLineScanned(lineNo: Int, scanned: Double, userId: String) {
         viewModelScope.launch {
-            repository.setLineScanned(documentNo, type, lineNo, scanned)
+            repository.setLineScanned(documentNo, type, lineNo, scanned, userId)
         }
     }
 

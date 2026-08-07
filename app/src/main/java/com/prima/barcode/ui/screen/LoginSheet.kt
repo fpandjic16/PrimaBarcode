@@ -23,9 +23,11 @@ fun LoginSheet(
     onSubmit: (username: String, password: String) -> Unit,
     onDismiss: () -> Unit,
     ctaLabel: String = "Sign in",
+    initialUsername: String = "",
+    initialPassword: String = "",
 ) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf(initialUsername) }
+    var password by remember { mutableStateOf(initialPassword) }
     var visible  by remember { mutableStateOf(false) }
 
     val ttlLabel = if (credentialTtlHours == 168) stringResource(R.string.login_ttl_days, 7)

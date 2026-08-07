@@ -10,6 +10,7 @@
     <string name="btn_download">Download</string>
     <string name="btn_upload">Upload</string>
     <string name="btn_create">Create</string>
+    <string name="doc_create_blocked_hint">Select a location to create documents</string>
     <string name="btn_clear">Clear</string>
     <string name="btn_retry_upload">Retry Upload</string>
     <string name="btn_sign_in">Sign in</string>
@@ -140,8 +141,6 @@
     <string name="settings_warn_over_desc">Confirm when scanned quantity exceeds expected</string>
     <string name="settings_last_scanned">Last scanned lines</string>
     <string name="settings_last_scanned_desc">Lines shown in scan tape (0 = hidden)</string>
-    <string name="settings_live_mode">Live mode</string>
-    <string name="settings_live_mode_desc">Connect to external system instead of test data</string>
     <string name="settings_auto_upload">Auto-upload completed docs</string>
     <string name="settings_auto_upload_desc">Upload automatically when all lines are scanned</string>
     <string name="settings_wifi_only">Sync on Wi-Fi only</string>
@@ -201,6 +200,7 @@
     <string name="lrc_section_location">Location</string>
     <string name="lrc_no_locations">No locations for this RC</string>
     <string name="lrc_rc_placeholder">Select responsibility center</string>
+    <string name="lrc_rc_any">Any responsibility center</string>
     <string name="lrc_location_placeholder">Select location</string>
     <string name="lrc_search_placeholder">Search…</string>
     <string name="lrc_no_results">No results</string>
@@ -218,7 +218,6 @@
     <string name="ext_config_session_duration">Session duration</string>
     <string name="ext_config_session_desc">Credentials are wiped from encrypted storage after this period</string>
     <string name="ext_config_locations_url">Locations URL</string>
-    <string name="ext_config_rc_url">Responsibility Centers URL</string>
     <string name="ext_config_recording_url">Recording sync URL</string>
     <string name="ext_config_load_title">Load configuration</string>
     <string name="ext_config_load_desc">Load built-in production defaults or import a custom JSON file from the device.</string>
@@ -226,6 +225,7 @@
     <string name="ext_config_load_from_file">Import from file</string>
     <string name="ext_config_import_success">Configuration imported</string>
     <string name="ext_config_doc_type_code">Document Type Code</string>
+    <string name="ext_config_document_lines_url">Document lines URL</string>
     <string name="ext_config_import_parse_error">Could not parse JSON file</string>
     <string name="ext_config_import_read_error">Could not read file</string>
     <!-- Document recordings -->

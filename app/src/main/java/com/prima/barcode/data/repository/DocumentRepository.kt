@@ -4,6 +4,8 @@ import androidx.room.withTransaction
 import com.prima.barcode.data.db.*
 import com.prima.barcode.data.model.DocState
 import com.prima.barcode.data.model.Document
+import com.prima.barcode.data.model.DocumentType
+import com.prima.barcode.data.model.Line
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.time.Instant
@@ -15,6 +17,7 @@ interface DocumentRepository {
     fun observeDocuments(sourceCode: String, rcCode: String): Flow<List<Document>>
     fun observeDocument(documentNo: String, type: String): Flow<Document?>
     suspend fun upsertDocument(doc: Document)
+    suspend fun replaceDownloadedDocuments(type: DocumentType, docs: List<Document>)
     suspend fun recordScan(
         documentNo: String,
         type: String,
@@ -25,14 +28,17 @@ interface DocumentRepository {
         format: String?,
     )
     suspend fun undoLastScan(documentNo: String, type: String, lineNo: Int)
-    suspend fun setLineScanned(documentNo: String, type: String, lineNo: Int, scanned: Double)
+    suspend fun setLineScanned(documentNo: String, type: String, lineNo: Int, scanned: Double, userId: String)
     suspend fun addExtraLine(documentNo: String, type: String, barcodeNo: String, userId: String, quantity: Double)
     suspend fun updateExtraLineQuantity(documentNo: String, type: String, recordingLineNo: Int, quantity: Double)
     suspend fun deleteExtraLine(documentNo: String, type: String, recordingLineNo: Int)
     suspend fun updateDocState(documentNo: String, type: String, state: DocState)
     suspend fun deleteDocument(documentNo: String, type: String)
     suspend fun getUploadableDocs(): List<Document>
+    suspend fun getRecordings(documentNo: String, type: String): List<RecordingEntity>
+    suspend fun deleteRecording(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int)
     suspend fun clearAll()
+    suspend fun clearByType(type: DocumentType)
     suspend fun deleteDocumentRecordings(documentNo: String, type: String)
 }
 
@@ -90,11 +96,102 @@ class DocumentRepositoryImpl @Inject constructor(
                             destinationCode = line.destinationCode,
                             sourceCode = line.sourceCode,
                             unitOfMeasureCode = line.unitOfMeasureCode,
+                            rcCode = doc.rcCode,
                         )
                     )
                 }
             }
         }
+    }
+
+    override suspend fun replaceDownloadedDocuments(type: DocumentType, docs: List<Document>) {
+        db.withTransaction {
+            val existingHeaders = db.documentHeaderDao().getAll().filter { it.type == type.key }
+            val downloadedKeys = docs.map { it.documentNo }.toSet()
+
+            // A document no longer in this download is only removed if it has no
+            // recordings — recordings (real scan progress) must never be deleted.
+            for (header in existingHeaders) {
+                if (header.documentNo !in downloadedKeys) {
+                    val hasRecordings = db.recordingDao().getByDoc(header.documentNo, header.type).isNotEmpty()
+                    if (!hasRecordings) db.documentHeaderDao().deleteByKey(header.documentNo, header.type)
+                }
+            }
+
+            for (doc in docs) {
+                mergeDocument(doc, type.key)
+            }
+        }
+    }
+
+    /**
+     * Merges a freshly downloaded document into local state without ever deleting
+     * recordings. Extra (not-on-document) recordings are re-attributed to real lines
+     * by matching barcode, in case they were scanned offline before this document's
+     * lines were known locally. Header/lines always refresh to the downloaded values;
+     * docState is always recomputed from the merged recordings.
+     */
+    private suspend fun mergeDocument(doc: Document, type: String) {
+        val existingRecordings = db.recordingDao().getByDoc(doc.documentNo, type)
+        val lineTiedRecordings = existingRecordings.filter { it.documentLine != 0 }
+        val scannedByLine = lineTiedRecordings.groupBy { it.documentLine }
+            .mapValues { (_, recs) -> recs.sumOf { it.quantity } }.toMutableMap()
+
+        val extras = existingRecordings.filter { it.documentLine == 0 }
+        for (extra in extras) {
+            val matchingLines = doc.lines.filter { it.barcodeNo == extra.barcodeNo }.sortedBy { it.lineNo }
+            if (matchingLines.isEmpty()) continue
+
+            var remainingQty = extra.quantity
+            for ((index, line) in matchingLines.withIndex()) {
+                val isLast = index == matchingLines.lastIndex
+                val alreadyScanned = scannedByLine[line.lineNo] ?: 0.0
+                val room = (line.expected - alreadyScanned).coerceAtLeast(0.0)
+                // The last matching line absorbs whatever is left, even over its expected qty.
+                val allocation = if (isLast) remainingQty else minOf(remainingQty, room)
+                if (allocation <= 0.0) continue
+
+                val nextNo = db.recordingDao().getNextRecordingLineNo(doc.documentNo, type, line.lineNo)
+                db.recordingDao().insert(
+                    RecordingEntity(
+                        documentNo = doc.documentNo,
+                        type = type,
+                        documentLine = line.lineNo,
+                        recordingLineNo = nextNo,
+                        barcodeNo = extra.barcodeNo,
+                        quantity = allocation,
+                        creationDateTime = extra.creationDateTime,
+                        format = extra.format,
+                        userId = extra.userId,
+                        destinationCode = line.destinationCode,
+                        sourceCode = line.sourceCode,
+                        unitOfMeasureCode = line.unitOfMeasureCode,
+                        rcCode = doc.rcCode,
+                    )
+                )
+                scannedByLine[line.lineNo] = alreadyScanned + allocation
+                remainingQty -= allocation
+            }
+            // Every match fully absorbs the extra's quantity (the last line takes any
+            // remainder), so once there's at least one match the old row is spent.
+            db.recordingDao().deleteByPk(doc.documentNo, type, 0, extra.recordingLineNo)
+        }
+
+        val finalRecordings = db.recordingDao().getByDoc(doc.documentNo, type)
+        val state = computeStateAfterMerge(doc.lines, finalRecordings)
+        db.documentHeaderDao().upsert(doc.toEntity().copy(docState = state.toDbString()))
+        db.documentLineDao().deleteAllForDoc(doc.documentNo, type)
+        db.documentLineDao().upsertAll(doc.lines.map { it.toEntity(type) })
+    }
+
+    private fun computeStateAfterMerge(lines: List<Line>, recordings: List<RecordingEntity>): DocState {
+        if (recordings.isEmpty()) return DocState.Downloaded
+        val scannedByLine = recordings.filter { it.documentLine != 0 }
+            .groupBy { it.documentLine }
+            .mapValues { (_, recs) -> recs.sumOf { it.quantity } }
+        val hasExtras = recordings.any { it.documentLine == 0 }
+        val allExact = lines.all { line -> (scannedByLine[line.lineNo] ?: 0.0) == line.expected }
+        return if (allExact && !hasExtras) DocState.Completed else DocState.InProgress
     }
 
     override suspend fun recordScan(
@@ -108,6 +205,7 @@ class DocumentRepositoryImpl @Inject constructor(
     ) {
         db.withTransaction {
             val line = db.documentLineDao().getByKey(documentNo, type, lineNo) ?: return@withTransaction
+            val header = db.documentHeaderDao().getByKey(documentNo, type) ?: return@withTransaction
             val nextNo = db.recordingDao().getNextRecordingLineNo(documentNo, type, lineNo)
             db.recordingDao().insert(
                 RecordingEntity(
@@ -123,6 +221,7 @@ class DocumentRepositoryImpl @Inject constructor(
                     destinationCode = line.destinationCode,
                     sourceCode = line.sourceCode,
                     unitOfMeasureCode = line.unitOfMeasureCode,
+                    rcCode = header.rcCode,
                 )
             )
             advanceToInProgressIfNeeded(documentNo, type)
@@ -138,7 +237,7 @@ class DocumentRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun setLineScanned(documentNo: String, type: String, lineNo: Int, scanned: Double) {
+    override suspend fun setLineScanned(documentNo: String, type: String, lineNo: Int, scanned: Double, userId: String) {
         db.withTransaction {
             db.recordingDao().deleteAllForLine(documentNo, type, lineNo)
             if (scanned > 0.0) {
@@ -155,10 +254,11 @@ class DocumentRepositoryImpl @Inject constructor(
                         quantity = scanned,
                         creationDateTime = Instant.now().toString(),
                         format = null,
-                        userId = "",
+                        userId = userId,
                         destinationCode = line.destinationCode,
                         sourceCode = line.sourceCode,
                         unitOfMeasureCode = line.unitOfMeasureCode,
+                        rcCode = header.rcCode,
                     )
                 )
             }
@@ -192,6 +292,7 @@ class DocumentRepositoryImpl @Inject constructor(
                         destinationCode = header.destinationCode,
                         sourceCode = header.sourceCode,
                         unitOfMeasureCode = "",
+                        rcCode = header.rcCode,
                     )
                 )
             }
@@ -233,8 +334,19 @@ class DocumentRepositoryImpl @Inject constructor(
         }.filter { it.lines.any { l -> l.scanned > 0.0 } || it.extraLines.isNotEmpty() }
     }
 
+    override suspend fun getRecordings(documentNo: String, type: String): List<RecordingEntity> =
+        db.recordingDao().getByDoc(documentNo, type)
+
+    override suspend fun deleteRecording(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int) {
+        db.recordingDao().deleteByPk(documentNo, type, documentLine, recordingLineNo)
+    }
+
     override suspend fun clearAll() {
         db.documentHeaderDao().deleteAll()
+    }
+
+    override suspend fun clearByType(type: DocumentType) {
+        db.documentHeaderDao().deleteAllByType(type.key)
     }
 
     override suspend fun deleteDocumentRecordings(documentNo: String, type: String) {

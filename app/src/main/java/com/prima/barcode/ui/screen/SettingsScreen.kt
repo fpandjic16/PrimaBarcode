@@ -43,7 +43,7 @@ private const val DB_SCHEMA_VERSION = "7.0.0"
 fun SettingsScreen(
     user: User?,
     location: Location?,
-    rc: ResponsibilityCenter,
+    rc: ResponsibilityCenter?,
     textSize: TextSize,
     onTextSizeChange: (TextSize) -> Unit,
     uppercaseText: Boolean = false,
@@ -62,23 +62,26 @@ fun SettingsScreen(
     onWarnOnOverChange: (Boolean) -> Unit = {},
     warnNotOnDocument: Boolean = true,
     onWarnNotOnDocumentChange: (Boolean) -> Unit = {},
+    askQtyForUnknownBarcode: Boolean = true,
+    onAskQtyForUnknownBarcodeChange: (Boolean) -> Unit = {},
     autoUploadCompleted: Boolean = false,
     onAutoUploadChange: (Boolean) -> Unit = {},
     backgroundSync: Boolean = false,
     onBackgroundSyncChange: (Boolean) -> Unit = {},
-    liveMode: Boolean = false,
-    onLiveModeChange: (Boolean) -> Unit = {},
     debuggerActive: Boolean = false,
     onDebuggerActiveChange: (Boolean) -> Unit = {},
     onExport: () -> Unit = {},
     onClearCache: () -> Unit = {},
+    onDeleteAllDocuments: () -> Unit = {},
     onInsertTestData: () -> Unit = {},
     onBack: () -> Unit,
     onChangeLocation: () -> Unit,
     onOpenExtSystemConfig: () -> Unit = {},
     onSignOut: () -> Unit,
+    onSignInTap: () -> Unit = {},
 ) {
     var showClearCacheDialog by remember { mutableStateOf(false) }
+    var showDeleteAllDocumentsDialog by remember { mutableStateOf(false) }
     var showInsertTestDataDialog by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
@@ -290,6 +293,14 @@ fun SettingsScreen(
                         onCheckedChange = onWarnNotOnDocumentChange,
                     )
                     SettingsDivider()
+                    ToggleRow(
+                        icon = Icons.Outlined.Dialpad,
+                        label = "Ask for Qty for unknown barcode",
+                        description = "Show a quantity screen when scanning a barcode that's not on the document. When off, it's recorded with Qty = 1 automatically.",
+                        checked = askQtyForUnknownBarcode,
+                        onCheckedChange = onAskQtyForUnknownBarcodeChange,
+                    )
+                    SettingsDivider()
                     var lastScannedExpanded by remember { mutableStateOf(false) }
                     Row(
                         modifier = Modifier
@@ -355,14 +366,6 @@ fun SettingsScreen(
 
             item {
                 Column(modifier = Modifier.fillMaxWidth().background(Color.White)) {
-                    ToggleRow(
-                        icon = Icons.Outlined.CloudSync,
-                        label = stringResource(R.string.settings_live_mode),
-                        description = stringResource(R.string.settings_live_mode_desc),
-                        checked = liveMode,
-                        onCheckedChange = onLiveModeChange,
-                    )
-                    SettingsDivider()
                     ToggleRow(
                         icon = Icons.Outlined.CloudUpload,
                         label = stringResource(R.string.settings_auto_upload),
@@ -522,6 +525,38 @@ fun SettingsScreen(
                             )
                         }
                     }
+                    SettingsDivider()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showDeleteAllDocumentsDialog = true }
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFFFFEAEA)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(Icons.Outlined.DeleteForever, contentDescription = null, tint = SignOutRed, modifier = Modifier.size(20.dp))
+                        }
+                        Spacer(Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Delete all documents and recordings",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = SignOutRed,
+                                    fontWeight = FontWeight.Medium,
+                                ),
+                            )
+                            Text(
+                                "Permanently deletes every downloaded document, line, and recording. Settings and sign-in stay untouched.",
+                                style = monoLabel.copy(color = PrimaPalette.Ink3),
+                            )
+                        }
+                    }
                 }
             }
 
@@ -633,6 +668,7 @@ fun SettingsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable(enabled = user == null, onClick = onSignInTap)
                             .padding(horizontal = 20.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -706,6 +742,23 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearCacheDialog = false }) { Text(stringResource(R.string.btn_cancel)) }
+            },
+        )
+    }
+
+    if (showDeleteAllDocumentsDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAllDocumentsDialog = false },
+            title = { Text("Delete all documents and recordings?") },
+            text = { Text("This permanently deletes every downloaded document, line, and recording — including any unsynced scans. This cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { showDeleteAllDocumentsDialog = false; onDeleteAllDocuments() },
+                    colors = ButtonDefaults.textButtonColors(contentColor = SignOutRed),
+                ) { Text(stringResource(R.string.btn_clear)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAllDocumentsDialog = false }) { Text(stringResource(R.string.btn_cancel)) }
             },
         )
     }

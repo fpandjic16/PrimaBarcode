@@ -23,11 +23,11 @@ class AppSettingsStore @Inject constructor(@param:ApplicationContext private val
         hapticEnabled    = prefs.getBoolean("hapticEnabled", true),
         warnOnOver          = prefs.getBoolean("warnOnOver", true),
         warnNotOnDocument   = prefs.getBoolean("warnNotOnDocument", true),
+        askQtyForUnknownBarcode = prefs.getBoolean("askQtyForUnknownBarcode", true),
         autoUploadCompleted = prefs.getBoolean("autoUploadCompleted", false),
         backgroundSync      = prefs.getBoolean("backgroundSync", false),
         lastLocationCode = prefs.getString("lastLocationCode", "") ?: "",
         lastRcCode       = prefs.getString("lastRcCode", "") ?: "",
-        liveMode         = prefs.getBoolean("liveMode", false),
         disabledDocTypes = prefs.getString("disabledDocTypes", "")?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
         docTypeFilters = prefs.getString("docTypeFilters", "")
             ?.split(",")?.filter { it.isNotEmpty() }
@@ -53,11 +53,11 @@ class AppSettingsStore @Inject constructor(@param:ApplicationContext private val
             .putBoolean("hapticEnabled",      settings.hapticEnabled)
             .putBoolean("warnOnOver",          settings.warnOnOver)
             .putBoolean("warnNotOnDocument",   settings.warnNotOnDocument)
+            .putBoolean("askQtyForUnknownBarcode", settings.askQtyForUnknownBarcode)
             .putBoolean("autoUploadCompleted", settings.autoUploadCompleted)
             .putBoolean("backgroundSync",      settings.backgroundSync)
             .putString ("lastLocationCode",   settings.lastLocationCode)
             .putString ("lastRcCode",         settings.lastRcCode)
-            .putBoolean("liveMode",           settings.liveMode)
             .putString ("disabledDocTypes",   settings.disabledDocTypes.joinToString(","))
             .putString ("docTypeFilters",     settings.docTypeFilters.entries.joinToString(",") { "${it.key}:${it.value.name}" })
             .putBoolean("debuggerActive",     settings.debuggerActive)

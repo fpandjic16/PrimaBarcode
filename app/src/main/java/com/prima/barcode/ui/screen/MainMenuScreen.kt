@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.MoveToInbox
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Store
 import androidx.compose.material3.Icon
@@ -21,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -47,13 +49,14 @@ data class DocTypeSummary(
     val short: String,
     val count: Int,
     val statusMini: List<LineStatus>,
+    val blocked: Boolean = false,
 )
 
 @Composable
 fun MainMenuScreen(
     user: User?,
     location: Location?,
-    rc: ResponsibilityCenter,
+    rc: ResponsibilityCenter?,
     docTypes: List<DocTypeSummary>,
     shiftScans: Int = 0,
     shiftErrors: Int = 0,
@@ -112,7 +115,7 @@ fun MainMenuScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            rc.code,
+                            rc?.code ?: "—",
                             style = monoLabel.copy(color = Color.White, fontWeight = FontWeight.Medium),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -167,10 +170,11 @@ private fun DocumentTypeList(summary: DocTypeSummary, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .alpha(if (summary.blocked) 0.45f else 1f)
             .clip(RoundedCornerShape(14.dp))
             .background(Color.White)
             .border(1.dp, Color(0x18000000), RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
+            .clickable(enabled = !summary.blocked, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -190,13 +194,17 @@ private fun DocumentTypeList(summary: DocTypeSummary, onClick: () -> Unit) {
             }
         }
         Spacer(Modifier.width(8.dp))
-        Text(
-            summary.count.toString(),
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontFamily = com.prima.barcode.ui.theme.GeistMono,
-                color = if (summary.count > 0) PrimaPalette.Ink else PrimaPalette.Ink4,
-                fontWeight = FontWeight.Medium,
-            ),
-        )
+        if (summary.blocked) {
+            Icon(Icons.Outlined.Lock, contentDescription = null, tint = PrimaPalette.Ink4, modifier = Modifier.size(18.dp))
+        } else {
+            Text(
+                summary.count.toString(),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontFamily = com.prima.barcode.ui.theme.GeistMono,
+                    color = if (summary.count > 0) PrimaPalette.Ink else PrimaPalette.Ink4,
+                    fontWeight = FontWeight.Medium,
+                ),
+            )
+        }
     }
 }

@@ -1,0 +1,2712 @@
+OBJECT Table 50179 Barcode App Entry
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08.06.26;
+    Time=12:54:04;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 10  ;   ;Document Type       ;Code20        ;DataClassification=ToBeClassified }
+    { 20  ;   ;Document No.        ;Code20        ;DataClassification=ToBeClassified }
+    { 30  ;   ;Line No.            ;Integer       ;DataClassification=ToBeClassified }
+    { 40  ;   ;Source No.          ;Code20        ;DataClassification=ToBeClassified }
+    { 50  ;   ;Retail Location     ;Boolean       ;DataClassification=ToBeClassified }
+    { 60  ;   ;Destination No.     ;Code20        ;DataClassification=ToBeClassified }
+    { 70  ;   ;Document Date       ;Date          ;DataClassification=ToBeClassified }
+    { 80  ;   ;Responsibility Center;Code20       ;DataClassification=ToBeClassified }
+    { 90  ;   ;Item No.            ;Code20        ;DataClassification=ToBeClassified }
+    { 100 ;   ;Item Description    ;Text110       ;DataClassification=ToBeClassified }
+    { 110 ;   ;Item Qty.           ;Decimal       ;DataClassification=ToBeClassified }
+    { 111 ;   ;Scanning Qty.       ;Decimal       ;DataClassification=ToBeClassified }
+    { 120 ;   ;Item UoM            ;Code20        ;DataClassification=ToBeClassified }
+    { 130 ;   ;Barcode             ;Text100       ;DataClassification=ToBeClassified }
+  }
+  KEYS
+  {
+    {    ;Document Type,Document No.,Line No.     ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+
+OBJECT Table 5401810 BEMF Order
+{
+  OBJECT-PROPERTIES
+  {
+    Date=26.05.25;
+    Time=13:10:59;
+    Modified=Yes;
+    Version List=BEMF1.1.6;
+  }
+  PROPERTIES
+  {
+    CaptionML=[DEU=BE-Mobile Auftrag;
+               ENU=BE-Mobile Order];
+  }
+  FIELDS
+  {
+    { 1   ;   ;orderId             ;Code40        ;DataClassification=ToBeClassified }
+    { 80  ;   ;orderType           ;Code40        ;DataClassification=ToBeClassified }
+    { 100 ;   ;description_1       ;Text250       ;DataClassification=ToBeClassified }
+    { 101 ;   ;description_2       ;Text250       ;DataClassification=ToBeClassified }
+    { 102 ;   ;description_3       ;Text250       ;DataClassification=ToBeClassified }
+    { 103 ;   ;description_4       ;Text250       ;DataClassification=ToBeClassified }
+    { 50000;  ;RetailLocation      ;Boolean       ;DataClassification=ToBeClassified;
+                                                   Description=ZGNVSUPPCO-1246 }
+  }
+  KEYS
+  {
+    {    ;orderId,orderType                       ;Clustered=Yes }
+    {    ;orderType                                }
+    {    ;description_4                            }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+
+OBJECT Table 5401811 BEMF OrderLine
+{
+  OBJECT-PROPERTIES
+  {
+    Date=27.05.25;
+    Time=14:34:55;
+    Modified=Yes;
+    Version List=BEMF1.1.6;
+  }
+  PROPERTIES
+  {
+    CaptionML=[DEU=BE-Mobile Auftragszeile;
+               ENU=BE-Mobile Order Line];
+  }
+  FIELDS
+  {
+    { 1   ;   ;orderLineId         ;Code40        ;DataClassification=ToBeClassified }
+    { 2   ;   ;orderId             ;Code40        ;TableRelation="BEMF Order";
+                                                   DataClassification=ToBeClassified }
+    { 3   ;   ;orderType           ;Code40        ;DataClassification=ToBeClassified }
+    { 20  ;   ;quantity            ;Decimal       ;DataClassification=ToBeClassified }
+    { 100 ;   ;description_1       ;Text250       ;DataClassification=ToBeClassified }
+    { 101 ;   ;description_2       ;Text250       ;DataClassification=ToBeClassified }
+    { 102 ;   ;description_3       ;Text250       ;DataClassification=ToBeClassified }
+    { 103 ;   ;description_4       ;Text250       ;DataClassification=ToBeClassified }
+    { 50000;  ;RetailLocation      ;Boolean       ;DataClassification=ToBeClassified;
+                                                   Description=ZGNVSUPPCO-1246 }
+  }
+  KEYS
+  {
+    {    ;orderId,orderType,orderLineId           ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+
+OBJECT Table 5401812 BEMF OrderLineItem
+{
+  OBJECT-PROPERTIES
+  {
+    Date=26.05.25;
+    Time=13:11:14;
+    Modified=Yes;
+    Version List=BEMF1.1.6;
+  }
+  PROPERTIES
+  {
+    CaptionML=[DEU=BE-Mobile Auftragszeile Artikel;
+               ENU=BE-Mobile Order Line Item];
+  }
+  FIELDS
+  {
+    { 1   ;   ;orderLineId         ;Code40        ;TableRelation="BEMF OrderLine".orderLineId;
+                                                   DataClassification=ToBeClassified }
+    { 2   ;   ;orderId             ;Code40        ;TableRelation="BEMF OrderLine".orderId WHERE (orderLineId=FIELD(orderLineId));
+                                                   DataClassification=ToBeClassified }
+    { 3   ;   ;orderType           ;Code40        ;DataClassification=ToBeClassified }
+    { 10  ;   ;barcode             ;Text200       ;DataClassification=ToBeClassified }
+    { 20  ;   ;quantity            ;Decimal       ;DataClassification=ToBeClassified }
+    { 100 ;   ;description_1       ;Text250       ;DataClassification=ToBeClassified }
+    { 101 ;   ;description_2       ;Text250       ;DataClassification=ToBeClassified }
+    { 102 ;   ;description_3       ;Text250       ;DataClassification=ToBeClassified }
+    { 103 ;   ;description_4       ;Text250       ;DataClassification=ToBeClassified }
+    { 50000;  ;RetailLocation      ;Boolean       ;DataClassification=ToBeClassified;
+                                                   Description=ZGNVSUPPCO-1246 }
+  }
+  KEYS
+  {
+    {    ;orderLineId,orderId,orderType,barcode   ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+
+OBJECT Codeunit 50107 BEMF Mgmt
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08.06.26;
+    Time=12:30:19;
+    Modified=Yes;
+    Version List=PRIMA;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            IF NOT AutoUpdateBarcodeStatusOnSync() THEN;
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      DocumentNotExists@50001 : TextConst 'ENU=Document does not exists - %1;HRV=Dokument ne postoji - %1';
+      MultipleValueBarcode@50002 : Boolean;
+      BarcodeQty@50003 : Decimal;
+      BarcodeUoM@50004 : Code[10];
+      BarcodeItem@50005 : Code[40];
+      DocumentLineNo@50006 : Integer;
+      BarcodeMgmt@50007 : Codeunit 50106;
+      LineNo@50009 : Integer;
+      ResponsibilityCenterLocation@50010 : Record 50009;
+
+    [EventSubscriber(Table,5401813,OnAfterModifyEvent)]
+    LOCAL PROCEDURE BEMFRecording_OnAfterModify@50003(VAR Rec@50000 : Record 5401813;VAR xRec@50001 : Record 5401813;RunTrigger@50002 : Boolean);
+    VAR
+      BEMFRecording@50003 : Record 5401813;
+      DocNo@50004 : Code[20];
+      ScannedDocumentType@50005 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+    BEGIN
+      //due to SOAP call, cannot use OnAfterInsert
+      IF Rec.ISTEMPORARY THEN
+        EXIT;
+
+      IF Rec.orderId <> '' THEN
+        DocNo := Rec.orderId
+      ELSE
+        DocNo := Rec.description;
+
+      IF DocNo = '' THEN
+        ERROR(STRSUBSTNO(DocumentNotExists, Rec));
+
+      CASE Rec.orderType OF
+        UPPERCASE(FORMAT(ScannedDocumentType::Shipment)) :
+          CheckDocumentStatus(ScannedDocumentType::Shipment,DocNo);
+        UPPERCASE(FORMAT(ScannedDocumentType::Prereceipt)) :
+          CheckDocumentStatus(ScannedDocumentType::Prereceipt,DocNo);
+        //<ZGNVSUPPCO-1059>
+        UPPERCASE(FORMAT(ScannedDocumentType::Receipt)) :
+          CheckDocumentStatus(ScannedDocumentType::Receipt,DocNo);
+        //</ZGNVSUPPCO-1059>
+        // <ZGNVSUPPCO-1246>
+        UPPERCASE(FORMAT(ScannedDocumentType::Transport)) :
+          CheckDocumentStatus(ScannedDocumentType::Transport,DocNo);
+        // </ZGNVSUPPCO-1246>
+        // <ZGNVSUPPCO-1246>
+        UPPERCASE(FORMAT(ScannedDocumentType::WHCDSHIP)) :
+          CheckDocumentStatus(ScannedDocumentType::WHCDSHIP,DocNo);
+        UPPERCASE(FORMAT(ScannedDocumentType::WHCDREC)) :
+          CheckDocumentStatus(ScannedDocumentType::WHCDREC,DocNo);
+        UPPERCASE(FORMAT(ScannedDocumentType::WHCDSHFROM)) :
+          CheckDocumentStatus(ScannedDocumentType::WHCDSHFROM,DocNo);
+        UPPERCASE(FORMAT(ScannedDocumentType::CPCDSHIP)) :
+          CheckDocumentStatus(ScannedDocumentType::CPCDSHIP,DocNo);
+        UPPERCASE(FORMAT(ScannedDocumentType::CPCDREC)) :
+          CheckDocumentStatus(ScannedDocumentType::CPCDREC,DocNo);
+        UPPERCASE(FORMAT(ScannedDocumentType::CPCDSHFROM)) :
+          CheckDocumentStatus(ScannedDocumentType::CPCDSHFROM,DocNo);
+        // </ZGNVSUPPCO-1246>
+      END;
+
+      CreateSyncRecord(DocNo, Rec.orderType, Rec."User ID"); //<ZGNVSUPPCO-1059/>
+    END;
+
+    [EventSubscriber(Table,5401813,OnBeforeModifyEvent)]
+    LOCAL PROCEDURE BEMFRecording_OnBeforeModify@50012(VAR Rec@50000 : Record 5401813;VAR xRec@50001 : Record 5401813;RunTrigger@50002 : Boolean);
+    VAR
+      BEMFRecording@50003 : Record 5401813;
+      DocNo@50004 : Code[20];
+    BEGIN
+      IF Rec.ISTEMPORARY THEN
+        EXIT;
+
+      Rec."User ID" := USERID;
+      Rec."Creation DateTime" := CURRENTDATETIME;
+    END;
+
+    LOCAL PROCEDURE CheckDocumentStatus@50006(DocumentType@50000 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';DocumentNo@50001 : Code[20]);
+    VAR
+      WhseShpt@50002 : Record 7320;
+      DocDoesntExists@50003 : TextConst 'ENU=%1 %2 does not exists or has unallowed status.;HRV=%1 %2 ne postoji ili je u nedozvoljenom statusu.';
+      WhseRcpt@50004 : Record 7316;
+      TransSheet@50005 : Record 50015;
+      ComplaintShpt@50006 : Record 50021;
+    BEGIN
+      CASE DocumentType OF
+        DocumentType::Shipment :
+          BEGIN
+            WhseShpt.LOCKTABLE(TRUE);
+            IF NOT (WhseShpt.GET(DocumentNo)) OR (WhseShpt."Barcode Status" = WhseShpt."Barcode Status"::Processed) THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,WhseShpt.TABLECAPTION,DocumentNo))
+            ELSE IF (WhseShpt."Barcode Status" = WhseShpt."Barcode Status"::Blank) THEN BEGIN
+              WhseShpt."Barcode Status" := WhseShpt."Barcode Status"::Synchronized;
+              WhseShpt.MODIFY;
+            END;
+          END;
+        //<ZGNVSUPPCO-1059>
+        DocumentType::Receipt:
+          BEGIN
+            WhseRcpt.LOCKTABLE(TRUE);
+            IF NOT (WhseRcpt.GET(DocumentNo)) OR (WhseRcpt."Barcode Status" = WhseRcpt."Barcode Status"::Processed) THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,WhseRcpt.TABLECAPTION,DocumentNo));
+
+            IF (WhseRcpt."Barcode Status" = WhseRcpt."Barcode Status"::Blank) THEN BEGIN
+              WhseRcpt."Barcode Status" := WhseRcpt."Barcode Status"::Synchronized;
+              WhseRcpt.MODIFY;
+            END;
+          END;
+        //</ZGNVSUPPCO-1059>
+        DocumentType::Transport:
+        //<ZGNVSUPPCO-1246>
+          BEGIN
+            TransSheet.LOCKTABLE(TRUE);
+            IF NOT (TransSheet.GET(DocumentNo)) OR (TransSheet."Barcode Status" = TransSheet."Barcode Status"::Processed) THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,TransSheet.TABLECAPTION,DocumentNo));
+
+            IF (TransSheet."Barcode Status" = TransSheet."Barcode Status"::Blank) THEN BEGIN
+              TransSheet."Barcode Status" := TransSheet."Barcode Status"::Synchronized;
+              TransSheet.MODIFY;
+            END;
+          END;
+        //</ZGNVSUPPCO-1246>
+        //<ZGNVSUPPCO-1245>
+        DocumentType::WHCDSHIP:
+          BEGIN
+            WhseShpt.LOCKTABLE(TRUE);
+            IF NOT WhseShpt.GET(DocumentNo) OR (WhseShpt."Cross-Dock Shipment Status" > WhseShpt."Cross-Dock Shipment Status"::"Shipped to CD") THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,WhseShpt.TABLECAPTION,DocumentNo))
+            ELSE IF (WhseShpt."Cross-Dock Shipment Status" < WhseShpt."Cross-Dock Shipment Status"::"Shipped to CD (sync)") THEN BEGIN
+              WhseShpt."Cross-Dock Shipment Status" := WhseShpt."Cross-Dock Shipment Status"::"Shipped to CD (sync)";
+              WhseShpt.MODIFY;
+            END;
+          END;
+        DocumentType::WHCDREC:
+          BEGIN
+            WhseShpt.LOCKTABLE(TRUE);
+            IF NOT WhseShpt.GET(DocumentNo) THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,WhseShpt.TABLECAPTION,DocumentNo))
+            ELSE IF (WhseShpt."Cross-Dock Shipment Status" < WhseShpt."Cross-Dock Shipment Status"::"Shipped to CD (sync)") OR (WhseShpt."Cross-Dock Shipment Status" > WhseShpt."Cross-Dock Shipment Status"::"Received on CD") THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,WhseShpt.TABLECAPTION,DocumentNo))
+            ELSE IF (WhseShpt."Cross-Dock Shipment Status" < WhseShpt."Cross-Dock Shipment Status"::"Received on CD (sync)") THEN BEGIN
+              WhseShpt."Cross-Dock Shipment Status" := WhseShpt."Cross-Dock Shipment Status"::"Received on CD (sync)";
+              WhseShpt.MODIFY;
+            END;
+          END;
+        DocumentType::WHCDSHFROM:
+          BEGIN
+            WhseShpt.LOCKTABLE(TRUE);
+            IF NOT WhseShpt.GET(DocumentNo) THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,WhseShpt.TABLECAPTION,DocumentNo))
+            ELSE IF (WhseShpt."Cross-Dock Shipment Status" < WhseShpt."Cross-Dock Shipment Status"::"Received on CD (sync)") THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,WhseShpt.TABLECAPTION,DocumentNo))
+            ELSE IF (WhseShpt."Cross-Dock Shipment Status" < WhseShpt."Cross-Dock Shipment Status"::"Received on CD (sync)") THEN BEGIN
+              WhseShpt."Cross-Dock Shipment Status" := WhseShpt."Cross-Dock Shipment Status"::"Received on CD (sync)";
+              WhseShpt.MODIFY;
+            END;
+          END;
+
+        DocumentType::CPCDSHIP:
+          BEGIN
+            ComplaintShpt.LOCKTABLE(TRUE);
+            IF NOT ComplaintShpt.GET(DocumentNo) OR (ComplaintShpt."Cross-Dock Shipment Status" > ComplaintShpt."Cross-Dock Shipment Status"::"Shipped to CD") THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,ComplaintShpt.TABLECAPTION,DocumentNo))
+            ELSE IF (ComplaintShpt."Cross-Dock Shipment Status" < ComplaintShpt."Cross-Dock Shipment Status"::"Shipped to CD (sync)") THEN BEGIN
+              ComplaintShpt."Cross-Dock Shipment Status" := ComplaintShpt."Cross-Dock Shipment Status"::"Shipped to CD (sync)";
+              ComplaintShpt.MODIFY;
+            END;
+          END;
+        DocumentType::CPCDREC:
+          BEGIN
+            ComplaintShpt.LOCKTABLE(TRUE);
+            IF NOT ComplaintShpt.GET(DocumentNo) THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,ComplaintShpt.TABLECAPTION,DocumentNo))
+            ELSE IF (ComplaintShpt."Cross-Dock Shipment Status" < ComplaintShpt."Cross-Dock Shipment Status"::"Shipped to CD (sync)") OR (ComplaintShpt."Cross-Dock Shipment Status" > ComplaintShpt."Cross-Dock Shipment Status"::"Received on CD") THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,ComplaintShpt.TABLECAPTION,DocumentNo))
+            ELSE IF (ComplaintShpt."Cross-Dock Shipment Status" < ComplaintShpt."Cross-Dock Shipment Status"::"Received on CD (sync)") THEN BEGIN
+              ComplaintShpt."Cross-Dock Shipment Status" := ComplaintShpt."Cross-Dock Shipment Status"::"Received on CD (sync)";
+              ComplaintShpt.MODIFY;
+            END;
+          END;
+        DocumentType::CPCDSHFROM:
+          BEGIN
+            ComplaintShpt.LOCKTABLE(TRUE);
+            IF NOT ComplaintShpt.GET(DocumentNo) THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,ComplaintShpt.TABLECAPTION,DocumentNo))
+            ELSE IF (ComplaintShpt."Cross-Dock Shipment Status" < ComplaintShpt."Cross-Dock Shipment Status"::"Received on CD (sync)") THEN
+              ERROR(STRSUBSTNO(DocDoesntExists,ComplaintShpt.TABLECAPTION,DocumentNo))
+            ELSE IF (ComplaintShpt."Cross-Dock Shipment Status" < ComplaintShpt."Cross-Dock Shipment Status"::"Received on CD (sync)") THEN BEGIN
+              ComplaintShpt."Cross-Dock Shipment Status" := ComplaintShpt."Cross-Dock Shipment Status"::"Received on CD (sync)";
+              ComplaintShpt.MODIFY;
+            END;
+          END;
+        // </ZGNVSUPPCO-1245>
+      END;
+    END;
+
+    [EventSubscriber(Codeunit,7310,OnBeforeRelease)]
+    PROCEDURE WhseShptStatus_OnBeforeRelease@50000(VAR WarehouseShipmentHeader@50000 : Record 7320);
+    VAR
+      WhseShptFound@50006 : Boolean;
+    BEGIN
+      IF WarehouseShipmentHeader.ISTEMPORARY THEN
+        EXIT;
+
+      FillWhseShptBarcodeEntries(WarehouseShipmentHeader,FALSE);
+    END;
+
+    [EventSubscriber(Codeunit,7310,OnBeforeReopen)]
+    PROCEDURE WhseShptStatus_OnBeforeReOpen@50007(VAR WarehouseShipmentHeader@50000 : Record 7320);
+    VAR
+      BarcodeStatusErr@50001 : TextConst 'ENU=Barcode status of document %1 must not be %2.;HRV=Barkod status dokumenta %1 ne smije biti %2.';
+      ScannedDocumentType@50002 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+    BEGIN
+      IF WarehouseShipmentHeader.ISTEMPORARY THEN
+        EXIT;
+
+      IF WarehouseShipmentHeader."Barcode Status" = WarehouseShipmentHeader."Barcode Status"::Processed THEN
+        ERROR(STRSUBSTNO(BarcodeStatusErr,WarehouseShipmentHeader."No.",WarehouseShipmentHeader."Barcode Status"::Processed));
+
+      //DeleteWhseShptBarcodeEntries(WarehouseShipmentHeader);   //<ZGNVSUPPCO-1059/>
+      //<ZGNVSUPPCO-1059>
+      IF WarehouseShipmentHeader.Status = WarehouseShipmentHeader.Status::Open THEN
+        EXIT;
+      //<ZGNVSUPPCO-1059>
+      DeleteBarcodeEntries(WarehouseShipmentHeader."No.", ScannedDocumentType::Shipment);  //<ZGNVSUPPCO-1059/>
+    END;
+
+    [EventSubscriber(Table,7320,OnAfterDeleteEvent)]
+    PROCEDURE WhseShpt_OnAfterDelete@50019(VAR Rec@50000 : Record 7320;RunTrigger@50001 : Boolean);
+    BEGIN
+      IF Rec.ISTEMPORARY THEN
+        EXIT;
+      //<ZGNVSUPPCO-1059>
+      IF Rec.Status = Rec.Status::Open THEN
+        EXIT;
+      //<ZGNVSUPPCO-1059>
+      //DeleteWhseShptBarcodeEntries(Rec); //<ZGNVSUPPCO-1059/>
+
+      // <ZGNVSUPPCO-1245>
+      //DeleteBarcodeEntries(Rec."No.", ScannedDocumentType::Shipment);  //<ZGNVSUPPCO-1059/>
+      DeleteBarcodeEntriesOnDeleteDocument(Rec."No.");
+      DeleteScannedEntries(Rec."No.");
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE FillWhseShptBarcodeEntries@50004(Rec@50000 : Record 7320;SkipRelease@50006 : Boolean);
+    VAR
+      BEMFOrder@50003 : Record 5401810;
+      BEMFOrderLine@50002 : Record 5401811;
+      BEMFOrderLineItem@50001 : Record 5401812;
+      WarehouseShipmentLine@50004 : Record 7321;
+      BOMComponent@50005 : Record 90;
+      UnitofMeasure@50007 : Record 204;
+      BarcodeNo@50008 : Text[200];
+      DocTypeLoc@50009 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+      IsRetailLocation@50010 : Boolean;
+    BEGIN
+      CLEAR(LineNo);
+
+      IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocTypeLoc::Shipment) THEN
+        EXIT;
+
+      IF Rec.Status = Rec.Status::Released THEN
+        IF NOT SkipRelease THEN
+          EXIT;
+
+      IF Rec."Barcode Status" = Rec."Barcode Status"::Processed THEN
+        EXIT;
+
+      // <ZGNVSUPPCO-1245>
+      Rec.CALCFIELDS("Retail Location");
+      IsRetailLocation := Rec."Retail Location";
+      //IF BEMFOrder.GET(Rec."No.") THEN
+      IF BEMFOrder.GET(Rec."No.",FORMAT(DocTypeLoc::Shipment)) THEN
+      // </ZGNVSUPPCO-1245>
+        //DeleteWhseShptBarcodeEntries(Rec); // <ZGNVSUPPCO-1059/>
+        DeleteBarcodeEntries(Rec."No.",DocTypeLoc::Shipment);
+
+      WarehouseShipmentLine.RESET;
+      WarehouseShipmentLine.SETRANGE("No.",Rec."No.");
+      IF NOT WarehouseShipmentLine.FINDSET THEN
+        EXIT;
+
+      BEMFOrder.INIT;
+      BEMFOrder.orderId := Rec."No.";
+      BEMFOrder.orderType := FORMAT(DocTypeLoc::Shipment);
+      BEMFOrder.description_1 := FORMAT(Rec."Posting Date")+', '+ Rec.FIELDCAPTION("Destination No.")+ ': ' +Rec."Destination No."+', '+ Rec.FIELDCAPTION("Location Code")+ ': ' +Rec."Location Code";
+      BEMFOrder.description_2 := FORMAT(Rec."Location Code");
+      BEMFOrder.description_4 := FORMAT(Rec."Posting Date");
+      // <ZGNVSUPPCO-1246>
+      //BEMFOrder.description_3 := FORMAT(CURRENTDATETIME);
+      ResponsibilityCenterLocation.SETRANGE("Location Code",Rec."Location Code");
+      IF ResponsibilityCenterLocation.FINDFIRST THEN
+        BEMFOrder.description_3 := ResponsibilityCenterLocation."Responsibility Center";
+      BEMFOrder.RetailLocation := IsRetailLocation;
+      // </ZGNVSUPPCO-1246>
+
+      BEMFOrder.INSERT;
+      REPEAT
+        BOMComponent.RESET;
+        BOMComponent.SETRANGE("Parent Item No.",WarehouseShipmentLine."Item No.");
+        BOMComponent.SETRANGE(Type,BOMComponent.Type::Item);
+        IF BOMComponent.FINDSET THEN BEGIN
+          REPEAT
+            LineNo+=10000;
+            BarcodeNo := GetItemBarcode(BOMComponent."No.",BOMComponent."Unit of Measure Code",BOMComponent."Variant Code");
+            IF UnitofMeasure.GET(BOMComponent."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+              BarcodeNo += '|' + BOMComponent."Unit of Measure Code" + '|' + FORMAT(BOMComponent."Quantity per");
+              InsertSplitBEMFEntries(BEMFOrder,DocTypeLoc::Shipment,WarehouseShipmentLine."Line No.",TRUE,BOMComponent,BarcodeNo)
+            END ELSE
+              //InsertBEMFLineEntry(BEMFOrder,WarehouseShipmentLine,TRUE,BOMComponent, BarcodeNo); //<ZGNVSUPPCO-1059/>
+              InsertBEMFLineEntry(BEMFOrder,DocTypeLoc::Shipment,WarehouseShipmentLine."Line No.",TRUE,BOMComponent, BarcodeNo); //<ZGNVSUPPCO-1059/>
+          UNTIL BOMComponent.NEXT = 0;
+
+        END ELSE BEGIN //normal items
+          LineNo+=10000;
+          BarcodeNo := GetItemBarcode(WarehouseShipmentLine."Item No.",WarehouseShipmentLine."Unit of Measure Code",WarehouseShipmentLine."Variant Code");
+          IF UnitofMeasure.GET(WarehouseShipmentLine."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+            // <ZGNVSUPPCO-1059>
+            //BarcodeNo += '|' + WarehouseShipmentLine."Unit of Measure Code" + '|' + FORMAT(WarehouseShipmentLine.Quantity);
+            BarcodeNo += '|' + WarehouseShipmentLine."Unit of Measure Code" + '|' + FORMAT(WarehouseShipmentLine."Qty. to Ship");
+            // </ZGNVSUPPCO-1059>
+            InsertSplitBEMFEntries(BEMFOrder,DocTypeLoc::Shipment,WarehouseShipmentLine."Line No.",FALSE,BOMComponent,BarcodeNo)
+          END ELSE
+            //InsertBEMFLineEntry(BEMFOrder,WarehouseShipmentLine,FALSE,BOMComponent,BarcodeNo);  //<ZGNVSUPPCO-1059/>
+            InsertBEMFLineEntry(BEMFOrder,DocTypeLoc::Shipment,WarehouseShipmentLine."Line No.",FALSE,BOMComponent,BarcodeNo);  //<ZGNVSUPPCO-1059/>
+        END;
+      UNTIL WarehouseShipmentLine.NEXT = 0;
+    END;
+
+    PROCEDURE DeleteBarcodeEntries@50005(DocNo@50000 : Code[20];DocTypeLoc@50009 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM');
+    VAR
+      BEMFOrder@50003 : Record 5401810;
+      BEMFOrderLine@50002 : Record 5401811;
+      BEMFOrderLineItem@50001 : Record 5401812;
+      WhseShptFound@50004 : Boolean;
+      WarehouseShipmentHeader@50006 : Record 7320;
+      WarehouseReceiptHeader@50007 : Record 7316;
+      FusionSetup@50008 : Record 5401802;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      {
+      //<ZGNVSUPPCO-1059>
+      //IF Rec.Status = Rec.Status::Open THEN
+      //  EXIT;
+      {CASE DocType OF
+        DocType::Shipment:
+          BEGIN
+            WarehouseShipmentHeader.GET(DocNo);
+            IF WarehouseShipmentHeader.Status = WarehouseShipmentHeader.Status::Open THEN
+              EXIT;
+          END;
+        DocType::Receipt:
+          BEGIN
+            WarehouseReceiptHeader.GET(DocNo);
+            IF WarehouseReceiptHeader.Status = WarehouseReceiptHeader.Status::Open THEN
+              EXIT;
+          END;
+      END;}
+      //</ZGNVSUPPCO-1059>
+
+      // <ZGNVSUPPCO-1059>
+      //IF BEMFOrder.GET(Rec."No.") THEN
+      IF BEMFOrder.GET(DocNo) THEN
+      // </ZGNVSUPPCO-1059>
+        WhseShptFound := TRUE
+      ELSE BEGIN
+        //<ZGNVSUPPCO-1059>
+        //BEMFOrder.SETRANGE(description_1,Rec."No.");
+        //BEMFOrder.SETFILTER(orderType,FORMAT(ScannedDocumentType::Shipment));
+        BEMFOrder.SETRANGE(description_1,DocNo);
+        BEMFOrder.SETFILTER(orderType, '%1',FORMAT(DocType));
+        //<ZGNVSUPPCO-1059>
+        IF BEMFOrder.FINDFIRST THEN
+          WhseShptFound := TRUE;
+      END;
+      }
+      // <ZGNVSUPPCO-1245>
+      {IF NOT FusionSetup.FINDFIRST THEN
+        EXIT;
+
+      BEMFOrder.SETRANGE(orderType,FusionSetup."Primary Key");
+      BEMFOrder.SETRANGE(orderId,DocNo);
+      BEMFOrder.SETRANGE(orderType,FORMAT(ScannedDocumentType::Shipment));
+      }
+
+      IF BEMFOrder.GET(DocNo, FORMAT(DocTypeLoc)) THEN
+      // </ZGNVSUPPCO-1245>
+        WhseShptFound := TRUE
+      ELSE BEGIN
+        BEMFOrder.SETRANGE(description_1,DocNo);
+        BEMFOrder.SETRANGE(orderType,FORMAT(DocTypeLoc)); // <ZGNVSUPPCO-1245/>
+        BEMFOrder.SETRANGE(orderId);
+        IF BEMFOrder.FINDFIRST THEN
+          WhseShptFound := TRUE;
+      END;
+
+      IF WhseShptFound THEN BEGIN
+        BEMFOrderLineItem.SETRANGE(orderId,BEMFOrder.orderId);
+        BEMFOrderLineItem.SETRANGE(orderType,FORMAT(DocTypeLoc)); // <ZGNVSUPPCO-1245/>
+
+        IF BEMFOrderLineItem.FINDSET THEN
+          BEMFOrderLineItem.DELETEALL;
+        BEMFOrderLine.SETRANGE(orderId,BEMFOrder.orderId);
+        BEMFOrderLine.SETRANGE(orderType,FORMAT(DocTypeLoc)); // <ZGNVSUPPCO-1245/>
+        IF BEMFOrderLine.FINDSET THEN
+          BEMFOrderLine.DELETEALL;
+        BEMFOrder.DELETE;
+      END;
+    END;
+
+    PROCEDURE DeleteScannedEntries@50002(DocNo@50001 : Code[20]);
+    VAR
+      ScannedDocumentLines@50002 : Record 50111;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      {
+      CASE DocType OF
+        ScannedDocumentType::Shipment: BEGIN
+          WarehouseShipmentHeader.GET(DocNo);
+          DeleteBarcodeEntries(WarehouseShipmentHeader."No.", DocType);
+        END;
+        //<ZGNVSUPPCO-1059>
+        ScannedDocumentType::Receipt: BEGIN
+          WarehouseReceiptHeader.GET(DocNo);
+          DeleteBarcodeEntries(WarehouseReceiptHeader."No.", DocType);
+        END;
+        //</ZGNVSUPPCO-1059>
+        ScannedDocumentType::Prereceipt:;
+      END;
+      }
+
+      ScannedDocumentLines.SETRANGE("Document No.",DocNo);
+      IF ScannedDocumentLines.FINDSET THEN
+        ScannedDocumentLines.DELETEALL(FALSE);
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    LOCAL PROCEDURE GetItemBarcode@50010(ItemNo@50000 : Code[20];UomCode@50003 : Code[10];VariantCode@50004 : Code[10]) : Code[50];
+    VAR
+      Barcodes@50001 : Record 99001451;
+      Item@50002 : Record 27;
+    BEGIN
+      IF (NOT Item.GET(ItemNo)) OR (Item.Type = Item.Type::Service) THEN
+        EXIT;
+
+      Barcodes.RESET;
+      Barcodes.SETRANGE("Item No.",ItemNo);
+      Barcodes.SETRANGE("Unit of Measure Code", UomCode);
+      IF VariantCode <> '' THEN
+        Barcodes.SETRANGE("Variant Code",VariantCode);
+      IF Barcodes.FINDLAST THEN
+        EXIT(Barcodes."Barcode No.")
+      ELSE
+        EXIT(ItemNo);
+    END;
+
+    PROCEDURE GetBarcodeFields@50011(BEMFRecording@50001 : Record 5401813);
+    VAR
+      Barcodes@50002 : Record 99001451;
+      Item@50003 : Record 27;
+      BarcodeNo@50000 : Text[40];
+    BEGIN
+      CLEAR(BarcodeItem);
+      CLEAR(BarcodeUoM);
+      CLEAR(BarcodeQty);
+      BarcodeNo := CONVERTSTR(BEMFRecording.barcode,',','.');
+
+      IF STRPOS(BarcodeNo,'|') <> 0 THEN BEGIN
+        BarcodeItem := COPYSTR(BarcodeNo,1,STRPOS(BarcodeNo,'|')-1);
+        BarcodeNo := COPYSTR(BarcodeNo,STRLEN(BarcodeItem)+2,STRLEN(BarcodeNo));
+        BarcodeUoM := COPYSTR(BarcodeNo,1,STRPOS(BarcodeNo,'|')-1);
+        BarcodeQty := BEMFRecording.quantity;
+        EXIT;
+      END;
+
+      IF Barcodes.GET(BEMFRecording.barcode) THEN BEGIN
+        BarcodeItem := Barcodes."Item No.";
+        BarcodeUoM := Barcodes."Unit of Measure Code";
+        BarcodeQty := BEMFRecording.quantity;
+      END ELSE IF Item.GET(BEMFRecording.barcode) THEN BEGIN
+        BarcodeItem := Item."No.";
+        BarcodeUoM := Item."Base Unit of Measure";
+        BarcodeQty := BEMFRecording.quantity;
+      END;
+    END;
+
+    PROCEDURE FindScannedEntries@50009(DocNo@50001 : Code[20];DocType@50000 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM');
+    VAR
+      BEMFRecording@50003 : Record 5401813;
+      EntriesInserted@50004 : Boolean;
+    BEGIN
+      CLEAR(EntriesInserted);
+
+      CASE DocType OF
+        DocType::Shipment:
+          BEMFRecording.SETRANGE(orderType,UPPERCASE(FORMAT(DocType::Shipment)));
+        DocType::Prereceipt:
+          BEMFRecording.SETRANGE(orderType,UPPERCASE(FORMAT(DocType::Prereceipt)));
+        //<ZGNVSUPPCO-1059>
+        DocType::Receipt:
+          BEMFRecording.SETRANGE(orderType,UPPERCASE(FORMAT(DocType::Receipt)));
+        //</ZGNVSUPPCO-1059>
+        // <ZGNVSUPPCO-1246>
+        DocType::Transport:
+          BEMFRecording.SETRANGE(orderType,UPPERCASE(FORMAT(DocType::Transport)));
+        // </ZGNVSUPPCO-1246>
+        // <ZGNVSUPPCO-1245>
+        DocType::WHCDSHIP:
+          BEMFRecording.SETRANGE(orderType,UPPERCASE(FORMAT(DocType::WHCDSHIP)));
+        DocType::WHCDREC:
+          BEMFRecording.SETRANGE(orderType,UPPERCASE(FORMAT(DocType::WHCDREC)));
+        DocType::WHCDSHFROM:
+          BEMFRecording.SETRANGE(orderType,UPPERCASE(FORMAT(DocType::WHCDSHFROM)));
+        DocType::CPCDSHIP:
+          BEMFRecording.SETRANGE(orderType,UPPERCASE(FORMAT(DocType::CPCDSHIP)));
+        DocType::CPCDREC:
+          BEMFRecording.SETRANGE(orderType,UPPERCASE(FORMAT(DocType::CPCDREC)));
+        DocType::CPCDSHFROM:
+          BEMFRecording.SETRANGE(orderType,UPPERCASE(FORMAT(DocType::CPCDSHFROM)));
+        // </ZGNVSUPPCO-1245>
+      END;
+
+      BEMFRecording.SETRANGE(orderId,DocNo);
+      IF BEMFRecording.FINDSET(TRUE) THEN BEGIN
+        REPEAT
+          InsertScannedEntries(BEMFRecording,DocNo,DocType);
+          BEMFRecording.DELETE(TRUE);
+          COMMIT;
+          EntriesInserted := TRUE;
+        UNTIL BEMFRecording.NEXT = 0;
+      END ELSE BEGIN
+        BEMFRecording.SETRANGE(orderId);
+        BEMFRecording.SETRANGE(description,DocNo);
+        IF BEMFRecording.FINDSET(TRUE) THEN BEGIN
+          InsertScannedEntries(BEMFRecording,DocNo,DocType);
+          BEMFRecording.DELETE(TRUE);
+          COMMIT;
+          EntriesInserted := TRUE;
+        END;
+      END;
+
+      IF EntriesInserted THEN
+        DeleteBarcodeEntries(DocNo,DocType);
+    END;
+
+    PROCEDURE InsertScannedEntries@50008(BEMFRecording@50000 : Record 5401813;DocNo@50004 : Code[20];DocType@50005 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM');
+    VAR
+      ScannedDocumentLines@50001 : Record 50111;
+      Item@50002 : Record 27;
+      DescriptionValue@50003 : Text[110];
+      NoValue@50006 : Text;
+    BEGIN
+      ScannedDocumentLines.SETRANGE("Document Type",DocType);
+      ScannedDocumentLines.SETRANGE("Document No.",DocNo);
+      ScannedDocumentLines.SETRANGE(uuid,BEMFRecording.uuid);
+      IF NOT ScannedDocumentLines.FINDSET THEN BEGIN
+        // <ZGNVSUPPCO-1245>
+        CASE DocType OF
+          DocType::WHCDSHIP,DocType::WHCDREC,DocType::WHCDSHFROM:
+            BEGIN
+              NoValue := BEMFRecording.barcode;
+              BarcodeItem := BEMFRecording.barcode;
+              BarcodeQty := 1;
+              BarcodeUoM := 'KOM'; //change this
+              DescriptionValue := BEMFRecording.description;
+            END ;
+          DocType::CPCDSHIP,DocType::CPCDREC,DocType::CPCDSHFROM:
+            BEGIN
+              NoValue := BEMFRecording.barcode;
+              BarcodeItem := BEMFRecording.barcode;
+              BarcodeQty := BEMFRecording.quantity;
+              DescriptionValue := BEMFRecording.description;
+            END;
+          ELSE BEGIN
+            GetBarcodeFields(BEMFRecording);
+            IF Item.GET(BarcodeItem) THEN;
+            NoValue := Item."No.";
+            DescriptionValue := Item."Full Description";
+          END;
+        END;
+
+        {
+        GetBarcodeFields(BEMFRecording);
+        IF Item.GET(BarcodeItem) THEN;
+        }
+        // </ZGNVSUPPCO-1245>
+        ScannedDocumentLines.RESET;
+        ScannedDocumentLines.INIT;
+        ScannedDocumentLines."Document Type" := DocType;
+        ScannedDocumentLines."Document No." := DocNo;
+        ScannedDocumentLines."Item No." := NoValue;
+        ScannedDocumentLines."Item Description" := DescriptionValue;
+        ScannedDocumentLines.Barcode := BarcodeItem;
+        ScannedDocumentLines."Full Barcode Value" := BEMFRecording.barcode;
+        ScannedDocumentLines.Quantity := BarcodeQty;
+        ScannedDocumentLines."Scanned Quantity" := BarcodeQty;
+        ScannedDocumentLines."Unit of Measure" := BarcodeUoM;
+        ScannedDocumentLines."User ID" := BEMFRecording."User ID";
+        ScannedDocumentLines."Creation DateTime" := BEMFRecording."Creation DateTime";
+        ScannedDocumentLines.uuid := BEMFRecording.uuid;
+        ScannedDocumentLines."Entry Inserted" := CURRENTDATETIME;
+        ScannedDocumentLines.INSERT;
+      END;
+    END;
+
+    LOCAL PROCEDURE InsertBEMFLineEntry@50014(BEMFOrder@50009 : Record 5401810;DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';Document_LineNo@50004 : Integer;IsBOM@50002 : Boolean;BOMComponent@50001 : Record 90;BarcodeNo@50006 : Text[200]);
+    VAR
+      BEMFOrderLine@50005 : Record 5401811;
+      Item@50000 : Record 27;
+      WarehouseShipmentLine@50007 : Record 7321;
+      WarehouseReceiptLine@50008 : Record 7317;
+      Qty@50010 : Decimal;
+      LocationCode@50011 : Code[20];
+      ItemNo@50012 : Code[20];
+      FullItemDescription@50013 : Text[110];
+      TransportSheetLine@50014 : Record 50016;
+      TransportSheetHeader@50015 : Record 50015;
+      ComplaintShipmentHeaderPrim@50016 : Record 50021;
+      ComplaintShipmentLinesPrima@50017 : Record 50022;
+    BEGIN
+      //<ZGNVSUPPCO-1059>
+      CASE DocType OF
+        DocType::Shipment:
+          BEGIN
+            IF WarehouseShipmentLine.GET(BEMFOrder.orderId, Document_LineNo) THEN BEGIN
+              // <ZGNVSUPPCO-1059>
+              //Qty := WarehouseShipmentLine.Quantity;
+              Qty := WarehouseShipmentLine."Qty. to Ship";
+              // </ZGNVSUPPCO-1059>
+              LocationCode := WarehouseShipmentLine."Location Code";
+              ItemNo := WarehouseShipmentLine."Item No.";
+              FullItemDescription := WarehouseShipmentLine."Full Item Description";
+            END;
+          END;
+        DocType::Receipt:
+          BEGIN
+            IF WarehouseReceiptLine.GET(BEMFOrder.orderId, Document_LineNo) THEN BEGIN
+              // <ZGNVSUPPCO-1059>
+              //Qty := WarehouseReceiptLine.Quantity;
+              Qty := WarehouseReceiptLine."Qty. to Receive";
+              // </ZGNVSUPPCO-1059>
+              LocationCode := WarehouseReceiptLine."Location Code";
+              ItemNo := WarehouseReceiptLine."Item No.";
+              FullItemDescription := WarehouseReceiptLine."Full Item Description";
+            END;
+          END;
+        // <ZGNVSUPPCO-1246>
+        DocType::Transport:
+          BEGIN
+            IF TransportSheetLine.GET(BEMFOrder.orderId, Document_LineNo) THEN BEGIN
+              TransportSheetHeader.GET(BEMFOrder.orderId);
+              Qty := TransportSheetLine.Quantity;
+              LocationCode := TransportSheetHeader."Receiving Location";
+              ItemNo := TransportSheetLine."Item No.";
+              FullItemDescription := TransportSheetLine."Item Description";
+            END;
+          END;
+        // </ZGNVSUPPCO-1246>
+      END;
+
+      //</ZGNVSUPPCO-1059>
+      BEMFOrderLine.RESET;
+      BEMFOrderLine.SETRANGE(orderId, BEMFOrder.orderId);
+      BEMFOrderLine.SETRANGE(orderType, FORMAT(DocType));
+      IF IsBOM THEN
+        BEMFOrderLine.SETRANGE(description_1, BOMComponent."No.")
+      ELSE
+        //BEMFOrderLine.SETRANGE(description_1, WarehouseShipmentLine."Item No."); <ZGNVSUPPCO-1059/>
+        BEMFOrderLine.SETRANGE(description_1, ItemNo); //<ZGNVSUPPCO-1059/>
+
+      IF BEMFOrderLine.FINDFIRST THEN BEGIN //insert entry
+        IF IsBOM THEN
+          //BEMFOrderLine.quantity += WarehouseShipmentLine.Quantity * BOMComponent."Quantity per" //<ZGNVSUPPCO-1059/>
+          BEMFOrderLine.quantity += Qty * BOMComponent."Quantity per"  //<ZGNVSUPPCO-1059/>
+        ELSE
+          //BEMFOrderLine.quantity += WarehouseShipmentLine.Quantity;  //<ZGNVSUPPCO-1059/>
+          BEMFOrderLine.quantity += Qty; //<ZGNVSUPPCO-1059/>
+        BEMFOrderLine.MODIFY;
+      END ELSE BEGIN
+        BEMFOrderLine.RESET;
+        BEMFOrderLine.INIT;
+        BEMFOrderLine.orderId := BEMFOrder.orderId;
+        BEMFOrderLine.orderLineId := FORMAT(LineNo);
+        //BEMFOrderLine.orderType := FORMAT(ScannedDocumentType::Shipment); //<ZGNVSUPPCO-1059/>
+        BEMFOrderLine.orderType := FORMAT(DocType); //<ZGNVSUPPCO-1059/>
+        IF IsBOM THEN BEGIN
+          //BEMFOrderLine.quantity := WarehouseShipmentLine.Quantity * BOMComponent."Quantity per";  //<ZGNVSUPPCO-1059/>
+          BEMFOrderLine.quantity := Qty * BOMComponent."Quantity per";  //<ZGNVSUPPCO-1059/>
+          BEMFOrderLine.description_1 := BOMComponent."No.";
+          BEMFOrderLine.description_2 := BOMComponent."Full Item Description";
+          BEMFOrderLine.description_3 := ResponsibilityCenterLocation."Responsibility Center"; // <ZGNVSUPPCO-1246/>
+          //BEMFOrderLine.description_4 := WarehouseShipmentLine."Location Code";  //<ZGNVSUPPCO-1059/>
+          BEMFOrderLine.description_4 := LocationCode;  //<ZGNVSUPPCO-1059/>
+        END ELSE BEGIN
+          //<ZGNVSUPPCO-1059/>
+          {BEMFOrderLine.quantity := WarehouseShipmentLine.Quantity;
+          BEMFOrderLine.description_1 := WarehouseShipmentLine."Item No.";
+          BEMFOrderLine.description_2 := WarehouseShipmentLine."Full Item Description";
+          BEMFOrderLine.description_4 := WarehouseShipmentLine."Location Code";}
+          BEMFOrderLine.quantity := Qty;
+          BEMFOrderLine.description_1 := ItemNo;
+          BEMFOrderLine.description_2 := FullItemDescription;
+          BEMFOrderLine.description_3 := ResponsibilityCenterLocation."Responsibility Center"; // <ZGNVSUPPCO-1246/>
+          BEMFOrderLine.description_4 := LocationCode;
+          //<ZGNVSUPPCO-1059/>
+        END;
+
+        BEMFOrderLine.RetailLocation := BEMFOrder.RetailLocation; // <ZGNVSUPPCO-1246/>
+        BEMFOrderLine.INSERT;
+
+        //<ZGNVSUPPCO-1059>
+        CASE DocType OF
+          DocType::Shipment:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,WarehouseShipmentLine."Line No.", LocationCode,IsBOM,BOMComponent,BarcodeNo);
+          DocType::Receipt:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,WarehouseReceiptLine."Line No." , LocationCode,IsBOM,BOMComponent,BarcodeNo);
+          // <ZGNVSUPPCO-1246>
+          DocType::Transport:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,TransportSheetLine."Line No.", LocationCode,IsBOM,BOMComponent,BarcodeNo);
+          // </ZGNVSUPPCO-1246>
+        END;
+        // </ZGNVSUPPCO-1059>
+      END;
+    END;
+
+    LOCAL PROCEDURE InsertSplitBEMFEntries@50016(BEMFOrder@50008 : Record 5401810;DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt';Document_LineNo@50009 : Integer;IsBOM@50006 : Boolean;BOMComponent@50004 : Record 90;BarcodeNo@50000 : Text[200]);
+    VAR
+      BEMFOrderLine@50001 : Record 5401811;
+      BEMFOrderLineItem@50002 : Record 5401812;
+      UnitofMeasure@50007 : Record 204;
+      Item@50005 : Record 27;
+      WarehouseShipmentLine@50010 : Record 7321;
+      WarehouseReceiptLine@50011 : Record 7317;
+      Qty@50012 : Decimal;
+      LocationCode@50013 : Code[20];
+      ItemNo@50014 : Code[20];
+      FullItemDescription@50015 : Text[110];
+      BarcodeExistsLineNo@50016 : Text;
+      TransportSheetLine@50017 : Record 50016;
+      TransportSheetHeader@50018 : Record 50015;
+    BEGIN
+      //<ZGNVSUPPCO-1059>
+      CASE DocType OF
+        DocType::Shipment:
+          BEGIN
+            IF WarehouseShipmentLine.GET(BEMFOrder.orderId, Document_LineNo) THEN BEGIN
+              // <ZGNVSUPPCO-1059>
+              //Qty := WarehouseShipmentLine.Quantity;
+              Qty := WarehouseShipmentLine."Qty. to Ship";
+              // </ZGNVSUPPCO-1059>
+              LocationCode := WarehouseShipmentLine."Location Code";
+              ItemNo := WarehouseShipmentLine."Item No.";
+              FullItemDescription := WarehouseShipmentLine."Full Item Description";
+            END;
+          END;
+        DocType::Receipt:
+          BEGIN
+            IF WarehouseReceiptLine.GET(BEMFOrder.orderId, Document_LineNo) THEN BEGIN
+              // <ZGNVSUPPCO-1059>
+              //Qty := WarehouseReceiptLine.Quantity;
+              Qty := WarehouseReceiptLine."Qty. to Receive";
+              // </ZGNVSUPPCO-1059>
+              LocationCode := WarehouseReceiptLine."Location Code";
+              ItemNo := WarehouseReceiptLine."Item No.";
+              FullItemDescription := WarehouseReceiptLine."Full Item Description";
+            END;
+          END;
+        // <ZGNVSUPPCO-1246>
+        DocType::Transport:
+          BEGIN
+            IF TransportSheetLine.GET(BEMFOrder.orderId, Document_LineNo) THEN BEGIN
+              TransportSheetHeader.GET(BEMFOrder.orderId);
+              Qty := TransportSheetLine.Quantity;
+              LocationCode := TransportSheetHeader."Receiving Location";
+              ItemNo := TransportSheetLine."Item No.";
+              FullItemDescription := TransportSheetLine."Item Description";
+            END;
+          END;
+        // </ZGNVSUPPCO-1246>
+      END;
+      //</ZGNVSUPPCO-1059>
+
+      // <ZGNVSUPPCO-1101>
+      //IF BarcodeExists(BEMFOrder,IsBOM,BOMComponent,BarcodeNo) THEN BEGIN //check if same item and same barcode
+      CLEAR(BarcodeExistsLineNo);
+      BarcodeExistsLineNo := BarcodeExists(BEMFOrder,IsBOM,BOMComponent,BarcodeNo);
+      IF BarcodeExistsLineNo <> '' THEN BEGIN
+      // <ZGNVSUPPCO-1101>
+        BEMFOrderLine.SETRANGE(orderId, BEMFOrder.orderId);
+        BEMFOrderLine.SETRANGE(orderType, BEMFOrder.orderType);
+        BEMFOrderLine.SETRANGE(orderLineId,BarcodeExistsLineNo); // <ZGNVSUPPCO-1101/>
+        IF IsBOM THEN
+          BEMFOrderLine.SETRANGE(description_1,BOMComponent."No.")
+        ELSE
+          //BEMFOrderLine.SETRANGE(description_1,WarehouseShipmentLine."Item No."); //<ZGNVSUPPCO-1059/>
+          BEMFOrderLine.SETRANGE(description_1,ItemNo); //<ZGNVSUPPCO-1059/>
+
+        IF BEMFOrderLine.FINDFIRST THEN BEGIN
+          IF IsBOM THEN
+            //BEMFOrderLine.quantity += WarehouseShipmentLine.Quantity * BOMComponent."Quantity per" //<ZGNVSUPPCO-1059/>
+            BEMFOrderLine.quantity += Qty * BOMComponent."Quantity per"//<ZGNVSUPPCO-1059/>
+          ELSE
+            //BEMFOrderLine.quantity += WarehouseShipmentLine.Quantity; //<ZGNVSUPPCO-1059/>
+            BEMFOrderLine.quantity += Qty; //<ZGNVSUPPCO-1059/>
+          BEMFOrderLine.MODIFY;
+        END;
+      END ELSE BEGIN
+        BEMFOrderLine.RESET;
+        BEMFOrderLine.INIT;
+        BEMFOrderLine.orderId := BEMFOrder.orderId;
+        BEMFOrderLine.orderLineId := FORMAT(LineNo);
+        BEMFOrderLine.orderType := BEMFOrder.orderType;
+        IF IsBOM THEN BEGIN
+          //BEMFOrderLine.quantity := WarehouseShipmentLine.Quantity * BOMComponent."Quantity per"; //<ZGNVSUPPCO-1059/>
+          BEMFOrderLine.quantity := Qty* BOMComponent."Quantity per"; //<ZGNVSUPPCO-1059/>
+          BEMFOrderLine.description_1 := BOMComponent."No.";
+          BEMFOrderLine.description_2 := BOMComponent."Full Item Description";
+          BEMFOrderLine.description_3 := ResponsibilityCenterLocation."Responsibility Center"; // <ZGNVSUPPCO-1246/>
+          //BEMFOrderLine.description_4 := WarehouseShipmentLine."Location Code"; //<ZGNVSUPPCO-1059/>
+          BEMFOrderLine.description_4 := LocationCode; //<ZGNVSUPPCO-1059/>
+        END ELSE BEGIN
+          //<ZGNVSUPPCO-1059>
+          {BEMFOrderLine.quantity := WarehouseShipmentLine.Quantity;
+          BEMFOrderLine.description_1 := WarehouseShipmentLine."Item No.";
+          BEMFOrderLine.description_2 := WarehouseShipmentLine."Full Item Description";
+          BEMFOrderLine.description_4 := WarehouseShipmentLine."Location Code";
+          }
+          BEMFOrderLine.quantity := Qty;
+          BEMFOrderLine.description_1 := ItemNo;
+          BEMFOrderLine.description_2 := FullItemDescription;
+          BEMFOrderLine.description_3 := ResponsibilityCenterLocation."Responsibility Center"; // <ZGNVSUPPCO-1246/>
+          BEMFOrderLine.description_4 := LocationCode;
+          //<ZGNVSUPPCO-1059>
+        END;
+        BEMFOrderLine.RetailLocation := BEMFOrder.RetailLocation; // <ZGNVSUPPCO-1246/>
+        BEMFOrderLine.INSERT;
+
+        //<ZGNVSUPPCO-1059>
+        CASE DocType OF
+          DocType::Shipment:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,WarehouseShipmentLine."Line No.", LocationCode,IsBOM,BOMComponent,BarcodeNo);
+          DocType::Receipt:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,WarehouseReceiptLine."Line No." , LocationCode,IsBOM,BOMComponent,BarcodeNo);
+        // <ZGNVSUPPCO-1246>
+          DocType::Transport:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,TransportSheetLine."Line No.", LocationCode,IsBOM,BOMComponent,BarcodeNo);
+        // </ZGNVSUPPCO-1246>
+        END;
+        //</ZGNVSUPPCO-1059>
+      END;
+    END;
+
+    LOCAL PROCEDURE InsertBEMFLineItemEntries@50018(BEMFOrder@50004 : Record 5401810;DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt';Document_LineNo@50008 : Integer;LocationCode@50009 : Code[20];IsBOM@50002 : Boolean;BOMComponent@50001 : Record 90;BarcodeNo@50000 : Text[200]);
+    VAR
+      BEMFOrderLineItem@50005 : Record 5401812;
+      Item@50006 : Record 27;
+      UnitofMeasure@50007 : Record 204;
+      WarehouseShipmentLine@50010 : Record 7321;
+      WarehouseReceiptLine@50011 : Record 7317;
+      TransportSheetLine@50012 : Record 50016;
+      TransportSheetHeader@50013 : Record 50015;
+    BEGIN
+      BEMFOrderLineItem.RESET;
+      BEMFOrderLineItem.INIT;
+      BEMFOrderLineItem.orderId := BEMFOrder.orderId;
+      BEMFOrderLineItem.orderLineId := FORMAT(LineNo);
+      BEMFOrderLineItem.orderType := BEMFOrder.orderType;
+      BEMFOrderLineItem.barcode := BarcodeNo;
+      IF IsBOM THEN BEGIN
+        IF UnitofMeasure.GET(BOMComponent."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN
+          BEMFOrderLineItem.quantity := BOMComponent."Quantity per"
+        ELSE IF BOMComponent."Package Qty." <> 0 THEN
+          BEMFOrderLineItem.quantity := BOMComponent."Package Qty."
+        ELSE IF Item."Package Qty." <> 0 THEN BEGIN
+          Item.GET(BOMComponent."No.");
+          BEMFOrderLineItem.quantity := Item."Package Qty."
+        END ELSE
+          BEMFOrderLineItem.quantity := 1;
+
+        BEMFOrderLineItem.description_1 := BOMComponent."No.";
+        BEMFOrderLineItem.description_2 := BOMComponent."Full Item Description";
+        BEMFOrderLineItem.description_3 := ResponsibilityCenterLocation."Responsibility Center"; // <ZGNVSUPPCO-1246/>
+        //BEMFOrderLineItem.description_4 := WarehouseShipmentLine."Location Code"; //<ZGNVSUPPCO-1059/>
+        BEMFOrderLineItem.description_4 := LocationCode;   //<ZGNVSUPPCO-1059/>
+      END ELSE BEGIN
+        //<ZGNVSUPPCO-1059>
+        CASE DocType OF
+          DocType::Shipment:
+            BEGIN
+              WarehouseShipmentLine.GET(BEMFOrder.orderId, Document_LineNo);
+              //</ZGNVSUPPCO-1059>
+              IF UnitofMeasure.GET(WarehouseShipmentLine."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN
+                // <ZGNVSUPPCO-1059>
+                //BEMFOrderLineItem.quantity := WarehouseShipmentLine.Quantity
+                BEMFOrderLineItem.quantity := WarehouseShipmentLine."Qty. to Ship"
+                // </ZGNVSUPPCO-1059>
+              ELSE BEGIN
+                Item.GET(WarehouseShipmentLine."Item No.");
+                IF Item."Package Qty." <> 0 THEN
+                  BEMFOrderLineItem.quantity := Item."Package Qty."
+                ELSE
+                  BEMFOrderLineItem.quantity := 1;
+              END;
+              BEMFOrderLineItem.description_1 := WarehouseShipmentLine."Item No.";
+              BEMFOrderLineItem.description_2 := WarehouseShipmentLine."Full Item Description";
+              BEMFOrderLineItem.description_3 := ResponsibilityCenterLocation."Responsibility Center"; // <ZGNVSUPPCO-1246/>
+              BEMFOrderLineItem.description_4 := WarehouseShipmentLine."Location Code";
+          //<ZGNVSUPPCO-1059>
+            END;
+         DocType::Receipt:
+            BEGIN
+              WarehouseReceiptLine.GET(BEMFOrder.orderId, Document_LineNo);
+              IF UnitofMeasure.GET(WarehouseReceiptLine."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN
+                // <ZGNVSUPPCO-1059>
+                //BEMFOrderLineItem.quantity := WarehouseReceiptLine.Quantity
+                BEMFOrderLineItem.quantity := WarehouseReceiptLine."Qty. to Receive"
+                // </ZGNVSUPPCO-1059>
+              ELSE BEGIN
+                Item.GET(WarehouseReceiptLine."Item No.");
+                IF Item."Package Qty." <> 0 THEN
+                  BEMFOrderLineItem.quantity := Item."Package Qty."
+                ELSE
+                  BEMFOrderLineItem.quantity := 1;
+              END;
+              BEMFOrderLineItem.description_1 := WarehouseReceiptLine."Item No.";
+              BEMFOrderLineItem.description_2 := WarehouseReceiptLine."Full Item Description";
+              BEMFOrderLineItem.description_3 := ResponsibilityCenterLocation."Responsibility Center"; // <ZGNVSUPPCO-1246/>
+              BEMFOrderLineItem.description_4 := WarehouseReceiptLine."Location Code";
+            END;
+          // <ZGNVSUPPCO-1246>
+          DocType::Transport:
+            BEGIN
+              TransportSheetLine.GET(BEMFOrder.orderId, Document_LineNo);
+              IF UnitofMeasure.GET(TransportSheetLine."Unit of Measure") AND UnitofMeasure."Insert Qty Barcode" THEN
+                BEMFOrderLineItem.quantity := TransportSheetLine.Quantity
+              ELSE BEGIN
+                Item.GET(TransportSheetLine."Item No.");
+                IF Item."Package Qty." <> 0 THEN
+                  BEMFOrderLineItem.quantity := Item."Package Qty."
+                ELSE
+                  BEMFOrderLineItem.quantity := 1;
+              END;
+              BEMFOrderLineItem.description_1 := TransportSheetLine."Item No.";
+              BEMFOrderLineItem.description_2 := TransportSheetLine."Item Description";
+              BEMFOrderLineItem.description_3 := ResponsibilityCenterLocation."Responsibility Center"; // <ZGNVSUPPCO-1246/>
+              TransportSheetHeader.GET(TransportSheetLine."Document No.");
+              BEMFOrderLineItem.description_4 := TransportSheetHeader."Receiving Location";
+            END;
+          // </ZGNVSUPPCO-1246>
+        END;
+        //<ZGNVSUPPCO-1059>
+      END;
+      BEMFOrderLineItem.RetailLocation := BEMFOrder.RetailLocation; // <ZGNVSUPPCO-1246/>
+      BEMFOrderLineItem.INSERT;
+    END;
+
+    LOCAL PROCEDURE BarcodeExists@50013(BEMFOrder@50004 : Record 5401810;IsBOM@50002 : Boolean;BOMComponent@50001 : Record 90;BarcodeNo@50000 : Text[200]) : Text;
+    VAR
+      BEMFOrderLineItem@50005 : Record 5401812;
+    BEGIN
+      BEMFOrderLineItem.SETRANGE(orderId,BEMFOrder.orderId);
+      BEMFOrderLineItem.SETRANGE(orderType,BEMFOrder.orderType);
+      BEMFOrderLineItem.SETRANGE(barcode,BarcodeNo);
+      // <ZGNVSUPPCO-1101>
+      // EXIT(NOT BEMFOrderLineItem.ISEMPTY);
+      IF BEMFOrderLineItem.FINDLAST THEN
+        EXIT(BEMFOrderLineItem.orderLineId);
+      // <ZGNVSUPPCO-1101>
+    END;
+
+    PROCEDURE CheckScannedEntries@50001(DocNo@50001 : Code[20];DocType@50000 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM');
+    VAR
+      ScannedDocumentLines@50002 : Record 50111;
+      ErrorStatusChange@50003 : TextConst 'ENU=You cannot change Barcode status to Empty because there are scanned entries.;HRV=Ne mo§e se promijeniti barkod status u prazno jer postoje skenirane stavke.';
+    BEGIN
+      {CASE DocType OF
+      ScannedDocumentType::Shipment: BEGIN
+      ScannedDocumentLines.SETRANGE("Document Type",ScannedDocumentLines."Document Type"::Shipment);
+      } //<ZGNVSUPPCO-1059/> - commented
+      ScannedDocumentLines.SETRANGE("Document Type",DocType);  //<ZGNVSUPPCO-1059/>
+      ScannedDocumentLines.SETRANGE("Document No.",DocNo);
+      IF NOT ScannedDocumentLines.ISEMPTY THEN
+        ERROR(ErrorStatusChange);
+      {END;
+      ScannedDocumentType::Prereceipt:;
+      END;
+      } //<ZGNVSUPPCO-1059/> -commented
+    END;
+
+    PROCEDURE FillWhseReceiptBarcodeEntries@50015(Rec@50000 : Record 7316;SkipRelease@50006 : Boolean);
+    VAR
+      BEMFOrder@50003 : Record 5401810;
+      BEMFOrderLine@50002 : Record 5401811;
+      BEMFOrderLineItem@50001 : Record 5401812;
+      WarehouseReceiptLine@50004 : Record 7317;
+      BOMComponent@50005 : Record 90;
+      UnitofMeasure@50007 : Record 204;
+      BarcodeNo@50008 : Text[200];
+      DocTypeLoc@50009 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+    BEGIN
+      //<ZGNVSUPPCO-1059> - copy of function FillWhseShptBarcodeEntries
+      CLEAR(LineNo);
+
+      IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocTypeLoc::Receipt) THEN
+        EXIT;
+
+      IF Rec.Status = Rec.Status::Released THEN
+        IF NOT SkipRelease THEN
+          EXIT;
+
+      IF Rec."Barcode Status" = Rec."Barcode Status"::Processed THEN
+        EXIT;
+
+      // <ZGNVSUPPCO-1245>
+      //IF BEMFOrder.GET(Rec."No.") THEN
+      IF BEMFOrder.GET(Rec."No.",'RECEIPT') THEN
+      // </ZGNVSUPPCO-1245>
+        DeleteBarcodeEntries(Rec."No.",DocTypeLoc::Receipt);
+
+      WarehouseReceiptLine.RESET;
+      WarehouseReceiptLine.SETRANGE("No.",Rec."No.");
+      IF NOT WarehouseReceiptLine.FINDSET THEN
+        EXIT;
+
+      BEMFOrder.INIT;
+      BEMFOrder.orderId := Rec."No.";
+      BEMFOrder.orderType := FORMAT(DocTypeLoc::Receipt);
+      BEMFOrder.description_1 := FORMAT(Rec."Posting Date")+', ' + Rec.FIELDCAPTION("Location Code")+ ': ' +Rec."Location Code";
+      BEMFOrder.description_2 := FORMAT(Rec."Location Code");
+      BEMFOrder.description_4 := FORMAT(Rec."Posting Date");
+      // <ZGNVSUPPCO-1246>
+      //BEMFOrder.description_3 := FORMAT(CURRENTDATETIME);
+      ResponsibilityCenterLocation.SETRANGE("Location Code",Rec."Location Code");
+      IF ResponsibilityCenterLocation.FINDFIRST THEN
+        BEMFOrder.description_3 := ResponsibilityCenterLocation."Responsibility Center";
+
+      // <ZGNVSUPPCO-1246>
+      Rec.CALCFIELDS("Retail Location");
+      BEMFOrder.RetailLocation := BEMFOrder.RetailLocation;
+      // </ZGNVSUPPCO-1246>
+
+      // </ZGNVSUPPCO-1246>
+      BEMFOrder.INSERT;
+
+      REPEAT
+        BOMComponent.RESET;
+        BOMComponent.SETRANGE("Parent Item No.",WarehouseReceiptLine."Item No.");
+        BOMComponent.SETRANGE(Type,BOMComponent.Type::Item);
+        IF BOMComponent.FINDSET THEN BEGIN
+          REPEAT
+            LineNo+=10000;
+            BarcodeNo := GetItemBarcode(BOMComponent."No.",BOMComponent."Unit of Measure Code",BOMComponent."Variant Code");
+            IF UnitofMeasure.GET(BOMComponent."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+              BarcodeNo += '|' + BOMComponent."Unit of Measure Code" + '|' + FORMAT(BOMComponent."Quantity per");
+              InsertSplitBEMFEntries(BEMFOrder,DocTypeLoc::Receipt,WarehouseReceiptLine."Line No.",TRUE,BOMComponent,BarcodeNo)
+            END ELSE
+              InsertBEMFLineEntry(BEMFOrder,DocTypeLoc::Receipt, WarehouseReceiptLine."Line No.",TRUE,BOMComponent, BarcodeNo);
+          UNTIL BOMComponent.NEXT = 0;
+
+        END ELSE BEGIN //normal items
+          LineNo+=10000;
+          BarcodeNo := GetItemBarcode(WarehouseReceiptLine."Item No.",WarehouseReceiptLine."Unit of Measure Code",WarehouseReceiptLine."Variant Code");
+          IF UnitofMeasure.GET(WarehouseReceiptLine."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+            // <ZGNVSUPPCO-1059>
+            //BarcodeNo += '|' + WarehouseReceiptLine."Unit of Measure Code" + '|' + FORMAT(WarehouseReceiptLine.Quantity);
+            BarcodeNo += '|' + WarehouseReceiptLine."Unit of Measure Code" + '|' + FORMAT(WarehouseReceiptLine."Qty. to Receive");
+            // </ZGNVSUPPCO-1059>
+            InsertSplitBEMFEntries(BEMFOrder,DocTypeLoc::Receipt,WarehouseReceiptLine."Line No.",FALSE,BOMComponent,BarcodeNo)
+          END ELSE
+            InsertBEMFLineEntry(BEMFOrder,DocTypeLoc::Receipt, WarehouseReceiptLine."Line No.",FALSE,BOMComponent,BarcodeNo);
+        END;
+      UNTIL WarehouseReceiptLine.NEXT = 0;
+      //</ZGNVSUPPCO-1059>
+    END;
+
+    [EventSubscriber(Codeunit,50127,OnBeforeRelease)]
+    PROCEDURE WhseRcptStatus_OnBeforeRelease@50017(VAR WarehouseReceiptHeader@50000 : Record 7316);
+    VAR
+      WhseRcptFound@50006 : Boolean;
+      Location@50001 : Record 14;
+    BEGIN
+      //<ZGNVSUPPCO-1059>
+      IF WarehouseReceiptHeader.ISTEMPORARY THEN
+        EXIT;
+
+      //IF Location.GET(WarehouseReceiptHeader."Location Code") AND Location."Use in BE-Mobile" AND Location."Central Warehouse" THEN
+      // <ZGNVSUPPCO-1245>
+      //IF Location.GET(WarehouseReceiptHeader."Location Code") AND Location."Use in BE-Mobile (receipt)" AND Location."Central Warehouse" THEN
+      IF Location.GET(WarehouseReceiptHeader."Location Code") AND Location."Use in BE-Mobile (receipt)" THEN
+      // </ZGNVSUPPCO-1245>
+        FillWhseReceiptBarcodeEntries(WarehouseReceiptHeader, FALSE);
+      // </ZGNVSUPPCO-1059>
+    END;
+
+    [EventSubscriber(Codeunit,50127,OnBeforeReopen)]
+    PROCEDURE WhseRcptStatus_OnBeforeReOpen@50020(VAR WarehouseReceiptHeader@50000 : Record 7316);
+    VAR
+      BarcodeStatusErr@50001 : TextConst 'ENU=Barcode status of document %1 must not be %2.;HRV=Barkod status dokumenta %1 ne smije biti %2.';
+      Location@50002 : Record 14;
+      ScannedDocumentType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+    BEGIN
+      //<ZGNVSUPPCO-1059>
+      IF WarehouseReceiptHeader.ISTEMPORARY THEN
+        EXIT;
+
+      IF WarehouseReceiptHeader."Barcode Status" = WarehouseReceiptHeader."Barcode Status"::Processed THEN
+        ERROR(STRSUBSTNO(BarcodeStatusErr,WarehouseReceiptHeader."No.",WarehouseReceiptHeader."Barcode Status"::Processed));
+
+      IF WarehouseReceiptHeader.Status = WarehouseReceiptHeader.Status::Open THEN
+        EXIT;
+
+      DeleteBarcodeEntries(WarehouseReceiptHeader."No.", ScannedDocumentType::Receipt);
+      //<ZGNVSUPPCO-1059>
+    END;
+
+    [EventSubscriber(Table,7316,OnAfterDeleteEvent)]
+    PROCEDURE WhseRcpt_OnAfterDelete@50023(VAR Rec@50000 : Record 7316;RunTrigger@50001 : Boolean);
+    BEGIN
+      //<ZGNVSUPPCO-1059>
+      IF Rec.ISTEMPORARY THEN
+        EXIT;
+
+      IF Rec.Status = Rec.Status::Open THEN
+        EXIT;
+
+      // <ZGNVSUPPCO-1245>
+      //DeleteBarcodeEntries(Rec."No.", ScannedDocumentType::Receipt);
+      DeleteBarcodeEntriesOnDeleteDocument(Rec."No.");
+      DeleteScannedEntries(Rec."No.");
+      //</ZGNVSUPPCO-1059>
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    LOCAL PROCEDURE CreateSyncRecord@50021(DocNo@50000 : Code[20];DocType@50001 : Code[40];UserID@50002 : Code[50]);
+    VAR
+      BarcodeSyncRecord@50003 : Record 50161;
+    BEGIN
+      //<ZGNVSUPPCO-1059>
+      // <ZGNVSUPPCO-1245>
+      {
+      BarcodeSyncRecord.SETRANGE("Document No.", DocNo);
+      BarcodeSyncRecord.SETRANGE("Document Type", DocType);
+      IF BarcodeSyncRecord.ISEMPTY() THEN BEGIN
+      }
+      // <ZGNVSUPPCO-1245>
+      BarcodeSyncRecord.INIT;
+      BarcodeSyncRecord."Document No." := DocNo;
+
+      BarcodeSyncRecord."Document Type" := DocType;
+      BarcodeSyncRecord."User ID" := UserID;
+      BarcodeSyncRecord."Syncronization DateTime" := CURRENTDATETIME;
+      BarcodeSyncRecord.INSERT;
+      // </ZGNVSUPPCO-1245> END;
+      //<ZGNVSUPPCO-1059/>
+    END;
+
+    PROCEDURE FillTransportSheetBarcodeEntries@50025(Rec@50000 : Record 50015;SkipRelease@50006 : Boolean);
+    VAR
+      BEMFOrder@50003 : Record 5401810;
+      BEMFOrderLine@50002 : Record 5401811;
+      BEMFOrderLineItem@50001 : Record 5401812;
+      BOMComponent@50005 : Record 90;
+      UnitofMeasure@50007 : Record 204;
+      BarcodeNo@50008 : Text[200];
+      TransportSheetLine@50004 : Record 50016;
+      DocTypeLoc@50009 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+    BEGIN
+      //<ZGNVSUPPCO-1246> - copy of function FillWhseShptBarcodeEntries
+      CLEAR(LineNo);
+
+      IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocTypeLoc::Transport) THEN
+        EXIT;
+
+      IF Rec.Status <> Rec.Status::"Shipped - Awaiting Receipt" THEN
+        IF NOT SkipRelease THEN
+          EXIT;
+
+      IF Rec."Barcode Status" = Rec."Barcode Status"::Processed THEN
+        EXIT;
+
+      IF BEMFOrder.GET(Rec."Document No.",'TRANSPORT') THEN
+        DeleteBarcodeEntries(Rec."Document No.",DocTypeLoc::Transport);
+
+      TransportSheetLine.RESET;
+      TransportSheetLine.SETRANGE("Document No.",Rec."Document No.");
+      IF NOT TransportSheetLine.FINDSET THEN
+        EXIT;
+
+      BEMFOrder.INIT;
+      BEMFOrder.orderId := Rec."Document No.";
+      BEMFOrder.orderType := FORMAT(DocTypeLoc::Transport);
+      BEMFOrder.description_1 := FORMAT(Rec."Posting Date")+', ' + Rec.FIELDCAPTION("Receiving Location")+ ': ' +Rec."Receiving Location";
+      BEMFOrder.description_2 := FORMAT(Rec."Receiving Location");
+      BEMFOrder.description_4 := FORMAT(Rec."Posting Date");
+      ResponsibilityCenterLocation.SETRANGE("Location Code",Rec."Receiving Location");
+      IF ResponsibilityCenterLocation.FINDFIRST THEN
+        BEMFOrder.description_3 := ResponsibilityCenterLocation."Responsibility Center";
+      BEMFOrder.INSERT;
+
+      REPEAT
+        BOMComponent.RESET;
+        BOMComponent.SETRANGE("Parent Item No.",TransportSheetLine."Item No.");
+        BOMComponent.SETRANGE(Type,BOMComponent.Type::Item);
+        IF BOMComponent.FINDSET THEN BEGIN
+          REPEAT
+            LineNo+=10000;
+            BarcodeNo := GetItemBarcode(BOMComponent."No.",BOMComponent."Unit of Measure Code",BOMComponent."Variant Code");
+            IF UnitofMeasure.GET(BOMComponent."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+              BarcodeNo += '|' + BOMComponent."Unit of Measure Code" + '|' + FORMAT(BOMComponent."Quantity per");
+              InsertSplitBEMFEntries(BEMFOrder,DocTypeLoc::Transport,TransportSheetLine."Line No.",TRUE,BOMComponent,BarcodeNo)
+            END ELSE
+              InsertBEMFLineEntry(BEMFOrder,DocTypeLoc::Transport,TransportSheetLine."Line No.",TRUE,BOMComponent, BarcodeNo);
+          UNTIL BOMComponent.NEXT = 0;
+        END ELSE BEGIN //normal items
+          LineNo+=10000;
+          BarcodeNo := GetItemBarcode(TransportSheetLine."Item No.",TransportSheetLine."Unit of Measure",'');
+          IF UnitofMeasure.GET(TransportSheetLine."Unit of Measure") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+            BarcodeNo += '|' + TransportSheetLine."Unit of Measure" + '|' + FORMAT(TransportSheetLine.Quantity);
+            InsertSplitBEMFEntries(BEMFOrder,DocTypeLoc::Transport,TransportSheetLine."Line No.",FALSE,BOMComponent,BarcodeNo)
+          END ELSE
+            InsertBEMFLineEntry(BEMFOrder,DocTypeLoc::Transport,TransportSheetLine."Line No.",FALSE,BOMComponent,BarcodeNo);
+        END;
+      UNTIL TransportSheetLine.NEXT = 0;
+      //</ZGNVSUPPCO-1246>
+    END;
+
+    PROCEDURE FillPartiallyTransportSheetBarcodeEntries@50039(Rec@50000 : Record 50015;SkipRelease@50006 : Boolean);
+    VAR
+      BEMFOrder@50003 : Record 5401810;
+      BEMFOrderLine@50002 : Record 5401811;
+      BEMFOrderLineItem@50001 : Record 5401812;
+      BOMComponent@50005 : Record 90;
+      UnitofMeasure@50007 : Record 204;
+      BarcodeNo@50008 : Text[200];
+      TransportSheetLine@50004 : Record 50016;
+      DocTypeLoc@50009 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+      Item@50010 : Record 27;
+    BEGIN
+      //<ZGNVSUPPCO-1246>
+      CLEAR(LineNo);
+
+      IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocTypeLoc::Transport) THEN
+        EXIT;
+
+      IF Rec.Status <> Rec.Status::"Shipped - Awaiting Receipt" THEN
+        IF NOT SkipRelease THEN
+          EXIT;
+
+      IF Rec."Barcode Status" = Rec."Barcode Status"::Processed THEN
+        EXIT;
+
+      IF BEMFOrder.GET(Rec."Document No.",'TRANSPORT') THEN
+        DeleteBarcodeEntries(Rec."Document No.",DocTypeLoc::Transport);
+
+      TransportSheetLine.RESET;
+      TransportSheetLine.SETRANGE("Document No.",Rec."Document No.");
+      TransportSheetLine.SETFILTER("Qty. to Ship 2", '>0');
+      IF NOT TransportSheetLine.FINDSET THEN
+        EXIT;
+
+      BEMFOrder.INIT;
+      BEMFOrder.orderId := Rec."Document No.";
+      BEMFOrder.orderType := FORMAT(DocTypeLoc::Transport);
+      BEMFOrder.description_1 := FORMAT(Rec."Posting Date")+', ' + Rec.FIELDCAPTION("Receiving Location")+ ': ' +Rec."Receiving Location";
+      BEMFOrder.description_2 := FORMAT(Rec."Receiving Location");
+      BEMFOrder.description_4 := FORMAT(Rec."Posting Date");
+      ResponsibilityCenterLocation.SETRANGE("Location Code",Rec."Receiving Location");
+      IF ResponsibilityCenterLocation.FINDFIRST THEN
+        BEMFOrder.description_3 := ResponsibilityCenterLocation."Responsibility Center";
+      BEMFOrder.INSERT;
+
+      REPEAT
+        BOMComponent.RESET;
+        BOMComponent.SETRANGE("Parent Item No.",TransportSheetLine."Item No.");
+        BOMComponent.SETRANGE(Type,BOMComponent.Type::Item);
+        IF BOMComponent.FINDSET THEN BEGIN
+          REPEAT
+            LineNo+=10000;
+            BarcodeNo := GetItemBarcode(BOMComponent."No.",BOMComponent."Unit of Measure Code",BOMComponent."Variant Code");
+            IF UnitofMeasure.GET(BOMComponent."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+              BarcodeNo += '|' + BOMComponent."Unit of Measure Code" + '|' + FORMAT(BOMComponent."Quantity per");
+              InsertSplitBEMFEntries(BEMFOrder,DocTypeLoc::Shipment,TransportSheetLine."Line No.",TRUE,BOMComponent,BarcodeNo)
+            END ELSE
+              InsertBEMFLineEntry(BEMFOrder,DocTypeLoc::Shipment,TransportSheetLine."Line No.",TRUE,BOMComponent, BarcodeNo);
+          UNTIL BOMComponent.NEXT = 0;
+        END ELSE BEGIN //normal items
+          LineNo+=10000;
+          BarcodeNo := GetItemBarcode(TransportSheetLine."Item No.",TransportSheetLine."Unit of Measure",'');
+          IF UnitofMeasure.GET(TransportSheetLine."Unit of Measure") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+            BarcodeNo += '|' + TransportSheetLine."Unit of Measure" + '|' + FORMAT(TransportSheetLine."Qty. to Ship 2");
+            InsertSplitBEMFEntries(BEMFOrder,DocTypeLoc::Shipment,TransportSheetLine."Line No.",FALSE,BOMComponent,BarcodeNo)
+          END ELSE
+            InsertBEMFLineEntry(BEMFOrder,DocTypeLoc::Shipment,TransportSheetLine."Line No.",FALSE,BOMComponent,BarcodeNo);
+        END;
+
+        BEMFOrderLine.RESET;
+        BEMFOrderLine.INIT;
+        BEMFOrderLine.orderId := BEMFOrder.orderId;
+        BEMFOrderLine.orderLineId := FORMAT(LineNo);
+        BEMFOrderLine.orderType := FORMAT(DocTypeLoc);
+        BEMFOrderLine.quantity := TransportSheetLine.Quantity;
+        BEMFOrderLine.description_1 := TransportSheetLine."Item No.";
+        BEMFOrderLine.description_2 := TransportSheetLine."Item Description";
+        BEMFOrderLine.description_3 := Rec."Destination No.";
+        BEMFOrderLine.description_4 := Rec."Receiving Location";
+        BEMFOrderLine.INSERT;
+
+        BEMFOrderLineItem.RESET;
+        BEMFOrderLineItem.INIT;
+        BEMFOrderLineItem.orderId := BEMFOrder.orderId;
+        BEMFOrderLineItem.orderLineId := FORMAT(LineNo);
+        BEMFOrderLineItem.orderType := BEMFOrder.orderType;
+        BEMFOrderLineItem.barcode := BarcodeNo;
+
+        IF UnitofMeasure.GET(TransportSheetLine."Unit of Measure") AND UnitofMeasure."Insert Qty Barcode" THEN
+          BEMFOrderLineItem.quantity := TransportSheetLine."Qty. to Ship 2"
+        ELSE BEGIN
+          Item.GET(TransportSheetLine."Item No.");
+          IF Item."Package Qty." <> 0 THEN
+            BEMFOrderLineItem.quantity := Item."Package Qty."
+          ELSE
+            BEMFOrderLineItem.quantity := 1;
+        END;
+        BEMFOrderLineItem.description_1 := TransportSheetLine."Item No.";
+        BEMFOrderLineItem.description_2 := TransportSheetLine."Item Description";
+        BEMFOrderLineItem.description_3 := Rec."Destination No.";
+        BEMFOrderLineItem.description_4 := Rec."Receiving Location";
+
+        BEMFOrderLineItem.INSERT;
+
+      UNTIL TransportSheetLine.NEXT = 0;
+      //</ZGNVSUPPCO-1246>
+    END;
+
+    [EventSubscriber(Table,50015,OnAfterDeleteEvent)]
+    PROCEDURE TransportSheet_OnAfterDelete@50044(VAR Rec@50000 : Record 50015;RunTrigger@50001 : Boolean);
+    BEGIN
+      // <ZGNVSUPPCO-1246>
+      IF Rec.ISTEMPORARY THEN
+        EXIT;
+
+      IF Rec.Status = Rec.Status::Open THEN
+        EXIT;
+
+      DeleteBarcodeEntriesOnDeleteDocument(Rec."Document No.");
+      DeleteScannedEntries(Rec."Document No.");
+      // </ZGNVSUPPCO-1246>
+    END;
+
+    PROCEDURE FillComplaintBarcodeEntries@50024(Rec@50000 : Record 50021;SkipRelease@50006 : Boolean;DocTypeLoc@50005 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM');
+    VAR
+      BEMFOrder@50003 : Record 5401810;
+      BEMFOrderLine@50002 : Record 5401811;
+      BEMFOrderLineItem@50001 : Record 5401812;
+      ComplaintShipmentLinesPrima@50004 : Record 50022;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      CLEAR(LineNo);
+
+      IF NOT IsCrossDockRespCenter(Rec."Store Responsible Center") THEN
+        EXIT;
+
+      Rec.TESTFIELD(Status,Rec.Status::Released);
+
+      IF BEMFOrder.GET(Rec."Document No.",FORMAT(DocTypeLoc)) THEN
+        DeleteBarcodeEntries(Rec."Document No.",DocTypeLoc);
+
+      ComplaintShipmentLinesPrima.RESET;
+      ComplaintShipmentLinesPrima.SETRANGE("Document No.",Rec."Document No.");
+      IF NOT ComplaintShipmentLinesPrima.FINDSET THEN
+        EXIT;
+
+      BEMFOrder.INIT;
+      BEMFOrder.orderId := Rec."Document No.";
+      BEMFOrder.orderType := FORMAT(DocTypeLoc);
+      BEMFOrder.description_1 := FORMAT(Rec."Shipment Date")+', '+ Rec.FIELDCAPTION(Store)+ ': ' +Rec.Store+', '+ Rec.FIELDCAPTION("Store Responsible Center")+ ': ' +Rec."Store Responsible Center";
+      BEMFOrder.description_2 := Rec."Store Responsible Center";
+      BEMFOrder.description_3 := FORMAT(Rec.Store);
+      BEMFOrder.description_4 := FORMAT(Rec."Shipment Date");
+      BEMFOrder.INSERT;
+
+      REPEAT
+        LineNo+=10000;
+        BEMFOrderLine.RESET();
+        BEMFOrderLine.INIT;
+        BEMFOrderLine.orderId := BEMFOrder.orderId;
+        BEMFOrderLine.orderType := BEMFOrder.orderType;
+        BEMFOrderLine.orderLineId := FORMAT(LineNo);
+        BEMFOrderLine.quantity := ComplaintShipmentLinesPrima."Package Quantity";
+        BEMFOrderLine.description_1 := FORMAT(Rec."Shipment Date")+', '+ Rec.FIELDCAPTION(Store)+ ': ' +Rec.Store+', '+ Rec.FIELDCAPTION("Store Responsible Center")+ ': ' +Rec."Store Responsible Center";
+        BEMFOrderLine.description_2 := ComplaintShipmentLinesPrima."Complaint No.";
+        BEMFOrderLine.description_3 := FORMAT(Rec."Shipment Date");
+        BEMFOrderLine.description_4 := Rec."Store Responsible Center";
+        BEMFOrderLine.INSERT;
+
+        BEMFOrderLineItem.RESET;
+        BEMFOrderLineItem.INIT;
+        BEMFOrderLineItem.orderId := BEMFOrder.orderId;
+        BEMFOrderLineItem.orderType := BEMFOrder.orderType;
+        BEMFOrderLineItem.orderLineId := FORMAT(LineNo);
+        BEMFOrderLineItem.barcode := ComplaintShipmentLinesPrima."Complaint No.";
+        BEMFOrderLineItem.quantity := 1;
+        BEMFOrderLineItem.description_1 := FORMAT(Rec."Shipment Date")+', '+ Rec.FIELDCAPTION(Store)+ ': ' +Rec.Store+', '+ Rec.FIELDCAPTION("Store Responsible Center")+ ': ' +Rec."Store Responsible Center";
+        BEMFOrderLineItem.description_2 := FORMAT(Rec."Shipment Date");
+        BEMFOrderLineItem.description_3 := FORMAT(Rec.Store);
+        BEMFOrderLineItem.description_4 := Rec."Store Responsible Center";
+        BEMFOrderLineItem.INSERT;
+      UNTIL ComplaintShipmentLinesPrima.NEXT = 0;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    [EventSubscriber(Table,50021,OnAfterDeleteEvent)]
+    PROCEDURE ComplaintShipment_OnAfterDelete@50048(VAR Rec@50000 : Record 50021;RunTrigger@50001 : Boolean);
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      IF Rec.ISTEMPORARY THEN
+        EXIT;
+
+      IF Rec.Status = Rec.Status::Open THEN
+        EXIT;
+
+      DeleteBarcodeEntriesOnDeleteDocument(Rec."Document No.");
+      DeleteScannedEntries(Rec."Document No.");
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE FillWhseShptBarcodeEntriesCrossDock@50036(WhseShpt@50002 : Record 7320;DocTypeLoc@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM');
+    VAR
+      BEMFOrder@50001 : Record 5401810;
+      BEMFOrderLine@50005 : Record 5401811;
+      BEMFOrderLineItem@50000 : Record 5401812;
+      i@50004 : Integer;
+      NoOfPallets@50006 : Integer;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      IF (WhseShpt."No. of Pallets" = 0) AND (WhseShpt."No. of Additional Packages" = 0) AND (WhseShpt."No. of Pallets Add. Packages" = 0) AND (WhseShpt."Linked Whse. Shpt. No." = '') THEN
+        EXIT;
+
+      CASE WhseShpt."Cross-Dock Shipment Status" OF
+        WhseShpt."Cross-Dock Shipment Status"::"Ready for CD Shipment":
+          DocTypeLoc:=DocTypeLoc::WHCDSHIP;
+        WhseShpt."Cross-Dock Shipment Status"::"Shipped to CD",WhseShpt."Cross-Dock Shipment Status"::"Shipped to CD (sync)":
+          DocTypeLoc:=DocTypeLoc::WHCDREC;
+        WhseShpt."Cross-Dock Shipment Status"::"Received on CD",WhseShpt."Cross-Dock Shipment Status"::"Received on CD (sync)":
+          DocTypeLoc:=DocTypeLoc::WHCDSHFROM;
+        ELSE BEGIN
+          IF BEMFOrder.GET(WhseShpt."No.",FORMAT(DocTypeLoc)) THEN
+            DeleteBarcodeEntries(WhseShpt."No.",DocTypeLoc);
+          EXIT;
+        END;
+      END;
+
+      IF BEMFOrder.GET(WhseShpt."No.",FORMAT(DocTypeLoc)) THEN
+        DeleteBarcodeEntries(WhseShpt."No.",DocTypeLoc);
+
+      BEMFOrder.INIT;
+      BEMFOrder.orderId := WhseShpt."No.";
+      BEMFOrder.orderType := FORMAT(DocTypeLoc);
+      BEMFOrder.description_1 := FORMAT(WhseShpt."Posting Date")+', '+ WhseShpt.FIELDCAPTION("Location Code")+ ': ' + WhseShpt."Location Code" + ', '+ WhseShpt.FIELDCAPTION("Destination No.")+ ': ' +WhseShpt."Destination No.";
+      BEMFOrder.description_2 := FORMAT(WhseShpt."Location Code");
+      BEMFOrder.description_4 := FORMAT(WhseShpt."Posting Date");
+      BEMFOrder.description_3 := WhseShpt."Destination No.";
+      BEMFOrder.INSERT;
+
+      IF WhseShpt."Linked Whse. Shpt. No." <> '' THEN
+        NoOfPallets := 1
+      ELSE
+        NoOfPallets := WhseShpt."No. of Pallets";
+
+      FOR i := 1 TO NoOfPallets DO BEGIN
+        LineNo += 10000;
+        BEMFOrderLine.RESET;
+        BEMFOrderLine.INIT;
+        BEMFOrderLine.orderId := BEMFOrder.orderId;
+        BEMFOrderLine.orderLineId := FORMAT(LineNo);
+        BEMFOrderLine.orderType := FORMAT(DocTypeLoc);
+        BEMFOrderLine.quantity := 1;
+        BEMFOrderLine.description_1 := GetWhseShptCrossDockBarcode(BEMFOrder.orderId, i, NoOfPallets, 2);
+        IF WhseShpt."Linked Whse. Shpt. No." <> '' THEN
+          BEMFOrderLine.description_1 += ' - ' + WhseShpt."Linked Whse. Shpt. No.";
+        BEMFOrderLine.description_3 := WhseShpt."Destination No.";
+        BEMFOrderLine.description_4 := WhseShpt."Location Code";
+        BEMFOrderLine.INSERT;
+
+        BEMFOrderLineItem.RESET;
+        BEMFOrderLineItem.INIT;
+        BEMFOrderLineItem.orderId := BEMFOrder.orderId;
+        BEMFOrderLineItem.orderLineId := FORMAT(LineNo);
+        BEMFOrderLineItem.orderType := BEMFOrder.orderType;
+        BEMFOrderLineItem.barcode := GetWhseShptCrossDockBarcode(BEMFOrder.orderId, i, NoOfPallets, 1);
+        BEMFOrderLineItem.quantity := 1;
+        BEMFOrderLineItem.description_1 := BEMFOrderLine.description_1;
+        BEMFOrderLineItem.description_3 := WhseShpt."Destination No.";
+        BEMFOrderLineItem.description_4 := WhseShpt."Location Code";
+        BEMFOrderLineItem.INSERT;
+      END;
+
+      FOR i := 1 TO WhseShpt."No. of Additional Packages" DO BEGIN
+        LineNo += 10000;
+        BEMFOrderLine.RESET;
+        BEMFOrderLine.INIT;
+        BEMFOrderLine.orderId := BEMFOrder.orderId;
+        BEMFOrderLine.orderLineId := FORMAT(LineNo);
+        BEMFOrderLine.orderType := FORMAT(DocTypeLoc);
+        BEMFOrderLine.quantity := 1;
+        BEMFOrderLine.description_1 := GetWhseShptCrossDockBarcode(BEMFOrder.orderId, i, WhseShpt."No. of Additional Packages", 4);
+        BEMFOrderLine.description_3 := WhseShpt."Destination No.";
+        BEMFOrderLine.description_4 := WhseShpt."Location Code";
+        BEMFOrderLine.INSERT;
+
+        BEMFOrderLineItem.RESET;
+        BEMFOrderLineItem.INIT;
+        BEMFOrderLineItem.orderId := BEMFOrder.orderId;
+        BEMFOrderLineItem.orderLineId := FORMAT(LineNo);
+        BEMFOrderLineItem.orderType := BEMFOrder.orderType;
+        BEMFOrderLineItem.barcode := GetWhseShptCrossDockBarcode(BEMFOrder.orderId, i, WhseShpt."No. of Additional Packages", 3);
+        BEMFOrderLineItem.quantity := 1;
+        BEMFOrderLineItem.description_1 :=  BEMFOrderLine.description_1;
+        BEMFOrderLineItem.description_3 := WhseShpt."Destination No.";
+        BEMFOrderLineItem.description_4 := WhseShpt."Location Code";
+        BEMFOrderLineItem.INSERT;
+      END;
+
+      FOR i := 1 TO WhseShpt."No. of Pallets Add. Packages" DO BEGIN // TODO
+        LineNo += 10000;
+        BEMFOrderLine.RESET;
+        BEMFOrderLine.INIT;
+        BEMFOrderLine.orderId := BEMFOrder.orderId;
+        BEMFOrderLine.orderLineId := FORMAT(LineNo);
+        BEMFOrderLine.orderType := FORMAT(DocTypeLoc);
+        BEMFOrderLine.quantity := 1;
+        BEMFOrderLine.description_1 := GetWhseShptCrossDockBarcode(BEMFOrder.orderId, i, WhseShpt."No. of Pallets Add. Packages", 6);
+        BEMFOrderLine.description_3 := WhseShpt."Destination No.";
+        BEMFOrderLine.description_4 := WhseShpt."Location Code";
+        BEMFOrderLine.INSERT;
+
+        BEMFOrderLineItem.RESET;
+        BEMFOrderLineItem.INIT;
+        BEMFOrderLineItem.orderId := BEMFOrder.orderId;
+        BEMFOrderLineItem.orderLineId := FORMAT(LineNo);
+        BEMFOrderLineItem.orderType := BEMFOrder.orderType;
+        BEMFOrderLineItem.barcode := GetWhseShptCrossDockBarcode(BEMFOrder.orderId, i, WhseShpt."No. of Pallets Add. Packages", 5);
+        BEMFOrderLineItem.quantity := 1;
+        BEMFOrderLineItem.description_1 :=  BEMFOrderLine.description_1;
+        BEMFOrderLineItem.description_3 := WhseShpt."Destination No.";
+        BEMFOrderLineItem.description_4 := WhseShpt."Location Code";
+        BEMFOrderLineItem.INSERT;
+      END;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE IsCrossDockLocation@50027(LocationNo@50000 : Code[20]) : Boolean;
+    VAR
+      Location@50001 : Record 14;
+    BEGIN
+      EXIT(Location.GET(LocationNo) AND Location."Use Cross-Dock Warehouse"); // <ZGNVSUPPCO-1245/>
+    END;
+
+    PROCEDURE IsCrossDockRespCenter@50028(RespCenterNo@50000 : Code[20]) : Boolean;
+    VAR
+      ResponsibilityCenter@50001 : Record 5714;
+    BEGIN
+      EXIT(ResponsibilityCenter.GET(RespCenterNo) AND ResponsibilityCenter."Use Cross-Dock Warehouse"); // <ZGNVSUPPCO-1245/>
+    END;
+
+    PROCEDURE IsValidCrossDockStatus@50022(PreviousStatusIndex@50003 : Integer;NextStatusIndex@50002 : Integer) : Boolean;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      IF PreviousStatusIndex = NextStatusIndex THEN
+        EXIT(TRUE);
+
+      CASE TRUE OF
+        (PreviousStatusIndex = 0) AND (NextStatusIndex = 1):
+          EXIT(TRUE);
+        (PreviousStatusIndex = 1) AND (NextStatusIndex = 2) OR (NextStatusIndex = 3):
+          EXIT(TRUE);
+        (NextStatusIndex = 4) AND (NextStatusIndex = 5):
+          EXIT(TRUE);
+        (PreviousStatusIndex = 6) AND (NextStatusIndex = 7):
+          EXIT(TRUE);
+        NextStatusIndex = 8: // complaint finish? TODO
+          EXIT(TRUE);
+      END;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE GetWhseShptCrossDockBarcode@50026(DocNo@50000 : Code[40];PackageNo@50001 : Integer;TotalPackageNo@50003 : Integer;LineType@50002 : Integer) : Code[40];
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      CASE LineType OF
+        1: EXIT(DocNo + 'PAL' + FORMAT(PackageNo) + '/' + FORMAT(TotalPackageNo));
+        2: EXIT(DocNo + ' PALETA ' + FORMAT(PackageNo) + '/' + FORMAT(TotalPackageNo));
+        3: EXIT(DocNo + 'PK' + FORMAT(PackageNo) + '/' + FORMAT(TotalPackageNo));
+        4: EXIT(DocNo + ' DODATNIH PAKETA ' + FORMAT(PackageNo) + '/' + FORMAT(TotalPackageNo));
+        5: EXIT(DocNo + 'PLDP' + FORMAT(PackageNo) + '/' + FORMAT(TotalPackageNo));
+        6: EXIT(DocNo + ' PALETA DOD. PAKETA ' + FORMAT(PackageNo) + '/' + FORMAT(TotalPackageNo));
+      END;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE InsertWhseShptBarcodeStatusLog@50030(WhseShpt@50001 : Record 7320);
+    VAR
+      BarcodeStatusChangeLog@50000 : Record 50167;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      BarcodeStatusChangeLog.INIT;
+
+      CASE WhseShpt."Barcode Status" OF
+        WhseShpt."Barcode Status"::Blank:
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::" ";
+        WhseShpt."Barcode Status"::Synchronized:
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::Synchronized;
+        WhseShpt."Barcode Status"::Processed:
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::Processed;
+      END;
+
+      BarcodeStatusChangeLog."Document No." := WhseShpt."No.";
+      BarcodeStatusChangeLog."Document Type" := BarcodeStatusChangeLog."Document Type"::"Warehouse Shipment";
+      BarcodeStatusChangeLog."User ID" := USERID;
+      BarcodeStatusChangeLog."Creation DateTime" := CURRENTDATETIME;
+      BarcodeStatusChangeLog.INSERT;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE InsertWhseRcptBarcodeStatusLog@50038(WhseRcpt@50001 : Record 7316);
+    VAR
+      BarcodeStatusChangeLog@50000 : Record 50167;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      BarcodeStatusChangeLog.INIT;
+
+      CASE WhseRcpt."Barcode Status" OF
+        WhseRcpt."Barcode Status"::Blank:
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::" ";
+        WhseRcpt."Barcode Status"::Synchronized:
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::Synchronized;
+        WhseRcpt."Barcode Status"::Processed:
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::Processed;
+      END;
+
+      BarcodeStatusChangeLog."Document No." := WhseRcpt."No.";
+      BarcodeStatusChangeLog."Document Type" := BarcodeStatusChangeLog."Document Type"::"Warehouse Receipt";
+      BarcodeStatusChangeLog."User ID" := USERID;
+      BarcodeStatusChangeLog."Creation DateTime" := CURRENTDATETIME;
+      BarcodeStatusChangeLog.INSERT;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE InsertTransportBarcodeStatusLog@50041(TransportHeader@50001 : Record 50015);
+    VAR
+      BarcodeStatusChangeLog@50000 : Record 50167;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      BarcodeStatusChangeLog.INIT;
+
+      CASE TransportHeader."Barcode Status" OF
+        TransportHeader."Barcode Status"::Blank:
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::" ";
+        TransportHeader."Barcode Status"::Synchronized:
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::Synchronized;
+        TransportHeader."Barcode Status"::Processed:
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::Processed;
+      END;
+
+      BarcodeStatusChangeLog."Document No." := TransportHeader."Document No.";
+      BarcodeStatusChangeLog."Document Type" := BarcodeStatusChangeLog."Document Type"::"Transport Sheet";
+      BarcodeStatusChangeLog."User ID" := USERID;
+      BarcodeStatusChangeLog."Creation DateTime" := CURRENTDATETIME;
+      BarcodeStatusChangeLog.INSERT;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE InsertWhseShptCDBarcodeStatusLog@50029(WhseShpt@50001 : Record 7320);
+    VAR
+      BarcodeStatusChangeLog@50000 : Record 50167;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      BarcodeStatusChangeLog.INIT;
+
+      CASE WhseShpt."Cross-Dock Shipment Status" OF
+        WhseShpt."Cross-Dock Shipment Status"::" ":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::" ";
+        WhseShpt."Cross-Dock Shipment Status"::"Ready for CD Shipment":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Ready for CD Shipment";
+        WhseShpt."Cross-Dock Shipment Status"::"Shipped to CD (sync)":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Shipped to CD (sync)";
+        WhseShpt."Cross-Dock Shipment Status"::"Shipped to CD":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Shipped to CD";
+        WhseShpt."Cross-Dock Shipment Status"::"Received on CD (sync)":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Received on CD (sync)";
+        WhseShpt."Cross-Dock Shipment Status"::"Received on CD":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Received on CD";
+        WhseShpt."Cross-Dock Shipment Status"::"Shipped from CD (sync)":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Shipped from CD (sync)";
+        WhseShpt."Cross-Dock Shipment Status"::"Shipped from CD":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Shipped from CD";
+      END;
+
+      BarcodeStatusChangeLog."Document No." := WhseShpt."No.";
+      BarcodeStatusChangeLog."Document Type" := BarcodeStatusChangeLog."Document Type"::"Warehouse Shipment";
+      BarcodeStatusChangeLog."User ID" := USERID;
+      BarcodeStatusChangeLog."Creation DateTime" := CURRENTDATETIME;
+      BarcodeStatusChangeLog.INSERT;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE InsertComplaintCDBarcodeStatusLog@50031(ComplaintShpt@50001 : Record 50021);
+    VAR
+      BarcodeStatusChangeLog@50000 : Record 50167;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      BarcodeStatusChangeLog.INIT;
+
+      CASE ComplaintShpt."Cross-Dock Shipment Status" OF
+        ComplaintShpt."Cross-Dock Shipment Status"::" ":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::" ";
+        ComplaintShpt."Cross-Dock Shipment Status"::"Ready For Shipment":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Shipped to CD (sync)";
+        ComplaintShpt."Cross-Dock Shipment Status"::"Shipped to CD (sync)":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Shipped to CD";
+        ComplaintShpt."Cross-Dock Shipment Status"::"Shipped to CD":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Received on CD (sync)";
+        ComplaintShpt."Cross-Dock Shipment Status"::"Received on CD (sync)":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Received on CD";
+        ComplaintShpt."Cross-Dock Shipment Status"::"Received on CD":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Shipped from CD (sync)";
+        ComplaintShpt."Cross-Dock Shipment Status"::"Shipped from CD (sync)":
+          BarcodeStatusChangeLog."Barcode Status" := BarcodeStatusChangeLog."Barcode Status"::"Shipped from CD";
+      END;
+
+      BarcodeStatusChangeLog."Document No." := ComplaintShpt."Document No.";
+      BarcodeStatusChangeLog."Document Type" := BarcodeStatusChangeLog."Document Type"::"Complaint Shipment";
+      BarcodeStatusChangeLog."User ID" := USERID;
+      BarcodeStatusChangeLog."Creation DateTime" := CURRENTDATETIME;
+      BarcodeStatusChangeLog.INSERT;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE DeleteBarcodeEntriesOnDeleteDocument@50042(DocNo@50000 : Code[20]);
+    VAR
+      BEMFOrder@50003 : Record 5401810;
+      BEMFOrderLine@50002 : Record 5401811;
+      BEMFOrderLineItem@50001 : Record 5401812;
+      DocFound@50004 : Boolean;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      BEMFOrder.SETRANGE(orderId, DocNo);
+      IF BEMFOrder.FINDSET THEN
+        DocFound := TRUE
+      ELSE BEGIN
+        BEMFOrder.SETRANGE(description_1,DocNo);
+        BEMFOrder.SETRANGE(orderId);
+        IF BEMFOrder.FINDSET THEN
+          DocFound := TRUE;
+      END;
+
+      IF DocFound THEN BEGIN
+        REPEAT
+          BEMFOrderLineItem.SETRANGE(orderId,BEMFOrder.orderId);
+          IF BEMFOrderLineItem.FINDSET THEN
+            BEMFOrderLineItem.DELETEALL;
+          BEMFOrderLine.SETRANGE(orderId,BEMFOrder.orderId);
+          IF BEMFOrderLine.FINDSET THEN
+            BEMFOrderLine.DELETEALL;
+          BEMFOrder.DELETE;
+        UNTIL BEMFOrder.NEXT = 0;
+      END;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    [TryFunction]
+    PROCEDURE AutoUpdateBarcodeStatusOnSync@50043();
+    VAR
+      BarcodeMgmt@50000 : Codeunit 50106;
+      BarcodeSyncRecord@50001 : Record 50161;
+      DocType@50002 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+      TempProcessedRecord@50003 : TEMPORARY Record 50161;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      BarcodeMgmt.SetIsBulkUpdate(TRUE);
+
+      BarcodeSyncRecord.SETRANGE("Entry Processed",FALSE);
+      BarcodeSyncRecord.SETFILTER("Syncronization DateTime",'..%1',CREATEDATETIME(TODAY,TIME - (5*60*1000)));// process all entries 5 minutes after sync
+      IF BarcodeSyncRecord.FINDSET(TRUE) THEN REPEAT
+        TempProcessedRecord.SETRANGE("Document No.",BarcodeSyncRecord."Document No.");
+        TempProcessedRecord.SETRANGE("Document Type",BarcodeSyncRecord."Document Type");
+        IF NOT TempProcessedRecord.FINDFIRST THEN BEGIN
+          TempProcessedRecord.INIT;
+          TempProcessedRecord.TRANSFERFIELDS(BarcodeSyncRecord);
+          IF TempProcessedRecord.ISTEMPORARY() THEN
+            TempProcessedRecord.INSERT();
+
+          CASE TempProcessedRecord."Document Type" OF
+              UPPERCASE(FORMAT(DocType::Shipment)):
+                BarcodeMgmt.OnOpenBufferPage(TempProcessedRecord."Document No.",DocType::Shipment,TRUE);
+              UPPERCASE(FORMAT(DocType::Prereceipt)):
+                BarcodeMgmt.OnOpenBufferPage(TempProcessedRecord."Document No.",DocType::Prereceipt,TRUE);
+              UPPERCASE(FORMAT(DocType::Receipt)):
+                BarcodeMgmt.OnOpenBufferPage(TempProcessedRecord."Document No.",DocType::Receipt,TRUE);
+              UPPERCASE(FORMAT(DocType::Transport)):
+                BarcodeMgmt.OnOpenBufferPage(TempProcessedRecord."Document No.",DocType::Transport,TRUE);
+              UPPERCASE(FORMAT(DocType::WHCDSHIP)):
+                BarcodeMgmt.OnOpenBufferPage(TempProcessedRecord."Document No.",DocType::WHCDSHIP,TRUE);
+              UPPERCASE(FORMAT(DocType::WHCDREC)):
+                BarcodeMgmt.OnOpenBufferPage(TempProcessedRecord."Document No.",DocType::WHCDREC,TRUE);
+              UPPERCASE(FORMAT(DocType::WHCDSHFROM)):
+                BarcodeMgmt.OnOpenBufferPage(TempProcessedRecord."Document No.",DocType::WHCDSHFROM,TRUE);
+              UPPERCASE(FORMAT(DocType::CPCDSHIP)):
+                BarcodeMgmt.OnOpenBufferPage(TempProcessedRecord."Document No.",DocType::CPCDSHIP,TRUE);
+              UPPERCASE(FORMAT(DocType::CPCDREC)):
+                BarcodeMgmt.OnOpenBufferPage(TempProcessedRecord."Document No.",DocType::CPCDREC,TRUE);
+              UPPERCASE(FORMAT(DocType::CPCDSHFROM)):
+                BarcodeMgmt.OnOpenBufferPage(TempProcessedRecord."Document No.",DocType::CPCDSHFROM,TRUE);
+            END;
+          COMMIT;
+        END;
+
+        BarcodeSyncRecord."Entry Processed" := TRUE;
+        BarcodeSyncRecord.MODIFY;
+      UNTIL BarcodeSyncRecord.NEXT = 0;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE BulkWhseShptStatusUpdate@50034(VAR WarehouseShipmentHeader@50000 : Record 7320);
+    VAR
+      BarcodeStatusLbl@50001 : TextConst 'ENU=Do you want to update Barcode Status on %1 Warehouse Shipments?;HRV=¦elite li a§urirati barkod status na %1 skladiçnih otpremnica?';
+      BarcodeMgmt@50002 : Codeunit 50106;
+      WhseCount@50004 : Integer;
+      UpdateLbl@50005 : TextConst 'ENU=There is nothing for update.;HRV=Ne postoji niçta za a§uriranje.';
+      isCompleatedStatus@50006 : Boolean;
+      DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      WhseCount := WarehouseShipmentHeader.COUNT;
+      IF WhseCount = 0 THEN BEGIN
+        IF GUIALLOWED THEN
+          MESSAGE(UpdateLbl);
+        EXIT;
+      END;
+
+      IF GUIALLOWED THEN
+        IF NOT CONFIRM(STRSUBSTNO(BarcodeStatusLbl,WhseCount), TRUE) THEN
+          EXIT;
+
+      BarcodeMgmt.SetIsBulkUpdate(TRUE);
+      IF WarehouseShipmentHeader.FINDSET(TRUE) THEN REPEAT
+        BarcodeMgmt.OnOpenBufferPage(WarehouseShipmentHeader."No.",DocType::Shipment,TRUE);
+        // commit??
+        BarcodeMgmt.OnOpenBufferPage(WarehouseShipmentHeader."No.",DocType::WHCDSHIP,TRUE);
+        BarcodeMgmt.OnOpenBufferPage(WarehouseShipmentHeader."No.",DocType::WHCDREC,TRUE);
+        BarcodeMgmt.OnOpenBufferPage(WarehouseShipmentHeader."No.",DocType::WHCDSHFROM,TRUE);
+      UNTIL WarehouseShipmentHeader.NEXT = 0;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE BulkWhseReceiptStatusUpdate@50033(VAR WarehouseReceiptHeader@50000 : Record 7316);
+    VAR
+      BarcodeStatusLbl@50001 : TextConst 'ENU=Do you want to update Barcode Status on %1 Warehouse Receipts?;HRV=¦elite li a§urirati barkod status na %1 skladiçnih primki?';
+      BarcodeMgmt@50002 : Codeunit 50106;
+      WhseCount@50004 : Integer;
+      UpdateLbl@50005 : TextConst 'ENU=There is nothing for update.;HRV=Ne postoji niçta za a§uriranje.';
+      isCompleatedStatus@50006 : Boolean;
+      DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+    BEGIN
+      // <ZGNVSUPPCO-1059>
+      WhseCount := WarehouseReceiptHeader.COUNT;
+      IF WhseCount = 0 THEN BEGIN
+        IF GUIALLOWED THEN
+          MESSAGE(UpdateLbl);
+        EXIT;
+      END;
+
+      IF GUIALLOWED THEN
+        IF NOT CONFIRM(STRSUBSTNO(BarcodeStatusLbl,WhseCount), TRUE) THEN
+          EXIT;
+
+      BarcodeMgmt.SetIsBulkUpdate(TRUE);
+      IF WarehouseReceiptHeader.FINDSET THEN REPEAT
+        BarcodeMgmt.OnOpenBufferPage(WarehouseReceiptHeader."No.",DocType::Receipt,TRUE);
+      UNTIL WarehouseReceiptHeader.NEXT = 0;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE BulkTransportSheetStatusUpdate@50035(VAR TransportSheetHeader@50000 : Record 50015);
+    VAR
+      BarcodeStatusLbl@50001 : TextConst 'ENU=Do you want to update Barcode Status on %1 Warehouse Receipts?;HRV=¦elite li a§urirati barkod status na %1 skladiçnih primki?';
+      BarcodeMgmt@50002 : Codeunit 50106;
+      TransportCount@50004 : Integer;
+      UpdateLbl@50005 : TextConst 'ENU=There is nothing for update.;HRV=Ne postoji niçta za a§uriranje.';
+      isCompleatedStatus@50006 : Boolean;
+      DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      TransportCount := TransportSheetHeader.COUNT;
+      IF TransportCount = 0 THEN BEGIN
+        IF GUIALLOWED THEN
+          MESSAGE(UpdateLbl);
+        EXIT;
+      END;
+
+      IF GUIALLOWED THEN
+        IF NOT CONFIRM(STRSUBSTNO(BarcodeStatusLbl,TransportCount), TRUE) THEN
+          EXIT;
+
+      BarcodeMgmt.SetIsBulkUpdate(TRUE);
+      IF TransportSheetHeader.FINDSET THEN REPEAT
+        BarcodeMgmt.OnOpenBufferPage(TransportSheetHeader."Document No.",DocType::Transport,TRUE);
+      UNTIL TransportSheetHeader.NEXT = 0;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE BulkComplaintSheetStatusUpdate@50040(VAR ComplaintShipment@50000 : Record 50021);
+    VAR
+      BarcodeStatusLbl@50001 : TextConst 'ENU=Do you want to update Barcode Status on %1 Warehouse Receipts?;HRV=¦elite li a§urirati barkod status na %1 skladiçnih primki?';
+      BarcodeMgmt@50002 : Codeunit 50106;
+      ComplaintCount@50004 : Integer;
+      UpdateLbl@50005 : TextConst 'ENU=There is nothing for update.;HRV=Ne postoji niçta za a§uriranje.';
+      isCompleatedStatus@50006 : Boolean;
+      DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+      ResponsibilityCenter@50007 : Record 5714;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      ComplaintCount := ComplaintShipment.COUNT;
+      IF ComplaintCount = 0 THEN BEGIN
+        IF GUIALLOWED THEN
+          MESSAGE(UpdateLbl);
+        EXIT;
+      END;
+
+      IF GUIALLOWED THEN
+        IF NOT CONFIRM(STRSUBSTNO(BarcodeStatusLbl,ComplaintCount), TRUE) THEN
+          EXIT;
+
+      BarcodeMgmt.SetIsBulkUpdate(TRUE);
+      IF ComplaintShipment.FINDSET THEN REPEAT
+        BarcodeMgmt.OnOpenBufferPage(ComplaintShipment."Document No.",DocType::CPCDSHIP,TRUE);
+        BarcodeMgmt.OnOpenBufferPage(ComplaintShipment."Document No.",DocType::CPCDREC,TRUE);
+        BarcodeMgmt.OnOpenBufferPage(ComplaintShipment."Document No.",DocType::CPCDSHFROM,TRUE);
+      UNTIL ComplaintShipment.NEXT = 0;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    PROCEDURE CreateLocationRespCenterDialog@50032(FusionBuilder_PC@50003 : Codeunit 5401801;VAR BEMFInput_PX@50000 : XMLport 5401800;VAR BEMFState_PX@50001 : XMLport 5401800;VAR BEMFPage_PX@50002 : XMLport 5401801;SetupName@50005 : Text;WebServiceName@50009 : Text;ApplyMethodName@50010 : Text);
+    VAR
+      FusionSetup@50004 : Record 5401802;
+      Location@50006 : Record 14;
+      ResponsibilityCenter@50007 : Record 5714;
+      SelectID@50008 : Text;
+      LocRespCenterNotConfErr@50011 : TextConst 'ENU=Location / Resp. Center selection not configured.';
+      SelectLbl@50012 : TextConst 'ENU=Select %1';
+      SelectPlaceLbl@50013 : TextConst 'ENU=Please select a %1';
+      ApplyLbl@50014 : TextConst 'ENU=Apply';
+      ScrollContainer@50017 : Text;
+      List@50015 : Text;
+      ListEntryContainer@50016 : Text;
+      ClickAction@50018 : Text;
+      TempLocation@50019 : TEMPORARY Record 14;
+    BEGIN
+      // BETERNA OW 05.02.24...
+      FusionBuilder_PC.Init(BEMFPage_PX,BEMFState_PX,BEMFInput_PX);
+
+      FusionBuilder_PC.AddPage('LocationRespCenterSelect');
+      FusionBuilder_PC.AttachActionHome('');
+      FusionBuilder_PC.LinkAction('', 'backAction');
+
+      ScrollContainer := FusionBuilder_PC.AddScrollContainer();
+      FusionBuilder_PC.PlaceElementOnPage();
+
+      FusionSetup.GET(SetupName);
+
+      IF (NOT FusionSetup."Enable Location Sel. Action") AND
+        (NOT FusionSetup."Enable Res. Cent. Sel. Action")
+      THEN
+        ERROR(LocRespCenterNotConfErr);
+
+      IF FusionSetup."Enable Location Sel. Action" THEN BEGIN
+        FusionBuilder_PC.AttachTitle(STRSUBSTNO(SelectLbl,Location.TABLECAPTION));
+        // <ZGNVSUPPCO-1245>
+        CASE FusionSetup."Document Type" OF
+          FusionSetup."Document Type"::Shipment:
+            BEGIN
+              Location.SETRANGE("Use in BE-Mobile (shipment)",TRUE);
+              Location.SETRANGE("Is Retail Location",FALSE);
+            END;
+          FusionSetup."Document Type"::"Retail Shipment":
+            BEGIN
+              Location.SETRANGE("Use in BE-Mobile (shipment)",TRUE);
+              Location.SETRANGE("Is Retail Location",TRUE);
+            END;
+          FusionSetup."Document Type"::Receipt:
+            BEGIN
+              Location.SETRANGE("Use in BE-Mobile (receipt)",TRUE);
+              Location.SETRANGE("Is Retail Location",FALSE);
+            END;
+          FusionSetup."Document Type"::"Retail Receipt":
+            BEGIN
+              Location.SETRANGE("Use in BE-Mobile (receipt)",TRUE);
+              Location.SETRANGE("Is Retail Location",TRUE);
+            END;
+          FusionSetup."Document Type"::Transport:
+              Location.SETRANGE("Use in BE-Mobile (transport)",TRUE);
+        END;
+
+        IF FusionSetup."Destination Filter" <> '' THEN BEGIN
+          CreateDestinationLocations(TempLocation,FusionSetup);
+          TempLocation.RESET();
+          IF TempLocation.FINDSET(FALSE,FALSE) THEN BEGIN
+            FusionBuilder_PC.AddLabelPreset(STRSUBSTNO(SelectPlaceLbl,Location.TABLECAPTION), '');
+            FusionBuilder_PC.AttachStyle('bemf-text-bold');
+            FusionBuilder_PC.AttachStyle('bemf-text-lg');
+            FusionBuilder_PC.SetParentElement(ScrollContainer);
+            List := FusionBuilder_PC.AddList();
+            FusionBuilder_PC.SetParentElement(ScrollContainer);
+            REPEAT
+              ListEntryContainer := FusionBuilder_PC.AddContainer(0);
+              FusionBuilder_PC.AttachActionRequest('', WebServiceName, ApplyMethodName);
+              FusionBuilder_PC.LinkAction('', 'onClick');
+              ClickAction := FusionBuilder_PC.GetCurrentActionRefId();
+              FusionBuilder_PC.AttachActionParameter('SelectedPlace', ClickAction, TempLocation.Code);
+              FusionBuilder_PC.SetParentElement(List);
+              FusionBuilder_PC.AddLabelPreset(TempLocation.Code + ' - ' + TempLocation.Name, '');
+              FusionBuilder_PC.SetParentElement(ListEntryContainer);
+            UNTIL TempLocation.NEXT = 0;
+          END;
+        END ELSE
+        // </ZGNVSUPPCO-1245>
+        IF Location.FINDSET(FALSE,FALSE) THEN BEGIN
+          FusionBuilder_PC.AddLabelPreset(STRSUBSTNO(SelectPlaceLbl,Location.TABLECAPTION), '');
+          FusionBuilder_PC.AttachStyle('bemf-text-bold');
+          FusionBuilder_PC.AttachStyle('bemf-text-lg');
+          FusionBuilder_PC.SetParentElement(ScrollContainer);
+          List := FusionBuilder_PC.AddList();
+          FusionBuilder_PC.SetParentElement(ScrollContainer);
+          REPEAT
+            ListEntryContainer := FusionBuilder_PC.AddContainer(0);
+            FusionBuilder_PC.AttachActionRequest('', WebServiceName, ApplyMethodName);
+            FusionBuilder_PC.LinkAction('', 'onClick');
+            ClickAction := FusionBuilder_PC.GetCurrentActionRefId();
+            FusionBuilder_PC.AttachActionParameter('SelectedPlace', ClickAction, Location.Code);
+            FusionBuilder_PC.SetParentElement(List);
+            FusionBuilder_PC.AddLabelPreset(Location.Code + ' - ' + Location.Name, '');
+            FusionBuilder_PC.SetParentElement(ListEntryContainer);
+          UNTIL Location.NEXT = 0;
+        END;
+      END ELSE IF FusionSetup."Enable Res. Cent. Sel. Action" THEN BEGIN
+        FusionBuilder_PC.AttachTitle(STRSUBSTNO(SelectLbl,ResponsibilityCenter.TABLECAPTION));
+        ResponsibilityCenter.SETRANGE("Use in BE-Mobile (complaint)",TRUE); // <ZGNVSUPPCO-1245/>
+        IF ResponsibilityCenter.FINDSET(FALSE,FALSE) THEN BEGIN
+          FusionBuilder_PC.AddLabelPreset(STRSUBSTNO(SelectPlaceLbl,ResponsibilityCenter.TABLECAPTION), '');
+          FusionBuilder_PC.AttachStyle('bemf-text-bold');
+          FusionBuilder_PC.AttachStyle('bemf-text-lg');
+          FusionBuilder_PC.SetParentElement(ScrollContainer);
+          List := FusionBuilder_PC.AddList();
+          FusionBuilder_PC.SetParentElement(ScrollContainer);
+          REPEAT
+            ListEntryContainer := FusionBuilder_PC.AddContainer(0);
+            FusionBuilder_PC.AttachActionRequest('', WebServiceName, ApplyMethodName);
+            FusionBuilder_PC.LinkAction('', 'onClick');
+            ClickAction := FusionBuilder_PC.GetCurrentActionRefId();
+            FusionBuilder_PC.AttachActionParameter('SelectedPlace', ClickAction, ResponsibilityCenter.Code);
+            FusionBuilder_PC.SetParentElement(List);
+            FusionBuilder_PC.AddLabelPreset(ResponsibilityCenter.Code + ' - ' + ResponsibilityCenter.Name, '');
+            FusionBuilder_PC.SetParentElement(ListEntryContainer);
+          UNTIL ResponsibilityCenter.NEXT = 0;
+        END;
+      END;
+      // ...BETERNA OW 05.02.24
+    END;
+
+    LOCAL PROCEDURE CreateDestinationLocations@50037(VAR TempLocation@50000 : TEMPORARY Record 14;FusionSetup@50004 : Record 5401802);
+    VAR
+      WhseShptHdr@50001 : Record 7320;
+      Location@50002 : Record 14;
+      Customer@50003 : Record 18;
+    BEGIN
+      // <ZGNVSUPPCO-1245>
+      WhseShptHdr.SETFILTER("Destination No.",FusionSetup."Destination Filter");
+      IF FusionSetup."Primary Key" = 'WHCDSHFROM' THEN
+        WhseShptHdr.SETFILTER("Cross-Dock Shipment Status", '%1|%2',WhseShptHdr."Cross-Dock Shipment Status"::"Received on CD",WhseShptHdr."Cross-Dock Shipment Status"::"Received on CD (sync)");
+      IF WhseShptHdr.FINDSET THEN
+        REPEAT
+          IF NOT TempLocation.GET(WhseShptHdr."Destination No.") THEN
+            IF Customer.GET(WhseShptHdr."Destination No.") THEN BEGIN
+              TempLocation.Code := Customer."No.";
+              TempLocation.Name := Customer.Name;
+              IF TempLocation.ISTEMPORARY() THEN
+                TempLocation.INSERT;
+            END ELSE IF Location.GET(WhseShptHdr."Destination No.") THEN BEGIN
+              TempLocation.Code := Location.Code;
+              TempLocation.Name := Location.Name;
+              IF TempLocation.ISTEMPORARY() THEN
+                TempLocation.INSERT;
+            END;
+        UNTIL WhseShptHdr.NEXT = 0;
+      // </ZGNVSUPPCO-1245>
+    END;
+
+    BEGIN
+    {
+      <PRIMA>
+        <ZGNVSUPPCO-1059>BARKOD SKLADIæNA PRIMKA NABAVE
+         <TASK>Expand option values in parameter of functions </TASK>
+        </ZGNVSUPPCO-1059>
+        <ZGNVSUPPCO-1101>Barkod - neispravno zbrajanje barkodova za radne ploŸe</ZGNVSUPPCO-1101>
+      </PRIMA>
+
+      BETERNA OW 05.02.24 - Dialog for location / responsibility center select
+    }
+    END.
+  }
+}
+
+OBJECT Codeunit 50112 Barcode App Mgmt
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06.08.26;
+    Time=11:42:49;
+    Modified=Yes;
+    Version List=PRIMA;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      LineNo@50000 : Integer;
+
+    PROCEDURE CreateTestBarcodeAppEntries@50045(WarehouseShipmentHeader@50002 : Record 7320);
+    VAR
+      BarcodeAppEntry@50000 : Record 50179;
+      DocTypeLoc@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+      BOMComponent@50004 : Record 90;
+      BarcodeNo@50006 : Text;
+      UnitofMeasure@50007 : Record 204;
+      IsRetailLoc@50008 : Boolean;
+      DocNo@50009 : Code[20];
+      WarehouseShipmentLine@50003 : Record 7321;
+    BEGIN
+      BarcodeAppEntry.SETRANGE("Document Type",FORMAT(DocTypeLoc::Shipment));
+      BarcodeAppEntry.SETRANGE("Document No.",WarehouseShipmentHeader."No.");
+      IF NOT BarcodeAppEntry.ISEMPTY() THEN
+        BarcodeAppEntry.DELETEALL();
+
+      WarehouseShipmentLine.RESET;
+      WarehouseShipmentLine.SETRANGE("No.",WarehouseShipmentHeader."No.");
+      IF NOT WarehouseShipmentLine.FINDSET THEN
+        EXIT;
+
+      IsRetailLoc := FALSE; //////temp
+
+      REPEAT
+        DocNo := WarehouseShipmentHeader."No.";
+
+        BOMComponent.RESET;
+        BOMComponent.SETRANGE("Parent Item No.",WarehouseShipmentLine."Item No.");
+        BOMComponent.SETRANGE(Type,BOMComponent.Type::Item);
+        IF BOMComponent.FINDSET THEN BEGIN
+          REPEAT
+            LineNo+=10000;
+            BarcodeNo := GetItemBarcode(BOMComponent."No.",BOMComponent."Unit of Measure Code",BOMComponent."Variant Code");
+            IF UnitofMeasure.GET(BOMComponent."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+              BarcodeNo += '|' + BOMComponent."Unit of Measure Code" + '|' + FORMAT(BOMComponent."Quantity per");
+              InsertSplitBEMFEntries(DocNo,DocTypeLoc::Shipment,WarehouseShipmentLine."Line No.",TRUE,BOMComponent,BarcodeNo,IsRetailLoc)
+            END ELSE
+              InsertBEMFLineEntry(DocNo,DocTypeLoc::Shipment,WarehouseShipmentLine."Line No.",TRUE,BOMComponent, BarcodeNo,IsRetailLoc);
+          UNTIL BOMComponent.NEXT = 0;
+        END ELSE BEGIN //normal items
+          LineNo+=10000;
+          BarcodeNo := GetItemBarcode(WarehouseShipmentLine."Item No.",WarehouseShipmentLine."Unit of Measure Code",WarehouseShipmentLine."Variant Code");
+          IF UnitofMeasure.GET(WarehouseShipmentLine."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+            BarcodeNo += '|' + WarehouseShipmentLine."Unit of Measure Code" + '|' + FORMAT(WarehouseShipmentLine."Qty. to Ship");
+            InsertSplitBEMFEntries(DocNo,DocTypeLoc::Shipment,WarehouseShipmentLine."Line No.",FALSE,BOMComponent,BarcodeNo,IsRetailLoc)
+          END ELSE
+            InsertBEMFLineEntry(DocNo,DocTypeLoc::Shipment,WarehouseShipmentLine."Line No.",FALSE,BOMComponent,BarcodeNo,IsRetailLoc);
+        END;
+      UNTIL WarehouseShipmentLine.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE InsertBEMFLineEntry@50014(DocNo@50009 : Code[20];DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';Document_LineNo@50004 : Integer;IsBOM@50002 : Boolean;BOMComponent@50001 : Record 90;BarcodeNo@50006 : Text[200];IsRetailLoc@50020 : Boolean);
+    VAR
+      BEMFOrderLine@50005 : Record 5401811;
+      Item@50000 : Record 27;
+      WarehouseShipmentLine@50007 : Record 7321;
+      WarehouseReceiptLine@50008 : Record 7317;
+      Qty@50010 : Decimal;
+      LocationCode@50011 : Code[20];
+      ItemNo@50012 : Code[20];
+      FullItemDescription@50013 : Text[110];
+      TransportSheetLine@50014 : Record 50016;
+      TransportSheetHeader@50015 : Record 50015;
+      ComplaintShipmentHeaderPrim@50016 : Record 50021;
+      ComplaintShipmentLinesPrima@50017 : Record 50022;
+      RespCenter@50018 : Code[20];
+      BarcodeAppEntry@50019 : Record 50179;
+      UnitofMeasure@50021 : Record 204;
+    BEGIN
+      CASE DocType OF
+        DocType::Shipment:
+          BEGIN
+            IF WarehouseShipmentLine.GET(DocNo, Document_LineNo) THEN BEGIN
+              Qty := WarehouseShipmentLine."Qty. to Ship";
+              LocationCode := WarehouseShipmentLine."Location Code";
+              ItemNo := WarehouseShipmentLine."Item No.";
+              FullItemDescription := WarehouseShipmentLine."Full Item Description";
+            END;
+          END;
+       { DocType::Receipt:
+          BEGIN
+            IF WarehouseReceiptLine.GET(BEMFOrder.orderId, Document_LineNo) THEN BEGIN
+              Qty := WarehouseReceiptLine."Qty. to Receive";
+              LocationCode := WarehouseReceiptLine."Location Code";
+              ItemNo := WarehouseReceiptLine."Item No.";
+              FullItemDescription := WarehouseReceiptLine."Full Item Description";
+            END;
+          END;
+        DocType::Transport:
+          BEGIN
+            IF TransportSheetLine.GET(BEMFOrder.orderId, Document_LineNo) THEN BEGIN
+              TransportSheetHeader.GET(BEMFOrder.orderId);
+              Qty := TransportSheetLine.Quantity;
+              LocationCode := TransportSheetHeader."Receiving Location";
+              ItemNo := TransportSheetLine."Item No.";
+              FullItemDescription := TransportSheetLine."Item Description";
+            END;
+          END;}
+      END;
+
+      BarcodeAppEntry.RESET;
+      BarcodeAppEntry.SETRANGE("Document No.", DocNo);
+      BarcodeAppEntry.SETRANGE("Document Type", FORMAT(DocType));
+      BarcodeAppEntry.SETRANGE(Barcode, BarcodeNo);
+      IF IsBOM THEN
+        BarcodeAppEntry.SETRANGE("Item No.", BOMComponent."No.")
+      ELSE
+        BarcodeAppEntry.SETRANGE("Item No.", ItemNo);
+      IF BarcodeAppEntry.FINDFIRST THEN BEGIN //insert entry
+        IF IsBOM THEN
+          BarcodeAppEntry."Item Qty." += Qty * BOMComponent."Quantity per"
+        ELSE
+          BarcodeAppEntry."Item Qty." += Qty;
+        BarcodeAppEntry.MODIFY;
+      END ELSE BEGIN
+        BarcodeAppEntry.RESET;
+        BarcodeAppEntry.INIT;
+        BarcodeAppEntry."Document No." := DocNo;
+        BarcodeAppEntry."Line No." := LineNo;
+        BarcodeAppEntry."Document Type" := FORMAT(DocType);
+        BarcodeAppEntry."Document Date" := WarehouseShipmentLine."Shipment Date"; // replace with doc date
+        BarcodeAppEntry.Barcode := BarcodeNo;
+        //BarcodeAppEntry."Responsibility Center" := ResponsibilityCenterLocation."Responsibility Center";
+        BarcodeAppEntry."Source No." := LocationCode;
+        BarcodeAppEntry."Destination No." := WarehouseShipmentLine."Destination No.";
+
+        IF IsBOM THEN BEGIN
+          BarcodeAppEntry."Item No." := BOMComponent."No.";
+          BarcodeAppEntry."Item Description" := BOMComponent."Full Item Description";
+          BarcodeAppEntry."Item Qty." := Qty * BOMComponent."Quantity per";
+          BarcodeAppEntry."Item UoM" := BOMComponent."Unit of Measure Code";
+
+          IF UnitofMeasure.GET(BOMComponent."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN
+            BarcodeAppEntry."Scanning Qty." := BOMComponent."Quantity per"
+          ELSE IF BOMComponent."Package Qty." <> 0 THEN
+            BarcodeAppEntry."Scanning Qty." := BOMComponent."Package Qty."
+          ELSE IF Item."Package Qty." <> 0 THEN BEGIN
+            Item.GET(BOMComponent."No.");
+            BarcodeAppEntry."Scanning Qty." := Item."Package Qty."
+          END ELSE
+            BarcodeAppEntry."Scanning Qty." := 1;
+
+        END ELSE BEGIN
+          BarcodeAppEntry."Item No." := ItemNo;
+          BarcodeAppEntry."Item Description" := FullItemDescription;
+          BarcodeAppEntry."Item Qty." := Qty;
+          BarcodeAppEntry."Item UoM" := WarehouseShipmentLine."Unit of Measure Code";
+
+          IF UnitofMeasure.GET(WarehouseShipmentLine."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN
+            BarcodeAppEntry."Scanning Qty." := WarehouseShipmentLine."Qty. to Ship"
+          ELSE BEGIN
+            Item.GET(WarehouseShipmentLine."Item No.");
+            IF Item."Package Qty." <> 0 THEN
+              BarcodeAppEntry."Scanning Qty." := Item."Package Qty."
+            ELSE
+              BarcodeAppEntry."Scanning Qty." := 1;
+          END;
+        END;
+
+        BarcodeAppEntry."Retail Location" := IsRetailLoc;
+        BarcodeAppEntry.INSERT;
+
+        {CASE DocType OF
+          DocType::Shipment:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,WarehouseShipmentLine."Line No.", LocationCode,IsBOM,BOMComponent,BarcodeNo);
+          DocType::Receipt:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,WarehouseReceiptLine."Line No." , LocationCode,IsBOM,BOMComponent,BarcodeNo);
+          DocType::Transport:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,TransportSheetLine."Line No.", LocationCode,IsBOM,BOMComponent,BarcodeNo);}
+        //END;
+      END;
+    END;
+
+    LOCAL PROCEDURE InsertSplitBEMFEntries@50016(DocNo@50019 : Code[20];DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt';Document_LineNo@50009 : Integer;IsBOM@50006 : Boolean;BOMComponent@50004 : Record 90;BarcodeNo@50000 : Text[200];IsRetailLocation@50008 : Boolean);
+    VAR
+      BEMFOrderLine@50001 : Record 5401811;
+      BEMFOrderLineItem@50002 : Record 5401812;
+      UnitofMeasure@50007 : Record 204;
+      Item@50005 : Record 27;
+      WarehouseShipmentLine@50010 : Record 7321;
+      WarehouseReceiptLine@50011 : Record 7317;
+      Qty@50012 : Decimal;
+      LocationCode@50013 : Code[20];
+      ItemNo@50014 : Code[20];
+      FullItemDescription@50015 : Text[110];
+      BarcodeExistsLineNo@50016 : Text;
+      TransportSheetLine@50017 : Record 50016;
+      TransportSheetHeader@50018 : Record 50015;
+    BEGIN
+      CASE DocType OF
+        DocType::Shipment:
+          BEGIN
+            IF WarehouseShipmentLine.GET(DocNo, Document_LineNo) THEN BEGIN
+              Qty := WarehouseShipmentLine."Qty. to Ship";
+              LocationCode := WarehouseShipmentLine."Location Code";
+              ItemNo := WarehouseShipmentLine."Item No.";
+              FullItemDescription := WarehouseShipmentLine."Full Item Description";
+            END;
+          END;
+        DocType::Receipt:
+          BEGIN
+            IF WarehouseReceiptLine.GET(DocNo, Document_LineNo) THEN BEGIN
+              Qty := WarehouseReceiptLine."Qty. to Receive";
+              LocationCode := WarehouseReceiptLine."Location Code";
+              ItemNo := WarehouseReceiptLine."Item No.";
+              FullItemDescription := WarehouseReceiptLine."Full Item Description";
+            END;
+          END;
+        DocType::Transport:
+          BEGIN
+            IF TransportSheetLine.GET(DocNo, Document_LineNo) THEN BEGIN
+              TransportSheetHeader.GET(DocNo);
+              Qty := TransportSheetLine.Quantity;
+              LocationCode := TransportSheetHeader."Receiving Location";
+              ItemNo := TransportSheetLine."Item No.";
+              FullItemDescription := TransportSheetLine."Item Description";
+            END;
+          END;
+      END;
+
+      {
+      CLEAR(BarcodeExistsLineNo);
+      BarcodeExistsLineNo := BarcodeExists(BEMFOrder,IsBOM,BOMComponent,BarcodeNo);
+      IF BarcodeExistsLineNo <> '' THEN BEGIN
+        BEMFOrderLine.SETRANGE(orderId, BEMFOrder.orderId);
+        BEMFOrderLine.SETRANGE(orderType, BEMFOrder.orderType);
+        BEMFOrderLine.SETRANGE(orderLineId,BarcodeExistsLineNo); // <ZGNVSUPPCO-1101/>
+        IF IsBOM THEN
+          BEMFOrderLine.SETRANGE(description_1,BOMComponent."No.")
+        ELSE
+          BEMFOrderLine.SETRANGE(description_1,ItemNo); //<ZGNVSUPPCO-1059/>
+
+        IF BEMFOrderLine.FINDFIRST THEN BEGIN
+          IF IsBOM THEN
+            BEMFOrderLine.quantity += Qty * BOMComponent."Quantity per"
+          ELSE
+            BEMFOrderLine.quantity += Qty;
+          BEMFOrderLine.MODIFY;
+        END;
+      END ELSE BEGIN
+        BEMFOrderLine.RESET;
+        BEMFOrderLine.INIT;
+        BEMFOrderLine.orderId := BEMFOrder.orderId;
+        BEMFOrderLine.orderLineId := FORMAT(LineNo);
+        BEMFOrderLine.orderType := BEMFOrder.orderType;
+        IF IsBOM THEN BEGIN
+          BEMFOrderLine.quantity := Qty* BOMComponent."Quantity per";
+          BEMFOrderLine.description_1 := BOMComponent."No.";
+          BEMFOrderLine.description_2 := BOMComponent."Full Item Description";
+          BEMFOrderLine.description_3 := ResponsibilityCenterLocation."Responsibility Center";
+          BEMFOrderLine.description_4 := LocationCode;
+        END ELSE BEGIN
+          BEMFOrderLine.quantity := Qty;
+          BEMFOrderLine.description_1 := ItemNo;
+          BEMFOrderLine.description_2 := FullItemDescription;
+          BEMFOrderLine.description_3 := ResponsibilityCenterLocation."Responsibility Center";
+          BEMFOrderLine.description_4 := LocationCode;
+        END;
+        BEMFOrderLine.RetailLocation := BEMFOrder.RetailLocation;
+        BEMFOrderLine.INSERT;
+
+        CASE DocType OF
+          DocType::Shipment:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,WarehouseShipmentLine."Line No.", LocationCode,IsBOM,BOMComponent,BarcodeNo);
+          DocType::Receipt:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,WarehouseReceiptLine."Line No." , LocationCode,IsBOM,BOMComponent,BarcodeNo);
+          DocType::Transport:
+            InsertBEMFLineItemEntries(BEMFOrder,DocType,TransportSheetLine."Line No.", LocationCode,IsBOM,BOMComponent,BarcodeNo);
+        END;
+      END;
+      }
+    END;
+
+    LOCAL PROCEDURE InsertBEMFLineItemEntries@50018(BEMFOrder@50004 : Record 5401810;DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt';Document_LineNo@50008 : Integer;LocationCode@50009 : Code[20];IsBOM@50002 : Boolean;BOMComponent@50001 : Record 90;BarcodeNo@50000 : Text[200]);
+    VAR
+      BEMFOrderLineItem@50005 : Record 5401812;
+      Item@50006 : Record 27;
+      UnitofMeasure@50007 : Record 204;
+      WarehouseShipmentLine@50010 : Record 7321;
+      WarehouseReceiptLine@50011 : Record 7317;
+      TransportSheetLine@50012 : Record 50016;
+      TransportSheetHeader@50013 : Record 50015;
+    BEGIN
+      BEMFOrderLineItem.RESET;
+      BEMFOrderLineItem.INIT;
+      BEMFOrderLineItem.orderId := BEMFOrder.orderId;
+      BEMFOrderLineItem.orderLineId := FORMAT(LineNo);
+      BEMFOrderLineItem.orderType := BEMFOrder.orderType;
+      BEMFOrderLineItem.barcode := BarcodeNo;
+      IF IsBOM THEN BEGIN
+        IF UnitofMeasure.GET(BOMComponent."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN
+          BEMFOrderLineItem.quantity := BOMComponent."Quantity per"
+        ELSE IF BOMComponent."Package Qty." <> 0 THEN
+          BEMFOrderLineItem.quantity := BOMComponent."Package Qty."
+        ELSE IF Item."Package Qty." <> 0 THEN BEGIN
+          Item.GET(BOMComponent."No.");
+          BEMFOrderLineItem.quantity := Item."Package Qty."
+        END ELSE
+          BEMFOrderLineItem.quantity := 1;
+
+        BEMFOrderLineItem.description_1 := BOMComponent."No.";
+        BEMFOrderLineItem.description_2 := BOMComponent."Full Item Description";
+        //BEMFOrderLineItem.description_3 := ResponsibilityCenterLocation."Responsibility Center";
+        BEMFOrderLineItem.description_4 := LocationCode;
+      END ELSE BEGIN
+        CASE DocType OF
+          DocType::Shipment:
+            BEGIN
+              WarehouseShipmentLine.GET(BEMFOrder.orderId, Document_LineNo);
+              IF UnitofMeasure.GET(WarehouseShipmentLine."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN
+                BEMFOrderLineItem.quantity := WarehouseShipmentLine."Qty. to Ship"
+              ELSE BEGIN
+                Item.GET(WarehouseShipmentLine."Item No.");
+                IF Item."Package Qty." <> 0 THEN
+                  BEMFOrderLineItem.quantity := Item."Package Qty."
+                ELSE
+                  BEMFOrderLineItem.quantity := 1;
+              END;
+              BEMFOrderLineItem.description_1 := WarehouseShipmentLine."Item No.";
+              BEMFOrderLineItem.description_2 := WarehouseShipmentLine."Full Item Description";
+              //BEMFOrderLineItem.description_3 := ResponsibilityCenterLocation."Responsibility Center";
+              BEMFOrderLineItem.description_4 := WarehouseShipmentLine."Location Code";
+            END;
+         DocType::Receipt:
+            BEGIN
+              WarehouseReceiptLine.GET(BEMFOrder.orderId, Document_LineNo);
+              IF UnitofMeasure.GET(WarehouseReceiptLine."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN
+                BEMFOrderLineItem.quantity := WarehouseReceiptLine."Qty. to Receive"
+              ELSE BEGIN
+                Item.GET(WarehouseReceiptLine."Item No.");
+                IF Item."Package Qty." <> 0 THEN
+                  BEMFOrderLineItem.quantity := Item."Package Qty."
+                ELSE
+                  BEMFOrderLineItem.quantity := 1;
+              END;
+              BEMFOrderLineItem.description_1 := WarehouseReceiptLine."Item No.";
+              BEMFOrderLineItem.description_2 := WarehouseReceiptLine."Full Item Description";
+              //BEMFOrderLineItem.description_3 := ResponsibilityCenterLocation."Responsibility Center";
+              BEMFOrderLineItem.description_4 := WarehouseReceiptLine."Location Code";
+            END;
+          DocType::Transport:
+            BEGIN
+              TransportSheetLine.GET(BEMFOrder.orderId, Document_LineNo);
+              IF UnitofMeasure.GET(TransportSheetLine."Unit of Measure") AND UnitofMeasure."Insert Qty Barcode" THEN
+                BEMFOrderLineItem.quantity := TransportSheetLine.Quantity
+              ELSE BEGIN
+                Item.GET(TransportSheetLine."Item No.");
+                IF Item."Package Qty." <> 0 THEN
+                  BEMFOrderLineItem.quantity := Item."Package Qty."
+                ELSE
+                  BEMFOrderLineItem.quantity := 1;
+              END;
+              BEMFOrderLineItem.description_1 := TransportSheetLine."Item No.";
+              BEMFOrderLineItem.description_2 := TransportSheetLine."Item Description";
+              //BEMFOrderLineItem.description_3 := ResponsibilityCenterLocation."Responsibility Center";
+              TransportSheetHeader.GET(TransportSheetLine."Document No.");
+              BEMFOrderLineItem.description_4 := TransportSheetHeader."Receiving Location";
+            END;
+        END;
+      END;
+
+      BEMFOrderLineItem.RetailLocation := BEMFOrder.RetailLocation;
+      BEMFOrderLineItem.INSERT;
+    END;
+
+    LOCAL PROCEDURE GetItemBarcode@50010(ItemNo@50000 : Code[20];UomCode@50003 : Code[10];VariantCode@50004 : Code[10]) : Code[50];
+    VAR
+      Barcodes@50001 : Record 99001451;
+      Item@50002 : Record 27;
+    BEGIN
+      IF (NOT Item.GET(ItemNo)) OR (Item.Type = Item.Type::Service) THEN
+        EXIT;
+
+      Barcodes.RESET;
+      Barcodes.SETRANGE("Item No.",ItemNo);
+      Barcodes.SETRANGE("Unit of Measure Code", UomCode);
+      IF VariantCode <> '' THEN
+        Barcodes.SETRANGE("Variant Code",VariantCode);
+      IF Barcodes.FINDLAST THEN
+        EXIT(Barcodes."Barcode No.")
+      ELSE
+        EXIT(ItemNo);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

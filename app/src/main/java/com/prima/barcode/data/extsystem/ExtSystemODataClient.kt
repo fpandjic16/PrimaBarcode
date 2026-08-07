@@ -84,10 +84,10 @@ class ExtSystemODataClient @Inject constructor() {
         }
     }
 
-    suspend fun upload(url: String, payload: ExtSystemUploadPayload): ExtSystemResult<Unit> {
+    suspend fun uploadRecording(url: String, row: NavBarcodeAppRecording): ExtSystemResult<Unit> {
         val client = httpClient ?: return ExtSystemResult.Failure("Client not configured")
         return runCatching {
-            val body = gson.toJson(payload)
+            val body = gson.toJson(row)
             val response = client.post(url) {
                 contentType(ContentType.Application.Json)
                 accept(ContentType.Application.Json)
@@ -98,7 +98,7 @@ class ExtSystemODataClient @Inject constructor() {
             } else {
                 val errorBody = runCatching { response.bodyAsText() }.getOrDefault("")
                 Timber.w("OData upload failed [${response.status.value}]: $errorBody")
-                ExtSystemResult.Failure("HTTP ${response.status.value}: ${response.status.description}", response.status.value)
+                ExtSystemResult.Failure("HTTP ${response.status.value}: $errorBody".take(300), response.status.value)
             }
         }.getOrElse {
             Timber.e(it, "OData upload error")

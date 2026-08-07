@@ -94,6 +94,7 @@ fun RecordingScreen(
     debounceTime: Int = 500,
     warnOnOver: Boolean = true,
     warnNotOnDocument: Boolean = true,
+    askQtyForUnknownBarcode: Boolean = true,
     autoUploadCompleted: Boolean = false,
 ) {
     var view by remember { mutableStateOf(RecordingView.OVERVIEW) }
@@ -110,6 +111,7 @@ fun RecordingScreen(
     var typedExtraQty by remember { mutableStateOf("") }
     var overScanWarning by remember { mutableStateOf<OverScanInfo?>(null) }
     var notOnDocWarning by remember { mutableStateOf<String?>(null) }
+    var uomMismatchWarning by remember { mutableStateOf<UomMismatchInfo?>(null) }
     var showAutoUploadDialog by remember { mutableStateOf(false) }
     val sizeOffset = LocalTextSizeOffset.current
     val showUpload = doc.lines.any { it.scanned > 0.0 } || doc.extraLines.isNotEmpty()
@@ -124,15 +126,29 @@ fun RecordingScreen(
         if (scanErrorFlash) { delay(600); scanErrorFlash = false }
     }
 
-    fun handleScan(barcode: String) {
+    fun handleScan(rawInput: String) {
+        // The scanned/matched barcode is always the full raw input, e.g. "NTR1234|M|5.6"
+        // in its entirety — that's the literal value on the label and what line.barcodeNo
+        // matches against. UOM and quantity are additionally parsed out of it for
+        // recording purposes when there are exactly two "|" separators and the last
+        // part is a valid number; they never change what's searched for or stored as
+        // the barcode.
+        val barcode = rawInput
+        val pipeParts = rawInput.split("|")
+        val parsedQty = if (pipeParts.size == 3) pipeParts[2].toDoubleOrNull() else null
+        val parsedUom = if (parsedQty != null) pipeParts[1] else null
+
         val matchedLine = doc.lines.find { it.barcodeNo == barcode }
         val wasExact = matchedLine?.status == LineStatus.EXACT
         if (matchedLine == null) {
             scanErrorFlash = true
             if (hapticEnabled) hapticEngine.error()
-            if (autoScan) {
-                onExtraLineAdd(barcode, 1.0)
-                tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, null, 1.0, Instant.now(), null)) + tape
+            // A recognized BARCODE|UOM|QUANTITY scan always records directly, regardless
+            // of the "ask for qty" setting — the quantity is already known.
+            if (parsedQty != null || !askQtyForUnknownBarcode) {
+                val qty = parsedQty ?: 1.0
+                onExtraLineAdd(barcode, qty)
+                tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, null, qty, Instant.now(), null)) + tape
                 // Manually-created docs (no expected lines) are all "extra" — don't warn there.
                 if (warnNotOnDocument && doc.lines.isNotEmpty()) notOnDocWarning = barcode
             } else {
@@ -141,7 +157,7 @@ fun RecordingScreen(
                 view = RecordingView.UNKNOWN_BARCODE
             }
         } else {
-            val qty = matchedLine.scanningQty
+            val qty = parsedQty ?: matchedLine.scanningQty
             onScan(barcode, qty)
             val newScanned = matchedLine.scanned + qty
             val newStatus = LineStatus.of(newScanned, matchedLine.expected)
@@ -149,6 +165,9 @@ fun RecordingScreen(
             tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, matchedLine.item.name, qty, Instant.now(), newStatus)) + tape
             if (warnOnOver && newStatus == LineStatus.OVER) {
                 overScanWarning = OverScanInfo(matchedLine.item.no, matchedLine.item.name, barcode, matchedLine.expected, newScanned)
+            }
+            if (parsedUom != null && parsedUom != matchedLine.unitOfMeasureCode) {
+                uomMismatchWarning = UomMismatchInfo(matchedLine.item.no, matchedLine.item.name, barcode, matchedLine.unitOfMeasureCode, parsedUom)
             }
         }
     }
@@ -428,6 +447,24 @@ fun RecordingScreen(
         )
     }
 
+    uomMismatchWarning?.let { info ->
+        AlertDialog(
+            onDismissRequest = { uomMismatchWarning = null },
+            title = { Text("Unit of measure mismatch", fontWeight = FontWeight.Bold, color = Color(0xFFC7943A)) },
+            text = {
+                Text(
+                    "Item ${info.itemNo} – ${info.itemName}\n" +
+                    "Barcode: ${info.barcode}\n" +
+                    "Expected UoM: ${info.expectedUom}\n" +
+                    "Scanned UoM: ${info.scannedUom}"
+                )
+            },
+            confirmButton = {
+                Button(onClick = { uomMismatchWarning = null }) { Text("OK", fontWeight = FontWeight.SemiBold) }
+            },
+        )
+    }
+
     if (showAutoUploadDialog) {
         AlertDialog(
             onDismissRequest = { showAutoUploadDialog = false },
@@ -449,6 +486,14 @@ private data class OverScanInfo(
     val barcode: String,
     val expected: Double,
     val scanned: Double,
+)
+
+private data class UomMismatchInfo(
+    val itemNo: String,
+    val itemName: String,
+    val barcode: String,
+    val expectedUom: String,
+    val scannedUom: String,
 )
 
 @Composable
@@ -1113,10 +1158,19 @@ private fun ItemQtyNotOnDocExtraDetails(
                                 .clickable { onKey(key) },
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(
-                                if (key == "X") "⌫" else if (key == ".") "," else key,
-                                style = monoCounter.copy(color = PrimaPalette.Ink, fontSize = (26 + sizeOffset).sp, fontWeight = FontWeight.Medium),
-                            )
+                            if (key == "X") {
+                                Icon(
+                                    Icons.AutoMirrored.Outlined.Backspace,
+                                    contentDescription = null,
+                                    tint = PrimaPalette.Ink,
+                                    modifier = Modifier.size((26 + sizeOffset).dp),
+                                )
+                            } else {
+                                Text(
+                                    if (key == ".") "," else key,
+                                    style = monoCounter.copy(color = PrimaPalette.Ink, fontSize = (26 + sizeOffset).sp, fontWeight = FontWeight.Medium),
+                                )
+                            }
                         }
                     }
                 }
@@ -1277,10 +1331,19 @@ private fun UnknownBarcodeContent(
                                 .clickable { onKey(key) },
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(
-                                if (key == "X") "âŚ«" else if (key == ".") "," else key,
-                                style = monoCounter.copy(color = PrimaPalette.Ink, fontSize = (26 + sizeOffset).sp, fontWeight = FontWeight.Medium),
-                            )
+                            if (key == "X") {
+                                Icon(
+                                    Icons.AutoMirrored.Outlined.Backspace,
+                                    contentDescription = null,
+                                    tint = PrimaPalette.Ink,
+                                    modifier = Modifier.size((26 + sizeOffset).dp),
+                                )
+                            } else {
+                                Text(
+                                    if (key == ".") "," else key,
+                                    style = monoCounter.copy(color = PrimaPalette.Ink, fontSize = (26 + sizeOffset).sp, fontWeight = FontWeight.Medium),
+                                )
+                            }
                         }
                     }
                 }

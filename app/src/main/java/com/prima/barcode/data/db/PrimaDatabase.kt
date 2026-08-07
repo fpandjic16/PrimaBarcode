@@ -13,7 +13,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         LocationEntity::class,
         ResponsibilityCenterEntity::class,
     ],
-    version = 13,
+    version = 15,
     exportSchema = true,
 )
 abstract class PrimaDatabase : RoomDatabase() {
@@ -86,6 +86,26 @@ abstract class PrimaDatabase : RoomDatabase() {
                 """.trimIndent())
                 db.execSQL("DROP TABLE documentHeader")
                 db.execSQL("ALTER TABLE documentHeader_new RENAME TO documentHeader")
+            }
+        }
+
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE documentHeader ADD COLUMN isSourceRetail INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE recordings ADD COLUMN rcCode TEXT NOT NULL DEFAULT ''")
+                db.execSQL("""
+                    UPDATE recordings
+                    SET rcCode = (
+                        SELECT rcCode FROM documentHeader
+                        WHERE documentHeader.documentNo = recordings.documentNo
+                          AND documentHeader.type = recordings.type
+                    )
+                """.trimIndent())
             }
         }
     }

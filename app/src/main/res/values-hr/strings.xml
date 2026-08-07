@@ -10,6 +10,7 @@
     <string name="btn_download">Preuzmi</string>
     <string name="btn_upload">Učitaj</string>
     <string name="btn_create">Stvori</string>
+    <string name="doc_create_blocked_hint">Odaberite lokaciju za kreiranje dokumenata</string>
     <string name="btn_clear">Obriši</string>
     <string name="btn_retry_upload">Pokušaj ponovo</string>
     <string name="btn_sign_in">Prijavi se</string>
@@ -140,8 +141,6 @@
     <string name="settings_warn_over_desc">Potvrdi kada skenirana količina premašuje očekivanu</string>
     <string name="settings_last_scanned">Zadnji skenirani redci</string>
     <string name="settings_last_scanned_desc">Redci prikazani u vrpci skeniranja (0 = skriveno)</string>
-    <string name="settings_live_mode">Stvarni način rada</string>
-    <string name="settings_live_mode_desc">Spoji se na vanjski sustav umjesto testnih podataka</string>
     <string name="settings_auto_upload">Automatsko učitavanje završenih dok.</string>
     <string name="settings_auto_upload_desc">Učitaj automatski kada su skenirani svi redci</string>
     <string name="settings_wifi_only">Sinkroniziraj samo putem Wi-Fi</string>
@@ -201,6 +200,7 @@
     <string name="lrc_section_location">Lokacija</string>
     <string name="lrc_no_locations">Nema lokacija za ovaj CC</string>
     <string name="lrc_rc_placeholder">Odaberite centar odgovornosti</string>
+    <string name="lrc_rc_any">Bilo koji centar odgovornosti</string>
     <string name="lrc_location_placeholder">Odaberite lokaciju</string>
     <string name="lrc_search_placeholder">Pretraži…</string>
     <string name="lrc_no_results">Nema rezultata</string>
@@ -218,7 +218,6 @@
     <string name="ext_config_session_duration">Trajanje sesije</string>
     <string name="ext_config_session_desc">Vjerodajnice se brišu iz šifrirane pohrane nakon ovog razdoblja</string>
     <string name="ext_config_locations_url">URL lokacija</string>
-    <string name="ext_config_rc_url">URL centara odgovornosti</string>
     <string name="ext_config_recording_url">URL sinkronizacije snimanja</string>
     <string name="ext_config_load_title">Učitaj konfiguraciju</string>
     <string name="ext_config_load_desc">Učitajte ugrađene zadane vrijednosti ili uvezite JSON datoteku s uređaja.</string>
@@ -226,6 +225,7 @@
     <string name="ext_config_load_from_file">Uvezi iz datoteke</string>
     <string name="ext_config_import_success">Konfiguracija uvezena</string>
     <string name="ext_config_doc_type_code">Šifra vrste dokumenta</string>
+    <string name="ext_config_document_lines_url">URL stavki dokumenta</string>
     <string name="ext_config_import_parse_error">JSON datoteka nije valjana</string>
     <string name="ext_config_import_read_error">Datoteka se ne može pročitati</string>
     <!-- Document recordings -->
