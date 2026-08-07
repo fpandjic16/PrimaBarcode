@@ -525,7 +525,7 @@ class AppViewModel @Inject constructor(
 
         suspend fun scan(docNo: String, type: DocumentType, lineNo: Int,
                          barcode: String, qty: Double) =
-            repository.recordScan(docNo, type.key, lineNo, barcode, "", qty, null)
+            repository.recordScan(docNo, type.key, lineNo, barcode, "", qty)
 
         // ── S-OTP-26-17612  SHIPMENT -> MP1091  InProgress ──────────────
         val d1 = "S-OTP-26-17612"
