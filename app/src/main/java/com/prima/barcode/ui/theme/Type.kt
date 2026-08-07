@@ -5,26 +5,22 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.prima.barcode.R
 
-// Place Geist TTFs in res/font/.
-// import com.prima.barcode.R
+val Geist = FontFamily(
+    Font(R.font.geist_regular, FontWeight.Normal),
+    Font(R.font.geist_medium, FontWeight.Medium),
+    Font(R.font.geist_semibold, FontWeight.SemiBold),
+)
 
-// TODO: place Geist TTFs in res/font/ and uncomment the Font() lines below
-val Geist = FontFamily.Default
-//    FontFamily(
-//        Font(R.font.geist_regular, FontWeight.Normal),
-//        Font(R.font.geist_medium,  FontWeight.Medium),
-//        Font(R.font.geist_semibold, FontWeight.SemiBold),
-//    )
-
-val GeistMono = FontFamily.Monospace
-//    FontFamily(
-//        Font(R.font.geist_mono_regular, FontWeight.Normal),
-//        Font(R.font.geist_mono_medium,  FontWeight.Medium),
-//    )
+val GeistMono = FontFamily(
+    Font(R.font.geistmono_regular, FontWeight.Normal),
+    Font(R.font.geistmono_medium, FontWeight.Medium),
+)
 
 /** Drives the +2 / +4 sp text-size preference. Provided by [PrimaBarcodeTheme]. */
 val LocalTextSizeOffset = compositionLocalOf { 0 }

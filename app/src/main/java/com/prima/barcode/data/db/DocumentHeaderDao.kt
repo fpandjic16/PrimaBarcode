@@ -8,9 +8,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface DocumentHeaderDao {
 
-    @Query("SELECT * FROM documentHeader WHERE sourceCode = :sourceCode AND rcCode = :rcCode")
-    fun observeHeaders(sourceCode: String, rcCode: String): Flow<List<DocumentHeaderEntity>>
-
     @Query("SELECT * FROM documentHeader WHERE documentNo = :documentNo AND type = :type")
     fun observeHeader(documentNo: String, type: String): Flow<DocumentHeaderEntity?>
 
@@ -37,7 +34,4 @@ interface DocumentHeaderDao {
 
     @Query("DELETE FROM documentHeader")
     suspend fun deleteAll()
-
-    @Query("DELETE FROM documentHeader WHERE type = :type")
-    suspend fun deleteAllByType(type: String)
 }

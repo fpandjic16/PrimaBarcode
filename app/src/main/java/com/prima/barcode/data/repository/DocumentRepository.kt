@@ -14,7 +14,6 @@ import javax.inject.Singleton
 
 interface DocumentRepository {
     fun observeAll(): Flow<List<Document>>
-    fun observeDocuments(sourceCode: String, rcCode: String): Flow<List<Document>>
     fun observeDocument(documentNo: String, type: String): Flow<Document?>
     suspend fun upsertDocument(doc: Document)
     suspend fun replaceDownloadedDocuments(type: DocumentType, docs: List<Document>)
@@ -26,18 +25,15 @@ interface DocumentRepository {
         userId: String,
         quantity: Double,
     )
-    suspend fun undoLastScan(documentNo: String, type: String, lineNo: Int)
     suspend fun setLineScanned(documentNo: String, type: String, lineNo: Int, scanned: Double, userId: String)
     suspend fun addExtraLine(documentNo: String, type: String, barcodeNo: String, userId: String, quantity: Double)
     suspend fun updateExtraLineQuantity(documentNo: String, type: String, recordingLineNo: Int, quantity: Double)
     suspend fun deleteExtraLine(documentNo: String, type: String, recordingLineNo: Int)
     suspend fun updateDocState(documentNo: String, type: String, state: DocState)
     suspend fun deleteDocument(documentNo: String, type: String)
-    suspend fun getUploadableDocs(): List<Document>
     suspend fun getRecordings(documentNo: String, type: String): List<RecordingEntity>
     suspend fun deleteRecording(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int)
     suspend fun clearAll()
-    suspend fun clearByType(type: DocumentType)
     suspend fun deleteDocumentRecordings(documentNo: String, type: String)
 }
 
@@ -49,15 +45,6 @@ class DocumentRepositoryImpl @Inject constructor(
     override fun observeAll(): Flow<List<Document>> =
         combine(
             db.documentHeaderDao().observeAllHeaders(),
-            db.documentLineDao().observeAll(),
-            db.recordingDao().observeAll(),
-        ) { headers, lines, recordings ->
-            assembleDocuments(headers, lines, recordings)
-        }
-
-    override fun observeDocuments(sourceCode: String, rcCode: String): Flow<List<Document>> =
-        combine(
-            db.documentHeaderDao().observeHeaders(sourceCode, rcCode),
             db.documentLineDao().observeAll(),
             db.recordingDao().observeAll(),
         ) { headers, lines, recordings ->
@@ -220,15 +207,7 @@ class DocumentRepositoryImpl @Inject constructor(
                 )
             )
             advanceToInProgressIfNeeded(documentNo, type)
-        }
-    }
-
-    override suspend fun undoLastScan(documentNo: String, type: String, lineNo: Int) {
-        db.withTransaction {
-            val last = db.recordingDao().getLastForLine(documentNo, type, lineNo) ?: return@withTransaction
-            db.recordingDao().deleteByPk(documentNo, type, lineNo, last.recordingLineNo)
             regressFromCompletedIfNeeded(documentNo, type)
-            regressToDownloadedIfNeeded(documentNo, type)
         }
     }
 
@@ -318,15 +297,6 @@ class DocumentRepositoryImpl @Inject constructor(
         db.documentHeaderDao().deleteByKey(documentNo, type)
     }
 
-    override suspend fun getUploadableDocs(): List<Document> {
-        val headers = db.documentHeaderDao().getAll()
-        return headers.map { header ->
-            val lines = db.documentLineDao().getByDoc(header.documentNo, header.type)
-            val recordings = db.recordingDao().getByDoc(header.documentNo, header.type)
-            DocumentHeaderWithLines(header, lines, recordings).toDomain()
-        }.filter { it.lines.any { l -> l.scanned > 0.0 } || it.extraLines.isNotEmpty() }
-    }
-
     override suspend fun getRecordings(documentNo: String, type: String): List<RecordingEntity> =
         db.recordingDao().getByDoc(documentNo, type)
 
@@ -336,10 +306,6 @@ class DocumentRepositoryImpl @Inject constructor(
 
     override suspend fun clearAll() {
         db.documentHeaderDao().deleteAll()
-    }
-
-    override suspend fun clearByType(type: DocumentType) {
-        db.documentHeaderDao().deleteAllByType(type.key)
     }
 
     override suspend fun deleteDocumentRecordings(documentNo: String, type: String) {

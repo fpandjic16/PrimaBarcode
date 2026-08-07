@@ -8,9 +8,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface RecordingDao {
 
-    @Query("SELECT * FROM recordings WHERE documentNo = :documentNo AND type = :type AND documentLine = :lineNo ORDER BY recordingLineNo DESC")
-    fun observeByLine(documentNo: String, type: String, lineNo: Int): Flow<List<RecordingEntity>>
-
     @Query("SELECT * FROM recordings WHERE documentNo = :documentNo AND type = :type ORDER BY documentLine, recordingLineNo")
     fun observeByDoc(documentNo: String, type: String): Flow<List<RecordingEntity>>
 

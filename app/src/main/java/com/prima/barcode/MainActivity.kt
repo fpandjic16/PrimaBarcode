@@ -264,6 +264,7 @@ private fun PrimaBarcodeApp(
     }
 
     val documents by appVm.documents.collectAsState()
+    val extSystemConfig by appVm.extSystemConfig.collectAsState()
 
     val filteredDocs = documents.filter { doc ->
         doc.hasProgress ||
@@ -273,7 +274,7 @@ private fun PrimaBarcodeApp(
             }
     }
 
-    val locationsManaged = appVm.extSystemConfig.locationsUrl.isNotBlank()
+    val locationsManaged = extSystemConfig.locationsUrl.isNotBlank()
     val docTypes = DocumentType.entries.map { type ->
         val short = when (type) {
             DocumentType.WAREHOUSE_SHIPMENT -> "Warehouse to Store"
@@ -385,7 +386,7 @@ private fun PrimaBarcodeApp(
                 isRefreshing = isRefreshing,
                 lastSyncedAt = lastSyncedAt,
                 hasCredentials = appVm.extSystemCredentialStore.isValid(),
-                credentialTtlHours = appVm.extSystemConfig.credentialTtlHours,
+                credentialTtlHours = extSystemConfig.credentialTtlHours,
                 onSelect = { rc, loc ->
                     onRcCodeChange(rc)
                     onLocationCodeChange(loc)
@@ -409,7 +410,7 @@ private fun PrimaBarcodeApp(
         }
         composable("ext_system_config") {
             ExtSystemConfigScreen(
-                initial = appVm.extSystemConfig,
+                initial = extSystemConfig,
                 onSave  = { config ->
                     appVm.saveExtSystemConfig(config)
                     nav.popBackStack()
@@ -478,7 +479,6 @@ private fun PrimaBarcodeApp(
                 },
                 onClearCache = { appVm.clearCache() },
                 onDeleteAllDocuments = { appVm.deleteAllDocuments() },
-                onInsertTestData = { appVm.insertTestData() },
                 onChangeLocation = { nav.navigate("location_rc_pick") },
                 onOpenExtSystemConfig = { nav.navigate("ext_system_config") },
                 onSignOut = { appVm.signOut() },
@@ -504,7 +504,7 @@ private fun PrimaBarcodeApp(
             DocumentListScreen(
                 docType = selectedDocType,
                 locationCode = location?.code ?: "",
-                docTypeCode = appVm.extSystemConfig.docTypeCodeFor(selectedDocType),
+                docTypeCode = extSystemConfig.docTypeCodeFor(selectedDocType),
                 documents = typeDocs,
                 onBack = { nav.popBackStack() },
                 onDocTap = { selected -> nav.navigate("recording/${selected.documentNo}/${selected.type.key}") },
@@ -658,7 +658,7 @@ private fun PrimaBarcodeApp(
             doc?.let { currentDoc ->
                 RecordingScreen(
                     doc = currentDoc,
-                    docTypeCode = appVm.extSystemConfig.docTypeCodeFor(currentDoc.type),
+                    docTypeCode = extSystemConfig.docTypeCodeFor(currentDoc.type),
                     onBack = { nav.popBackStack() },
                     onScan = { barcode, multiplier ->
                         currentDoc.lines.find { it.barcodeNo == barcode }?.let { line ->
@@ -791,7 +791,7 @@ private fun PrimaBarcodeApp(
 
     if (showUploadLoginSheet) {
         LoginSheet(
-            credentialTtlHours = appVm.extSystemConfig.credentialTtlHours,
+            credentialTtlHours = extSystemConfig.credentialTtlHours,
             ctaLabel           = "Sign in",
             initialUsername    = appVm.extSystemCredentialStore.get()?.username ?: "",
             initialPassword    = appVm.extSystemCredentialStore.get()?.password ?: "",

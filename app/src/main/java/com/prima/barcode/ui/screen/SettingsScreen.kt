@@ -61,7 +61,6 @@ fun SettingsScreen(
     onExport: () -> Unit = {},
     onClearCache: () -> Unit = {},
     onDeleteAllDocuments: () -> Unit = {},
-    onInsertTestData: () -> Unit = {},
     onChangeLocation: () -> Unit,
     onOpenExtSystemConfig: () -> Unit = {},
     onSignOut: () -> Unit,
@@ -99,7 +98,6 @@ fun SettingsScreen(
 
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var showDeleteAllDocumentsDialog by remember { mutableStateOf(false) }
-    var showInsertTestDataDialog by remember { mutableStateOf(false) }
     var showInsertSystemDefaultsDialog by remember { mutableStateOf(false) }
     var pendingExtSystemConfig by remember { mutableStateOf<ExtSystemConfig?>(null) }
     var showExitDialog by remember { mutableStateOf(false) }
@@ -524,36 +522,6 @@ fun SettingsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { showInsertTestDataDialog = true }
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        SettingsIcon(Icons.Outlined.DataObject)
-                        Spacer(Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                stringResource(R.string.settings_insert_test),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = PrimaPalette.Ink,
-                                    fontWeight = FontWeight.Normal,
-                                ),
-                            )
-                            Text(
-                                stringResource(R.string.settings_insert_test_desc),
-                                style = monoLabel.copy(color = PrimaPalette.Ink3),
-                            )
-                        }
-                        Icon(
-                            Icons.Outlined.ChevronRight,
-                            contentDescription = null,
-                            tint = PrimaPalette.Ink4,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                    SettingsDivider()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
                             .clickable { showInsertSystemDefaultsDialog = true }
                             .padding(horizontal = 20.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -899,22 +867,6 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteAllDocumentsDialog = false }) { Text(stringResource(R.string.btn_cancel)) }
-            },
-        )
-    }
-
-    if (showInsertTestDataDialog) {
-        AlertDialog(
-            onDismissRequest = { showInsertTestDataDialog = false },
-            title = { Text(stringResource(R.string.dialog_insert_test_title)) },
-            text = { Text(stringResource(R.string.dialog_insert_test_text)) },
-            confirmButton = {
-                TextButton(
-                    onClick = { showInsertTestDataDialog = false; onInsertTestData() },
-                ) { Text(stringResource(R.string.btn_yes_insert)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showInsertTestDataDialog = false }) { Text(stringResource(R.string.btn_cancel)) }
             },
         )
     }

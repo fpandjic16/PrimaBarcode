@@ -40,12 +40,6 @@ val LineStatus.bgColor: Color
         LineStatus.OVER    -> PrimaStatus.OverBg
     }
 
-/**
- * Floor an Int at 0 — used when undoing scans.
- *  Example: `(scanned - 1).flooredAtZero()`
- */
-fun Int.flooredAtZero(): Int = if (this < 0) 0 else this
-
 val LineStatus.label: String get() = when (this) {
     LineStatus.EMPTY   -> "Empty"
     LineStatus.PARTIAL -> "Partial"

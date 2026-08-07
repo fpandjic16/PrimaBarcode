@@ -1,4 +1,4 @@
-package com.prima.barcode.ui.viewmodel
+﻿package com.prima.barcode.ui.viewmodel
 
 import android.content.Context
 import android.net.Uri
@@ -31,7 +31,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import com.google.gson.Gson
@@ -39,7 +38,6 @@ import com.google.gson.reflect.TypeToken
 import com.prima.barcode.data.extsystem.NavBarcodeAppEntry
 import com.prima.barcode.data.extsystem.NavLocation
 import com.prima.barcode.data.extsystem.NavODataList
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
 import javax.inject.Inject
@@ -58,14 +56,6 @@ class AppViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val gson = Gson()
-
-    init {
-        viewModelScope.launch {
-            if (locationDao.observeLocations().first().isEmpty()) {
-                seedSampleLocations()
-            }
-        }
-    }
 
     private val _credentials = MutableStateFlow(extSystemCredentialStore.get())
     val credentials: StateFlow<ExtSystemCredentials?> = _credentials
@@ -97,7 +87,7 @@ class AppViewModel @Inject constructor(
 
     /** Returns null on success, or an error message on failure. */
     private suspend fun realDownloadLocations(): String? {
-        val config = extSystemConfig
+        val config = extSystemConfig.value
         val creds  = extSystemCredentialStore.get() ?: return "Not signed in"
         if (!config.isConfigured) return "External system not configured"
         if (config.locationsUrl.isBlank()) return "Locations URL not configured"
@@ -135,7 +125,7 @@ class AppViewModel @Inject constructor(
     }
 
     fun buildDownloadUrls(filter: DownloadFilter, docType: DocumentType? = null): List<Pair<String, String>> {
-        val config = extSystemConfig
+        val config = extSystemConfig.value
         if (config.documentLinesUrl.isBlank()) return emptyList()
         val types = if (docType != null) listOf(docType) else DocumentType.entries
         return types.map { type ->
@@ -146,8 +136,8 @@ class AppViewModel @Inject constructor(
         }
     }
 
-    fun getLocationsUrl(): String = extSystemConfig.locationsUrl
-    fun getRecordingSyncUrl(): String = extSystemConfig.recordingSyncUrl
+    fun getLocationsUrl(): String = extSystemConfig.value.locationsUrl
+    fun getRecordingSyncUrl(): String = extSystemConfig.value.recordingSyncUrl
 
     fun realDownloadDocuments(
         filter: DownloadFilter = DownloadFilter(),
@@ -155,7 +145,7 @@ class AppViewModel @Inject constructor(
         onComplete: (failureCount: Int, errors: List<String>) -> Unit = { _, _ -> },
     ) {
         viewModelScope.launch {
-            val config = extSystemConfig
+            val config = extSystemConfig.value
             val creds  = extSystemCredentialStore.get()
             if (!config.isConfigured || creds == null) {
                 val msg = if (creds == null) "Not signed in" else "External system not configured"
@@ -224,32 +214,6 @@ class AppViewModel @Inject constructor(
         }
     }
 
-    private suspend fun seedSampleLocations() {
-        val csvLines = appContext.assets.open("Data_RC_Location.csv")
-            .bufferedReader(Charsets.UTF_8)
-            .readLines()
-            .drop(1)
-        val locationEntities = mutableListOf<LocationEntity>()
-        val rcCodes = mutableSetOf<String>()
-        for (line in csvLines) {
-            val parts = line.split(";")
-            val code = parts.getOrNull(0)?.trim() ?: continue
-            val rc   = parts.getOrNull(1)?.trim() ?: ""
-            if (code.isBlank()) continue
-            val effectiveRc = rc.ifBlank { code }
-            locationEntities.add(LocationEntity(code, code, effectiveRc))
-            if (rc.isNotBlank()) rcCodes.add(rc)
-        }
-        val rcEntities = rcCodes.map { rc ->
-            val short = rc.replace(" ", "").take(3).uppercase()
-            ResponsibilityCenterEntity(rc, rc, short)
-        }
-        locationDao.clearLocations()
-        locationDao.clearRcs()
-        locationDao.upsertLocations(locationEntities)
-        locationDao.upsertRcs(rcEntities)
-    }
-
     fun loadSettings(): AppSettings = appSettingsStore.get()
 
     fun saveSettings(settings: AppSettings) = appSettingsStore.save(settings)
@@ -258,7 +222,7 @@ class AppViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _extSystemConfig = MutableStateFlow(extSystemConfigStore.get())
-    val extSystemConfig: ExtSystemConfig get() = _extSystemConfig.value
+    val extSystemConfig: StateFlow<ExtSystemConfig> = _extSystemConfig
 
     fun saveExtSystemConfig(config: ExtSystemConfig) {
         extSystemConfigStore.save(config)
@@ -266,7 +230,7 @@ class AppViewModel @Inject constructor(
     }
 
     fun saveCredentials(username: String, password: String) {
-        extSystemCredentialStore.save(username, password, extSystemConfig.credentialTtlHours)
+        extSystemCredentialStore.save(username, password, extSystemConfig.value.credentialTtlHours)
         _credentials.value = extSystemCredentialStore.get()
     }
 
@@ -295,7 +259,7 @@ class AppViewModel @Inject constructor(
                 onResult(ExtSystemResult.Failure("Server URL is empty")); return@launch
             }
             saveCredentials(username.trim(), password)
-            val config = extSystemConfig.copy(serverBaseUrl = url)
+            val config = extSystemConfig.value.copy(serverBaseUrl = url)
             val creds  = ExtSystemCredentials(username.trim(), password)
             extSystemClient.configure(config, creds)
             val result = extSystemClient.testConnection(url)
@@ -347,7 +311,7 @@ class AppViewModel @Inject constructor(
 
     /** Uploads each doc; on success deletes it, on failure marks UploadFailed. Returns failure count. */
     private suspend fun runUpload(docs: List<Document>): Int {
-        val config = extSystemConfig
+        val config = extSystemConfig.value
         val creds  = extSystemCredentialStore.get()
         if (!config.isConfigured || creds == null) {
             docs.forEach {
@@ -441,56 +405,6 @@ class AppViewModel @Inject constructor(
         viewModelScope.launch { repository.upsertDocument(doc) }
     }
 
-    fun testDownload(onComplete: () -> Unit = {}) {
-        viewModelScope.launch {
-            repository.clearAll()
-            seedSampleData()
-            onComplete()
-        }
-    }
-
-    fun testImportDocs(docs: List<Document>, onComplete: (failureCount: Int) -> Unit = {}) {
-        viewModelScope.launch {
-            val uploadable = docs.filter { it.state != DocState.Downloaded }
-            var failures = 0
-            uploadable.forEachIndexed { index, doc ->
-                delay(300)
-                if ((index + 1) % 3 == 0) {
-                    repository.updateDocState(
-                        doc.documentNo, doc.type.key,
-                        DocState.UploadFailed("Test failure: document ${index + 1} of ${uploadable.size}"),
-                    )
-                    failures++
-                } else {
-                    repository.deleteDocument(doc.documentNo, doc.type.key)
-                }
-            }
-            onComplete(failures)
-        }
-    }
-
-    private suspend fun runTestImport(): Int {
-        val docs = repository.getUploadableDocs()
-        var failures = 0
-        docs.forEachIndexed { index, doc ->
-            delay(300)
-            if ((index + 1) % 3 == 0) {
-                repository.updateDocState(
-                    doc.documentNo, doc.type.key,
-                    DocState.UploadFailed("Test failure: document ${index + 1} of ${docs.size}"),
-                )
-                failures++
-            } else {
-                repository.deleteDocument(doc.documentNo, doc.type.key)
-            }
-        }
-        return failures
-    }
-
-    fun insertTestData() {
-        viewModelScope.launch { seedSampleData() }
-    }
-
     fun clearDocumentRecordings(documentNo: String, type: DocumentType) {
         viewModelScope.launch {
             repository.deleteDocumentRecordings(documentNo, type.key)
@@ -512,132 +426,4 @@ class AppViewModel @Inject constructor(
         }
     }
 
-    private suspend fun seedSampleData() {
-        val rc  = "BJELOVAR"
-        val now    = Instant.now()
-
-        fun line(docNo: String, no: Int, itemNo: String, name: String,
-                 barcode: String, expected: Double, src: String, dst: String,
-                 scanningQty: Double = 1.0): Line {
-            val uom = if (expected == kotlin.math.floor(expected)) "KOM" else "M"
-            return Line(docNo, no, Item(itemNo, name), barcode, expected, 0.0, dst, src, uom, scanningQty)
-        }
-
-        suspend fun scan(docNo: String, type: DocumentType, lineNo: Int,
-                         barcode: String, qty: Double) =
-            repository.recordScan(docNo, type.key, lineNo, barcode, "", qty)
-
-        // ── S-OTP-26-17612  SHIPMENT -> MP1091  InProgress ──────────────
-        val d1 = "S-OTP-26-17612"
-        repository.upsertDocument(Document(d1, DocumentType.WAREHOUSE_SHIPMENT,
-            "MP1091", "CS175", rc, creationDateTime = now, documentDate = now, lines = listOf(
-                line(d1, 1, "NTR102078", "ISG IOLANI kut L Giulia 9713 EX.",               "NTR102078",    1.0,       "CS175", "MP1091", scanningQty = 2.0),
-                line(d1, 2, "NTR102079", "ISG IOLANI kut D Giulia 9713 EX.",               "NTR102079", 1124.0102,   "CS175", "MP1091"),
-                line(d1, 3, "NTR99757",  "ISG WINTON kut Olio 135 OT FSC MIX Credit EX.", "NTR99757",     5.52,      "CS175", "MP1091", scanningQty = 2.0),
-                line(d1, 4, "NTR102080", "ISG IKANO U kut L Degan 2513 bukva natur EX.",  "NTR102080",    2.0,       "CS175", "MP1091"),
-                line(d1, 5, "NTR102081", "ISG IKANO U kut D Degan 2501 bukva natur EX.",  "NTR102081",    1.10152,   "CS175", "MP1091"),
-            ), state = DocState.Downloaded))
-        scan(d1, DocumentType.WAREHOUSE_SHIPMENT, 1, "NTR102078",    1.0)
-        scan(d1, DocumentType.WAREHOUSE_SHIPMENT, 3, "NTR99757",     3.0)
-        repository.addExtraLine(d1, DocumentType.WAREHOUSE_SHIPMENT.key, "NTR999001", "", 1.0)
-
-        // ── S-OTP-26-17685  SHIPMENT -> MP1092  Downloaded ──────────────
-        val d2 = "S-OTP-26-17685"
-        repository.upsertDocument(Document(d2, DocumentType.WAREHOUSE_SHIPMENT,
-            "MP1092", "CS175", rc, creationDateTime = now, documentDate = now, lines = listOf(
-                line(d2, 1,  "NGP202233", "PC LIBERTA regal komoda 3VR+OTV. TIP 1 KORPUS hrast classic pak.1/3 ZA.", "NGP202233", 1.452,   "CS175", "MP1092"),
-                line(d2, 2,  "NGP202417", "PC LIBERTA regal TV komoda viseca PLAFON 240 hrast classic ZA.",          "NGP202417", 1.0,     "CS175", "MP1092"),
-                line(d2, 3,  "NGP202234", "PC LIBERTA regal komoda 3VR+OTV. TIP 2 KORPUS hrast classic pak.2/3 ZA.", "NGP202234", 1.10152,"CS175", "MP1092"),
-                line(d2, 4,  "NGP202235", "PC LIBERTA regal komoda 3VR+OTV. TIP 3 KORPUS hrast classic pak.3/3 ZA.", "NGP202235", 1.0,    "CS175", "MP1092"),
-                line(d2, 5,  "NGP202287", "PC LIBERTA regal komoda 3VR+OTV. PLAFON hrast classic pak.1/2 ZA.",       "NGP202287", 1.0,    "CS175", "MP1092"),
-                line(d2, 6,  "NGP202288", "PC LIBERTA regal komoda 3VR+OTV. NOGA hrast classic pak.2/2 ZA.",         "NGP202288", 1.0,    "CS175", "MP1092"),
-                line(d2, 7,  "NGP202283", "PC LIBERTA regal komoda 3VR+OTV. VRATA akril satin mat ZA.",              "NGP202283", 1.0,    "CS175", "MP1092"),
-                line(d2, 8,  "NGP202369", "PC LIBERTA regal TV komoda viseca 2L/80 KORPUS hrast classic pak.1/2 ZA.","NGP202369", 3.0,    "CS175", "MP1092"),
-                line(d2, 9,  "NGP202371", "PC LIBERTA regal TV komoda viseca 2L/80 OKOV hrast classic pak.2/2 ZA.",  "NGP202371", 3.0,    "CS175", "MP1092"),
-                line(d2, 10, "NGP202393", "PC LIBERTA regal TV komoda viseca 2L/80 MASKA akril satin mat ZA.",       "NGP202393", 3.0,    "CS175", "MP1092"),
-            ), state = DocState.Downloaded))
-
-        // ── S-OTP-26-17705  SHIPMENT -> MP1093  Completed ───────────────
-        val d3 = "S-OTP-26-17705"
-        repository.upsertDocument(Document(d3, DocumentType.WAREHOUSE_SHIPMENT,
-            "MP1093", "CS175", rc, creationDateTime = now, documentDate = now, lines = listOf(
-                line(d3, 1, "NGP239862", "IPC stol VITA 160x90 PLOCA hrast ontario/crno pak.1/2", "NGP239862", 1.452, "CS175", "MP1093"),
-                line(d3, 2, "NGP239863", "IPC stol VITA 160x90 POSTOLJE hrast ontario/crno pak.2/2", "NGP239863", 1.0, "CS175", "MP1093"),
-            ), state = DocState.Downloaded))
-        scan(d3, DocumentType.WAREHOUSE_SHIPMENT, 1, "NGP239862", 1.452)
-        scan(d3, DocumentType.WAREHOUSE_SHIPMENT, 2, "NGP239863", 1.0)
-        repository.updateDocState(d3, DocumentType.WAREHOUSE_SHIPMENT.key, DocState.Completed)
-
-        // ── S-OTP-26-17860  SHIPMENT -> MP1094  InProgress ──────────────
-        val d4 = "S-OTP-26-17860"
-        repository.upsertDocument(Document(d4, DocumentType.WAREHOUSE_SHIPMENT,
-            "MP1094", "CS175", rc, creationDateTime = now, documentDate = now, lines = listOf(
-                line(d4, 1, "NTR87569", "PSS sjediste fotelja TENOR Magnum 207 tamno zelena pak.1/2", "NTR87569",  2.0, "CS175", "MP1094", scanningQty = 2.0),
-                line(d4, 2, "NTR87576", "PSS sjediste stolica TENOR Magnum 207 tamno zelena pak.1/2", "NTR87576", 12.0, "CS175", "MP1094", scanningQty = 2.0),
-                line(d4, 3, "NTR87577", "PSS sjediste stolica TENOR Magnum 28 konjak smeda pak.1/2",  "NTR87577",  6.0, "CS175", "MP1094"),
-            ), state = DocState.Downloaded))
-        scan(d4, DocumentType.WAREHOUSE_SHIPMENT, 1, "NTR87569",  2.0)
-        scan(d4, DocumentType.WAREHOUSE_SHIPMENT, 2, "NTR87576",  6.0)
-
-        // ── S-OTP-26-17902  SHIPMENT -> MP1095  Downloaded ──────────────
-        val d5 = "S-OTP-26-17902"
-        repository.upsertDocument(Document(d5, DocumentType.WAREHOUSE_SHIPMENT,
-            "MP1095", "CS175", rc, creationDateTime = now, documentDate = now, lines = listOf(
-                line(d5, 1, "NGP253724", "PCKK OPTIMA NEXT / 24 tam.tek/cr.pla-cr.pla SKOKO INES",  "NGP253724", 1.0, "CS175", "MP1095"),
-                line(d5, 2, "NGP254894", "PCKK SARA / 24 bij/sah.bez-sah.bez BANOVIC VILIM",         "NGP254894", 1.0, "CS175", "MP1095"),
-                line(d5, 3, "NGP254913", "PCKK AURORA / 24 bij/champ-champ RESETAR MIRNA",           "NGP254913", 1.0, "CS175", "MP1095"),
-            ), state = DocState.Downloaded))
-
-        // ── S-OTP-26-17904  SHIPMENT -> MP1096  UploadFailed ────────────
-        val d6 = "S-OTP-26-17904"
-        repository.upsertDocument(Document(d6, DocumentType.WAREHOUSE_SHIPMENT,
-            "MP1096", "CS175", rc, creationDateTime = now, documentDate = now, lines = listOf(
-                line(d6, 1, "NGP253760", "PCKK LIBERTA LUX / 24 bij/akr.bijS-akr.bijS LUKANEC LEVACIC ELIZABETA", "NGP253760", 1.0, "CS175", "MP1096"),
-                line(d6, 2, "NGP253788", "PCKK CVITA / 24 bij/led.si-bij COOK NEILL",                             "NGP253788", 1.0, "CS175", "MP1096"),
-                line(d6, 3, "NGP253869", "PCKK NEA / 24 bij/si.gra-si.pla SIROLA TEREZA",                         "NGP253869", 1.0, "CS175", "MP1096"),
-                line(d6, 4, "NGP254923", "PCKK LORENA / 24 bij/mag-mag MICIC MAJA",                               "NGP254923", 1.0, "CS175", "MP1096"),
-            ), state = DocState.Downloaded))
-        scan(d6, DocumentType.WAREHOUSE_SHIPMENT, 1, "NGP253760", 1.0)
-        scan(d6, DocumentType.WAREHOUSE_SHIPMENT, 2, "NGP253788", 1.0)
-        scan(d6, DocumentType.WAREHOUSE_SHIPMENT, 3, "NGP253869", 1.0)
-        scan(d6, DocumentType.WAREHOUSE_SHIPMENT, 4, "NGP254923", 1.0)
-        repository.updateDocState(d6, DocumentType.WAREHOUSE_SHIPMENT.key, DocState.UploadFailed("OData service returned HTTP 503 Service Unavailable after 3 retry attempts. The external system application server failed to respond within the 30-second timeout window. This may indicate the service tier is overloaded, the application pool has recycled, or the warehouse posting batch job is currently locked by another session. Please retry the upload or contact your system administrator if the issue persists."))
-
-        // ── S-PR-26-47279  RECEIPT CS175 <- PS101  InProgress ───────────
-        val d7 = "S-PR-26-47279"
-        repository.upsertDocument(Document(d7, DocumentType.WAREHOUSE_RECEIPT,
-            "CS175", "PS101", rc, creationDateTime = now, documentDate = now, lines = listOf(
-                line(d7, 1, "NTR82270", "PCM RITA 2 fran. krevet 200x160 TAPET Helena 103 cappuccino",       "NTR82270", 20.0, "PS101", "CS175"),
-                line(d7, 2, "NTR82414", "PCM RITA 2 fran. krevet 200x180 UZGLAVLJE Helena 103 cappuccino",   "NTR82414", 10.0, "PS101", "CS175"),
-                line(d7, 3, "NTR82417", "PCM RITA 2 fran. krevet 200x90 TAPET DESNI Helena 103 cappuccino",  "NTR82417", 10.0, "PS101", "CS175"),
-                line(d7, 4, "NTR82420", "PCM RITA 2 fran. krevet 200x90 TAPET LIJEVI Helena 103 cappuccino", "NTR82420", 10.0, "PS101", "CS175"),
-                line(d7, 5, "NTR82477", "PCM RITA 2 fran. krevet 200x90 KORPUS DESNI Helena 103 cappuccino", "NTR82477", 10.0, "PS101", "CS175"),
-                line(d7, 6, "NTR82482", "PCM RITA 2 fran. krevet 200x90 KORPUS LIJEVI Helena 103 cappuccino","NTR82482", 10.0, "PS101", "CS175"),
-                line(d7, 7, "NTR82532", "PCM RITA 2 fran. krevet 180 OKOV+NOGE",                             "NTR82532", 10.0, "PS101", "CS175"),
-                line(d7, 8, "NTR82271", "PCM RITA 2 fran. krevet 200x160 UZGLAVLJE Helena 103 cappuccino",   "NTR82271", 20.0, "PS101", "CS175"),
-            ), state = DocState.Downloaded))
-        scan(d7, DocumentType.WAREHOUSE_RECEIPT, 1, "NTR82270", 12.0)
-        scan(d7, DocumentType.WAREHOUSE_RECEIPT, 2, "NTR82414",  5.0)
-        scan(d7, DocumentType.WAREHOUSE_RECEIPT, 3, "NTR82417", 10.0)
-
-        // ── S-PR-26-47363  RECEIPT CS175 <- PS101  Downloaded ───────────
-        val d8 = "S-PR-26-47363"
-        repository.upsertDocument(Document(d8, DocumentType.WAREHOUSE_RECEIPT,
-            "CS175", "PS101", rc, creationDateTime = now, documentDate = now, lines = listOf(
-                line(d8, 1, "NGP250012", "PC DAVOS predsoblje ogledalo hrast cremona cannolo ZA.", "NGP250012", 16.0, "PS101", "CS175"),
-            ), state = DocState.Downloaded))
-
-        // ── S-PR-26-47477  RECEIPT CS175 <- PS121  Completed ────────────
-        val d9 = "S-PR-26-47477"
-        repository.upsertDocument(Document(d9, DocumentType.WAREHOUSE_RECEIPT,
-            "CS175", "PS121", rc, creationDateTime = now, documentDate = now, lines = listOf(
-                line(d9, 1, "NTR68925", "PSS noge BRIGITA metal flah crno mat pak.2/2", "NTR68925", 20.0, "PS121", "CS175"),
-                line(d9, 2, "NTR75682", "PSS postolje ALBA crno mat fiksno pak.2/2",    "NTR75682", 20.0, "PS121", "CS175"),
-                line(d9, 3, "NTR86165", "PSS fotelja SENA postolje crno mat metal DZ.", "NTR86165", 30.0, "PS121", "CS175"),
-            ), state = DocState.Downloaded))
-        scan(d9, DocumentType.WAREHOUSE_RECEIPT, 1, "NTR68925", 20.0)
-        scan(d9, DocumentType.WAREHOUSE_RECEIPT, 2, "NTR75682", 20.0)
-        scan(d9, DocumentType.WAREHOUSE_RECEIPT, 3, "NTR86165", 30.0)
-        repository.updateDocState(d9, DocumentType.WAREHOUSE_RECEIPT.key, DocState.Completed)
-    }
 }

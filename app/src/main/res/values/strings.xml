@@ -15,7 +15,6 @@
     <string name="btn_retry_upload">Retry Upload</string>
     <string name="btn_sign_in">Sign in</string>
     <string name="btn_sign_in_sync">Sign in &amp; Sync</string>
-    <string name="btn_yes_insert">Yes, insert</string>
     <!-- Dashboard -->
     <string name="dashboard_today">TODAY (lines scanned)</string>
     <string name="dashboard_pill_ready">ready</string>
@@ -151,8 +150,6 @@
     <string name="settings_server_endpoints_desc">OData base URL, domain, document page URLs</string>
     <string name="settings_export">Export data</string>
     <string name="settings_export_desc">Dump all tables to a JSON file on device</string>
-    <string name="settings_insert_test">Insert test data</string>
-    <string name="settings_insert_test_desc">Load sample documents from built-in test JSON</string>
     <string name="settings_clear_cache">Clear cache</string>
     <string name="settings_clear_cache_desc">Delete all credentials, documents, and recordings</string>
     <string name="settings_app_version">App version</string>
@@ -164,8 +161,6 @@
     <string name="settings_coming_soon">SOON</string>
     <string name="dialog_clear_cache_title">Clear cache?</string>
     <string name="dialog_clear_cache_text">This will permanently delete all stored credentials, documents, and recordings. This cannot be undone.</string>
-    <string name="dialog_insert_test_title">Insert test data?</string>
-    <string name="dialog_insert_test_text">This will delete all current documents and recordings, then load the built-in test dataset. Continue?</string>
     <!-- Login -->
     <string name="login_title">Sign in to External System</string>
     <string name="login_domain">Windows domain</string>
