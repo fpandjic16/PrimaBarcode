@@ -9,6 +9,11 @@ data class ExtSystemConfig(
     val documentTypeCodes: Map<DocumentType, String> = emptyMap(),
     val recordingSyncUrl: String = "",
     val locationsUrl: String = "",
+    // Windows domain for NAV's NTLM auth. When set, it's combined with whatever the user
+    // types on the login screen so they only ever need to enter a bare username. Left blank,
+    // a domain embedded in the username itself (DOMAIN\user or user@domain) still works —
+    // see ExtSystemODataClient.buildClient.
+    val domain: String = "",
 ) {
     fun docTypeCodeFor(type: DocumentType): String = documentTypeCodes[type] ?: ""
     val isConfigured: Boolean get() = serverBaseUrl.isNotBlank()

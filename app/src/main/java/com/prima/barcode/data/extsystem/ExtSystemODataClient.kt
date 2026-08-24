@@ -25,22 +25,25 @@ class ExtSystemODataClient @Inject constructor() {
 
     private val gson = Gson()
     private var httpClient: HttpClient? = null
-    private var clientKey: Pair<String, String>? = null  // rawUsername, pass
+    private var clientKey: Triple<String, String, String>? = null  // domain, rawUsername, pass
     private var ntlmAuth: NtlmAuthenticator? = null
 
     fun configure(config: ExtSystemConfig, creds: ExtSystemCredentials): ExtSystemODataClient {
-        val key = creds.username to creds.password
+        val key = Triple(config.domain, creds.username, creds.password)
         if (clientKey != key) {
             httpClient?.close()
-            httpClient = buildClient(creds.username, creds.password)
+            httpClient = buildClient(config.domain, creds.username, creds.password)
             clientKey = key
         }
         return this
     }
 
-    private fun buildClient(rawUsername: String, password: String): HttpClient {
-        // Domain travels inside the username as DOMAIN\user or user@domain.
-        val (domain, username) = parseDomainUser(rawUsername)
+    private fun buildClient(configuredDomain: String, rawUsername: String, password: String): HttpClient {
+        // A configured domain (Settings → Credential session) takes priority, so users only
+        // type a bare username on the login screen. Otherwise fall back to a domain embedded
+        // in the username itself, as DOMAIN\user or user@domain.
+        val (domain, username) = if (configuredDomain.isNotBlank()) configuredDomain to rawUsername.trim()
+            else parseDomainUser(rawUsername)
         val auth = NtlmAuthenticator(domain, username, password)
         ntlmAuth = auth
         val okHttp = OkHttpClient.Builder()

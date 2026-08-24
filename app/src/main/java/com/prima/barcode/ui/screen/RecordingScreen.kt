@@ -194,7 +194,7 @@ fun RecordingScreen(
                             Icons.Outlined.ArrowUpward,
                             contentDescription = stringResource(R.string.btn_upload),
                             tint = Color.White,
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(24.dp),
                         )
                     }
                 }

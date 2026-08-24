@@ -20,6 +20,7 @@ class ExtSystemConfigStore @Inject constructor(@param:ApplicationContext private
         },
         recordingSyncUrl = prefs.getString("recordingSyncUrl", "") ?: "",
         locationsUrl     = prefs.getString("locationsUrl", "") ?: "",
+        domain           = prefs.getString("domain", "") ?: "",
     )
 
     fun clear() = prefs.edit().clear().apply()
@@ -31,6 +32,7 @@ class ExtSystemConfigStore @Inject constructor(@param:ApplicationContext private
             .putString("documentLinesUrl", config.documentLinesUrl)
             .putString("recordingSyncUrl", config.recordingSyncUrl)
             .putString("locationsUrl",     config.locationsUrl)
+            .putString("domain",           config.domain)
         config.documentTypeCodes.forEach { (type, code) ->
             ed.putString("doc_type_code_${type.key}", code)
         }

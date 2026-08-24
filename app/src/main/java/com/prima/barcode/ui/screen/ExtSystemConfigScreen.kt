@@ -73,6 +73,7 @@ fun ExtSystemConfigScreen(
     onImportJson: ((json: String) -> ExtSystemConfig?)? = null,
 ) {
     var serverBaseUrl             by remember { mutableStateOf(initial.serverBaseUrl) }
+    var domain                   by remember { mutableStateOf(initial.domain) }
     var ttlHours                 by remember { mutableIntStateOf(initial.credentialTtlHours) }
     var documentLinesUrl         by remember { mutableStateOf(initial.documentLinesUrl) }
     val documentTypeCodes = remember {
@@ -101,6 +102,7 @@ fun ExtSystemConfigScreen(
         documentTypeCodes        = documentTypeCodes.toMap(),
         recordingSyncUrl = recordingSyncUrl.trim(),
         locationsUrl     = locationsUrl.trim(),
+        domain           = domain.trim(),
     )
 
     fun applyConfig(c: ExtSystemConfig) {
@@ -110,6 +112,7 @@ fun ExtSystemConfigScreen(
         DocumentType.entries.forEach { documentTypeCodes[it] = c.docTypeCodeFor(it) }
         recordingSyncUrl = c.recordingSyncUrl
         locationsUrl = c.locationsUrl
+        domain = c.domain
     }
 
     fun attemptExit() {
@@ -213,6 +216,13 @@ fun ExtSystemConfigScreen(
             item { ConfigSectionHeader(stringResource(R.string.ext_config_sec_session)) }
             item {
                 ConfigCard {
+                    ConfigField(
+                        label = stringResource(R.string.ext_config_windows_domain),
+                        hint  = "e.g. PRIMA (leave blank if none)",
+                        value = domain,
+                        onValueChange = { domain = it },
+                    )
+                    ConfigDivider()
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
                         Text(
                             stringResource(R.string.ext_config_session_duration),
