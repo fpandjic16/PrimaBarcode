@@ -146,9 +146,9 @@ fun ExtSystemConfigScreen(
                 context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
             }.isSuccess
             if (written) {
-                Toast.makeText(context, "Defaults saved", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ext_config_defaults_saved), Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context, "Could not save ext_system_defaults.json", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.ext_config_defaults_save_error), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -201,10 +201,10 @@ fun ExtSystemConfigScreen(
                             enabled = serverBaseUrl.isNotBlank() && !testing,
                             modifier = Modifier.fillMaxWidth().height(48.dp),
                         ) {
-                            Text("Test connection", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.btn_test_connection), fontWeight = FontWeight.SemiBold)
                         }
                         Text(
-                            "Signs in with your Windows credentials and runs an authenticated request against the server URL.",
+                            stringResource(R.string.ext_config_test_connection_desc),
                             style = monoLabel.copy(color = PrimaPalette.Ink3),
                             modifier = Modifier.padding(top = 6.dp),
                         )
@@ -218,7 +218,7 @@ fun ExtSystemConfigScreen(
                 ConfigCard {
                     ConfigField(
                         label = stringResource(R.string.ext_config_windows_domain),
-                        hint  = "e.g. PRIMA (leave blank if none)",
+                        hint  = stringResource(R.string.ext_config_domain_hint),
                         value = domain,
                         onValueChange = { domain = it },
                     )
@@ -364,7 +364,7 @@ fun ExtSystemConfigScreen(
     if (showLoginSheet) {
         LoginSheet(
             credentialTtlHours = ttlHours,
-            ctaLabel           = "Test connection",
+            ctaLabel           = stringResource(R.string.btn_test_connection),
             initialUsername    = savedCredentials?.username ?: "",
             initialPassword    = savedCredentials?.password ?: "",
             onDismiss          = { showLoginSheet = false },
@@ -457,7 +457,7 @@ fun ExtSystemConfigScreen(
                                         applyConfig(defaults)
                                         Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
                                     } else {
-                                        Toast.makeText(context, "Could not load ${company.assetFileName}", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, context.getString(R.string.ext_config_company_load_error, company.assetFileName), Toast.LENGTH_LONG).show()
                                     }
                                 }
                             },
@@ -480,16 +480,16 @@ fun ExtSystemConfigScreen(
     if (showExitDialog) {
         AlertDialog(
             onDismissRequest = { showExitDialog = false },
-            title = { Text("Save changes?", fontWeight = FontWeight.Bold) },
-            text = { Text("Save the external system configuration before leaving?") },
+            title = { Text(stringResource(R.string.dialog_save_changes_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.ext_config_exit_dialog_text)) },
             confirmButton = {
                 Button(onClick = { showExitDialog = false; onSave(buildConfig()) }) {
-                    Text("Yes", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.btn_yes), fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showExitDialog = false; onDiscard() }) {
-                    Text("No")
+                    Text(stringResource(R.string.btn_no))
                 }
             },
         )
@@ -507,7 +507,7 @@ fun ExtSystemConfigScreen(
                 ) {
                     CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.5.dp)
                     Spacer(Modifier.width(16.dp))
-                    Text("Testing connection…", fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.ext_config_testing_connection), fontWeight = FontWeight.Medium)
                 }
             }
         }
@@ -518,14 +518,14 @@ fun ExtSystemConfigScreen(
             onDismissRequest = { testResult = null },
             title = {
                 Text(
-                    if (ok) "Connection OK" else "Connection failed",
+                    if (ok) stringResource(R.string.ext_config_connection_ok) else stringResource(R.string.ext_config_connection_failed),
                     fontWeight = FontWeight.Bold,
                     color = if (ok) PrimaPalette.Teal else Color(0xFFCE3A3A),
                 )
             },
             text = { Text(message) },
             confirmButton = {
-                TextButton(onClick = { testResult = null }) { Text("OK") }
+                TextButton(onClick = { testResult = null }) { Text(stringResource(R.string.btn_ok)) }
             },
         )
     }

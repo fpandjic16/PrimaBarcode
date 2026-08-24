@@ -131,9 +131,9 @@ fun SettingsScreen(
                 context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
             }.isSuccess
             if (written) {
-                Toast.makeText(context, "Defaults saved", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ext_config_defaults_saved), Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context, "Could not save ext_system_defaults.json", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.ext_config_defaults_save_error), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -766,7 +766,7 @@ fun SettingsScreen(
                     modifier = Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text("Insert system defaults", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_insert_defaults_dialog_title), fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
                     Button(
                         onClick = {
@@ -837,7 +837,7 @@ fun SettingsScreen(
                                         pendingExtSystemConfig = defaults
                                         Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
                                     } else {
-                                        Toast.makeText(context, "Could not load ${company.assetFileName}", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, context.getString(R.string.ext_config_company_load_error, company.assetFileName), Toast.LENGTH_LONG).show()
                                     }
                                 }
                             },
@@ -877,8 +877,8 @@ fun SettingsScreen(
     if (showDeleteAllDocumentsDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteAllDocumentsDialog = false },
-            title = { Text("Delete all documents and recordings?") },
-            text = { Text("This permanently deletes every downloaded document, line, and recording — including any unsynced scans. This cannot be undone.") },
+            title = { Text(stringResource(R.string.settings_delete_all_title)) },
+            text = { Text(stringResource(R.string.settings_delete_all_text)) },
             confirmButton = {
                 TextButton(
                     onClick = { showDeleteAllDocumentsDialog = false; onDeleteAllDocuments() },
@@ -894,19 +894,19 @@ fun SettingsScreen(
     if (showExitDialog) {
         AlertDialog(
             onDismissRequest = { showExitDialog = false },
-            title = { Text("Save changes?", fontWeight = FontWeight.Bold) },
-            text = { Text("Save your settings before leaving?") },
+            title = { Text(stringResource(R.string.dialog_save_changes_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.settings_exit_dialog_text)) },
             confirmButton = {
                 Button(onClick = {
                     showExitDialog = false
                     onSave(buildSettings())
                     pendingExtSystemConfig?.let { onSaveExtSystemConfig(it) }
                 }) {
-                    Text("Yes", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.btn_yes), fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showExitDialog = false; onDiscard() }) { Text("No") }
+                OutlinedButton(onClick = { showExitDialog = false; onDiscard() }) { Text(stringResource(R.string.btn_no)) }
             },
         )
     }

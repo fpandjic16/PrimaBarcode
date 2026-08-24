@@ -335,18 +335,17 @@ fun RecordingScreen(
     overScanWarning?.let { info ->
         AlertDialog(
             onDismissRequest = { overScanWarning = null },
-            title = { Text("Over-scanned", fontWeight = FontWeight.Bold, color = LineStatus.OVER.color) },
+            title = { Text(stringResource(R.string.recording_overscan_title), fontWeight = FontWeight.Bold, color = LineStatus.OVER.color) },
             text = {
                 Text(
-                    "Item ${info.itemNo} – ${info.itemName}\n" +
-                    "\n" +
-                    "Barcode: ${info.barcode}\n" +
-                    "Requested: ${info.expected.formatQty()}\n" +
-                    "Scanned: ${info.scanned.formatQty()}"
+                    stringResource(
+                        R.string.recording_overscan_body,
+                        info.itemNo, info.itemName, info.barcode, info.expected.formatQty(), info.scanned.formatQty(),
+                    )
                 )
             },
             confirmButton = {
-                Button(onClick = { overScanWarning = null }) { Text("OK", fontWeight = FontWeight.SemiBold) }
+                Button(onClick = { overScanWarning = null }) { Text(stringResource(R.string.btn_ok), fontWeight = FontWeight.SemiBold) }
             },
         )
     }
@@ -365,17 +364,17 @@ fun RecordingScreen(
     uomMismatchWarning?.let { info ->
         AlertDialog(
             onDismissRequest = { uomMismatchWarning = null },
-            title = { Text("Unit of measure mismatch", fontWeight = FontWeight.Bold, color = Color(0xFFC7943A)) },
+            title = { Text(stringResource(R.string.recording_uom_mismatch_title), fontWeight = FontWeight.Bold, color = Color(0xFFC7943A)) },
             text = {
                 Text(
-                    "Item ${info.itemNo} – ${info.itemName}\n" +
-                    "Barcode: ${info.barcode}\n" +
-                    "Expected UoM: ${info.expectedUom}\n" +
-                    "Scanned UoM: ${info.scannedUom}"
+                    stringResource(
+                        R.string.recording_uom_mismatch_body,
+                        info.itemNo, info.itemName, info.barcode, info.expectedUom, info.scannedUom,
+                    )
                 )
             },
             confirmButton = {
-                Button(onClick = { uomMismatchWarning = null }) { Text("OK", fontWeight = FontWeight.SemiBold) }
+                Button(onClick = { uomMismatchWarning = null }) { Text(stringResource(R.string.btn_ok), fontWeight = FontWeight.SemiBold) }
             },
         )
     }

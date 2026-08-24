@@ -159,6 +159,7 @@
     <string name="login_show_password">Prikaži geslo</string>
     <string name="login_hide_password">Skrij geslo</string>
     <string name="login_footer">Poverilnice shranjene šifrirano z AES-256-GCM za %s.</string>
+    <string name="login_username_hint">npr. uporabnik@prima</string>
     <string name="login_ttl_hours">%d ur</string>
     <string name="login_ttl_days">%d dni</string>
     <!-- User info -->
@@ -227,4 +228,41 @@
     <string name="cd_settings">Nastavitve</string>
     <string name="cd_filter">Filter</string>
     <string name="cd_clear">Počisti</string>
+    <string name="cd_close_camera">Zapri kamero</string>
+    <string name="cd_back">Nazaj</string>
+    <string name="cd_show_keyboard">Prikaži tipkovnico</string>
+    <string name="cd_open_camera">Odpri kamero</string>
+    <!-- Common dialogs -->
+    <string name="btn_yes">Da</string>
+    <string name="btn_no">Ne</string>
+    <string name="btn_test_connection">Preizkusi povezavo</string>
+    <string name="btn_proceed">Nadaljuj</string>
+    <string name="btn_see_errors">Prikaži napake</string>
+    <string name="btn_dismiss">Zapri</string>
+    <string name="dialog_save_changes_title">Shraniti spremembe?</string>
+    <string name="filter_dropdown_any">— Katerikoli —</string>
+    <!-- Ext system config (audit additions) -->
+    <string name="ext_config_test_connection_desc">Prijavi se z vašimi Windows poverilnicami in izvede overjeno zahtevo na URL strežnika.</string>
+    <string name="ext_config_defaults_saved">Privzete nastavitve shranjene</string>
+    <string name="ext_config_defaults_save_error">Datoteke ext_system_defaults.json ni bilo mogoče shraniti</string>
+    <string name="ext_config_company_load_error">Datoteke %s ni bilo mogoče naložiti</string>
+    <string name="ext_config_exit_dialog_text">Shraniti konfiguracijo zunanjega sistema pred izhodom?</string>
+    <string name="ext_config_testing_connection">Preizkušanje povezave…</string>
+    <string name="ext_config_connection_ok">Povezava uspešna</string>
+    <string name="ext_config_connection_failed">Povezava neuspešna</string>
+    <string name="ext_config_domain_hint">npr. PRIMA (pustite prazno, če ni)</string>
+    <!-- Settings (audit additions) -->
+    <string name="settings_exit_dialog_text">Shraniti nastavitve pred izhodom?</string>
+    <string name="settings_insert_defaults_dialog_title">Vstavi privzete nastavitve sistema</string>
+    <string name="settings_delete_all_title">Izbrisati vse dokumente in snemanja?</string>
+    <string name="settings_delete_all_text">To trajno izbriše vse prenesene dokumente, postavke in posnetke — vključno z nesinhroniziranimi skeniranji. Tega dejanja ni mogoče razveljaviti.</string>
+    <string name="export_saved">Izvoz shranjen</string>
+    <string name="debug_request_urls_title">Razhroščevanje — URL-ji zahtevkov</string>
+    <string name="sync_errors_title">Sinhronizacija končana z napakami</string>
+    <string name="sync_errors_text">Med sinhronizacijo je prišlo do napak. Jih želite videti?</string>
+    <!-- Recording warnings (audit additions) -->
+    <string name="recording_overscan_title">Presežek</string>
+    <string name="recording_overscan_body">Artikel %1$s – %2$s\n\nČrtna koda: %3$s\nZahtevano: %4$s\nSkenirano: %5$s</string>
+    <string name="recording_uom_mismatch_title">Neujemanje enote mere</string>
+    <string name="recording_uom_mismatch_body">Artikel %1$s – %2$s\nČrtna koda: %3$s\nPričakovana EM: %4$s\nSkenirana EM: %5$s</string>
 </resources>

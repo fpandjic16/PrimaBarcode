@@ -359,7 +359,7 @@ private fun FilterDateChip(
         if (value != null) {
             Icon(
                 Icons.Outlined.Clear,
-                contentDescription = "Clear",
+                contentDescription = stringResource(R.string.cd_clear),
                 tint = PrimaPalette.Ink3,
                 modifier = Modifier.size(14.dp).clickable(onClick = onClear),
             )
@@ -462,7 +462,7 @@ private fun FilterDropdown(
         }
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
-                text = { Text("— Any —", style = monoLabel) },
+                text = { Text(stringResource(R.string.filter_dropdown_any), style = monoLabel) },
                 onClick = { onValueChange(""); expanded = false },
             )
             options.forEach { option ->

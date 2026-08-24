@@ -159,6 +159,7 @@
     <string name="login_show_password">Show password</string>
     <string name="login_hide_password">Hide password</string>
     <string name="login_footer">Credentials stored encrypted with AES-256-GCM for %s.</string>
+    <string name="login_username_hint">e.g. user@prima</string>
     <string name="login_ttl_hours">%d hours</string>
     <string name="login_ttl_days">%d days</string>
     <!-- User info -->
@@ -227,4 +228,41 @@
     <string name="cd_settings">Settings</string>
     <string name="cd_filter">Filter</string>
     <string name="cd_clear">Clear</string>
+    <string name="cd_close_camera">Close camera</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_show_keyboard">Show keyboard</string>
+    <string name="cd_open_camera">Open camera</string>
+    <!-- Common dialogs -->
+    <string name="btn_yes">Yes</string>
+    <string name="btn_no">No</string>
+    <string name="btn_test_connection">Test connection</string>
+    <string name="btn_proceed">Proceed</string>
+    <string name="btn_see_errors">See errors</string>
+    <string name="btn_dismiss">Dismiss</string>
+    <string name="dialog_save_changes_title">Save changes?</string>
+    <string name="filter_dropdown_any">— Any —</string>
+    <!-- Ext system config (audit additions) -->
+    <string name="ext_config_test_connection_desc">Signs in with your Windows credentials and runs an authenticated request against the server URL.</string>
+    <string name="ext_config_defaults_saved">Defaults saved</string>
+    <string name="ext_config_defaults_save_error">Could not save ext_system_defaults.json</string>
+    <string name="ext_config_company_load_error">Could not load %s</string>
+    <string name="ext_config_exit_dialog_text">Save the external system configuration before leaving?</string>
+    <string name="ext_config_testing_connection">Testing connection…</string>
+    <string name="ext_config_connection_ok">Connection OK</string>
+    <string name="ext_config_connection_failed">Connection failed</string>
+    <string name="ext_config_domain_hint">e.g. PRIMA (leave blank if none)</string>
+    <!-- Settings (audit additions) -->
+    <string name="settings_exit_dialog_text">Save your settings before leaving?</string>
+    <string name="settings_insert_defaults_dialog_title">Insert system defaults</string>
+    <string name="settings_delete_all_title">Delete all documents and recordings?</string>
+    <string name="settings_delete_all_text">This permanently deletes every downloaded document, line, and recording — including any unsynced scans. This cannot be undone.</string>
+    <string name="export_saved">Export saved</string>
+    <string name="debug_request_urls_title">Debug — Request URLs</string>
+    <string name="sync_errors_title">Sync completed with errors</string>
+    <string name="sync_errors_text">There are errors while sync. Do you want to see errors?</string>
+    <!-- Recording warnings (audit additions) -->
+    <string name="recording_overscan_title">Over-scanned</string>
+    <string name="recording_overscan_body">Item %1$s – %2$s\n\nBarcode: %3$s\nRequested: %4$s\nScanned: %5$s</string>
+    <string name="recording_uom_mismatch_title">Unit of measure mismatch</string>
+    <string name="recording_uom_mismatch_body">Item %1$s – %2$s\nBarcode: %3$s\nExpected UoM: %4$s\nScanned UoM: %5$s</string>
 </resources>

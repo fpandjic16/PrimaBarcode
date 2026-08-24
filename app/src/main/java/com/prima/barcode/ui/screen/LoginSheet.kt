@@ -30,7 +30,7 @@ fun LoginSheet(
     credentialTtlHours: Int = 24,
     onSubmit: (username: String, password: String) -> Unit,
     onDismiss: () -> Unit,
-    ctaLabel: String = "Sign in",
+    ctaLabel: String = stringResource(R.string.btn_sign_in),
     initialUsername: String = "",
     initialPassword: String = "",
     // When set, the entered credentials are verified against the NAV server (the same
@@ -87,7 +87,7 @@ fun LoginSheet(
                     value = username,
                     onValueChange = { username = it },
                     label = { Text(stringResource(R.string.login_username)) },
-                    placeholder = { Text("e.g. user@prima") },
+                    placeholder = { Text(stringResource(R.string.login_username_hint)) },
                     singleLine = true,
                     enabled = !testing,
                     modifier = Modifier.fillMaxWidth(),

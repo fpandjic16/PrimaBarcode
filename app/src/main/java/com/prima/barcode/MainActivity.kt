@@ -353,7 +353,7 @@ private fun PrimaBarcodeApp(
     ) { uri ->
         uri?.let {
             appVm.exportDatabase(it) {
-                Toast.makeText(context, "Export saved", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.export_saved), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -762,7 +762,7 @@ private fun PrimaBarcodeApp(
     if (showDebugDialog) {
         AlertDialog(
             onDismissRequest = { showDebugDialog = false; pendingCancel?.invoke() },
-            title = { Text("Debug — Request URLs", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.debug_request_urls_title), fontWeight = FontWeight.Bold) },
             text = { Text(debugUrls.joinToString("\n\n")) },
             confirmButton = {
                 Column(
@@ -772,7 +772,7 @@ private fun PrimaBarcodeApp(
                     Button(
                         onClick = { showDebugDialog = false; pendingAction?.invoke() },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
-                    ) { Text("Proceed", fontWeight = FontWeight.Bold) }
+                    ) { Text(stringResource(R.string.btn_proceed), fontWeight = FontWeight.Bold) }
                     OutlinedButton(
                         onClick = { showDebugDialog = false; pendingCancel?.invoke() },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -785,7 +785,7 @@ private fun PrimaBarcodeApp(
     if (showUploadLoginSheet) {
         LoginSheet(
             credentialTtlHours = extSystemConfig.credentialTtlHours,
-            ctaLabel           = "Sign in",
+            ctaLabel           = stringResource(R.string.btn_sign_in),
             initialUsername    = appVm.extSystemCredentialStore.get()?.username ?: "",
             initialPassword    = appVm.extSystemCredentialStore.get()?.password ?: "",
             onDismiss          = { showUploadLoginSheet = false; pendingUploadAction = null },
@@ -801,7 +801,7 @@ private fun PrimaBarcodeApp(
     if (showMainLoginSheet) {
         LoginSheet(
             credentialTtlHours = extSystemConfig.credentialTtlHours,
-            ctaLabel           = "Sign in",
+            ctaLabel           = stringResource(R.string.btn_sign_in),
             onDismiss          = { showMainLoginSheet = false },
             onTestConnection   = ::testSignIn,
             onSubmit           = { _, _ -> showMainLoginSheet = false },
@@ -811,8 +811,8 @@ private fun PrimaBarcodeApp(
     if (showSyncErrorDialog) {
         AlertDialog(
             onDismissRequest = { showSyncErrorDialog = false },
-            title = { Text("Sync completed with errors", fontWeight = FontWeight.Bold) },
-            text = { Text("There are errors while sync. Do you want to see errors?") },
+            title = { Text(stringResource(R.string.sync_errors_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.sync_errors_text)) },
             confirmButton = {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
@@ -822,11 +822,11 @@ private fun PrimaBarcodeApp(
                         onClick = { showSyncErrorDialog = false; nav.navigate("dashboard") },
                         modifier = Modifier.fillMaxWidth().height(52.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCE3A3A)),
-                    ) { Text("See errors", fontWeight = FontWeight.Bold) }
+                    ) { Text(stringResource(R.string.btn_see_errors), fontWeight = FontWeight.Bold) }
                     OutlinedButton(
                         onClick = { showSyncErrorDialog = false },
                         modifier = Modifier.fillMaxWidth().height(52.dp),
-                    ) { Text("Dismiss") }
+                    ) { Text(stringResource(R.string.btn_dismiss)) }
                 }
             },
         )

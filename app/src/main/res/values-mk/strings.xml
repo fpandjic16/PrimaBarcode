@@ -159,6 +159,7 @@
     <string name="login_show_password">Прикажи лозинка</string>
     <string name="login_hide_password">Сокриј лозинка</string>
     <string name="login_footer">Акредитивите се зачувани шифрирано со AES-256-GCM за %s.</string>
+    <string name="login_username_hint">нпр. корисник@prima</string>
     <string name="login_ttl_hours">%d часа</string>
     <string name="login_ttl_days">%d дена</string>
     <!-- User info -->
@@ -227,4 +228,41 @@
     <string name="cd_settings">Поставки</string>
     <string name="cd_filter">Филтер</string>
     <string name="cd_clear">Исчисти</string>
+    <string name="cd_close_camera">Затвори камера</string>
+    <string name="cd_back">Назад</string>
+    <string name="cd_show_keyboard">Прикажи тастатура</string>
+    <string name="cd_open_camera">Отвори камера</string>
+    <!-- Common dialogs -->
+    <string name="btn_yes">Да</string>
+    <string name="btn_no">Не</string>
+    <string name="btn_test_connection">Тестирај врска</string>
+    <string name="btn_proceed">Продолжи</string>
+    <string name="btn_see_errors">Прикажи грешки</string>
+    <string name="btn_dismiss">Затвори</string>
+    <string name="dialog_save_changes_title">Да се зачуваат промените?</string>
+    <string name="filter_dropdown_any">— Било кој —</string>
+    <!-- Ext system config (audit additions) -->
+    <string name="ext_config_test_connection_desc">Се најавува со вашите Windows акредитиви и испраќа автентицирано барање до URL-то на серверот.</string>
+    <string name="ext_config_defaults_saved">Стандардните поставки се зачувани</string>
+    <string name="ext_config_defaults_save_error">Датотеката ext_system_defaults.json не можеше да се зачува</string>
+    <string name="ext_config_company_load_error">%s не можеше да се вчита</string>
+    <string name="ext_config_exit_dialog_text">Да се зачува конфигурацијата на надворешниот систем пред напуштање?</string>
+    <string name="ext_config_testing_connection">Тестирање на врската…</string>
+    <string name="ext_config_connection_ok">Врската е успешна</string>
+    <string name="ext_config_connection_failed">Врската не успеа</string>
+    <string name="ext_config_domain_hint">нпр. PRIMA (оставете празно ако нема)</string>
+    <!-- Settings (audit additions) -->
+    <string name="settings_exit_dialog_text">Да се зачуваат поставките пред напуштање?</string>
+    <string name="settings_insert_defaults_dialog_title">Внеси стандардни поставки на системот</string>
+    <string name="settings_delete_all_title">Да се избришат сите документи и снимања?</string>
+    <string name="settings_delete_all_text">Ова трајно ги брише сите преземени документи, ставки и снимања — вклучувајќи ги несинхронизираните скенирања. Ова дејство не може да се врати.</string>
+    <string name="export_saved">Извозот е зачуван</string>
+    <string name="debug_request_urls_title">Дебагирање — URL на барања</string>
+    <string name="sync_errors_title">Синхронизацијата заврши со грешки</string>
+    <string name="sync_errors_text">Има грешки при синхронизацијата. Дали сакате да ги видите?</string>
+    <!-- Recording warnings (audit additions) -->
+    <string name="recording_overscan_title">Прекумерно скенирање</string>
+    <string name="recording_overscan_body">Артикл %1$s – %2$s\n\nБаркод: %3$s\nПобарано: %4$s\nСкенирано: %5$s</string>
+    <string name="recording_uom_mismatch_title">Неусогласена единица мерка</string>
+    <string name="recording_uom_mismatch_body">Артикл %1$s – %2$s\nБаркод: %3$s\nОчекувана ЕМ: %4$s\nСкенирана ЕМ: %5$s</string>
 </resources>

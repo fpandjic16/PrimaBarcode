@@ -105,7 +105,7 @@
     <string name="settings_sec_sync">Sinkronizacija</string>
     <string name="settings_sec_ext_config">Konfiguracija vanjskog sustava</string>
     <string name="settings_sec_data">Podaci</string>
-    <string name="settings_sec_debug">Debug</string>
+    <string name="settings_sec_debug">Otklanjanje pogrešaka</string>
     <string name="settings_debugger_active">Debugger aktivan</string>
     <string name="settings_debugger_active_desc">Prikaži pune URL-ove zahtjeva prije spajanja</string>
     <string name="settings_sec_system_info">Informacije o sustavu</string>
@@ -159,6 +159,7 @@
     <string name="login_show_password">Prikaži lozinku</string>
     <string name="login_hide_password">Sakrij lozinku</string>
     <string name="login_footer">Vjerodajnice pohranjene šifrirano s AES-256-GCM za %s.</string>
+    <string name="login_username_hint">npr. korisnik@prima</string>
     <string name="login_ttl_hours">%d sati</string>
     <string name="login_ttl_days">%d dana</string>
     <!-- User info -->
@@ -225,6 +226,43 @@
         <!-- Accessibility -->
     <string name="cd_refresh">Osvježi</string>
     <string name="cd_settings">Postavke</string>
-    <string name="cd_filter">Filter</string>
+    <string name="cd_filter">Filtar</string>
     <string name="cd_clear">Obriši</string>
+    <string name="cd_close_camera">Zatvori kameru</string>
+    <string name="cd_back">Natrag</string>
+    <string name="cd_show_keyboard">Prikaži tipkovnicu</string>
+    <string name="cd_open_camera">Otvori kameru</string>
+    <!-- Common dialogs -->
+    <string name="btn_yes">Da</string>
+    <string name="btn_no">Ne</string>
+    <string name="btn_test_connection">Testiraj vezu</string>
+    <string name="btn_proceed">Nastavi</string>
+    <string name="btn_see_errors">Prikaži pogreške</string>
+    <string name="btn_dismiss">Zatvori</string>
+    <string name="dialog_save_changes_title">Spremiti promjene?</string>
+    <string name="filter_dropdown_any">— Bilo koji —</string>
+    <!-- Ext system config (audit additions) -->
+    <string name="ext_config_test_connection_desc">Prijavljuje se s vašim Windows vjerodajnicama i šalje autenticirani zahtjev na URL poslužitelja.</string>
+    <string name="ext_config_defaults_saved">Zadane postavke spremljene</string>
+    <string name="ext_config_defaults_save_error">Datoteka ext_system_defaults.json nije spremljena</string>
+    <string name="ext_config_company_load_error">Datoteka %s nije učitana</string>
+    <string name="ext_config_exit_dialog_text">Spremiti konfiguraciju vanjskog sustava prije izlaska?</string>
+    <string name="ext_config_testing_connection">Testiranje veze…</string>
+    <string name="ext_config_connection_ok">Veza uspostavljena</string>
+    <string name="ext_config_connection_failed">Veza neuspješna</string>
+    <string name="ext_config_domain_hint">npr. PRIMA (ostavite prazno ako nema)</string>
+    <!-- Settings (audit additions) -->
+    <string name="settings_exit_dialog_text">Spremiti postavke prije izlaska?</string>
+    <string name="settings_insert_defaults_dialog_title">Umetni zadane postavke sustava</string>
+    <string name="settings_delete_all_title">Izbrisati sve dokumente i snimanja?</string>
+    <string name="settings_delete_all_text">Ovo trajno briše sve preuzete dokumente, stavke i snimanja — uključujući neusklađena skeniranja. Ova radnja se ne može poništiti.</string>
+    <string name="export_saved">Izvoz spremljen</string>
+    <string name="debug_request_urls_title">Otklanjanje pogrešaka — URL-ovi zahtjeva</string>
+    <string name="sync_errors_title">Sinkronizacija završena s pogreškama</string>
+    <string name="sync_errors_text">Došlo je do pogrešaka tijekom sinkronizacije. Želite li ih vidjeti?</string>
+    <!-- Recording warnings (audit additions) -->
+    <string name="recording_overscan_title">Prekoračeno</string>
+    <string name="recording_overscan_body">Artikl %1$s – %2$s\n\nBarkod: %3$s\nTraženo: %4$s\nSkenirano: %5$s</string>
+    <string name="recording_uom_mismatch_title">Neusklađena jedinica mjere</string>
+    <string name="recording_uom_mismatch_body">Artikl %1$s – %2$s\nBarkod: %3$s\nOčekivana JM: %4$s\nSkenirana JM: %5$s</string>
 </resources>

@@ -135,7 +135,7 @@ fun DocumentListScreen(
                 IconButton(onClick = onOpenFilter) {
                     Icon(
                         Icons.Outlined.Tune,
-                        contentDescription = "Filter",
+                        contentDescription = stringResource(R.string.cd_filter),
                         tint = if (filter.isActive) PrimaPalette.Coral else Color.White,
                         modifier = Modifier.size(22.dp),
                     )

@@ -334,7 +334,7 @@ private fun DlDateChip(
         if (value != null) {
             Icon(
                 Icons.Outlined.Clear,
-                contentDescription = "Clear",
+                contentDescription = stringResource(R.string.cd_clear),
                 tint = PrimaPalette.Ink3,
                 modifier = Modifier.size(14.dp).clickable(onClick = onClear),
             )

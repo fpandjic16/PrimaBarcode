@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.prima.barcode.R
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -131,7 +133,7 @@ fun CameraPreview(
         ) {
             Icon(
                 imageVector = Icons.Outlined.Close,
-                contentDescription = "Close camera",
+                contentDescription = stringResource(R.string.cd_close_camera),
                 tint = Color.White,
             )
         }
