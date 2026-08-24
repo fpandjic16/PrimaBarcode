@@ -52,13 +52,6 @@ data class Line(
     val status: LineStatus get() = LineStatus.of(scanned, expected)
 }
 
-data class ExtraLine(
-    val recordingLineNo: Int,
-    val barcodeNo: String,
-    val quantity: Double,
-    val unitOfMeasureCode: String,
-)
-
 data class Document(
     val documentNo: String,
     val type: DocumentType,
@@ -69,14 +62,13 @@ data class Document(
     val creationDateTime: Instant,
     val documentDate: Instant? = null,
     val lines: List<Line>,
-    val extraLines: List<ExtraLine> = emptyList(),
     val state: DocState,
 ) {
     val linesExact: Int get() = lines.count { it.status == LineStatus.EXACT }
     val linesTotal: Int get() = lines.size
     val scannedQty: Double get() = lines.sumOf { it.scanned }
     val expectedQty: Double get() = lines.sumOf { it.expected }
-    val hasProgress: Boolean get() = lines.any { it.scanned > 0.0 } || extraLines.isNotEmpty()
+    val hasProgress: Boolean get() = lines.any { it.scanned > 0.0 }
 }
 
 sealed interface DocState {

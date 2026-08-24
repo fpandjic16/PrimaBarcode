@@ -24,31 +24,36 @@ fun PrimaTopBar(
     title: String,
     subtitle: String? = null,
     onBack: (() -> Unit)? = null,
+    leading: (@Composable () -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .padding(bottom = 2.dp)
             .background(PrimaPalette.Slate)
+            .statusBarsPadding()
+            .height(48.dp)
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (onBack != null) {
-            Box(
-                modifier = Modifier
-                    .padding(start = 8.dp, top = 8.dp, bottom = 8.dp, end = 4.dp)
-                    .size(width = 60.dp, height = 40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0x20FFFFFF))
-                    .clickable(onClick = onBack),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back", tint = Color.White)
+        when {
+            leading != null -> leading()
+            onBack != null -> {
+                Box(
+                    modifier = Modifier
+                        .padding(start = 8.dp, top = 2.dp, bottom = 2.dp, end = 4.dp)
+                        .size(width = 60.dp, height = 44.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0x20FFFFFF))
+                        .clickable(onClick = onBack),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back", tint = Color.White)
+                }
             }
-        } else {
-            Spacer(Modifier.width(72.dp))
+            else -> Spacer(Modifier.width(72.dp))
         }
         Column(modifier = Modifier.weight(1f).padding(start = 4.dp)) {
             Text(

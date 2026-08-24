@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.prima.barcode.data.auth.AppSettings
 import com.prima.barcode.data.auth.ExtSystemConfig
+import com.prima.barcode.data.auth.ExtSystemDefaultsCompany
 import com.prima.barcode.data.model.Location
 import com.prima.barcode.data.model.ResponsibilityCenter
 import com.prima.barcode.data.model.User
@@ -55,9 +56,10 @@ fun SettingsScreen(
     onSave: (AppSettings) -> Unit,
     onDiscard: () -> Unit = {},
     onSaveExtSystemConfig: (ExtSystemConfig) -> Unit = {},
-    loadExtSystemConfigDefaults: () -> ExtSystemConfig? = { null },
+    loadExtSystemConfigDefaults: (fileName: String) -> ExtSystemConfig? = { null },
     parseExtSystemConfigJson: (String) -> ExtSystemConfig? = { null },
-    getExtSystemDefaultsJsonText: () -> String? = { null },
+    getExtSystemDefaultsJsonText: (fileName: String) -> String? = { null },
+    listExtSystemDefaultsCompanies: () -> List<ExtSystemDefaultsCompany> = { emptyList() },
     onExport: () -> Unit = {},
     onClearCache: () -> Unit = {},
     onDeleteAllDocuments: () -> Unit = {},
@@ -74,9 +76,6 @@ fun SettingsScreen(
     var debounceTime by remember { mutableStateOf(initial.debounceTime) }
     var hapticEnabled by remember { mutableStateOf(initial.hapticEnabled) }
     var warnOnOver by remember { mutableStateOf(initial.warnOnOver) }
-    var warnNotOnDocument by remember { mutableStateOf(initial.warnNotOnDocument) }
-    var askQtyForUnknownBarcode by remember { mutableStateOf(initial.askQtyForUnknownBarcode) }
-    var autoUploadCompleted by remember { mutableStateOf(initial.autoUploadCompleted) }
     var backgroundSync by remember { mutableStateOf(initial.backgroundSync) }
     var debuggerActive by remember { mutableStateOf(initial.debuggerActive) }
 
@@ -89,9 +88,6 @@ fun SettingsScreen(
         debounceTime = debounceTime,
         hapticEnabled = hapticEnabled,
         warnOnOver = warnOnOver,
-        warnNotOnDocument = warnNotOnDocument,
-        askQtyForUnknownBarcode = askQtyForUnknownBarcode,
-        autoUploadCompleted = autoUploadCompleted,
         backgroundSync = backgroundSync,
         debuggerActive = debuggerActive,
     )
@@ -99,6 +95,9 @@ fun SettingsScreen(
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var showDeleteAllDocumentsDialog by remember { mutableStateOf(false) }
     var showInsertSystemDefaultsDialog by remember { mutableStateOf(false) }
+    var showCompanyPickDialog by remember { mutableStateOf(false) }
+    var companyPickForDownload by remember { mutableStateOf(false) }
+    var downloadFileName by remember { mutableStateOf("") }
     var pendingExtSystemConfig by remember { mutableStateOf<ExtSystemConfig?>(null) }
     var showExitDialog by remember { mutableStateOf(false) }
 
@@ -127,7 +126,7 @@ fun SettingsScreen(
 
     val downloadExtSystemDefaultsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
-            val text = getExtSystemDefaultsJsonText()
+            val text = getExtSystemDefaultsJsonText(downloadFileName)
             val written = text != null && runCatching {
                 context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
             }.isSuccess
@@ -340,22 +339,6 @@ fun SettingsScreen(
                         onCheckedChange = { warnOnOver = it },
                     )
                     SettingsDivider()
-                    ToggleRow(
-                        icon = Icons.Outlined.ErrorOutline,
-                        label = "Warn on not on document",
-                        description = "Warn when scanning items that aren't on the document.",
-                        checked = warnNotOnDocument,
-                        onCheckedChange = { warnNotOnDocument = it },
-                    )
-                    SettingsDivider()
-                    ToggleRow(
-                        icon = Icons.Outlined.Dialpad,
-                        label = "Ask for Qty for unknown barcode",
-                        description = "Show a quantity screen when scanning a barcode that's not on the document. When off, it's recorded with Qty = 1 automatically.",
-                        checked = askQtyForUnknownBarcode,
-                        onCheckedChange = { askQtyForUnknownBarcode = it },
-                    )
-                    SettingsDivider()
                     var lastScannedExpanded by remember { mutableStateOf(false) }
                     Row(
                         modifier = Modifier
@@ -421,14 +404,6 @@ fun SettingsScreen(
 
             item {
                 Column(modifier = Modifier.fillMaxWidth().background(Color.White)) {
-                    ToggleRow(
-                        icon = Icons.Outlined.CloudUpload,
-                        label = stringResource(R.string.settings_auto_upload),
-                        description = stringResource(R.string.settings_auto_upload_desc),
-                        checked = autoUploadCompleted,
-                        onCheckedChange = { autoUploadCompleted = it },
-                    )
-                    SettingsDivider()
                     ToggleRow(
                         icon = Icons.Outlined.Sync,
                         label = "Enable background sync",
@@ -796,13 +771,8 @@ fun SettingsScreen(
                     Button(
                         onClick = {
                             showInsertSystemDefaultsDialog = false
-                            val defaults = loadExtSystemConfigDefaults()
-                            if (defaults != null) {
-                                pendingExtSystemConfig = defaults
-                                Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, "Could not load ext_system_defaults.json", Toast.LENGTH_LONG).show()
-                            }
+                            companyPickForDownload = false
+                            showCompanyPickDialog = true
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -811,7 +781,8 @@ fun SettingsScreen(
                     OutlinedButton(
                         onClick = {
                             showInsertSystemDefaultsDialog = false
-                            downloadExtSystemDefaultsLauncher.launch("ext_system_defaults.json")
+                            companyPickForDownload = true
+                            showCompanyPickDialog = true
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -828,6 +799,55 @@ fun SettingsScreen(
                     }
                     TextButton(
                         onClick = { showInsertSystemDefaultsDialog = false },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                }
+            }
+        }
+    }
+
+    if (showCompanyPickDialog) {
+        Dialog(onDismissRequest = { showCompanyPickDialog = false }) {
+            Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(stringResource(R.string.ext_config_pick_company_title), fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(4.dp))
+                    val companies = remember { listExtSystemDefaultsCompanies() }
+                    if (companies.isEmpty()) {
+                        Text(
+                            stringResource(R.string.ext_config_no_companies_found),
+                            style = monoLabel.copy(color = PrimaPalette.Ink3),
+                        )
+                    }
+                    companies.forEach { company ->
+                        OutlinedButton(
+                            onClick = {
+                                showCompanyPickDialog = false
+                                if (companyPickForDownload) {
+                                    downloadFileName = company.assetFileName
+                                    downloadExtSystemDefaultsLauncher.launch(company.assetFileName)
+                                } else {
+                                    val defaults = loadExtSystemConfigDefaults(company.assetFileName)
+                                    if (defaults != null) {
+                                        pendingExtSystemConfig = defaults
+                                        Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, "Could not load ${company.assetFileName}", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(company.label, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                    TextButton(
+                        onClick = { showCompanyPickDialog = false },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(stringResource(android.R.string.cancel))

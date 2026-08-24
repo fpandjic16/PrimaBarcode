@@ -35,22 +35,4 @@ class RecordingViewModel @Inject constructor(
             repository.setLineScanned(documentNo, type, lineNo, scanned, userId)
         }
     }
-
-    fun addExtraLine(barcodeNo: String, userId: String, quantity: Double) {
-        viewModelScope.launch {
-            repository.addExtraLine(documentNo, type, barcodeNo, userId, quantity)
-        }
-    }
-
-    fun updateExtraLineQuantity(recordingLineNo: Int, quantity: Double) {
-        viewModelScope.launch {
-            repository.updateExtraLineQuantity(documentNo, type, recordingLineNo, quantity)
-        }
-    }
-
-    fun deleteExtraLine(recordingLineNo: Int) {
-        viewModelScope.launch {
-            repository.deleteExtraLine(documentNo, type, recordingLineNo)
-        }
-    }
 }

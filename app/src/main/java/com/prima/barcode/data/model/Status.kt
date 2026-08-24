@@ -48,12 +48,12 @@ val LineStatus.label: String get() = when (this) {
 }
 
 fun Document.scanStatus(): LineStatus {
-    if (lines.isEmpty()) return if (extraLines.isEmpty()) LineStatus.EMPTY else LineStatus.PARTIAL
+    if (lines.isEmpty()) return LineStatus.EMPTY
     val s = lines.map { it.status }
     return when {
-        s.all { it == LineStatus.EMPTY } && extraLines.isEmpty()  -> LineStatus.EMPTY
-        s.any { it == LineStatus.OVER }                           -> LineStatus.OVER
-        s.all { it == LineStatus.EXACT } && extraLines.isEmpty()  -> LineStatus.EXACT
-        else                                                      -> LineStatus.PARTIAL
+        s.all { it == LineStatus.EMPTY }  -> LineStatus.EMPTY
+        s.any { it == LineStatus.OVER }   -> LineStatus.OVER
+        s.all { it == LineStatus.EXACT }  -> LineStatus.EXACT
+        else                              -> LineStatus.PARTIAL
     }
 }

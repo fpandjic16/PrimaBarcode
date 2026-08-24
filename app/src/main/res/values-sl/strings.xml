@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PrimaBarcode</string>
+    <string name="app_name">Prima Barcode</string>
     <!-- Common -->
     <string name="btn_ok">V redu</string>
     <string name="btn_cancel">Prekliči</string>
@@ -9,14 +9,12 @@
     <string name="btn_reset">Ponastavi</string>
     <string name="btn_download">Prenesi</string>
     <string name="btn_upload">Naloži</string>
-    <string name="btn_create">Ustvari</string>
-    <string name="doc_create_blocked_hint">Izberite lokacijo za ustvarjanje dokumentov</string>
     <string name="btn_clear">Počisti</string>
     <string name="btn_retry_upload">Poskusi znova</string>
     <string name="btn_sign_in">Prijava</string>
     <string name="btn_sign_in_sync">Prijava in sinhronizacija</string>
     <!-- Dashboard -->
-    <string name="dashboard_today">DANES (skenirane vrstice)</string>
+    <string name="dashboard_today">DANES\n(skenirane vrstice)</string>
     <string name="dashboard_pill_ready">pripravljeno</string>
     <string name="dashboard_pill_partial">delno</string>
     <string name="dashboard_pill_error">napaka</string>
@@ -41,7 +39,7 @@
     <string name="doc_list_empty">Ni dokumentov</string>
     <string name="doc_list_scan_placeholder">Skeniraj številko dokumenta…</string>
     <string name="doc_list_create_title">Dokument ni najden</string>
-    <string name="doc_list_create_text">Dokument "%s" ne obstaja. Ali ga želite ustvariti?</string>
+    <string name="doc_list_create_text">Dokument "%s" ne obstaja. Najprej prenesite dokumente iz ERP, nato začnite s skeniranjem.</string>
     <string name="doc_chip_error">Napaka</string>
     <string name="doc_status_empty">Prazno</string>
     <string name="doc_status_partial">Delno</string>
@@ -78,14 +76,8 @@
     <string name="upload_error_line_plural">%d vrstic</string>
     <!-- Recording -->
     <string name="recording_title">Snemanje</string>
-    <string name="recording_not_on_doc_badge">NI NA DOKUMENTU</string>
-    <string name="recording_not_on_doc">Ni na dokumentu</string>
-    <string name="recording_not_listed">Ni navedeno v tem dokumentu. Količina bo evidentirana ločeno in označena za pregled.</string>
-    <string name="recording_will_be_added">BO DODANO</string>
-    <string name="recording_type_a_value">Vnesite vrednost</string>
-    <string name="recording_type_a_quantity">Vnesite količino</string>
-    <string name="recording_remove">Odstrani</string>
-    <string name="recording_uom_prefix">EM: </string>
+    <string name="recording_barcode_not_found_title">Črtna koda ni najdena</string>
+    <string name="recording_barcode_not_found_text">Črtna koda %s ne obstaja na tem dokumentu.</string>
     <string name="recording_barcode_prefix">Črtna koda: </string>
     <string name="status_chip_empty">PRAZNO</string>
     <string name="status_chip_partial">DELNO</string>
@@ -140,8 +132,6 @@
     <string name="settings_warn_over_desc">Potrdi, ko skenirana količina presega pričakovano</string>
     <string name="settings_last_scanned">Zadnje skenirane vrstice</string>
     <string name="settings_last_scanned_desc">Vrstice, prikazane v traku skeniranja (0 = skrito)</string>
-    <string name="settings_auto_upload">Samodejno nalaganje zaključenih dok.</string>
-    <string name="settings_auto_upload_desc">Samodejno naloži, ko so skenirane vse vrstice</string>
     <string name="settings_wifi_only">Sinhroniziraj samo prek Wi-Fi</string>
     <string name="settings_wifi_only_desc">Za sinhronizacijo ne uporabljaj mobilnih podatkov</string>
     <string name="settings_test_signin">Testna prijava</string>
@@ -168,10 +158,13 @@
     <string name="login_password">Geslo</string>
     <string name="login_show_password">Prikaži geslo</string>
     <string name="login_hide_password">Skrij geslo</string>
-    <string name="login_footer">Poverilnice šifrirane z AES-256-GCM · Zunanji sistem</string>
+    <string name="login_footer">Poverilnice shranjene šifrirano z AES-256-GCM za %s.</string>
     <string name="login_ttl_hours">%d ur</string>
     <string name="login_ttl_days">%d dni</string>
-    <string name="login_session_info">Seja shranjena šifrirano za %s</string>
+    <!-- User info -->
+    <string name="user_info_title">Podatki o uporabniku</string>
+    <string name="user_info_id">ID uporabnika</string>
+    <string name="user_info_name">Ime</string>
     <!-- Download filter -->
     <string name="download_error_title">Prenos ni uspel</string>
     <string name="download_title">Prenos</string>
@@ -216,6 +209,8 @@
     <string name="ext_config_recording_url">URL sinhronizacije snemanj</string>
     <string name="ext_config_load_title">Naloži konfiguracijo</string>
     <string name="ext_config_load_desc">Naložite vgrajene privzete vrednosti ali uvozite datoteko JSON po meri z naprave.</string>
+    <string name="ext_config_pick_company_title">Izberi podjetje</string>
+    <string name="ext_config_no_companies_found">Ni najdenih vgrajenih konfiguracij</string>
     <string name="ext_config_load_builtin">Naloži vgrajene privzete vrednosti</string>
     <string name="ext_config_download_builtin">Prenesi vgrajene privzete vrednosti</string>
     <string name="ext_config_load_from_file">Uvozi iz datoteke</string>

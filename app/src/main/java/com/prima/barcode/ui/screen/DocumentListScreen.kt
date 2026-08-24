@@ -54,6 +54,15 @@ private val dateFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy
 private fun Instant.toLocalDate(): LocalDate =
     atZone(ZoneId.systemDefault()).toLocalDate()
 
+@androidx.compose.runtime.Composable
+private fun DocumentType.localizedDisplay(): String = when (this) {
+    DocumentType.WAREHOUSE_SHIPMENT -> stringResource(R.string.doctype_warehouse_shipment)
+    DocumentType.WAREHOUSE_RECEIPT  -> stringResource(R.string.doctype_warehouse_receipt)
+    DocumentType.RETAIL_SHIPMENT    -> stringResource(R.string.doctype_retail_shipment)
+    DocumentType.RETAIL_RECEIPT     -> stringResource(R.string.doctype_retail_receipt)
+    DocumentType.TRANSPORT_SHEET    -> stringResource(R.string.doctype_transport_sheet)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DocumentListScreen(
@@ -66,15 +75,13 @@ fun DocumentListScreen(
     onDownload: () -> Unit,
     onUpload: (List<Document>) -> Unit,
     onErrorTap: (Document) -> Unit = {},
-    onCreateDoc: (docNo: String, locationCode: String) -> Unit = { _, _ -> },
-    canCreateDoc: Boolean = true,
     onDeleteRecordings: (Document) -> Unit = {},
     onClearErrors: () -> Unit = {},
     filter: DocumentFilter = DocumentFilter(),
     onOpenFilter: () -> Unit = {},
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    var createDocNo by remember { mutableStateOf<String?>(null) }
+    var docNotFoundError by remember { mutableStateOf<String?>(null) }
     var showDeleteDialog by remember { mutableStateOf<Document?>(null) }
     var showClearErrorsDialog by remember { mutableStateOf(false) }
     val filtered = remember(documents, locationCode, filter) {
@@ -96,7 +103,7 @@ fun DocumentListScreen(
         filtered.filter { doc ->
             doc.state == DocState.Completed ||
             doc.state is DocState.UploadFailed ||
-            (doc.state == DocState.InProgress && (doc.lines.any { it.scanned > 0.0 } || doc.extraLines.isNotEmpty()))
+            (doc.state == DocState.InProgress && doc.lines.any { it.scanned > 0.0 })
         }
     }
     val errors     = remember(filtered) { filtered.filter { it.state is DocState.UploadFailed } }
@@ -116,12 +123,12 @@ fun DocumentListScreen(
 
     fun handleDocScan(barcode: String) {
         val found = documents.firstOrNull { it.documentNo == barcode }
-        if (found != null) onDocTap(found) else createDocNo = barcode
+        if (found != null) onDocTap(found) else docNotFoundError = barcode
     }
 
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
-            title = docType.display,
+            title = docType.localizedDisplay(),
             subtitle = if (docTypeCode.isNotBlank()) "$locationCode · $docTypeCode" else locationCode,
             onBack = onBack,
             actions = {
@@ -297,28 +304,13 @@ fun DocumentListScreen(
         }
     }
 
-    createDocNo?.let { no ->
+    docNotFoundError?.let { no ->
         AlertDialog(
-            onDismissRequest = { createDocNo = null },
-            title = { Text(stringResource(R.string.doc_list_create_title)) },
+            onDismissRequest = { docNotFoundError = null },
+            title = { Text(stringResource(R.string.doc_list_create_title), fontWeight = FontWeight.Bold) },
             text = { Text(stringResource(R.string.doc_list_create_text, no)) },
             confirmButton = {
-                Column(horizontalAlignment = Alignment.End) {
-                    Button(
-                        onClick = { onCreateDoc(no, locationCode); createDocNo = null },
-                        enabled = canCreateDoc,
-                    ) { Text(stringResource(R.string.btn_create)) }
-                    if (!canCreateDoc) {
-                        Text(
-                            stringResource(R.string.doc_create_blocked_hint),
-                            style = monoLabel.copy(color = PrimaPalette.Ink3),
-                            modifier = Modifier.padding(top = 4.dp, end = 4.dp),
-                        )
-                    }
-                }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = { createDocNo = null }) { Text(stringResource(R.string.btn_cancel)) }
+                Button(onClick = { docNotFoundError = null }) { Text(stringResource(R.string.btn_ok)) }
             },
         )
     }

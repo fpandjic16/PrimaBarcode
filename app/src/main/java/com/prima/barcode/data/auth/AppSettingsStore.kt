@@ -22,9 +22,6 @@ class AppSettingsStore @Inject constructor(@param:ApplicationContext private val
         debounceTime     = prefs.getInt("debounceTime", 500),
         hapticEnabled    = prefs.getBoolean("hapticEnabled", true),
         warnOnOver          = prefs.getBoolean("warnOnOver", true),
-        warnNotOnDocument   = prefs.getBoolean("warnNotOnDocument", true),
-        askQtyForUnknownBarcode = prefs.getBoolean("askQtyForUnknownBarcode", true),
-        autoUploadCompleted = prefs.getBoolean("autoUploadCompleted", false),
         backgroundSync      = prefs.getBoolean("backgroundSync", false),
         lastLocationCode = prefs.getString("lastLocationCode", "") ?: "",
         lastRcCode       = prefs.getString("lastRcCode", "") ?: "",
@@ -52,9 +49,6 @@ class AppSettingsStore @Inject constructor(@param:ApplicationContext private val
             .putInt    ("debounceTime",        settings.debounceTime)
             .putBoolean("hapticEnabled",      settings.hapticEnabled)
             .putBoolean("warnOnOver",          settings.warnOnOver)
-            .putBoolean("warnNotOnDocument",   settings.warnNotOnDocument)
-            .putBoolean("askQtyForUnknownBarcode", settings.askQtyForUnknownBarcode)
-            .putBoolean("autoUploadCompleted", settings.autoUploadCompleted)
             .putBoolean("backgroundSync",      settings.backgroundSync)
             .putString ("lastLocationCode",   settings.lastLocationCode)
             .putString ("lastRcCode",         settings.lastRcCode)

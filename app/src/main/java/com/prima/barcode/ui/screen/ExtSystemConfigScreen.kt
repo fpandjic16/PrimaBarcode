@@ -23,6 +23,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.prima.barcode.data.auth.ExtSystemConfig
 import com.prima.barcode.data.auth.ExtSystemCredentials
+import com.prima.barcode.data.auth.ExtSystemDefaultsCompany
 import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.ui.component.PrimaTopBar
@@ -54,8 +55,9 @@ fun ExtSystemConfigScreen(
     initial: ExtSystemConfig,
     onSave: (ExtSystemConfig) -> Unit,
     onDiscard: () -> Unit = {},
-    loadDefaults: () -> ExtSystemConfig? = { null },
-    getDefaultsJsonText: () -> String? = { null },
+    loadDefaults: (fileName: String) -> ExtSystemConfig? = { null },
+    getDefaultsJsonText: (fileName: String) -> String? = { null },
+    listCompanies: () -> List<ExtSystemDefaultsCompany> = { emptyList() },
     disabledDocTypes: Set<String> = emptySet(),
     onDisabledDocTypesChange: (Set<String>) -> Unit = {},
     docTypeFilters: Map<String, DocTypeFilterMode> = emptyMap(),
@@ -86,6 +88,9 @@ fun ExtSystemConfigScreen(
     var testResult     by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
     var showExitDialog by remember { mutableStateOf(false) }
     var showLoadDialog by remember { mutableStateOf(false) }
+    var showCompanyPickDialog by remember { mutableStateOf(false) }
+    var companyPickForDownload by remember { mutableStateOf(false) }
+    var downloadFileName by remember { mutableStateOf("") }
 
     val context = LocalContext.current
 
@@ -133,7 +138,7 @@ fun ExtSystemConfigScreen(
 
     val downloadLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
-            val text = getDefaultsJsonText()
+            val text = getDefaultsJsonText(downloadFileName)
             val written = text != null && runCatching {
                 context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
             }.isSuccess
@@ -376,13 +381,8 @@ fun ExtSystemConfigScreen(
                     Button(
                         onClick = {
                             showLoadDialog = false
-                            val defaults = loadDefaults()
-                            if (defaults != null) {
-                                applyConfig(defaults)
-                                Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, "Could not load ext_system_defaults.json", Toast.LENGTH_LONG).show()
-                            }
+                            companyPickForDownload = false
+                            showCompanyPickDialog = true
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -391,7 +391,8 @@ fun ExtSystemConfigScreen(
                     OutlinedButton(
                         onClick = {
                             showLoadDialog = false
-                            downloadLauncher.launch("ext_system_defaults.json")
+                            companyPickForDownload = true
+                            showCompanyPickDialog = true
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -408,6 +409,55 @@ fun ExtSystemConfigScreen(
                     }
                     TextButton(
                         onClick = { showLoadDialog = false },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                }
+            }
+        }
+    }
+
+    if (showCompanyPickDialog) {
+        Dialog(onDismissRequest = { showCompanyPickDialog = false }) {
+            Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(stringResource(R.string.ext_config_pick_company_title), fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(4.dp))
+                    val companies = remember { listCompanies() }
+                    if (companies.isEmpty()) {
+                        Text(
+                            stringResource(R.string.ext_config_no_companies_found),
+                            style = monoLabel.copy(color = PrimaPalette.Ink3),
+                        )
+                    }
+                    companies.forEach { company ->
+                        OutlinedButton(
+                            onClick = {
+                                showCompanyPickDialog = false
+                                if (companyPickForDownload) {
+                                    downloadFileName = company.assetFileName
+                                    downloadLauncher.launch(company.assetFileName)
+                                } else {
+                                    val defaults = loadDefaults(company.assetFileName)
+                                    if (defaults != null) {
+                                        applyConfig(defaults)
+                                        Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, "Could not load ${company.assetFileName}", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(company.label, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                    TextButton(
+                        onClick = { showCompanyPickDialog = false },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(stringResource(android.R.string.cancel))

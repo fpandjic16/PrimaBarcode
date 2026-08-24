@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.MoveToInbox
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Store
 import androidx.compose.material3.Icon
@@ -46,11 +48,19 @@ import com.prima.barcode.R
 
 data class DocTypeSummary(
     val type: DocumentType,
-    val short: String,
     val count: Int,
     val statusMini: List<LineStatus>,
     val blocked: Boolean = false,
 )
+
+@Composable
+private fun DocumentType.localizedDisplay(): String = when (this) {
+    DocumentType.WAREHOUSE_SHIPMENT -> stringResource(R.string.doctype_warehouse_shipment)
+    DocumentType.WAREHOUSE_RECEIPT  -> stringResource(R.string.doctype_warehouse_receipt)
+    DocumentType.RETAIL_SHIPMENT    -> stringResource(R.string.doctype_retail_shipment)
+    DocumentType.RETAIL_RECEIPT     -> stringResource(R.string.doctype_retail_receipt)
+    DocumentType.TRANSPORT_SHEET    -> stringResource(R.string.doctype_transport_sheet)
+}
 
 @Composable
 fun MainMenuScreen(
@@ -68,11 +78,28 @@ fun MainMenuScreen(
     onTypeTap: (DocumentType) -> Unit,
     onDocumentOverview: () -> Unit,
     onShowErrors: () -> Unit = {},
+    onUserInfoTap: () -> Unit = {},
 ) {
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
-            title = "Prima Barcode",
-            subtitle = user?.displayName.orEmpty(),
+            title = user?.displayName ?: stringResource(R.string.settings_not_signed_in),
+            leading = {
+                Box(
+                    modifier = Modifier
+                        .padding(start = 8.dp, top = 2.dp, bottom = 2.dp, end = 4.dp)
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(if (user != null) PrimaPalette.Coral else Color(0x20FFFFFF))
+                        .clickable(onClick = onUserInfoTap),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (user != null) {
+                        Text(user.initials, style = monoLabel.copy(color = Color.White, fontWeight = FontWeight.Bold))
+                    } else {
+                        Icon(Icons.Outlined.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                    }
+                }
+            },
             actions = {
                 IconButton(onClick = onOpenSettings, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Outlined.Settings, "Settings", tint = Color.White, modifier = Modifier.size(28.dp))
@@ -187,7 +214,7 @@ private fun DocumentTypeList(summary: DocTypeSummary, onClick: () -> Unit) {
         ) { Icon(icon, contentDescription = null, tint = PrimaPalette.Slate) }
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(summary.type.display.uppercased, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium))
+            Text(summary.type.localizedDisplay().uppercased, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium))
             if (summary.statusMini.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
                 StatusProgressBar(segments = summary.statusMini, height = 4.dp, gap = 2.dp)

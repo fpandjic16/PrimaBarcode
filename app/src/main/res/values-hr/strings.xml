@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PrimaBarcode</string>
+    <string name="app_name">Prima Barcode</string>
     <!-- Common -->
     <string name="btn_ok">U redu</string>
     <string name="btn_cancel">Odustani</string>
@@ -9,14 +9,12 @@
     <string name="btn_reset">Poništi</string>
     <string name="btn_download">Preuzmi</string>
     <string name="btn_upload">Učitaj</string>
-    <string name="btn_create">Stvori</string>
-    <string name="doc_create_blocked_hint">Odaberite lokaciju za kreiranje dokumenata</string>
     <string name="btn_clear">Obriši</string>
     <string name="btn_retry_upload">Pokušaj ponovo</string>
     <string name="btn_sign_in">Prijavi se</string>
     <string name="btn_sign_in_sync">Prijavi se i sinkroniziraj</string>
     <!-- Dashboard -->
-    <string name="dashboard_today">DANAS (skenirane linije)</string>
+    <string name="dashboard_today">DANAS\n(skenirane linije)</string>
     <string name="dashboard_pill_ready">gotovo</string>
     <string name="dashboard_pill_partial">djelomično</string>
     <string name="dashboard_pill_error">greška</string>
@@ -41,7 +39,7 @@
     <string name="doc_list_empty">Nema dokumenata</string>
     <string name="doc_list_scan_placeholder">Skeniraj broj dokumenta…</string>
     <string name="doc_list_create_title">Dokument nije pronađen</string>
-    <string name="doc_list_create_text">Dokument "%s" ne postoji. Želite li ga stvoriti?</string>
+    <string name="doc_list_create_text">Dokument "%s" ne postoji. Prvo preuzmite dokumente iz ERP-a, a zatim započnite skeniranje.</string>
     <string name="doc_chip_error">Greška</string>
     <string name="doc_status_empty">Prazno</string>
     <string name="doc_status_partial">Djelomično</string>
@@ -78,14 +76,8 @@
     <string name="upload_error_line_plural">%d redaka</string>
     <!-- Recording -->
     <string name="recording_title">Snimanje</string>
-    <string name="recording_not_on_doc_badge">NIJE NA DOKUMENTU</string>
-    <string name="recording_not_on_doc">Nije na dokumentu</string>
-    <string name="recording_not_listed">Nije navedeno u ovom dokumentu. Količina će biti evidentirana zasebno i označena za pregled.</string>
-    <string name="recording_will_be_added">BIT ĆE DODANO</string>
-    <string name="recording_type_a_value">Unesite vrijednost</string>
-    <string name="recording_type_a_quantity">Unesite količinu</string>
-    <string name="recording_remove">Ukloni</string>
-    <string name="recording_uom_prefix">JM: </string>
+    <string name="recording_barcode_not_found_title">Barkod nije pronađen</string>
+    <string name="recording_barcode_not_found_text">Barkod %s ne postoji na ovom dokumentu.</string>
     <string name="recording_barcode_prefix">Barkod: </string>
     <string name="status_chip_empty">PRAZNO</string>
     <string name="status_chip_partial">DJELOMIČNO</string>
@@ -140,8 +132,6 @@
     <string name="settings_warn_over_desc">Potvrdi kada skenirana količina premašuje očekivanu</string>
     <string name="settings_last_scanned">Zadnji skenirani redci</string>
     <string name="settings_last_scanned_desc">Redci prikazani u vrpci skeniranja (0 = skriveno)</string>
-    <string name="settings_auto_upload">Automatsko učitavanje završenih dok.</string>
-    <string name="settings_auto_upload_desc">Učitaj automatski kada su skenirani svi redci</string>
     <string name="settings_wifi_only">Sinkroniziraj samo putem Wi-Fi</string>
     <string name="settings_wifi_only_desc">Ne koristi mobilne podatke za sinkronizaciju</string>
     <string name="settings_test_signin">Testna prijava</string>
@@ -168,10 +158,13 @@
     <string name="login_password">Lozinka</string>
     <string name="login_show_password">Prikaži lozinku</string>
     <string name="login_hide_password">Sakrij lozinku</string>
-    <string name="login_footer">Vjerodajnice šifrirane s AES-256-GCM · Vanjski sustav</string>
+    <string name="login_footer">Vjerodajnice pohranjene šifrirano s AES-256-GCM za %s.</string>
     <string name="login_ttl_hours">%d sati</string>
     <string name="login_ttl_days">%d dana</string>
-    <string name="login_session_info">Sesija pohranjena šifrirano za %s</string>
+    <!-- User info -->
+    <string name="user_info_title">Podaci o korisniku</string>
+    <string name="user_info_id">ID korisnika</string>
+    <string name="user_info_name">Ime</string>
     <!-- Download filter -->
     <string name="download_error_title">Preuzimanje nije uspjelo</string>
     <string name="download_title">Preuzimanje</string>
@@ -216,6 +209,8 @@
     <string name="ext_config_recording_url">URL sinkronizacije snimanja</string>
     <string name="ext_config_load_title">Učitaj konfiguraciju</string>
     <string name="ext_config_load_desc">Učitajte ugrađene zadane vrijednosti ili uvezite JSON datoteku s uređaja.</string>
+    <string name="ext_config_pick_company_title">Odaberi tvrtku</string>
+    <string name="ext_config_no_companies_found">Nisu pronađene ugrađene konfiguracije</string>
     <string name="ext_config_load_builtin">Učitaj ugrađene zadane vrijednosti</string>
     <string name="ext_config_download_builtin">Preuzmi ugrađene zadane vrijednosti</string>
     <string name="ext_config_load_from_file">Uvezi iz datoteke</string>

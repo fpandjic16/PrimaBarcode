@@ -10,6 +10,7 @@ import com.prima.barcode.data.auth.ExtSystemConfig
 import com.prima.barcode.data.auth.ExtSystemConfigStore
 import com.prima.barcode.data.auth.ExtSystemCredentialStore
 import com.prima.barcode.data.auth.ExtSystemCredentials
+import com.prima.barcode.data.auth.ExtSystemDefaultsCompany
 import com.prima.barcode.data.db.LocationDao
 import com.prima.barcode.data.db.LocationEntity
 import com.prima.barcode.data.db.ResponsibilityCenterEntity
@@ -286,19 +287,41 @@ class AppViewModel @Inject constructor(
         )
     }.onFailure { Timber.w(it, "parseExtSystemConfigJson failed") }.getOrNull()
 
-    /** Loads predefined parameters from the bundled asset `ext_system_defaults.json`. */
-    fun loadExtSystemDefaults(): ExtSystemConfig? = runCatching {
-        appContext.assets.open("ext_system_defaults.json")
+    /** Loads predefined parameters from a bundled `ext_system_defaults_*.json` asset. */
+    fun loadExtSystemDefaults(fileName: String): ExtSystemConfig? = runCatching {
+        appContext.assets.open(fileName)
             .bufferedReader(Charsets.UTF_8).use { it.readText() }
-    }.onFailure { Timber.w(it, "Failed to load ext_system_defaults.json") }
+    }.onFailure { Timber.w(it, "Failed to load $fileName") }
      .getOrNull()
      ?.let { parseExtSystemConfigJson(it) }
 
-    /** Raw text of the bundled `ext_system_defaults.json` asset, for "download as file". */
-    fun getExtSystemDefaultsJsonText(): String? = runCatching {
-        appContext.assets.open("ext_system_defaults.json")
+    /** Raw text of a bundled `ext_system_defaults_*.json` asset, for "download as file". */
+    fun getExtSystemDefaultsJsonText(fileName: String): String? = runCatching {
+        appContext.assets.open(fileName)
             .bufferedReader(Charsets.UTF_8).use { it.readText() }
-    }.onFailure { Timber.w(it, "Failed to read ext_system_defaults.json") }.getOrNull()
+    }.onFailure { Timber.w(it, "Failed to read $fileName") }.getOrNull()
+
+    /**
+     * Scans bundled assets for `ext_system_defaults_*.json` files and reads each one's
+     * `companyName` field, so the "Load built-in defaults" picker always matches whatever
+     * files are actually bundled — adding a company is just adding a new asset file, no
+     * code change needed.
+     */
+    fun listExtSystemDefaultsCompanies(): List<ExtSystemDefaultsCompany> = runCatching {
+        appContext.assets.list("")
+            ?.filter { it.startsWith("ext_system_defaults_") && it.endsWith(".json") }
+            ?.sorted()
+            ?.mapNotNull { fileName ->
+                val text = runCatching {
+                    appContext.assets.open(fileName).bufferedReader(Charsets.UTF_8).use { it.readText() }
+                }.getOrNull() ?: return@mapNotNull null
+                val name = runCatching { gson.fromJson(text, CompanyNameDto::class.java).companyName }.getOrNull()
+                if (name.isNullOrBlank()) null else ExtSystemDefaultsCompany(label = name, assetFileName = fileName)
+            }
+            ?: emptyList()
+    }.onFailure { Timber.w(it, "Failed to list ext_system_defaults companies") }.getOrDefault(emptyList())
+
+    private data class CompanyNameDto(val companyName: String? = null)
 
     private data class ExtSystemDefaultsDto(
         val serverBaseUrl: String? = null,
@@ -401,10 +424,6 @@ class AppViewModel @Inject constructor(
         }
     }
 
-    fun createDocument(doc: Document) {
-        viewModelScope.launch { repository.upsertDocument(doc) }
-    }
-
     fun clearDocumentRecordings(documentNo: String, type: DocumentType) {
         viewModelScope.launch {
             repository.deleteDocumentRecordings(documentNo, type.key)
@@ -418,7 +437,7 @@ class AppViewModel @Inject constructor(
                 .forEach { doc ->
                     val resetState = when {
                         doc.lines.all { it.scanned >= it.expected && it.expected > 0 } -> DocState.Completed
-                        doc.lines.any { it.scanned > 0 } || doc.extraLines.isNotEmpty() -> DocState.InProgress
+                        doc.lines.any { it.scanned > 0 } -> DocState.InProgress
                         else -> DocState.Downloaded
                     }
                     repository.updateDocState(doc.documentNo, doc.type.key, resetState)

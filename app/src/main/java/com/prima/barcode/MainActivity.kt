@@ -11,6 +11,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -52,7 +54,6 @@ import com.prima.barcode.data.barcode.DataWedgeManager
 import com.prima.barcode.data.extsystem.ExtSystemResult
 import com.prima.barcode.data.model.DocState
 import com.prima.barcode.data.model.DocTypeFilterMode
-import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.DocumentFilter
 import com.prima.barcode.data.model.DownloadFilter
 import com.prima.barcode.data.model.DocumentType
@@ -71,6 +72,7 @@ import com.prima.barcode.ui.screen.LoginSheet
 import com.prima.barcode.ui.screen.MainMenuScreen
 import com.prima.barcode.ui.screen.RecordingScreen
 import com.prima.barcode.ui.screen.SettingsScreen
+import com.prima.barcode.ui.screen.UserInfoScreen
 import com.prima.barcode.ui.theme.Language
 import com.prima.barcode.ui.theme.PrimaBarcodeTheme
 import com.prima.barcode.ui.theme.TextSize
@@ -86,12 +88,24 @@ import java.time.format.DateTimeFormatter
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         hideNavBar()
         DataWedgeManager.configure(this)
         setContent {
+            // Showing the IME re-shows the nav bar on many devices/OS versions even though we
+            // asked for it hidden — re-hide it whenever the keyboard becomes visible so it
+            // doesn't linger onscreen for the whole time the user is typing. Reading this via
+            // Compose's own WindowInsets (rather than a View-level OnApplyWindowInsetsListener
+            // on the decor view) avoids interfering with how insets propagate to Compose's own
+            // status-bar padding.
+            val imeVisible = WindowInsets.isImeVisible
+            LaunchedEffect(imeVisible) {
+                if (imeVisible) hideNavBar()
+            }
+
             val appVm: AppViewModel = hiltViewModel()
             val initialSettings = remember { appVm.loadSettings() }
             var textSize         by remember { mutableStateOf(initialSettings.textSize) }
@@ -102,9 +116,6 @@ class MainActivity : AppCompatActivity() {
             var debounceTime     by remember { mutableStateOf(initialSettings.debounceTime) }
             var hapticEnabled     by remember { mutableStateOf(initialSettings.hapticEnabled) }
             var warnOnOver       by remember { mutableStateOf(initialSettings.warnOnOver) }
-            var warnNotOnDocument by remember { mutableStateOf(initialSettings.warnNotOnDocument) }
-            var askQtyForUnknownBarcode by remember { mutableStateOf(initialSettings.askQtyForUnknownBarcode) }
-            var autoUploadCompleted by remember { mutableStateOf(initialSettings.autoUploadCompleted) }
             var backgroundSync   by remember { mutableStateOf(initialSettings.backgroundSync) }
             var disabledDocTypes by remember { mutableStateOf(initialSettings.disabledDocTypes) }
             var docTypeFilters    by remember { mutableStateOf(initialSettings.docTypeFilters) }
@@ -121,9 +132,6 @@ class MainActivity : AppCompatActivity() {
                 debounceTime     = debounceTime,
                 hapticEnabled    = hapticEnabled,
                 warnOnOver          = warnOnOver,
-                warnNotOnDocument   = warnNotOnDocument,
-                askQtyForUnknownBarcode = askQtyForUnknownBarcode,
-                autoUploadCompleted = autoUploadCompleted,
                 backgroundSync      = backgroundSync,
                 lastLocationCode = locationCode,
                 lastRcCode       = rcCode,
@@ -147,9 +155,6 @@ class MainActivity : AppCompatActivity() {
                 debounceTime = s.debounceTime
                 hapticEnabled = s.hapticEnabled
                 warnOnOver = s.warnOnOver
-                warnNotOnDocument = s.warnNotOnDocument
-                askQtyForUnknownBarcode = s.askQtyForUnknownBarcode
-                autoUploadCompleted = s.autoUploadCompleted
                 backgroundSync = s.backgroundSync
                 debuggerActive = s.debuggerActive
                 appVm.saveSettings(s)
@@ -169,9 +174,6 @@ class MainActivity : AppCompatActivity() {
                     debounceTime              = debounceTime,
                     hapticEnabled             = hapticEnabled,
                     warnOnOver                = warnOnOver,
-                    warnNotOnDocument         = warnNotOnDocument,
-                    askQtyForUnknownBarcode   = askQtyForUnknownBarcode,
-                    autoUploadCompleted       = autoUploadCompleted,
                     backgroundSync            = backgroundSync,
                     disabledDocTypes          = disabledDocTypes,
                     onDisabledDocTypesChange  = { disabledDocTypes = it; appVm.saveSettings(buildSettings().copy(disabledDocTypes = it)) },
@@ -214,9 +216,6 @@ private fun PrimaBarcodeApp(
     debounceTime: Int,
     hapticEnabled: Boolean,
     warnOnOver: Boolean,
-    warnNotOnDocument: Boolean,
-    askQtyForUnknownBarcode: Boolean,
-    autoUploadCompleted: Boolean,
     backgroundSync: Boolean,
     disabledDocTypes: Set<String>,
     onDisabledDocTypesChange: (Set<String>) -> Unit,
@@ -276,13 +275,6 @@ private fun PrimaBarcodeApp(
 
     val locationsManaged = extSystemConfig.locationsUrl.isNotBlank()
     val docTypes = DocumentType.entries.map { type ->
-        val short = when (type) {
-            DocumentType.WAREHOUSE_SHIPMENT -> "Warehouse to Store"
-            DocumentType.WAREHOUSE_RECEIPT  -> "Supplier to Warehouse"
-            DocumentType.RETAIL_SHIPMENT    -> "Store to Customer"
-            DocumentType.RETAIL_RECEIPT     -> "Store to Warehouse"
-            DocumentType.TRANSPORT_SHEET    -> "Transfer sheet"
-        }
         val filterMode = docTypeFilters[type.key] ?: DocTypeFilterMode.LOCATION
         val blocked = locationsManaged && when (filterMode) {
             DocTypeFilterMode.LOCATION -> locations.isEmpty()
@@ -290,7 +282,6 @@ private fun PrimaBarcodeApp(
         }
         DocTypeSummary(
             type = type,
-            short = short,
             count = filteredDocs.count { it.type == type },
             statusMini = filteredDocs.filter { it.type == type }.mapNotNull { doc ->
                 when {
@@ -303,7 +294,7 @@ private fun PrimaBarcodeApp(
         )
     }.filter { it.type.key !in disabledDocTypes }
 
-    val shiftScans  = filteredDocs.sumOf { d -> d.lines.count { it.scanned > 0 } + d.extraLines.size }
+    val shiftScans  = filteredDocs.sumOf { d -> d.lines.count { it.scanned > 0 } }
     val errorDocs   = filteredDocs.filter { it.state is DocState.UploadFailed }
     val readyDocs   = filteredDocs.filter { it.state !is DocState.UploadFailed && it.scanStatus() == LineStatus.EXACT }
     val partialDocs = filteredDocs.filter { it.state !is DocState.UploadFailed && it.scanStatus() == LineStatus.PARTIAL }
@@ -333,6 +324,7 @@ private fun PrimaBarcodeApp(
 
     var showUploadLoginSheet by remember { mutableStateOf(false) }
     var pendingUploadAction  by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var showMainLoginSheet   by remember { mutableStateOf(false) }
 
     fun requireCredentials(action: () -> Unit) {
         if (appVm.extSystemCredentialStore.isValid()) {
@@ -373,6 +365,19 @@ private fun PrimaBarcodeApp(
                 },
                 onDocumentOverview = { nav.navigate("dashboard?tab=1") },
                 onShowErrors = { nav.navigate("dashboard") },
+                onUserInfoTap = {
+                    if (appVm.extSystemCredentialStore.isValid()) nav.navigate("user_info")
+                    else showMainLoginSheet = true
+                },
+            )
+        }
+        composable("user_info") {
+            UserInfoScreen(
+                user = user,
+                location = location,
+                rc = rc,
+                onBack = { nav.popBackStack() },
+                onSignOut = { appVm.signOut(); nav.popBackStack() },
             )
         }
         composable("location_rc_pick") {
@@ -416,8 +421,9 @@ private fun PrimaBarcodeApp(
                     nav.popBackStack()
                 },
                 onDiscard = { nav.popBackStack() },
-                loadDefaults = { appVm.loadExtSystemDefaults() },
-                getDefaultsJsonText = { appVm.getExtSystemDefaultsJsonText() },
+                loadDefaults = { fileName -> appVm.loadExtSystemDefaults(fileName) },
+                listCompanies = { appVm.listExtSystemDefaultsCompanies() },
+                getDefaultsJsonText = { fileName -> appVm.getExtSystemDefaultsJsonText(fileName) },
                 disabledDocTypes = disabledDocTypes,
                 onDisabledDocTypesChange = onDisabledDocTypesChange,
                 docTypeFilters = docTypeFilters,
@@ -452,9 +458,6 @@ private fun PrimaBarcodeApp(
                 debounceTime = debounceTime,
                 hapticEnabled = hapticEnabled,
                 warnOnOver = warnOnOver,
-                warnNotOnDocument = warnNotOnDocument,
-                askQtyForUnknownBarcode = askQtyForUnknownBarcode,
-                autoUploadCompleted = autoUploadCompleted,
                 backgroundSync = backgroundSync,
                 lastLocationCode = locationCode,
                 lastRcCode = rcCode,
@@ -470,9 +473,10 @@ private fun PrimaBarcodeApp(
                 onSave = { s -> onSettingsSaved(s); nav.popBackStack() },
                 onDiscard = { nav.popBackStack() },
                 onSaveExtSystemConfig = { config -> appVm.saveExtSystemConfig(config) },
-                loadExtSystemConfigDefaults = { appVm.loadExtSystemDefaults() },
+                loadExtSystemConfigDefaults = { fileName -> appVm.loadExtSystemDefaults(fileName) },
+                listExtSystemDefaultsCompanies = { appVm.listExtSystemDefaultsCompanies() },
                 parseExtSystemConfigJson = { json -> appVm.parseExtSystemConfigJson(json) },
-                getExtSystemDefaultsJsonText = { appVm.getExtSystemDefaultsJsonText() },
+                getExtSystemDefaultsJsonText = { fileName -> appVm.getExtSystemDefaultsJsonText(fileName) },
                 onExport = {
                     val ts = exportTimestampFmt.format(Instant.now())
                     exportLauncher.launch("prima_export_${ts}.json")
@@ -495,11 +499,6 @@ private fun PrimaBarcodeApp(
                             DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
                         }
                     )
-            }
-            val createFilterMode = docTypeFilters[selectedDocType.key] ?: DocTypeFilterMode.LOCATION
-            val canCreateDoc = when (createFilterMode) {
-                DocTypeFilterMode.LOCATION -> locationCode.isNotBlank()
-                DocTypeFilterMode.RESPONSIBILITY_CENTER -> rcCode.isNotBlank()
             }
             DocumentListScreen(
                 docType = selectedDocType,
@@ -530,21 +529,6 @@ private fun PrimaBarcodeApp(
                     }
                 },
                 onErrorTap = { doc -> nav.navigate("upload_error/${doc.documentNo}") },
-                canCreateDoc = canCreateDoc,
-                onCreateDoc = { docNo, srcCode ->
-                    val newDoc = Document(
-                        documentNo       = docNo,
-                        type             = selectedDocType,
-                        destinationCode  = "",
-                        sourceCode       = srcCode,
-                        rcCode           = rcCode,
-                        creationDateTime = Instant.now(),
-                        lines            = emptyList(),
-                        state            = DocState.Downloaded,
-                    )
-                    appVm.createDocument(newDoc)
-                    nav.navigate("recording/$docNo/${selectedDocType.key}")
-                },
                 onDeleteRecordings = { doc -> appVm.clearDocumentRecordings(doc.documentNo, doc.type) },
                 onClearErrors = { appVm.clearErrorDocs() },
                 filter = docFilter,
@@ -666,9 +650,6 @@ private fun PrimaBarcodeApp(
                         }
                     },
                     onLineUpdate = { lineNo, newScanned -> vm.setLineScanned(lineNo, newScanned, user?.id.orEmpty()) },
-                    onExtraLineAdd = { barcodeNo, quantity -> vm.addExtraLine(barcodeNo, user?.id.orEmpty(), quantity) },
-                    onExtraLineUpdate = { recordingLineNo, quantity -> vm.updateExtraLineQuantity(recordingLineNo, quantity) },
-                    onExtraLineDelete = { recordingLineNo -> vm.deleteExtraLine(recordingLineNo) },
                     onUpload = {
                         requireCredentials {
                             if (backgroundSync) {
@@ -694,9 +675,6 @@ private fun PrimaBarcodeApp(
                     hapticEnabled = hapticEnabled,
                     debounceTime = debounceTime,
                     warnOnOver = warnOnOver,
-                    warnNotOnDocument = warnNotOnDocument,
-                    askQtyForUnknownBarcode = askQtyForUnknownBarcode,
-                    autoUploadCompleted = autoUploadCompleted,
                 )
             }
         }
@@ -801,6 +779,18 @@ private fun PrimaBarcodeApp(
                 appVm.saveCredentials(u, p)
                 pendingUploadAction?.invoke()
                 pendingUploadAction = null
+            },
+        )
+    }
+
+    if (showMainLoginSheet) {
+        LoginSheet(
+            credentialTtlHours = extSystemConfig.credentialTtlHours,
+            ctaLabel           = "Sign in",
+            onDismiss          = { showMainLoginSheet = false },
+            onSubmit           = { u, p ->
+                showMainLoginSheet = false
+                appVm.saveCredentials(u, p)
             },
         )
     }

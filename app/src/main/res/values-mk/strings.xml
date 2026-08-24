@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PrimaBarcode</string>
+    <string name="app_name">Prima Barcode</string>
     <!-- Common -->
     <string name="btn_ok">Во ред</string>
     <string name="btn_cancel">Откажи</string>
@@ -9,14 +9,12 @@
     <string name="btn_reset">Ресетирај</string>
     <string name="btn_download">Преземи</string>
     <string name="btn_upload">Прикачи</string>
-    <string name="btn_create">Создај</string>
-    <string name="doc_create_blocked_hint">Изберете локација за да создадете документи</string>
     <string name="btn_clear">Исчисти</string>
     <string name="btn_retry_upload">Обиди се повторно</string>
     <string name="btn_sign_in">Најави се</string>
     <string name="btn_sign_in_sync">Најави се и синхронизирај</string>
     <!-- Dashboard -->
-    <string name="dashboard_today">ДЕНЕС (скенирани ставки)</string>
+    <string name="dashboard_today">ДЕНЕС\n(скенирани ставки)</string>
     <string name="dashboard_pill_ready">завршено</string>
     <string name="dashboard_pill_partial">делумно</string>
     <string name="dashboard_pill_error">грешка</string>
@@ -41,7 +39,7 @@
     <string name="doc_list_empty">Нема документи</string>
     <string name="doc_list_scan_placeholder">Скенирај број на документ…</string>
     <string name="doc_list_create_title">Документот не е пронајден</string>
-    <string name="doc_list_create_text">Документот „%s“ не постои. Дали сакате да го создадете?</string>
+    <string name="doc_list_create_text">Документот „%s“ не постои. Прво преземете ги документите од ERP, па потоа започнете со скенирање.</string>
     <string name="doc_chip_error">Грешка</string>
     <string name="doc_status_empty">Празно</string>
     <string name="doc_status_partial">Делумно</string>
@@ -78,14 +76,8 @@
     <string name="upload_error_line_plural">%d ставки</string>
     <!-- Recording -->
     <string name="recording_title">Снимање</string>
-    <string name="recording_not_on_doc_badge">НЕ Е НА ДОКУМЕНТ</string>
-    <string name="recording_not_on_doc">Не е на документ</string>
-    <string name="recording_not_listed">Не е наведено во овој документ. Количината ќе биде евидентирана посебно и означена за преглед.</string>
-    <string name="recording_will_be_added">ЌЕ БИДЕ ДОДАДЕНО</string>
-    <string name="recording_type_a_value">Внесете вредност</string>
-    <string name="recording_type_a_quantity">Внесете количина</string>
-    <string name="recording_remove">Отстрани</string>
-    <string name="recording_uom_prefix">ЕМ: </string>
+    <string name="recording_barcode_not_found_title">Баркодот не е пронајден</string>
+    <string name="recording_barcode_not_found_text">Баркодот %s не постои на овој документ.</string>
     <string name="recording_barcode_prefix">Баркод: </string>
     <string name="status_chip_empty">ПРАЗНО</string>
     <string name="status_chip_partial">ДЕЛУМНО</string>
@@ -140,8 +132,6 @@
     <string name="settings_warn_over_desc">Потврди кога скенираната количина ја надминува очекуваната</string>
     <string name="settings_last_scanned">Последно скенирани ставки</string>
     <string name="settings_last_scanned_desc">Ставки прикажани во лентата за скенирање (0 = скриено)</string>
-    <string name="settings_auto_upload">Автоматско прикачување завршени док.</string>
-    <string name="settings_auto_upload_desc">Прикачи автоматски кога сите ставки се скенирани</string>
     <string name="settings_wifi_only">Синхронизирај само преку Wi-Fi</string>
     <string name="settings_wifi_only_desc">Не користи мобилни податоци за синхронизација</string>
     <string name="settings_test_signin">Тестна најава</string>
@@ -168,10 +158,13 @@
     <string name="login_password">Лозинка</string>
     <string name="login_show_password">Прикажи лозинка</string>
     <string name="login_hide_password">Сокриј лозинка</string>
-    <string name="login_footer">Акредитивите се шифрирани со AES-256-GCM · Надворешен систем</string>
+    <string name="login_footer">Акредитивите се зачувани шифрирано со AES-256-GCM за %s.</string>
     <string name="login_ttl_hours">%d часа</string>
     <string name="login_ttl_days">%d дена</string>
-    <string name="login_session_info">Сесијата е зачувана шифрирано за %s</string>
+    <!-- User info -->
+    <string name="user_info_title">Информации за корисник</string>
+    <string name="user_info_id">Кориснички ID</string>
+    <string name="user_info_name">Име</string>
     <!-- Download filter -->
     <string name="download_error_title">Преземањето не успеа</string>
     <string name="download_title">Преземање</string>
@@ -216,6 +209,8 @@
     <string name="ext_config_recording_url">URL за синхронизација на снимања</string>
     <string name="ext_config_load_title">Вчитај конфигурација</string>
     <string name="ext_config_load_desc">Вчитајте ги вградените стандардни вредности или увезете прилагодена JSON датотека од уредот.</string>
+    <string name="ext_config_pick_company_title">Изберете компанија</string>
+    <string name="ext_config_no_companies_found">Не се пронајдени вградени конфигурации</string>
     <string name="ext_config_load_builtin">Вчитај вградени стандардни вредности</string>
     <string name="ext_config_download_builtin">Преземи вградени стандардни вредности</string>
     <string name="ext_config_load_from_file">Увези од датотека</string>

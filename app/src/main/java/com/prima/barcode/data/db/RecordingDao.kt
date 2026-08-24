@@ -20,9 +20,6 @@ interface RecordingDao {
     @Query("SELECT COALESCE(MAX(recordingLineNo), 0) + 1 FROM recordings WHERE documentNo = :documentNo AND type = :type AND documentLine = :documentLine")
     suspend fun getNextRecordingLineNo(documentNo: String, type: String, documentLine: Int): Int
 
-    @Query("SELECT * FROM recordings WHERE documentNo = :documentNo AND type = :type AND documentLine = 0 AND barcodeNo = :barcodeNo LIMIT 1")
-    suspend fun getExtraByBarcode(documentNo: String, type: String, barcodeNo: String): RecordingEntity?
-
     @Query("SELECT * FROM recordings WHERE documentNo = :documentNo AND type = :type")
     suspend fun getByDoc(documentNo: String, type: String): List<RecordingEntity>
 
@@ -37,9 +34,6 @@ interface RecordingDao {
 
     @Query("DELETE FROM recordings WHERE documentNo = :documentNo AND type = :type")
     suspend fun deleteAllForDoc(documentNo: String, type: String)
-
-    @Query("UPDATE recordings SET quantity = :quantity WHERE documentNo = :documentNo AND type = :type AND documentLine = :documentLine AND recordingLineNo = :recordingLineNo")
-    suspend fun updateQuantity(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int, quantity: Double)
 
     @Query("SELECT * FROM recordings")
     suspend fun getAll(): List<RecordingEntity>

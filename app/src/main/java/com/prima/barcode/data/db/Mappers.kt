@@ -3,7 +3,6 @@ package com.prima.barcode.data.db
 import com.prima.barcode.data.model.DocState
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.DocumentType
-import com.prima.barcode.data.model.ExtraLine
 import com.prima.barcode.data.model.Item
 import com.prima.barcode.data.model.Line
 import com.prima.barcode.data.model.Location
@@ -60,14 +59,6 @@ fun DocumentHeaderWithLines.toDomain(): Document = Document(
     lines = lines.sortedBy { it.lineNo }.map { lineEntity ->
         val scanned = recordings.filter { it.documentLine == lineEntity.lineNo }.sumOf { it.quantity }
         lineEntity.toDomain(scanned)
-    },
-    extraLines = recordings.filter { it.documentLine == 0 }.map { recording ->
-        ExtraLine(
-            recordingLineNo = recording.recordingLineNo,
-            barcodeNo = recording.barcodeNo,
-            quantity = recording.quantity,
-            unitOfMeasureCode = recording.unitOfMeasureCode,
-        )
     },
     state = document.docState.toDocState(),
 )

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.prima.barcode.data.model.DocumentFilter
 import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.LineStatus
@@ -78,6 +79,7 @@ fun DocumentFilterScreen(
     onBack: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     var dateFrom        by remember { mutableStateOf(initialFilter.dateFrom) }
     var dateTo          by remember { mutableStateOf(initialFilter.dateTo) }
@@ -101,7 +103,7 @@ fun DocumentFilterScreen(
     Column(modifier = Modifier
         .fillMaxSize()
         .background(PrimaPalette.Cream)
-        .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } }
+        .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus(); keyboardController?.hide() } }
     ) {
         PrimaTopBar(
             title    = stringResource(R.string.doc_filter_title),

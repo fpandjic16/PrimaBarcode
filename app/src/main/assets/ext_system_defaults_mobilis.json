@@ -1,0 +1,15 @@
+{
+  "companyName": "Prima Mobilis d.o.o.",
+  "serverBaseUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/",
+  "credentialTtlHours": 168,
+  "documentLinesUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
+  "documentTypeCodes": {
+    "WAREHOUSE_SHIPMENT": "SHIPMENT",
+    "WAREHOUSE_RECEIPT": "RECEIPT",
+    "RETAIL_SHIPMENT": "RETAILSHPT",
+    "RETAIL_RECEIPT": "RETAILRCPT",
+    "TRANSPORT_SHEET": "TRANSPORT"
+  },
+  "locationsUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/LocationList",
+  "recordingSyncUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppRecordings"
+}

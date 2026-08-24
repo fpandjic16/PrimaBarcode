@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.DownloadFilter
 import com.prima.barcode.data.model.Location
@@ -44,6 +45,15 @@ private fun Instant.toLocalDateDl(): LocalDate = atZone(ZoneId.systemDefault()).
 
 private enum class DlDateTarget { FROM, TO }
 
+@Composable
+private fun DocumentType.localizedDisplay(): String = when (this) {
+    DocumentType.WAREHOUSE_SHIPMENT -> stringResource(R.string.doctype_warehouse_shipment)
+    DocumentType.WAREHOUSE_RECEIPT  -> stringResource(R.string.doctype_warehouse_receipt)
+    DocumentType.RETAIL_SHIPMENT    -> stringResource(R.string.doctype_retail_shipment)
+    DocumentType.RETAIL_RECEIPT     -> stringResource(R.string.doctype_retail_receipt)
+    DocumentType.TRANSPORT_SHEET    -> stringResource(R.string.doctype_transport_sheet)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DownloadFilterScreen(
@@ -57,6 +67,7 @@ fun DownloadFilterScreen(
     onCancel: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     var dateFrom        by remember { mutableStateOf<LocalDate?>(null) }
     var dateTo          by remember { mutableStateOf<LocalDate?>(null) }
@@ -90,11 +101,11 @@ fun DownloadFilterScreen(
     Column(modifier = Modifier
         .fillMaxSize()
         .background(PrimaPalette.Cream)
-        .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } }
+        .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus(); keyboardController?.hide() } }
     ) {
         PrimaTopBar(
             title    = stringResource(R.string.download_title),
-            subtitle = docType?.display ?: stringResource(R.string.download_subtitle),
+            subtitle = docType?.localizedDisplay() ?: stringResource(R.string.download_subtitle),
             onBack   = onCancel,
         )
 

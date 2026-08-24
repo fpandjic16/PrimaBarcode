@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PrimaBarcode</string>
+    <string name="app_name">Prima Barcode</string>
     <!-- Common -->
     <string name="btn_ok">OK</string>
     <string name="btn_cancel">Cancel</string>
@@ -9,14 +9,12 @@
     <string name="btn_reset">Reset</string>
     <string name="btn_download">Download</string>
     <string name="btn_upload">Upload</string>
-    <string name="btn_create">Create</string>
-    <string name="doc_create_blocked_hint">Select a location to create documents</string>
     <string name="btn_clear">Clear</string>
     <string name="btn_retry_upload">Retry Upload</string>
     <string name="btn_sign_in">Sign in</string>
     <string name="btn_sign_in_sync">Sign in &amp; Sync</string>
     <!-- Dashboard -->
-    <string name="dashboard_today">TODAY (lines scanned)</string>
+    <string name="dashboard_today">TODAY\n(lines scanned)</string>
     <string name="dashboard_pill_ready">ready</string>
     <string name="dashboard_pill_partial">partial</string>
     <string name="dashboard_pill_error">error</string>
@@ -41,7 +39,7 @@
     <string name="doc_list_empty">No documents</string>
     <string name="doc_list_scan_placeholder">Scan document number…</string>
     <string name="doc_list_create_title">Document not found</string>
-    <string name="doc_list_create_text">Document "%s" does not exist. Do you want to create it?</string>
+    <string name="doc_list_create_text">Document "%s" does not exist. First download documents from ERP and then begin scanning.</string>
     <string name="doc_chip_error">Error</string>
     <string name="doc_status_empty">Empty</string>
     <string name="doc_status_partial">Partial</string>
@@ -78,14 +76,8 @@
     <string name="upload_error_line_plural">%d lines</string>
     <!-- Recording -->
     <string name="recording_title">Recording</string>
-    <string name="recording_not_on_doc_badge">NOT ON DOCUMENT</string>
-    <string name="recording_not_on_doc">Not on document</string>
-    <string name="recording_not_listed">Not listed in this document. Quantity will be recorded separately and flagged for review.</string>
-    <string name="recording_will_be_added">WILL BE ADDED</string>
-    <string name="recording_type_a_value">Type a value</string>
-    <string name="recording_type_a_quantity">Type a quantity</string>
-    <string name="recording_remove">Remove</string>
-    <string name="recording_uom_prefix">UoM: </string>
+    <string name="recording_barcode_not_found_title">Barcode not found</string>
+    <string name="recording_barcode_not_found_text">Barcode %s does not exist on this document.</string>
     <string name="recording_barcode_prefix">Barcode: </string>
     <string name="status_chip_empty">EMPTY</string>
     <string name="status_chip_partial">PARTIAL</string>
@@ -140,8 +132,6 @@
     <string name="settings_warn_over_desc">Confirm when scanned quantity exceeds expected</string>
     <string name="settings_last_scanned">Last scanned lines</string>
     <string name="settings_last_scanned_desc">Lines shown in scan tape (0 = hidden)</string>
-    <string name="settings_auto_upload">Auto-upload completed docs</string>
-    <string name="settings_auto_upload_desc">Upload automatically when all lines are scanned</string>
     <string name="settings_wifi_only">Sync on Wi-Fi only</string>
     <string name="settings_wifi_only_desc">Don\'t use mobile data for sync</string>
     <string name="settings_test_signin">Test sign-in</string>
@@ -168,10 +158,13 @@
     <string name="login_password">Password</string>
     <string name="login_show_password">Show password</string>
     <string name="login_hide_password">Hide password</string>
-    <string name="login_footer">Credentials encrypted with AES-256-GCM · External System</string>
+    <string name="login_footer">Credentials stored encrypted with AES-256-GCM for %s.</string>
     <string name="login_ttl_hours">%d hours</string>
     <string name="login_ttl_days">%d days</string>
-    <string name="login_session_info">Session stored encrypted for %s</string>
+    <!-- User info -->
+    <string name="user_info_title">User Info</string>
+    <string name="user_info_id">User ID</string>
+    <string name="user_info_name">Name</string>
     <!-- Download filter -->
     <string name="download_error_title">Download failed</string>
     <string name="download_title">Download</string>
@@ -216,6 +209,8 @@
     <string name="ext_config_recording_url">Recording sync URL</string>
     <string name="ext_config_load_title">Load configuration</string>
     <string name="ext_config_load_desc">Load built-in production defaults or import a custom JSON file from the device.</string>
+    <string name="ext_config_pick_company_title">Select company</string>
+    <string name="ext_config_no_companies_found">No built-in configurations found</string>
     <string name="ext_config_load_builtin">Load built-in defaults</string>
     <string name="ext_config_download_builtin">Download built-in defaults</string>
     <string name="ext_config_load_from_file">Import from file</string>
