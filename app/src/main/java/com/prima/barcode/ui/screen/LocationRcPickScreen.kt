@@ -50,6 +50,7 @@ fun LocationRcPickScreen(
     onSelect: (rcCode: String, locationCode: String) -> Unit,
     onRefresh: () -> Unit = {},
     onSaveCredentials: (username: String, password: String) -> Unit = { _, _ -> },
+    onTestConnection: (username: String, password: String, onResult: (success: Boolean, error: String?) -> Unit) -> Unit = { _, _, cb -> cb(true, null) },
     onBack: () -> Unit,
 ) {
     var selectedRcCode       by remember { mutableStateOf(currentRcCode) }
@@ -206,6 +207,7 @@ fun LocationRcPickScreen(
         LoginSheet(
             credentialTtlHours = credentialTtlHours,
             ctaLabel = stringResource(R.string.btn_sign_in_sync),
+            onTestConnection = onTestConnection,
             onSubmit = { u, p ->
                 onSaveCredentials(u, p)
                 showLoginSheet = false

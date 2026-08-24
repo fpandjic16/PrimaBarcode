@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -32,10 +33,33 @@ fun LoginSheet(
     ctaLabel: String = "Sign in",
     initialUsername: String = "",
     initialPassword: String = "",
+    // When set, the entered credentials are verified against the NAV server (the same
+    // check as ExtSystemConfigScreen's "Test connection") before onSubmit is called, so
+    // signing in actually confirms the server accepted them rather than just capturing
+    // whatever was typed. Left null for flows that already do their own testing (e.g.
+    // ExtSystemConfigScreen's own "Test connection" button reuses this sheet directly).
+    onTestConnection: ((username: String, password: String, onResult: (success: Boolean, error: String?) -> Unit) -> Unit)? = null,
 ) {
     var username by remember { mutableStateOf(initialUsername) }
     var password by remember { mutableStateOf(initialPassword) }
     var visible  by remember { mutableStateOf(false) }
+    var testing  by remember { mutableStateOf(false) }
+    var testError by remember { mutableStateOf<String?>(null) }
+
+    fun submit() {
+        val test = onTestConnection
+        if (test == null) {
+            onSubmit(username.trim(), password)
+            return
+        }
+        testError = null
+        testing = true
+        test(username.trim(), password) { success, error ->
+            testing = false
+            if (success) onSubmit(username.trim(), password)
+            else testError = error ?: "Could not connect. Check your username and password and try again."
+        }
+    }
 
     val ttlLabel = if (credentialTtlHours == 168) stringResource(R.string.login_ttl_days, 7)
         else stringResource(R.string.login_ttl_hours, credentialTtlHours)
@@ -65,6 +89,7 @@ fun LoginSheet(
                     label = { Text(stringResource(R.string.login_username)) },
                     placeholder = { Text("e.g. user@prima") },
                     singleLine = true,
+                    enabled = !testing,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(10.dp))
@@ -82,16 +107,29 @@ fun LoginSheet(
                         }
                     },
                     singleLine = true,
+                    enabled = !testing,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                testError?.let {
+                    Spacer(Modifier.height(8.dp))
+                    Text(it, style = monoLabel, color = Color(0xFFCE3A3A))
+                }
 
                 Spacer(Modifier.height(20.dp))
 
                 Button(
-                    onClick = { onSubmit(username.trim(), password) },
+                    onClick = ::submit,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
-                    enabled = username.isNotBlank() && password.isNotBlank(),
+                    enabled = username.isNotBlank() && password.isNotBlank() && !testing,
                 ) {
+                    if (testing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                        )
+                        return@Button
+                    }
                     Text(ctaLabel, fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(Modifier.height(10.dp))

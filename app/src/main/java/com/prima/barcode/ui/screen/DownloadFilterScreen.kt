@@ -64,6 +64,7 @@ fun DownloadFilterScreen(
     locations: List<Location> = emptyList(),
     rcs: List<ResponsibilityCenter> = emptyList(),
     onConfirm: (filter: DownloadFilter, username: String?, password: String?) -> Unit,
+    onTestConnection: (username: String, password: String, onResult: (success: Boolean, error: String?) -> Unit) -> Unit = { _, _, cb -> cb(true, null) },
     onCancel: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
@@ -288,6 +289,7 @@ fun DownloadFilterScreen(
 
     if (showLogin) {
         LoginSheet(
+            onTestConnection = onTestConnection,
             onSubmit = { username, password ->
                 showLogin = false
                 onConfirm(currentFilter(), username, password)

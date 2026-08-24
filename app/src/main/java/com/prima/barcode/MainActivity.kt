@@ -335,6 +335,19 @@ private fun PrimaBarcodeApp(
         }
     }
 
+    // Shared by every LoginSheet that gates access behind a real sign-in (as opposed to
+    // ExtSystemConfigScreen's own LoginSheet usage, which *is* the explicit "Test connection"
+    // action and already handles testing itself) — verifies the NAV server actually accepts
+    // the credentials before the sheet treats sign-in as successful.
+    fun testSignIn(username: String, password: String, onResult: (success: Boolean, error: String?) -> Unit) {
+        appVm.testExtSystemConnection(extSystemConfig.serverBaseUrl, username, password) { result ->
+            when (result) {
+                is ExtSystemResult.Success -> onResult(true, null)
+                is ExtSystemResult.Failure -> onResult(false, if (result.code > 0) "HTTP ${result.code}: ${result.message}" else result.message)
+            }
+        }
+    }
+
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -410,6 +423,7 @@ private fun PrimaBarcodeApp(
                     }
                 },
                 onSaveCredentials = { u, p -> appVm.saveCredentials(u, p) },
+                onTestConnection = ::testSignIn,
                 onBack = { nav.popBackStack() },
             )
         }
@@ -612,6 +626,7 @@ private fun PrimaBarcodeApp(
                 fixedRcCode     = if (dlFilterMode == DocTypeFilterMode.RESPONSIBILITY_CENTER) rcCode else null,
                 locations       = locations,
                 rcs             = rcs,
+                onTestConnection = ::testSignIn,
                 onConfirm = { filter, username, password ->
                     if (username != null && password != null) appVm.saveCredentials(username, password)
                     val urls = appVm.buildDownloadUrls(filter, selectedDocType).map { (type, url) -> "$type: $url" }
@@ -774,9 +789,9 @@ private fun PrimaBarcodeApp(
             initialUsername    = appVm.extSystemCredentialStore.get()?.username ?: "",
             initialPassword    = appVm.extSystemCredentialStore.get()?.password ?: "",
             onDismiss          = { showUploadLoginSheet = false; pendingUploadAction = null },
-            onSubmit           = { u, p ->
+            onTestConnection   = ::testSignIn,
+            onSubmit           = { _, _ ->
                 showUploadLoginSheet = false
-                appVm.saveCredentials(u, p)
                 pendingUploadAction?.invoke()
                 pendingUploadAction = null
             },
@@ -788,10 +803,8 @@ private fun PrimaBarcodeApp(
             credentialTtlHours = extSystemConfig.credentialTtlHours,
             ctaLabel           = "Sign in",
             onDismiss          = { showMainLoginSheet = false },
-            onSubmit           = { u, p ->
-                showMainLoginSheet = false
-                appVm.saveCredentials(u, p)
-            },
+            onTestConnection   = ::testSignIn,
+            onSubmit           = { _, _ -> showMainLoginSheet = false },
         )
     }
 
