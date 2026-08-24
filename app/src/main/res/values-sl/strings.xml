@@ -265,4 +265,8 @@
     <string name="recording_overscan_body">Artikel %1$s – %2$s\n\nČrtna koda: %3$s\nZahtevano: %4$s\nSkenirano: %5$s</string>
     <string name="recording_uom_mismatch_title">Neujemanje enote mere</string>
     <string name="recording_uom_mismatch_body">Artikel %1$s – %2$s\nČrtna koda: %3$s\nPričakovana EM: %4$s\nSkenirana EM: %5$s</string>
+    <string name="ext_config_server_url_empty">URL strežnika je prazen</string>
+    <string name="upload_error_not_configured">Zunanji sistem ni konfiguriran ali niste prijavljeni</string>
+    <string name="upload_error_sync_url_missing">URL za sinhronizacijo posnetkov ni konfiguriran</string>
+    <string name="upload_error_unknown">Neznana napaka</string>
 </resources>

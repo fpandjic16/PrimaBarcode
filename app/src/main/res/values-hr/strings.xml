@@ -265,4 +265,8 @@
     <string name="recording_overscan_body">Artikl %1$s – %2$s\n\nBarkod: %3$s\nTraženo: %4$s\nSkenirano: %5$s</string>
     <string name="recording_uom_mismatch_title">Neusklađena jedinica mjere</string>
     <string name="recording_uom_mismatch_body">Artikl %1$s – %2$s\nBarkod: %3$s\nOčekivana JM: %4$s\nSkenirana JM: %5$s</string>
+    <string name="ext_config_server_url_empty">URL poslužitelja je prazan</string>
+    <string name="upload_error_not_configured">Vanjski sustav nije konfiguriran ili niste prijavljeni</string>
+    <string name="upload_error_sync_url_missing">URL za sinkronizaciju snimanja nije konfiguriran</string>
+    <string name="upload_error_unknown">Nepoznata pogreška</string>
 </resources>

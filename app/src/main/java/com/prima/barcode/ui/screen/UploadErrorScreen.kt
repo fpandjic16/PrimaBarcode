@@ -53,7 +53,7 @@ fun UploadErrorScreen(
     onRetryUpload: () -> Unit,
 ) {
     val sizeOffset = LocalTextSizeOffset.current
-    val errorReason = (document.state as? DocState.UploadFailed)?.reason ?: "Unknown error"
+    val errorReason = (document.state as? DocState.UploadFailed)?.reason ?: stringResource(R.string.upload_error_unknown)
 
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(

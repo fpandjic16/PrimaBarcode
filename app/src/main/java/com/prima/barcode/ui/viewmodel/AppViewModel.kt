@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.prima.barcode.R
 import com.prima.barcode.data.auth.AppSettings
 import com.prima.barcode.data.auth.AppSettingsStore
 import com.prima.barcode.data.auth.ExtSystemConfig
@@ -257,7 +258,7 @@ class AppViewModel @Inject constructor(
         viewModelScope.launch {
             val url = serverBaseUrl.trim()
             if (url.isBlank()) {
-                onResult(ExtSystemResult.Failure("Server URL is empty")); return@launch
+                onResult(ExtSystemResult.Failure(appContext.getString(R.string.ext_config_server_url_empty))); return@launch
             }
             saveCredentials(username.trim(), password)
             val config = extSystemConfig.value.copy(serverBaseUrl = url)
@@ -341,14 +342,14 @@ class AppViewModel @Inject constructor(
         if (!config.isConfigured || creds == null) {
             docs.forEach {
                 repository.updateDocState(it.documentNo, it.type.key,
-                    DocState.UploadFailed("External system not configured or not signed in"))
+                    DocState.UploadFailed(appContext.getString(R.string.upload_error_not_configured)))
             }
             return docs.size
         }
         if (config.recordingSyncUrl.isBlank()) {
             docs.forEach {
                 repository.updateDocState(it.documentNo, it.type.key,
-                    DocState.UploadFailed("Recording sync URL not configured"))
+                    DocState.UploadFailed(appContext.getString(R.string.upload_error_sync_url_missing)))
             }
             return docs.size
         }

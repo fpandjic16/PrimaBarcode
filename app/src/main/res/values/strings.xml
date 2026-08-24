@@ -265,4 +265,8 @@
     <string name="recording_overscan_body">Item %1$s – %2$s\n\nBarcode: %3$s\nRequested: %4$s\nScanned: %5$s</string>
     <string name="recording_uom_mismatch_title">Unit of measure mismatch</string>
     <string name="recording_uom_mismatch_body">Item %1$s – %2$s\nBarcode: %3$s\nExpected UoM: %4$s\nScanned UoM: %5$s</string>
+    <string name="ext_config_server_url_empty">Server URL is empty</string>
+    <string name="upload_error_not_configured">External system not configured or not signed in</string>
+    <string name="upload_error_sync_url_missing">Recording sync URL not configured</string>
+    <string name="upload_error_unknown">Unknown error</string>
 </resources>

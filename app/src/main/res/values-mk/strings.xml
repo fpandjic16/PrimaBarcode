@@ -265,4 +265,8 @@
     <string name="recording_overscan_body">Артикл %1$s – %2$s\n\nБаркод: %3$s\nПобарано: %4$s\nСкенирано: %5$s</string>
     <string name="recording_uom_mismatch_title">Неусогласена единица мерка</string>
     <string name="recording_uom_mismatch_body">Артикл %1$s – %2$s\nБаркод: %3$s\nОчекувана ЕМ: %4$s\nСкенирана ЕМ: %5$s</string>
+    <string name="ext_config_server_url_empty">URL-то на серверот е празно</string>
+    <string name="upload_error_not_configured">Надворешниот систем не е конфигуриран или не сте најавени</string>
+    <string name="upload_error_sync_url_missing">URL-то за синхронизација на снимања не е конфигурирано</string>
+    <string name="upload_error_unknown">Непозната грешка</string>
 </resources>
