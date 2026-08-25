@@ -779,6 +779,7 @@ A systematic sweep for orphaned files/functions/fields found and removed:
 - `RecordingDao.getLastForLine()`, `DocumentHeaderDao.upsertAll()`, `Mappers.kt`'s `Location.toEntity()`/`ResponsibilityCenter.toEntity()` (their `toDomain()` counterparts are used, just not this direction) — zero call sites.
 - `Document.isSourceRetail` was flagged as write-only (set on every merge, never read) but deliberately **kept**, not removed — see §B.17.
 - This document (`TECHNICAL_GUIDE.md`) and `USER_GUIDE.md` were both corrected in the same pass — see the entry above for what had drifted.
+- Follow-up: 31 unused string resource keys removed from all 4 locale files (see §B.16) after a full audit, not just the sampled subset first found during the sweep.
 
 ## B.14 Design System / Theme
 
@@ -839,7 +840,7 @@ Only Compose/AndroidX/test/Hilt libraries and the 4 Gradle plugins are catalog a
 
 A 2026-08 localization audit found every screen had been using `stringResource()` correctly for a while, *except* a substantial number of `Text()`/`Toast`/`contentDescription`/`ctaLabel` call sites that had hardcoded English literals directly — meaning those strings had never even become resource keys, so they'd never had a chance to be translated. That pass added the missing keys (with real hr/sl/mk translations, not copies of the English text) and fixed every call site found at the time. If you're adding new UI text, always add it as a `stringResource()` key in all 4 locale files from the start rather than a literal — see the memory note this rule is tracked under for the project's assistant.
 
-Separately, `res/values/strings.xml` (+ `values-hr`/`values-sl`/`values-mk`, kept in sync, see §B.11.3) also contains a number of keys with **no corresponding UI** in the current screens at all — remnants of earlier iterations of the login/settings/multiplier flows, plus at least one cluster (`doc_state_new/active/done/failed`, all 5 `doctype_*_desc` keys) that don't correspond to any current status vocabulary or screen. These are harmless (unused string resources cost nothing at runtime) but a candidate for a cleanup pass — confirm via grep for the exact key before removing, since new UI could reuse one of these names.
+Separately, a full audit (2026-08, same pass) checked every one of the then-247 keys in `res/values/strings.xml` (+ `values-hr`/`values-sl`/`values-mk`, kept in sync, see §B.11.3) against `R.string.*`/`@string/*` usage across all Kotlin source, the manifest, and `res/xml/`. 31 had zero references anywhere — remnants of earlier iterations of the login/settings/multiplier flows, an unused `doc_state_new/active/done/failed` status vocabulary, all 5 `doctype_*_desc` keys, and a handful of others (`btn_save`, `cd_settings`, `doc_qty_scanned`, `settings_change`, etc. — surprising ones were re-verified individually before removal, not just trusted from the automated sweep). All 31 were removed from all 4 locale files, leaving 216. If you're removing a key yourself later, confirm via grep for the exact key first — new UI could always reuse one of these names.
 
 ## B.17 Extension Points & Notes for Future Developers
 

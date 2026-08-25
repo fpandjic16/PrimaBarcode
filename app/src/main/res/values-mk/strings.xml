@@ -4,7 +4,6 @@
     <!-- Common -->
     <string name="btn_ok">Во ред</string>
     <string name="btn_cancel">Откажи</string>
-    <string name="btn_save">Зачувај</string>
     <string name="btn_apply">Примени</string>
     <string name="btn_reset">Ресетирај</string>
     <string name="btn_download">Преземи</string>
@@ -20,18 +19,12 @@
     <string name="dashboard_pill_error">грешка</string>
     <!-- Main menu -->
     <string name="main_documents_header">ДОКУМЕНТИ</string>
-    <string name="main_no_location">Нема локација</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Магацинска испорака</string>
     <string name="doctype_warehouse_receipt">Магацински прием</string>
     <string name="doctype_retail_shipment">Малопродажна испорака</string>
     <string name="doctype_retail_receipt">Малопродажен прием</string>
     <string name="doctype_transport_sheet">Транспортен лист</string>
-    <string name="doctype_warehouse_shipment_desc">Излезни пратки од магацин до продавница</string>
-    <string name="doctype_warehouse_receipt_desc">Влезни приеми од добавувач во магацин</string>
-    <string name="doctype_retail_shipment_desc">Излезни пратки од продавница до купувач</string>
-    <string name="doctype_retail_receipt_desc">Враќања и влез од продавница во магацин</string>
-    <string name="doctype_transport_sheet_desc">Документи за пренос меѓу локации</string>
     <!-- Doc list screen -->
     <string name="doc_list_tab_orders">НАРАЧКИ</string>
     <string name="doc_list_tab_recordings">СНИМАЊА</string>
@@ -45,11 +38,6 @@
     <string name="doc_status_partial">Делумно</string>
     <string name="doc_status_ready">Завршено</string>
     <string name="doc_status_over_qty">Прекумерно</string>
-    <string name="doc_state_new">Ново</string>
-    <string name="doc_state_active">Активно</string>
-    <string name="doc_state_done">Завршено</string>
-    <string name="doc_state_failed">Неуспешно</string>
-    <string name="doc_qty_scanned">%1$s / %2$s скенирано</string>
     <!-- Document overview -->
     <string name="overview_title">Преглед</string>
     <string name="overview_subtitle">Преглед на документи</string>
@@ -91,27 +79,18 @@
     <string name="keypad_is_partial">делумно</string>
     <string name="keypad_is_exact">точно</string>
     <string name="keypad_is_over">прекумерно</string>
-    <!-- Multiplier -->
-    <string name="multiplier_title">Множител</string>
-    <string name="multiplier_subtitle">Количина додадена по скенирање</string>
-    <string name="multiplier_custom">Прилагодена количина</string>
     <!-- Settings -->
     <string name="settings_title">Поставки</string>
     <string name="settings_subtitle">Поставки на апликацијата</string>
-    <string name="settings_sec_location_rc">Локација и ЦО</string>
-    <string name="settings_sec_doc_types">Типови документи</string>
     <string name="settings_sec_appearance">Изглед</string>
     <string name="settings_sec_scanning">Скенирање</string>
     <string name="settings_sec_sync">Синхронизација</string>
     <string name="settings_sec_ext_config">Конфигурација на надворешен систем</string>
-    <string name="settings_sec_data">Податоци</string>
     <string name="settings_sec_debug">Дебагирање</string>
     <string name="settings_debugger_active">Дебагерот е активен</string>
     <string name="settings_debugger_active_desc">Прикажи ги целосните URL на барањата пред поврзување</string>
     <string name="settings_sec_system_info">Информации за системот</string>
     <string name="settings_sec_account">Сметка</string>
-    <string name="settings_no_location">Нема избрано локација</string>
-    <string name="settings_change">Промени</string>
     <string name="settings_text_size">Големина на текст</string>
     <string name="settings_text_size_desc">Се применува на сиот текст во апликацијата</string>
     <string name="settings_uppercase">Текст со големи букви</string>
@@ -124,18 +103,10 @@
     <string name="settings_debounce_desc">Минимум ms помеѓу скенирања (само непрекинато)</string>
     <string name="settings_haptic">Вибрациска повратна информација</string>
     <string name="settings_haptic_desc">Вибрира при потврда на скенирање и грешки</string>
-    <string name="settings_mute">Исклучи звуци при скенирање</string>
-    <string name="settings_mute_desc">Исклучи ги сите звучни сигнали од камерата и хардверскиот скенер</string>
-    <string name="settings_auto_collapse">Автоматско собирање на лентата за скенирање</string>
-    <string name="settings_auto_collapse_desc">Сокриј по 20 секунди неактивност</string>
     <string name="settings_warn_over">Предупреди при прекумерно скенирање</string>
     <string name="settings_warn_over_desc">Потврди кога скенираната количина ја надминува очекуваната</string>
     <string name="settings_last_scanned">Последно скенирани ставки</string>
     <string name="settings_last_scanned_desc">Ставки прикажани во лентата за скенирање (0 = скриено)</string>
-    <string name="settings_wifi_only">Синхронизирај само преку Wi-Fi</string>
-    <string name="settings_wifi_only_desc">Не користи мобилни податоци за синхронизација</string>
-    <string name="settings_test_signin">Тестна најава</string>
-    <string name="settings_test_signin_desc">Провери ги акредитивите без преземање</string>
     <string name="settings_server_endpoints">Сервер и крајни точки</string>
     <string name="settings_server_endpoints_desc">Основен OData URL, домен, URL-адреси на страници со документи</string>
     <string name="settings_export">Извези податоци</string>
@@ -153,7 +124,6 @@
     <string name="dialog_clear_cache_text">Ова трајно ќе ги избрише сите зачувани акредитиви, документи и снимања. Ова дејство не може да се врати.</string>
     <!-- Login -->
     <string name="login_title">Најава во надворешен систем</string>
-    <string name="login_domain">Windows домен</string>
     <string name="login_username">Корисничко име</string>
     <string name="login_password">Лозинка</string>
     <string name="login_show_password">Прикажи лозинка</string>
@@ -202,7 +172,6 @@
     <string name="ext_config_sec_reference">Референтни податоци</string>
     <string name="ext_config_sec_recording">Синхронизација на снимања</string>
     <string name="ext_config_server_url">Основен URL на серверот</string>
-    <string name="ext_config_company_name">Име на компанија</string>
     <string name="ext_config_windows_domain">Windows домен</string>
     <string name="ext_config_session_duration">Траење на сесијата</string>
     <string name="ext_config_session_desc">Акредитивите се бришат од шифрираното складиште по овој период</string>
@@ -225,7 +194,6 @@
     <string name="doc_delete_recordings_text">Сите снимања за %s ќе бидат избришани и документот ќе биде вратен во почетна состојба.</string>
         <!-- Accessibility -->
     <string name="cd_refresh">Освежи</string>
-    <string name="cd_settings">Поставки</string>
     <string name="cd_filter">Филтер</string>
     <string name="cd_clear">Исчисти</string>
     <string name="cd_close_camera">Затвори камера</string>

@@ -4,7 +4,6 @@
     <!-- Common -->
     <string name="btn_ok">U redu</string>
     <string name="btn_cancel">Odustani</string>
-    <string name="btn_save">Spremi</string>
     <string name="btn_apply">Primijeni</string>
     <string name="btn_reset">Poništi</string>
     <string name="btn_download">Preuzmi</string>
@@ -20,18 +19,12 @@
     <string name="dashboard_pill_error">greška</string>
     <!-- Main menu -->
     <string name="main_documents_header">DOKUMENTI</string>
-    <string name="main_no_location">Nema lokacije</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Skladišna otprema</string>
     <string name="doctype_warehouse_receipt">Skladišni primitak</string>
     <string name="doctype_retail_shipment">Maloprodajna otprema</string>
     <string name="doctype_retail_receipt">Maloprodajni primitak</string>
     <string name="doctype_transport_sheet">Transportni list</string>
-    <string name="doctype_warehouse_shipment_desc">Izlazne pošiljke iz skladišta u prodavaonicu</string>
-    <string name="doctype_warehouse_receipt_desc">Ulazni primitci od dobavljača u skladište</string>
-    <string name="doctype_retail_shipment_desc">Izlazne pošiljke iz prodavaonice kupcu</string>
-    <string name="doctype_retail_receipt_desc">Povrati i ulaz iz prodavaonice u skladište</string>
-    <string name="doctype_transport_sheet_desc">Dokumenti međulokacijskih premještaja</string>
     <!-- Doc list screen -->
     <string name="doc_list_tab_orders">NARUDŽBE</string>
     <string name="doc_list_tab_recordings">SNIMANJA</string>
@@ -45,11 +38,6 @@
     <string name="doc_status_partial">Djelomično</string>
     <string name="doc_status_ready">Gotovo</string>
     <string name="doc_status_over_qty">Prekoračenje</string>
-    <string name="doc_state_new">Novo</string>
-    <string name="doc_state_active">Aktivno</string>
-    <string name="doc_state_done">Završeno</string>
-    <string name="doc_state_failed">Neuspjelo</string>
-    <string name="doc_qty_scanned">%1$s / %2$s skenirano</string>
     <!-- Document overview -->
     <string name="overview_title">Pregled</string>
     <string name="overview_subtitle">Pregled dokumenata</string>
@@ -91,27 +79,18 @@
     <string name="keypad_is_partial">djelomično</string>
     <string name="keypad_is_exact">točno</string>
     <string name="keypad_is_over">prekoračenje</string>
-    <!-- Multiplier -->
-    <string name="multiplier_title">Množitelj</string>
-    <string name="multiplier_subtitle">Količina dodana po skeniranju</string>
-    <string name="multiplier_custom">Prilagoađena količina</string>
     <!-- Settings -->
     <string name="settings_title">Postavke</string>
     <string name="settings_subtitle">Postavke aplikacije</string>
-    <string name="settings_sec_location_rc">Lokacija i CC</string>
-    <string name="settings_sec_doc_types">Vrste dokumenata</string>
     <string name="settings_sec_appearance">Izgled</string>
     <string name="settings_sec_scanning">Skeniranje</string>
     <string name="settings_sec_sync">Sinkronizacija</string>
     <string name="settings_sec_ext_config">Konfiguracija vanjskog sustava</string>
-    <string name="settings_sec_data">Podaci</string>
     <string name="settings_sec_debug">Otklanjanje pogrešaka</string>
     <string name="settings_debugger_active">Debugger aktivan</string>
     <string name="settings_debugger_active_desc">Prikaži pune URL-ove zahtjeva prije spajanja</string>
     <string name="settings_sec_system_info">Informacije o sustavu</string>
     <string name="settings_sec_account">Korisnički račun</string>
-    <string name="settings_no_location">Nije odabrana lokacija</string>
-    <string name="settings_change">Promijeni</string>
     <string name="settings_text_size">Veličina teksta</string>
     <string name="settings_text_size_desc">Primjenjuje se na sav tekst u aplikaciji</string>
     <string name="settings_uppercase">Tekst velikim slovima</string>
@@ -124,18 +103,10 @@
     <string name="settings_debounce_desc">Minimalno ms između skeniranja (samo kontinuirano)</string>
     <string name="settings_haptic">Haptička povratna informacija</string>
     <string name="settings_haptic_desc">Vibrira pri potvrdi i greškama skeniranja</string>
-    <string name="settings_mute">Isključi zvukove skeniranja</string>
-    <string name="settings_mute_desc">Utišaj sve zvučne signale kamere i hardverskog skenera</string>
-    <string name="settings_auto_collapse">Automatsko sklapanje vrpce skeniranja</string>
-    <string name="settings_auto_collapse_desc">Sakrij nakon 20 sekundi neaktivnosti</string>
     <string name="settings_warn_over">Upozori pri prekoračenju</string>
     <string name="settings_warn_over_desc">Potvrdi kada skenirana količina premašuje očekivanu</string>
     <string name="settings_last_scanned">Zadnji skenirani redci</string>
     <string name="settings_last_scanned_desc">Redci prikazani u vrpci skeniranja (0 = skriveno)</string>
-    <string name="settings_wifi_only">Sinkroniziraj samo putem Wi-Fi</string>
-    <string name="settings_wifi_only_desc">Ne koristi mobilne podatke za sinkronizaciju</string>
-    <string name="settings_test_signin">Testna prijava</string>
-    <string name="settings_test_signin_desc">Provjeri vjerodajnice bez preuzimanja</string>
     <string name="settings_server_endpoints">Poslužitelj i krajnje točke</string>
     <string name="settings_server_endpoints_desc">OData osnovni URL, domena, URL-ovi stranica dokumenata</string>
     <string name="settings_export">Izvezi podatke</string>
@@ -153,7 +124,6 @@
     <string name="dialog_clear_cache_text">Ovo će trajno izbrisati sve pohranjene vjerodajnice, dokumente i snimanja. Ova radnja se ne može poništiti.</string>
     <!-- Login -->
     <string name="login_title">Prijava u vanjski sustav</string>
-    <string name="login_domain">Windows domena</string>
     <string name="login_username">Korisničko ime</string>
     <string name="login_password">Lozinka</string>
     <string name="login_show_password">Prikaži lozinku</string>
@@ -202,7 +172,6 @@
     <string name="ext_config_sec_reference">Referentni podaci</string>
     <string name="ext_config_sec_recording">Sinkronizacija snimanja</string>
     <string name="ext_config_server_url">Osnovni URL poslužitelja</string>
-    <string name="ext_config_company_name">Naziv tvrtke</string>
     <string name="ext_config_windows_domain">Windows domena</string>
     <string name="ext_config_session_duration">Trajanje sesije</string>
     <string name="ext_config_session_desc">Vjerodajnice se brišu iz šifrirane pohrane nakon ovog razdoblja</string>
@@ -225,7 +194,6 @@
     <string name="doc_delete_recordings_text">Sva snimanja za %s bit ce izbrisana i dokument ce biti vracen u pocetno stanje.</string>
         <!-- Accessibility -->
     <string name="cd_refresh">Osvježi</string>
-    <string name="cd_settings">Postavke</string>
     <string name="cd_filter">Filtar</string>
     <string name="cd_clear">Obriši</string>
     <string name="cd_close_camera">Zatvori kameru</string>

@@ -4,7 +4,6 @@
     <!-- Common -->
     <string name="btn_ok">OK</string>
     <string name="btn_cancel">Cancel</string>
-    <string name="btn_save">Save</string>
     <string name="btn_apply">Apply</string>
     <string name="btn_reset">Reset</string>
     <string name="btn_download">Download</string>
@@ -20,18 +19,12 @@
     <string name="dashboard_pill_error">error</string>
     <!-- Main menu -->
     <string name="main_documents_header">DOCUMENTS</string>
-    <string name="main_no_location">No location</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Warehouse Shipment</string>
     <string name="doctype_warehouse_receipt">Warehouse Receipt</string>
     <string name="doctype_retail_shipment">Retail Shipment</string>
     <string name="doctype_retail_receipt">Retail Whse. Receipt</string>
     <string name="doctype_transport_sheet">Transport Sheet</string>
-    <string name="doctype_warehouse_shipment_desc">Outbound shipments from warehouse to store</string>
-    <string name="doctype_warehouse_receipt_desc">Inbound receipts from supplier to warehouse</string>
-    <string name="doctype_retail_shipment_desc">Outbound shipments from store to customer</string>
-    <string name="doctype_retail_receipt_desc">Returns and inbound from store to warehouse</string>
-    <string name="doctype_transport_sheet_desc">Inter-location transfer documents</string>
     <!-- Doc list screen -->
     <string name="doc_list_tab_orders">ORDERS</string>
     <string name="doc_list_tab_recordings">RECORDINGS</string>
@@ -45,11 +38,6 @@
     <string name="doc_status_partial">Partial</string>
     <string name="doc_status_ready">Ready</string>
     <string name="doc_status_over_qty">Over-qty</string>
-    <string name="doc_state_new">New</string>
-    <string name="doc_state_active">Active</string>
-    <string name="doc_state_done">Done</string>
-    <string name="doc_state_failed">Failed</string>
-    <string name="doc_qty_scanned">%1$s / %2$s qty scanned</string>
     <!-- Document overview -->
     <string name="overview_title">Dashboard</string>
     <string name="overview_subtitle">Document overview</string>
@@ -91,27 +79,18 @@
     <string name="keypad_is_partial">partial</string>
     <string name="keypad_is_exact">exact</string>
     <string name="keypad_is_over">over</string>
-    <!-- Multiplier -->
-    <string name="multiplier_title">Multiplier</string>
-    <string name="multiplier_subtitle">Quantity added per scan</string>
-    <string name="multiplier_custom">Custom quantity</string>
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_subtitle">App preferences</string>
-    <string name="settings_sec_location_rc">Location &amp; RC</string>
-    <string name="settings_sec_doc_types">Document types</string>
     <string name="settings_sec_appearance">Appearance</string>
     <string name="settings_sec_scanning">Scanning</string>
     <string name="settings_sec_sync">Sync</string>
     <string name="settings_sec_ext_config">External System Configuration</string>
-    <string name="settings_sec_data">Data</string>
     <string name="settings_sec_debug">Debug</string>
     <string name="settings_debugger_active">Debugger active</string>
     <string name="settings_debugger_active_desc">Show full request URLs before connecting</string>
     <string name="settings_sec_system_info">System info</string>
     <string name="settings_sec_account">Account</string>
-    <string name="settings_no_location">No location selected</string>
-    <string name="settings_change">Change</string>
     <string name="settings_text_size">Text size</string>
     <string name="settings_text_size_desc">Applies to all text in the app</string>
     <string name="settings_uppercase">Uppercase text</string>
@@ -124,18 +103,10 @@
     <string name="settings_debounce_desc">Minimum ms between scans (continuous only)</string>
     <string name="settings_haptic">Haptic feedback</string>
     <string name="settings_haptic_desc">Vibrate on scan confirmation and errors</string>
-    <string name="settings_mute">Mute scan sounds</string>
-    <string name="settings_mute_desc">Silence all beeps from camera and hardware scanner</string>
-    <string name="settings_auto_collapse">Auto-collapse scan tape</string>
-    <string name="settings_auto_collapse_desc">Hide after 20 seconds of inactivity</string>
     <string name="settings_warn_over">Warn on over-scan</string>
     <string name="settings_warn_over_desc">Confirm when scanned quantity exceeds expected</string>
     <string name="settings_last_scanned">Last scanned lines</string>
     <string name="settings_last_scanned_desc">Lines shown in scan tape (0 = hidden)</string>
-    <string name="settings_wifi_only">Sync on Wi-Fi only</string>
-    <string name="settings_wifi_only_desc">Don\'t use mobile data for sync</string>
-    <string name="settings_test_signin">Test sign-in</string>
-    <string name="settings_test_signin_desc">Verify credentials without downloading</string>
     <string name="settings_server_endpoints">Server &amp; endpoints</string>
     <string name="settings_server_endpoints_desc">OData base URL, domain, document page URLs</string>
     <string name="settings_export">Export data</string>
@@ -153,7 +124,6 @@
     <string name="dialog_clear_cache_text">This will permanently delete all stored credentials, documents, and recordings. This cannot be undone.</string>
     <!-- Login -->
     <string name="login_title">Sign in to External System</string>
-    <string name="login_domain">Windows domain</string>
     <string name="login_username">Username</string>
     <string name="login_password">Password</string>
     <string name="login_show_password">Show password</string>
@@ -202,7 +172,6 @@
     <string name="ext_config_sec_reference">Reference data</string>
     <string name="ext_config_sec_recording">Recording sync</string>
     <string name="ext_config_server_url">Server base URL</string>
-    <string name="ext_config_company_name">Company name</string>
     <string name="ext_config_windows_domain">Windows domain</string>
     <string name="ext_config_session_duration">Session duration</string>
     <string name="ext_config_session_desc">Credentials are wiped from encrypted storage after this period</string>
@@ -225,7 +194,6 @@
     <string name="doc_delete_recordings_text">All recordings for %s will be deleted and the document will be reset to its initial state.</string>
         <!-- Accessibility -->
     <string name="cd_refresh">Refresh</string>
-    <string name="cd_settings">Settings</string>
     <string name="cd_filter">Filter</string>
     <string name="cd_clear">Clear</string>
     <string name="cd_close_camera">Close camera</string>
