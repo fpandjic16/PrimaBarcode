@@ -42,7 +42,7 @@ The everyday cycle looks like this:
 3. UPLOAD    — send your completed (or partial) work back to the central system
 ```
 
-You can also scan **before** downloading — if you're offline or start work before the office has released the document, your scans are kept locally and automatically matched up once you download the real document (see [§18.3](#183-i-scanned-before-the-document-was-downloaded)).
+You always need to download a document before scanning against it — there's no offline/before-download scanning mode. A barcode you scan is checked against that document's expected lines immediately; anything that doesn't match is rejected on the spot (see [§2.3](#23-unmatched-scans)).
 
 ---
 
@@ -61,7 +61,7 @@ Every line on a document — and the document as a whole — is always in one of
 
 A document's overall status follows simple rules:
 - If **any single line** is Over-qty, the **whole document** shows as Over-qty — even if every other line is perfect.
-- A document only shows **Ready** (green) when every line is exact **and** there are no "not on document" scans left unresolved.
+- A document only shows **Ready** (green) when every line is exact.
 - Otherwise it shows **Partial**.
 
 ### 2.2 Document lifecycle
@@ -72,9 +72,9 @@ Behind the scenes, every document also moves through a lifecycle as you work on 
 
 If an upload fails, the document instead becomes **Upload Failed**, shown on the **Errors** tab, and stays on your device until you retry (or the office fixes the underlying problem).
 
-### 2.3 "Not on document" lines
+### 2.3 Unmatched scans
 
-If you scan a barcode that isn't listed as an expected item on the current document, the app doesn't reject it — it records it separately as an **extra / not-on-document line**, clearly marked in orange, so nothing you scan is ever silently lost. You (or the office) can review and reconcile these later.
+If you scan a barcode that isn't listed as an expected item on the current document, the app **doesn't record it at all** — you'll see a "Barcode not found" message, the scan bar briefly flashes red, and the device vibrates. Nothing is added anywhere; double-check you're on the right document and that you scanned the right item, then try again.
 
 ---
 
@@ -82,9 +82,9 @@ If you scan a barcode that isn't listed as an expected item on the current docum
 
 When you first open the app:
 
-1. You are **not** required to sign in immediately — signing in only happens the first time you try to **Download** or **Upload** data (or refresh Locations/RCs), via a **sign-in sheet** that slides up from the bottom.
-2. Enter your **Username** (e.g. `user@prima` or `DOMAIN\user`) and **Password**, then tap the button shown (its label changes depending on what triggered it — "Sign in", "Test connection", or "Sign in & Sync").
-3. Your session stays signed in for a configured period (commonly 24 hours, sometimes longer — shown under the password field, e.g. *"Session stored encrypted for 24 hours"*). After that period, you'll simply be asked to sign in again next time it's needed — your credentials are encrypted on the device the whole time.
+1. You are **not** required to sign in immediately — signing in only happens the first time you try to **Download** or **Upload** data (or refresh Locations/RCs), via a full-screen sign-in form (back arrow top-left to cancel).
+2. Enter your **Username** and **Password**, then tap the button shown (its label changes depending on what triggered it — "Sign in", "Test connection", or "Sign in & Sync"). If your company has a Windows domain configured (Settings → External System Configuration), you just type your plain username — otherwise type it as `user@domain` or `DOMAIN\user`. Submitting actually verifies your credentials against the central system before signing you in — if they're rejected, you'll see why on the same screen and can correct and retry.
+3. Your session stays signed in for a configured period (commonly 24 hours, sometimes longer — named in the footer text below the button, e.g. *"Credentials stored encrypted with AES-256-GCM for 24 hours."*). After that period, you'll simply be asked to sign in again next time it's needed — your credentials are encrypted on the device the whole time.
 4. Pick your **Responsibility Center** and **Location** (see [§5](#5-choosing-your-location--responsibility-center)) — this tells the app which warehouse/store you're working from and filters everything you see to that scope.
 
 ---
@@ -93,7 +93,7 @@ When you first open the app:
 
 This is the home screen you land on every time you open the app.
 
-- **Top bar**: shows "PRIMA BARCODE" and your name (once signed in). A gear ⚙️ icon top-right opens **Settings**.
+- **Top bar**: shows your name once signed in (or a prompt to sign in). A round avatar button top-left (your initials once signed in) opens your **User Info** — user ID, name, Responsibility Center, Location, and a sign-out button; tapping it while signed out opens the sign-in screen instead. A gear ⚙️ icon top-right opens **Settings**.
 - **Today card** (tap it anywhere): a summary of today's activity — total lines scanned, and counts of Ready / Partial / Over / Error documents. Tapping this card opens the **Dashboard**.
 - **Location/RC bar**: two side-by-side pills showing your current Responsibility Center code and Location code. Tap **either one** to open the Location & RC picker and change them.
 - **Document type list**: one row per document type (Warehouse Shipment, Warehouse Receipt, Retail Shipment, Retail Whse. Receipt, Transport Sheet), each showing:
@@ -142,7 +142,7 @@ Reached by tapping a document type on the Main Menu. Shows all documents of that
 
 **Each document row** shows: document number, a colored status chip (Ready/Partial/Empty/Over-qty), the source location, and the document date. If it's in the Errors tab, an extra red "ERROR" chip appears, along with the failure reason.
 
-**Scanning/typing a document number** in the scan bar at the top jumps straight to that document if it exists, or offers to **create a new document** with that number if it doesn't (useful for offline scanning before a document has been officially released — see [§18.3](#183-i-scanned-before-the-document-was-downloaded)). Creating a document requires you to have a location selected.
+**Scanning/typing a document number** in the scan bar at the top jumps straight to that document if it exists. If it doesn't, you'll see a message that it needs to be downloaded from the central system first — there's no way to create or scan against a document that hasn't been officially released yet.
 
 **Deleting a document's recordings**: on the **Recordings** tab, press and hold a row for about 5 seconds (you'll see a progress ring fill in). This opens a confirmation to wipe all scans for that document and reset it back to its downloaded state — use this if you need to start a document over from scratch. Releasing early cancels the hold.
 
@@ -159,7 +159,7 @@ The funnel/filter icon (top-right) turns **coral/orange** when a filter is curre
 
 From the **Orders** tab, tap **DOWNLOAD**.
 
-1. If you're not signed in, a sign-in sheet appears automatically first.
+1. If you're not signed in, the sign-in screen appears automatically first.
 2. You'll see a filter screen where you can narrow what gets pulled down:
    - **Document Date** — From/To date range.
    - **Destination Code** — free text.
@@ -182,7 +182,6 @@ You'll see:
 - A summary bar: source/destination codes on the left, total scanned/expected on the right (turns green once everything is exact).
 - A thin progress bar summarizing every line's status at a glance.
 - The full list of expected lines — item number, item name, and a large scanned/expected counter in that line's status color.
-- If you have any "not on document" scans, they appear below in a clearly marked orange section.
 - At the bottom: a **scan bar** to type/scan a barcode, and a collapsible **"LAST SCANS" tape** showing your most recent scans.
 
 ### 9.2 Scanning
@@ -194,7 +193,9 @@ You can scan in three ways:
 
 **What happens when you scan:**
 - **Matches a line** → that line's scanned quantity goes up (usually by 1, or by whatever the document specifies per scan), and the line/document status updates live.
-- **Doesn't match any line** → it's recorded as an extra "not on document" line (see [§2.3](#23-not-on-document-lines)), and the scan bar briefly flashes red so you know it didn't match a real line. Depending on your Settings, you may instead be asked to type in a quantity first — see [§16](#16-settings--every-option-explained).
+- **Doesn't match any line** → nothing is recorded. You'll see a "Barcode not found" message and the scan bar briefly flashes red so you know it didn't match a real line (see [§2.3](#23-unmatched-scans)).
+
+**Using both the camera and the hardware trigger on the same screen**: don't point the camera at a barcode and pull the physical trigger for the same item — each is a separate scan path, so doing both for what you intend as one scan can record it twice. Use one or the other for a given scan.
 
 ### 9.3 Editing a line manually
 
@@ -203,15 +204,13 @@ Tap any line to open its detail view, where you can:
 - Tap the big number to open a **numeric keypad** and type an exact quantity, then confirm.
 - Tap **Apply** to save your change and return to the overview.
 
-The same pattern applies to "not on document" lines, except the confirm button there reads **Remove** (in red) if you set the quantity down to zero, or **Apply** (in orange) otherwise.
-
 ### 9.4 Uploading from here
 
 If there's any scanning activity on the document, a small **Upload** button appears in the top bar, letting you upload without going back to the list.
 
 ### 9.5 Leaving the screen
 
-Tapping back normally just takes you back to the document list. However, if the **"Auto-upload completed docs"** setting is on and the document is fully Ready, you'll instead be asked **"This document looks finished. Upload it now?"** — choose **Yes** to upload immediately, or **No** to leave without uploading (you can always upload later).
+Tapping back takes you straight back to the document list — your progress is saved as you scan, so there's nothing to confirm. Upload separately when you're ready (see [§12](#12-uploading-documents)).
 
 ---
 
@@ -220,9 +219,8 @@ Tapping back normally just takes you back to the document list. However, if the 
 | Warning | When it appears | What to do |
 |---|---|---|
 | **Over-scanned** | You scanned more than the expected quantity for a line (if the "Warn on over-scan" setting is on) | Just informational — tap OK. The extra quantity is still recorded (shown as blue "Over-qty"). |
-| **Not on document** | You scanned a barcode that isn't an expected item on this document (if "Warn on not on document" is on, and the document actually has expected lines) | Informational — the scan was still recorded as an extra line. Tap OK. |
 | **Unit of measure mismatch** | You used the [special barcode format](#11-the-special-barcode-format-barcodeuomqty) and the unit of measure you scanned doesn't match what the document expects for that item | Informational — the scan was still recorded with the quantity you scanned. Tap OK, and flag it to the office if it looks like a real discrepancy. |
-| **Document finished** | You try to leave a fully-scanned document (only if "Auto-upload completed docs" is on) | Choose whether to upload now or later. |
+| **Barcode not found** | You scanned something that isn't an expected item on this document | Nothing was recorded — double-check the item and document, then rescan. |
 
 None of these warnings block or undo your scan — they're all "heads up" notices. The scan has already been recorded by the time you see the dialog.
 
@@ -313,14 +311,11 @@ Open Settings via the gear icon on the Main Menu. **Settings are buffered** — 
 | **Debounce time** | Minimum time between camera scans in continuous mode (200ms–2s) — prevents the same label being scanned twice by accident. |
 | **Haptic feedback** | Vibrate on scan confirmation and errors. |
 | **Warn on over-scan** | Show a warning when you scan more than the expected quantity for a line. |
-| **Warn on not on document** | Show a warning when you scan a barcode that isn't an expected item on the document. |
-| **Ask for Qty for unknown barcode** | When **on**: scanning an unrecognized barcode opens a quantity-entry screen so you can specify how many. When **off**: it's recorded immediately with quantity = 1, no screen shown. (A barcode using the special `Barcode\|UoM\|Qty` format always records its own quantity directly, regardless of this setting.) |
 | **Last scanned lines** | How many recent scans are shown in the "LAST SCANS" tape while scanning (0 hides it entirely, up to 5). |
 
 ### Sync
 | Setting | What it does |
 |---|---|
-| **Auto-upload completed docs** | Prompts you to upload immediately when you finish (fully scan) a document and try to leave it. |
 | **Enable background sync** | Uploads run in the background so you can keep working instead of waiting on a progress screen. |
 
 ### External System Configuration
@@ -359,8 +354,8 @@ You likely don't have a location selected, or your company hasn't configured tha
 ### 18.2 "I scanned the wrong quantity"
 Tap into the line and either use −1/+1, or tap the number to type the correct total directly — this replaces the line's recorded quantity, it doesn't add to it.
 
-### 18.3 "I scanned before the document was downloaded"
-That's supported. Type/scan the document number in the Document List's scan bar; if it doesn't exist yet, you'll be offered to create it, and you can start scanning against it right away. Once the real document is later downloaded, your scans are automatically matched onto the correct lines by barcode — no work is lost or needs to be redone. (If a barcode matches more than one line, the app fills lines in order until the full scanned quantity is placed.)
+### 18.3 "I keep getting 'Barcode not found' for an item that's clearly on the document"
+Nothing is ever recorded for a rejected scan, so there's nothing to undo — just figure out the mismatch and rescan. Most common causes: you're on the wrong document (double-check the document number in the top bar), the label's barcode doesn't byte-for-byte match what's on the document (a re-print, a different symbology, or stray characters), or — if it's a special `Barcode|UoM|Qty` label — see [§18.7](#187-the-barcode-scanned-as-garbagewrong-characters). If you're confident the item genuinely belongs on the document and it's still not matching, flag it to the office — the document's data may need correcting on the central-system side.
 
 ### 18.4 "A document I was working on disappeared from Orders"
 Check the **Recordings** tab — if you'd already made progress on it, it lives there instead once it's Complete, or moves to Errors if an upload attempt failed.
@@ -383,9 +378,8 @@ If it's a special `Barcode|UoM|Qty` label, verify with the office that it was pr
 | **RC (Responsibility Center)** | An organizational grouping (e.g. a region or business unit) that a location belongs to. |
 | **Location / Source Code** | The specific warehouse or store you're working from. |
 | **Destination Code** | Where a document's goods are headed. |
-| **Extra / Not-on-document line** | A scan that didn't match any expected item on the document — recorded separately, shown in orange. |
 | **Downloaded** | A document pulled from the central system but not yet worked on. |
 | **In Progress** | A document with some, but not all, scanning done. |
-| **Completed** | Every line scanned exactly, no leftover extras. |
+| **Completed** | Every line scanned exactly. |
 | **Pending Upload** | Currently being sent to the central system. |
 | **Upload Failed** | The send attempt didn't succeed — see the Errors tab for the reason. |

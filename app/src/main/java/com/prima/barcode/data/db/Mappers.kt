@@ -95,5 +95,3 @@ fun Line.toEntity(type: String): DocumentLineEntity = DocumentLineEntity(
 
 fun LocationEntity.toDomain() = Location(code = code, name = name, rc = rcCode)
 fun ResponsibilityCenterEntity.toDomain() = ResponsibilityCenter(code = code, name = name, short = short)
-fun Location.toEntity() = LocationEntity(code = code, name = name, rcCode = rc)
-fun ResponsibilityCenter.toEntity() = ResponsibilityCenterEntity(code = code, name = name, short = short)

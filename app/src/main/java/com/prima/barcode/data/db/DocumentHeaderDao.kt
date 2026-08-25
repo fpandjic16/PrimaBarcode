@@ -23,9 +23,6 @@ interface DocumentHeaderDao {
     @Upsert
     suspend fun upsert(doc: DocumentHeaderEntity)
 
-    @Upsert
-    suspend fun upsertAll(docs: List<DocumentHeaderEntity>)
-
     @Query("UPDATE documentHeader SET docState = :state WHERE documentNo = :documentNo AND type = :type")
     suspend fun updateState(documentNo: String, type: String, state: String)
 

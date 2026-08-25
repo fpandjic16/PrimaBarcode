@@ -14,9 +14,6 @@ interface RecordingDao {
     @Query("SELECT * FROM recordings")
     fun observeAll(): Flow<List<RecordingEntity>>
 
-    @Query("SELECT * FROM recordings WHERE documentNo = :documentNo AND type = :type AND documentLine = :lineNo ORDER BY recordingLineNo DESC LIMIT 1")
-    suspend fun getLastForLine(documentNo: String, type: String, lineNo: Int): RecordingEntity?
-
     @Query("SELECT COALESCE(MAX(recordingLineNo), 0) + 1 FROM recordings WHERE documentNo = :documentNo AND type = :type AND documentLine = :documentLine")
     suspend fun getNextRecordingLineNo(documentNo: String, type: String, documentLine: Int): Int
 
