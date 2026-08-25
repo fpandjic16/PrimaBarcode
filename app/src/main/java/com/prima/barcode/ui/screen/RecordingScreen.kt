@@ -89,6 +89,13 @@ fun RecordingScreen(
     var overScanWarning by remember { mutableStateOf<OverScanInfo?>(null) }
     var barcodeNotFoundError by remember { mutableStateOf<String?>(null) }
     var uomMismatchWarning by remember { mutableStateOf<UomMismatchInfo?>(null) }
+    // The hardware trigger (DataWedge) and the camera can both be "live" at the same time —
+    // nothing stops a user from pulling the trigger while the camera is also pointed at a
+    // barcode. Without this, that single physical gesture reaches handleScan twice (once per
+    // input path) and records the quantity twice. Debounced on the raw scanned value itself so
+    // a genuine re-scan of the same barcode after this window still counts normally.
+    var lastHandledBarcode by remember { mutableStateOf<String?>(null) }
+    var lastHandledAtMs by remember { mutableStateOf(0L) }
     val sizeOffset = LocalTextSizeOffset.current
     val showUpload = doc.lines.any { it.scanned > 0.0 }
     val context = LocalContext.current
@@ -103,6 +110,11 @@ fun RecordingScreen(
     }
 
     fun handleScan(rawInput: String) {
+        val now = System.currentTimeMillis()
+        if (rawInput == lastHandledBarcode && now - lastHandledAtMs < debounceTime) return
+        lastHandledBarcode = rawInput
+        lastHandledAtMs = now
+
         // The scanned/matched barcode is always the full raw input, e.g. "NTR1234|M|5.6"
         // in its entirety — that's the literal value on the label and what line.barcodeNo
         // matches against. UOM and quantity are additionally parsed out of it for
@@ -136,8 +148,13 @@ fun RecordingScreen(
         }
     }
 
+    val latestHandleScan = rememberUpdatedState(::handleScan)
     DisposableEffect(Unit) {
-        val receiver = DataWedgeManager.createReceiver { barcode -> handleScan(barcode) }
+        // The receiver is registered once for the screen's lifetime, so it must call through
+        // latestHandleScan rather than closing over handleScan directly — otherwise it would
+        // keep calling the very first composition's handleScan forever, evaluating every scan
+        // after the first against a stale `doc` snapshot (wrong over-scan/UoM warnings).
+        val receiver = DataWedgeManager.createReceiver { barcode -> latestHandleScan.value(barcode) }
         if (Build.VERSION.SDK_INT >= 33) {
             context.registerReceiver(receiver, DataWedgeManager.intentFilter(), Context.RECEIVER_NOT_EXPORTED)
         } else {
