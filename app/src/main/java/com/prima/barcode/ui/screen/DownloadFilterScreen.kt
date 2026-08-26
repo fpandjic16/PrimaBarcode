@@ -83,6 +83,13 @@ fun DownloadFilterScreen(
     val selectedRc       = remember(rcCode, rcs) { rcs.find { it.code == rcCode } }
 
     LaunchedEffect(Unit) {
+        // The doc-list screen's ScanField deliberately holds focus (and, if the user tapped
+        // its keyboard icon, the IME) so the hardware scanner works without tapping first. If
+        // the user leaves it mid-edit by tapping DOWNLOAD, that focus/keyboard state can carry
+        // over onto this screen's first field once ScanField's EditText is disposed. Clear both
+        // explicitly on entry so the form always opens with nothing focused and no keyboard up.
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
         if (!hasCredentials) showLogin = true
     }
 

@@ -90,6 +90,14 @@ fun DocumentFilterScreen(
     var rcCode          by remember { mutableStateOf(lockedRcCode ?: initialFilter.rcCode) }
     var dateTarget      by remember { mutableStateOf<FilterDateTarget?>(null) }
 
+    LaunchedEffect(Unit) {
+        // Same fix as DownloadFilterScreen: the doc-list screen's ScanField deliberately holds
+        // focus (and sometimes the IME) for the hardware scanner, which can carry over onto this
+        // screen's first field once ScanField's EditText is disposed. Reset on entry.
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
+    }
+
     fun buildFilter() = DocumentFilter(
         dateFrom        = dateFrom,
         dateTo          = dateTo,
