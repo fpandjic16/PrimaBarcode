@@ -245,8 +245,9 @@ class AppViewModel @Inject constructor(
      * Performs an authenticated NTLM GET against [serverBaseUrl] to verify that the
      * server is reachable and the supplied Windows credentials are accepted.
      * The username carries the domain (user@domain or DOMAIN\user). Credentials are
-     * persisted regardless of outcome, so a failed test (e.g. a server-side error)
-     * doesn't force the user to retype them for the next attempt.
+     * only persisted (the user only becomes "signed in") once the server has actually
+     * accepted them — a failed test leaves the credential store untouched, so a wrong
+     * password never gets remembered.
      * The password is never logged.
      */
     fun testExtSystemConnection(
@@ -260,11 +261,11 @@ class AppViewModel @Inject constructor(
             if (url.isBlank()) {
                 onResult(ExtSystemResult.Failure(appContext.getString(R.string.ext_config_server_url_empty))); return@launch
             }
-            saveCredentials(username.trim(), password)
             val config = extSystemConfig.value.copy(serverBaseUrl = url)
             val creds  = ExtSystemCredentials(username.trim(), password)
             extSystemClient.configure(config, creds)
             val result = extSystemClient.testConnection(url)
+            if (result is ExtSystemResult.Success) saveCredentials(username.trim(), password)
             onResult(result)
         }
     }
