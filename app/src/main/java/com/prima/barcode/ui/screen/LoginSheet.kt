@@ -3,6 +3,8 @@ package com.prima.barcode.ui.screen
 import android.view.WindowManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -19,7 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import com.prima.barcode.ui.component.PrimaTopBar
+import com.prima.barcode.ui.component.verticalScrollbar
 import com.prima.barcode.ui.theme.PrimaPalette
 import com.prima.barcode.ui.theme.monoLabel
 import androidx.compose.ui.res.stringResource
@@ -68,18 +72,30 @@ fun LoginSheet(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        (LocalView.current.parent as? DialogWindowProvider)?.window?.setLayout(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-        )
+        (LocalView.current.parent as? DialogWindowProvider)?.window?.let { window ->
+            window.setLayout(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+            )
+            // This dialog has its own window, separate from the Activity's — enableEdgeToEdge()
+            // in MainActivity.onCreate() never reaches it, so without these two calls Compose's
+            // WindowInsets/imePadding() below can't see this window's own keyboard state, and the
+            // password field ends up hidden behind the IME on small screens (e.g. the MC3300).
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        }
         Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
             PrimaTopBar(
                 title = stringResource(R.string.login_title),
                 onBack = onDismiss,
             )
+            val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .imePadding()
+                    .verticalScrollbar(scrollState)
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 22.dp)
                     .padding(top = 24.dp, bottom = 32.dp),
             ) {
