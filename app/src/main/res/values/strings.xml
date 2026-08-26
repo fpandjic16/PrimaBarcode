@@ -153,6 +153,7 @@
     <string name="doc_filter_type">DOCUMENT TYPE</string>
     <!-- Location / RC -->
     <string name="lrc_title">Location &amp; RC</string>
+    <string name="lrc_refresh_list">Refresh list</string>
     <string name="lrc_select_subtitle">Select responsibility center and location</string>
     <string name="lrc_synced_at">Synced %s</string>
     <string name="lrc_section_rc">Responsibility Center</string>
@@ -193,7 +194,6 @@
     <string name="doc_delete_recordings_title">Delete recordings?</string>
     <string name="doc_delete_recordings_text">All recordings for %s will be deleted and the document will be reset to its initial state.</string>
         <!-- Accessibility -->
-    <string name="cd_refresh">Refresh</string>
     <string name="cd_filter">Filter</string>
     <string name="cd_clear">Clear</string>
     <string name="cd_close_camera">Close camera</string>

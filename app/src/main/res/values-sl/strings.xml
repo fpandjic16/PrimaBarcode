@@ -153,6 +153,7 @@
     <string name="doc_filter_type">VRSTA DOKUMENTA</string>
     <!-- Location / RC -->
     <string name="lrc_title">Lokacija in SM</string>
+    <string name="lrc_refresh_list">Osveži seznam</string>
     <string name="lrc_select_subtitle">Izberite stroškovno mesto in lokacijo</string>
     <string name="lrc_synced_at">Sinhronizirano %s</string>
     <string name="lrc_section_rc">Stroškovno mesto</string>
@@ -193,7 +194,6 @@
     <string name="doc_delete_recordings_title">Izbrisati snemanja?</string>
     <string name="doc_delete_recordings_text">Vsa snemanja za %s bodo izbrisana, dokument pa bo ponastavljen v začetno stanje.</string>
         <!-- Accessibility -->
-    <string name="cd_refresh">Osveži</string>
     <string name="cd_filter">Filter</string>
     <string name="cd_clear">Počisti</string>
     <string name="cd_close_camera">Zapri kamero</string>

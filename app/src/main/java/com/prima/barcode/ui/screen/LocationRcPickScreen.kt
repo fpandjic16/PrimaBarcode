@@ -88,11 +88,25 @@ fun LocationRcPickScreen(
                     )
                     Spacer(Modifier.width(12.dp))
                 } else {
-                    IconButton(onClick = { if (hasCredentials) onRefresh() else showLoginSheet = true }) {
+                    Row(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0x20FFFFFF))
+                            .clickable(onClick = { if (hasCredentials) onRefresh() else showLoginSheet = true })
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
                         Icon(
                             Icons.Outlined.Refresh,
-                            contentDescription = stringResource(R.string.cd_refresh),
+                            contentDescription = null,
                             tint = Color.White,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            stringResource(R.string.lrc_refresh_list),
+                            style = monoLabel.copy(color = Color.White, fontWeight = FontWeight.Medium),
                         )
                     }
                 }
