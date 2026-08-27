@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import com.prima.barcode.R
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -36,6 +37,11 @@ import androidx.core.content.ContextCompat
 import com.prima.barcode.data.barcode.BarcodeAnalyzer
 import timber.log.Timber
 import java.util.concurrent.Executors
+
+// Shared by the drawn reticle and the aim filter that decides which barcodes count — keep
+// them driven off the same values so what the user sees can't drift from what's scanned.
+private val RETICLE_W = 280.dp
+private val RETICLE_H = 170.dp
 
 @Composable
 fun CameraPreview(
@@ -53,6 +59,10 @@ fun CameraPreview(
     val latestOnClose = rememberUpdatedState(onClose)
     val latestContinuous = rememberUpdatedState(continuous)
     val latestDebounceMs = rememberUpdatedState(debounceMs)
+
+    val density = LocalDensity.current
+    val reticleWpx = with(density) { RETICLE_W.toPx() }
+    val reticleHpx = with(density) { RETICLE_H.toPx() }
 
     DisposableEffect(lifecycleOwner) {
         val mainExecutor = ContextCompat.getMainExecutor(context)
@@ -75,7 +85,16 @@ fun CameraPreview(
                 val analysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build().also { imageAnalysis ->
-                        imageAnalysis.setAnalyzer(analysisExecutor, BarcodeAnalyzer { barcode ->
+                        val analyzer = BarcodeAnalyzer(
+                            isAimedAt = { box, imgW, imgH ->
+                                isInsideReticle(
+                                    box = box,
+                                    imageW = imgW, imageH = imgH,
+                                    viewW = previewView.width, viewH = previewView.height,
+                                    reticleWpx = reticleWpx, reticleHpx = reticleHpx,
+                                )
+                            },
+                        ) { barcode ->
                             val now = System.currentTimeMillis()
                             if (now - lastScanMs < latestDebounceMs.value) return@BarcodeAnalyzer
                             lastScanMs = now
@@ -84,7 +103,8 @@ fun CameraPreview(
                                 latestOnBarcode.value(barcode)
                                 if (!latestContinuous.value) latestOnClose.value()
                             }
-                        })
+                        }
+                        imageAnalysis.setAnalyzer(analysisExecutor, analyzer)
                     }
 
                 provider.unbindAll()
@@ -144,8 +164,8 @@ private fun ScanningOverlay(modifier: Modifier = Modifier) {
     androidx.compose.foundation.Canvas(
         modifier = modifier.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen },
     ) {
-        val reticleW = 280.dp.toPx()
-        val reticleH = 170.dp.toPx()
+        val reticleW = RETICLE_W.toPx()
+        val reticleH = RETICLE_H.toPx()
         val left   = (size.width  - reticleW) / 2f
         val top    = (size.height - reticleH) / 2f
         val right  = left + reticleW
@@ -179,6 +199,41 @@ private fun ScanningOverlay(modifier: Modifier = Modifier) {
 
         drawCornerBrackets(left, top, right, bottom)
     }
+}
+
+/**
+ * True when [box] — a detected barcode's bounding box in upright image coordinates — has its
+ * centre inside the on-screen aiming reticle.
+ *
+ * The mapping matters: `PreviewView` renders the feed FILL_CENTER, scaling the analysis image
+ * up until it covers the view and then centre-cropping it. A rectangle drawn on the view
+ * therefore does *not* cover the same fraction of the analysis image — e.g. a 3:4 image in a
+ * 9:16 view has ~25% of its width cropped away off-screen. This inverts that transform
+ * (view px -> image px) so the region actually tested is the rectangle the user sees.
+ *
+ * Returns true when the geometry isn't known yet (view not laid out), so a barcode is never
+ * silently dropped just because the filter couldn't be evaluated.
+ */
+private fun isInsideReticle(
+    box: android.graphics.Rect,
+    imageW: Int, imageH: Int,
+    viewW: Int, viewH: Int,
+    reticleWpx: Float, reticleHpx: Float,
+): Boolean {
+    if (imageW <= 0 || imageH <= 0 || viewW <= 0 || viewH <= 0) return true
+
+    val scale = maxOf(viewW.toFloat() / imageW, viewH.toFloat() / imageH)
+    val cropX = (imageW * scale - viewW) / 2f
+    val cropY = (imageH * scale - viewH) / 2f
+
+    val leftView = (viewW - reticleWpx) / 2f
+    val topView  = (viewH - reticleHpx) / 2f
+    val left   = (leftView + cropX) / scale
+    val top    = (topView + cropY) / scale
+    val right  = (leftView + reticleWpx + cropX) / scale
+    val bottom = (topView + reticleHpx + cropY) / scale
+
+    return box.exactCenterX() in left..right && box.exactCenterY() in top..bottom
 }
 
 private fun DrawScope.drawCornerBrackets(
