@@ -8,7 +8,6 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -142,17 +141,6 @@ fun CameraPreview(
 
 @Composable
 private fun ScanningOverlay(modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition(label = "scan")
-    val lineProgress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue  = 1f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(1400, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "scanLine",
-    )
-
     androidx.compose.foundation.Canvas(
         modifier = modifier.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen },
     ) {
@@ -171,11 +159,21 @@ private fun ScanningOverlay(modifier: Modifier = Modifier) {
             blendMode = BlendMode.Clear,
         )
 
-        val scanY = top + lineProgress * reticleH
+        // Static red aiming line across the middle of the reticle, mirroring the red laser
+        // line on the Zebra hardware scanner: the user lines it up with the barcode rather
+        // than waiting for a sweeping animation to pass over it. Drawn twice — a soft wide
+        // pass under a crisp thin one — so it reads as a laser beam instead of a hairline.
+        val aimY = top + reticleH / 2f
         drawLine(
-            color       = Color(0xFF4CF58A),
-            start       = Offset(left + 4f, scanY),
-            end         = Offset(right - 4f, scanY),
+            color       = Color(0x55FF2D2D),
+            start       = Offset(left + 4f, aimY),
+            end         = Offset(right - 4f, aimY),
+            strokeWidth = 7.dp.toPx(),
+        )
+        drawLine(
+            color       = Color(0xFFFF2D2D),
+            start       = Offset(left + 4f, aimY),
+            end         = Offset(right - 4f, aimY),
             strokeWidth = 2.dp.toPx(),
         )
 
