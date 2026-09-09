@@ -8,6 +8,10 @@ import com.google.gson.annotations.SerializedName
 
 data class NavBarcodeAppRecording(
     @SerializedName("Document_Type")           val documentType: String,
+    // Retail and warehouse documents share a Document_Type code, so the recording has to carry
+    // the same discriminator the download filtered on or NAV can't tell which one it belongs
+    // to. Null (transport sheets, which are neither) is omitted from the JSON by Gson.
+    @SerializedName("Retail_Location")         val retailLocation: Boolean?,
     @SerializedName("Document_No")             val documentNo: String,
     @SerializedName("Document_Line_No")        val documentLineNo: Int,
     @SerializedName("Recording_Line_No")       val recordingLineNo: Int,
@@ -25,8 +29,13 @@ data class NavBarcodeAppRecording(
 // recordingGuid is generated fresh for every upload attempt (not persisted) so a
 // retry after a lost success-response can never collide on the NAV-side key.
 
-fun RecordingEntity.toNavRecording(documentTypeCode: String, recordingGuid: String): NavBarcodeAppRecording = NavBarcodeAppRecording(
+fun RecordingEntity.toNavRecording(
+    documentTypeCode: String,
+    recordingGuid: String,
+    retailLocation: Boolean?,
+): NavBarcodeAppRecording = NavBarcodeAppRecording(
     documentType             = documentTypeCode,
+    retailLocation           = retailLocation,
     documentNo               = documentNo,
     documentLineNo           = documentLine,
     recordingLineNo          = recordingLineNo,

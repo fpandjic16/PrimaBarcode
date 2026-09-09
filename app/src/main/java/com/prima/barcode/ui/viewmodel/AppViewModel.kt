@@ -109,9 +109,13 @@ class AppViewModel @Inject constructor(
         }
     }
 
-    private fun buildODataFilterString(filter: DownloadFilter, typeCode: String): String? {
+    private fun buildODataFilterString(filter: DownloadFilter, typeCode: String, type: DocumentType): String? {
         val clauses = mutableListOf<String>()
         if (typeCode.isNotBlank()) clauses.add("Document_Type eq '$typeCode'")
+        // Retail and warehouse share a Document_Type code, so this clause is what actually
+        // separates them — mandatory for all four, never optional. Transport sheets have no
+        // retailLocation and so get no clause at all.
+        type.retailLocation?.let { clauses.add("Retail_Location eq $it") }
         filter.dateFrom?.let { clauses.add("Document_Date ge $it") }
         filter.dateTo?.let { clauses.add("Document_Date le $it") }
         if (filter.destinationCode.isNotBlank()) clauses.add("Destination_No eq '${filter.destinationCode}'")
@@ -132,7 +136,7 @@ class AppViewModel @Inject constructor(
         val types = if (docType != null) listOf(docType) else DocumentType.entries
         return types.map { type ->
             val typeCode = config.docTypeCodeFor(type)
-            val filterStr = buildODataFilterString(filter, typeCode)
+            val filterStr = buildODataFilterString(filter, typeCode, type)
             val finalUrl = if (filterStr != null) appendODataFilter(config.documentLinesUrl, filterStr) else config.documentLinesUrl
             type.display to finalUrl
         }
@@ -164,7 +168,7 @@ class AppViewModel @Inject constructor(
             val errorMessages = mutableListOf<String>()
             for (type in typesToDownload) {
                 val typeCode = config.docTypeCodeFor(type)
-                val filterStr = buildODataFilterString(filter, typeCode)
+                val filterStr = buildODataFilterString(filter, typeCode, type)
                 val finalUrl = if (filterStr != null) appendODataFilter(config.documentLinesUrl, filterStr) else config.documentLinesUrl
                 val result = extSystemClient.downloadRaw(finalUrl)
                 when (result) {
@@ -363,7 +367,12 @@ class AppViewModel @Inject constructor(
             var failureMessage: String? = null
             for (row in rows) {
                 val recordingGuid = java.util.UUID.randomUUID().toString()
-                val result = extSystemClient.uploadRecording(url, row.toNavRecording(docTypeCode, recordingGuid))
+                // Taken from the document type rather than Document.isSourceRetail so it can't
+                // disagree with the Retail_Location the download filtered on — the recording
+                // goes back up under exactly the bucket it came down in.
+                val result = extSystemClient.uploadRecording(
+                    url, row.toNavRecording(docTypeCode, recordingGuid, doc.type.retailLocation),
+                )
                 when (result) {
                     // Delete each row as it's confirmed uploaded, so a retry after a
                     // partial failure only resends what NAV hasn't received yet.

@@ -66,7 +66,7 @@ All of this lives under **Settings → External System Configuration** (`ExtSyst
 | Session duration | How long a signed-in session's credentials stay valid before requiring re-entry (8h / 24h / 48h / 7 days) | 168h |
 | Document lines URL | The **"Barcode App Entry"** OData endpoint — shared by all 5 document types | `.../Company('Prima Commerce d.o.o.')/BarcodeAppEntries` |
 | Per-document-type: enabled switch | Whether that document type is offered in the app at all | — |
-| Per-document-type: Document Type Code | The exact `Document_Type` filter value the ERP expects for that type (read-only in this screen; comes from imported/loaded config, not typed here) | `SHIPMENT`, `RECEIPT`, `RETAILSHPT`, `RETAILRCPT`, `TRANSPORT` |
+| Per-document-type: Document Type Code | The exact `Document_Type` filter value the ERP expects for that type (read-only in this screen; comes from imported/loaded config, not typed here). Retail and warehouse deliberately share codes — see the `Retail_Location` note in §A.5.3 | `SHIPMENT` (warehouse *and* retail shipment), `RECEIPT` (warehouse *and* retail receipt), `TRANSPORT` |
 | Per-document-type: Filter by | Whether that type's "download" and "My Location" filtering scope by **Location** (source code) or by **Responsibility Center** | `LOCATION` (default) |
 | Locations URL | Reference-data endpoint for Locations (RCs are derived client-side from distinct location RC codes, not fetched from a separate RC endpoint) | `.../LocationList` |
 | Recording sync URL | The **"Barcode App Recordings"** OData endpoint — one POST per recorded scan | `.../BarcodeAppRecordings` |
@@ -91,7 +91,7 @@ One flat OData row per document **line** (header fields repeated on every row of
 | `Document_No` | Document number — the grouping key |
 | `Line_No` | Line number (rows with `Line_No <= 0` are treated as the header row and excluded from lines) |
 | `Source_No` | Source location code |
-| `Retail_Location` | Boolean — whether the source is a retail location |
+| `Retail_Location` | Boolean — whether the source is a retail location. **Also a mandatory filter** (2026-09): retail and warehouse types share a `Document_Type` code, so this is what actually separates them. Warehouse shipment/receipt filter `Retail_Location eq false`, retail shipment/receipt filter `eq true`; transport sheets don't filter on it at all. Driven by `DocumentType.retailLocation` (`Models.kt`), not by anything user-configurable |
 | `Destination_No` | Destination code |
 | `Document_Date` | Document date |
 | `Responsibility_Center` | RC code |
@@ -109,6 +109,7 @@ One flat OData row **per individual scanned recording** — not one row per docu
 | NAV field | Meaning |
 |---|---|
 | `Document_Type` | Document type code |
+| `Retail_Location` | Boolean, added 2026-09 — the same discriminator the download filtered on, since retail and warehouse share a `Document_Type` code. Sourced from `DocumentType.retailLocation`, so a recording goes back up under exactly the bucket it came down in. Omitted entirely for transport sheets (Gson drops the null) |
 | `Document_No` | Document number |
 | `Document_Line_No` | Which line this recording applies to |
 | `Recording_Line_No` | Sequence number within that line's recordings |
@@ -458,7 +459,7 @@ The typed value winning means a bad configured domain can be corrected at the lo
 2. `extSystemClient.configure(config, creds)`.
 3. For each `DocumentType` in scope (one, or all 5 if `docType == null`):
    - `typeCode = config.docTypeCodeFor(type)`.
-   - `buildODataFilterString(filter, typeCode)`: `Document_Type eq '<typeCode>'` (always, if non-blank) + `Document_Date ge/le` (if set) + `Destination_No eq` (if set) + `Source_No eq` (if set) + `Responsibility_Center eq` (if set) — joined with `" and "`.
+   - `buildODataFilterString(filter, typeCode, type)`: `Document_Type eq '<typeCode>'` (always, if non-blank) + `Retail_Location eq true/false` (whenever `type.retailLocation` is non-null, i.e. everything except transport sheets — see §A.5.3) + `Document_Date ge/le` (if set) + `Destination_No eq` (if set) + `Source_No eq` (if set) + `Responsibility_Center eq` (if set) — joined with `" and "`.
    - `appendODataFilter`: appends `?$filter=<urlencoded>` (or `&$filter=` if `?` already present); `URLEncoder.encode(..., "UTF-8")` with a `+`→`%20` post-fix.
    - `downloadRaw(finalUrl)` — paginated GET.
    - Parses as `NavODataList<NavBarcodeAppEntry>`, groups by `documentNo`, builds `Document`+`Line`s, `state=Downloaded`.
@@ -501,7 +502,7 @@ return failures
   "documentLinesUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
   "documentTypeCodes": {
     "WAREHOUSE_SHIPMENT": "SHIPMENT", "WAREHOUSE_RECEIPT": "RECEIPT",
-    "RETAIL_SHIPMENT": "RETAILSHPT", "RETAIL_RECEIPT": "RETAILRCPT", "TRANSPORT_SHEET": "TRANSPORT"
+    "RETAIL_SHIPMENT": "SHIPMENT", "RETAIL_RECEIPT": "RECEIPT", "TRANSPORT_SHEET": "TRANSPORT"
   },
   "locationsUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/LocationList",
   "recordingSyncUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppRecordings"
@@ -870,4 +871,4 @@ Separately, a full audit (2026-08, same pass) checked every one of the then-247 
 - **Adding a new AppSettings field**: add to the `AppSettings` data class + `AppSettingsStore` serialization, add local `remember` state + callback wiring in `MainActivity.kt`, and a control in `SettingsScreen.kt`. Remember the buffered-edit pattern — don't persist directly from the toggle, let it flow through `buildSettings()`/exit-save.
 - **The upload payload is intentionally flat and per-row**, not batched — if ERP-side batching is ever desired, `AppViewModel.runUpload`'s row loop is the place to change, but note the per-row-immediate-delete behavior is what makes partial-failure retries safe; batching would need an equivalent all-or-nothing safety guarantee.
 - **`NavResponsibilityCenter` DTO** is defined but unused (RCs are derived from Location rows) — if the ERP ever exposes a genuine RC list with richer fields (e.g. using the `short` field), this DTO is ready to wire into `AppViewModel.realDownloadLocations` (or a new `realDownloadResponsibilityCenters`).
-- **`Document.isSourceRetail`** (`documentHeader.isSourceRetail`) is written on every download/merge (from NAV's `Retail_Location` flag) but not currently read anywhere in the app — captured for a retail-specific feature that hasn't been built yet. Deliberately kept, not dead code to clean up.
+- **`Document.isSourceRetail`** (`documentHeader.isSourceRetail`) is written on every download/merge from NAV's `Retail_Location` flag and still isn't read anywhere. Note the retail/warehouse split added in 2026-09 does *not* use it: both the download filter and the uploaded recording take `Retail_Location` from `DocumentType.retailLocation` instead, so the value sent can't drift from the bucket the document was fetched under. `isSourceRetail` remains the raw echo of what NAV reported per document — the obvious thing to switch to if NAV's own value should ever win over the app's bucket.

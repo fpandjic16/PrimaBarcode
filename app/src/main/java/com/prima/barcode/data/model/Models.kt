@@ -24,11 +24,21 @@ data class Location(
 
 enum class DocTypeFilterMode { LOCATION, RESPONSIBILITY_CENTER }
 
-enum class DocumentType(val key: String, val display: String) {
-    WAREHOUSE_SHIPMENT("WHSE_SHIP", "Warehouse Shipment"),
-    WAREHOUSE_RECEIPT( "WHSE_RCPT", "Warehouse Receipt"),
-    RETAIL_SHIPMENT(   "RT_SHIP",   "Retail Shipment"),
-    RETAIL_RECEIPT(    "RT_RCPT",   "Retail Whse. Receipt"),
+/**
+ * [retailLocation] is what separates the retail types from the warehouse ones on the NAV side.
+ * They deliberately share a `Document_Type` code — retail shipment and warehouse shipment are
+ * both `SHIPMENT`, retail receipt and warehouse receipt are both `RECEIPT` — so `Document_Type`
+ * alone no longer identifies a bucket. Every download filter and every uploaded recording for
+ * these four carries `Retail_Location` alongside the code to disambiguate.
+ *
+ * Null means the type doesn't participate: transport sheets are neither, and get no
+ * `Retail_Location` clause on download nor the field on upload.
+ */
+enum class DocumentType(val key: String, val display: String, val retailLocation: Boolean? = null) {
+    WAREHOUSE_SHIPMENT("WHSE_SHIP", "Warehouse Shipment",    retailLocation = false),
+    WAREHOUSE_RECEIPT( "WHSE_RCPT", "Warehouse Receipt",     retailLocation = false),
+    RETAIL_SHIPMENT(   "RT_SHIP",   "Retail Shipment",       retailLocation = true),
+    RETAIL_RECEIPT(    "RT_RCPT",   "Retail Whse. Receipt",  retailLocation = true),
     TRANSPORT_SHEET(   "TRANSPORT", "Transport Sheet"),
 }
 
