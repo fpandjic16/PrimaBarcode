@@ -34,9 +34,11 @@ val String.uppercased: String
     @ReadOnlyComposable
     get() = if (LocalUppercaseEnabled.current) this.uppercase() else this
 
-enum class TextSize(val spOffset: Int, val label: String) {
-    NORMAL(2, "Normal"),
-    LARGER(4, "Larger"),
+// No label here — it's user-facing text, so it's resolved from string resources at the call
+// site (SettingsScreen.localizedLabel).
+enum class TextSize(val spOffset: Int) {
+    NORMAL(2),
+    LARGER(4),
 }
 
 /**

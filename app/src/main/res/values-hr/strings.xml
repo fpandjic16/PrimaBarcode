@@ -7,7 +7,7 @@
     <string name="btn_apply">Primijeni</string>
     <string name="btn_reset">Poništi</string>
     <string name="btn_download">Preuzmi</string>
-    <string name="btn_upload">Učitaj</string>
+    <string name="btn_upload">Pošalji</string>
     <string name="btn_clear">Obriši</string>
     <string name="btn_retry_upload">Pokušaj ponovo</string>
     <string name="btn_sign_in">Prijavi se</string>
@@ -20,14 +20,14 @@
     <!-- Main menu -->
     <string name="main_documents_header">DOKUMENTI</string>
     <!-- Document types -->
-    <string name="doctype_warehouse_shipment">Skladišna otprema</string>
-    <string name="doctype_warehouse_receipt">Skladišni primitak</string>
-    <string name="doctype_retail_shipment">Maloprodajna otprema</string>
-    <string name="doctype_retail_receipt">Maloprodajni primitak</string>
+    <string name="doctype_warehouse_shipment">Skladišna otpremnica</string>
+    <string name="doctype_warehouse_receipt">Skladišna primka</string>
+    <string name="doctype_retail_shipment">MP skladišna otpremnica</string>
+    <string name="doctype_retail_receipt">MP skladišna primka</string>
     <string name="doctype_transport_sheet">Transportni list</string>
     <!-- Doc list screen -->
-    <string name="doc_list_tab_orders">NARUDŽBE</string>
-    <string name="doc_list_tab_recordings">SNIMANJA</string>
+    <string name="doc_list_tab_orders">NALOZI</string>
+    <string name="doc_list_tab_recordings">ZAPISI</string>
     <string name="doc_list_tab_errors">GREŠKE</string>
     <string name="doc_list_empty">Nema dokumenata</string>
     <string name="doc_list_scan_placeholder">Skeniraj broj dokumenta…</string>
@@ -143,12 +143,11 @@
     <string name="filter_document_date">DATUM DOKUMENTA</string>
     <string name="filter_date_from">Od</string>
     <string name="filter_date_to">Do</string>
-    <string name="filter_destination_code">KOD ODREDIŠTA</string>
-    <string name="filter_source_code">KOD IZVORA</string>
+    <string name="filter_source_code">ŠIFRA ODREDIŠTA</string>
     <string name="filter_responsibility_center">CENTAR ODGOVORNOSTI</string>
     <!-- Document filter -->
     <string name="doc_filter_title">Filteri</string>
-    <string name="doc_filter_subtitle">Suzite popis dokumenata</string>
+    <string name="doc_filter_subtitle">Filtrirajte popis dokumenata</string>
     <string name="doc_filter_status">STATUS</string>
     <string name="doc_filter_type">VRSTA DOKUMENTA</string>
     <!-- Location / RC -->
@@ -208,7 +207,6 @@
     <string name="btn_see_errors">Prikaži pogreške</string>
     <string name="btn_dismiss">Zatvori</string>
     <string name="dialog_save_changes_title">Spremiti promjene?</string>
-    <string name="filter_dropdown_any">— Bilo koji —</string>
     <!-- Ext system config (audit additions) -->
     <string name="ext_config_test_connection_desc">Prijavljuje se s vašim Windows vjerodajnicama i šalje autenticirani zahtjev na URL poslužitelja.</string>
     <string name="ext_config_defaults_saved">Zadane postavke spremljene</string>
@@ -237,4 +235,17 @@
     <string name="upload_error_not_configured">Vanjski sustav nije konfiguriran ili niste prijavljeni</string>
     <string name="upload_error_sync_url_missing">URL za sinkronizaciju snimanja nije konfiguriran</string>
     <string name="upload_error_unknown">Nepoznata pogreška</string>
+    <string name="dashboard_pill_over">prekoračenje</string>
+    <string name="scan_placeholder">Skenirajte artikl · ili pritisnite tipku</string>
+    <string name="settings_background_sync">Omogući sinkronizaciju u pozadini</string>
+    <string name="text_size_normal">Normalno</string>
+    <string name="text_size_larger">Veće</string>
+    <string name="ext_config_filter_by">Filtriraj po</string>
+    <string name="ext_config_filter_location">Lokacija</string>
+    <string name="ext_config_filter_rc">Centar odgovornosti</string>
+    <string name="settings_insert_defaults_pending">(na čekanju)</string>
+    <string name="settings_insert_defaults_desc">Učitajte, preuzmite ili uvezite zadane postavke vanjskog sustava. Primjenjuje se pri spremanju.</string>
+    <string name="settings_delete_all">Izbriši sve dokumente i zapise</string>
+    <string name="settings_delete_all_desc">Trajno briše sve preuzete dokumente, stavke i zapise. Postavke i prijava ostaju netaknute.</string>
+    <string name="settings_background_sync_desc">Slanje se odvija u pozadini pa možete nastaviti raditi dok se dokumenti šalju.</string>
 </resources>

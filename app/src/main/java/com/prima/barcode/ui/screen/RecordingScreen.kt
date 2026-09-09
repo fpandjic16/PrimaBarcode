@@ -198,10 +198,13 @@ fun RecordingScreen(
             onBack = { handleBack() },
             actions = {
                 if (showUpload && view == RecordingView.OVERVIEW) {
+                    // Same footprint as PrimaTopBar's back button (60x44, 8dp radius, 24dp
+                    // icon), just mirrored padding and the Coral fill — so the two top-bar
+                    // controls read as a matching pair across the bar.
                     Box(
                         modifier = Modifier
-                            .padding(end = 8.dp)
-                            .size(36.dp)
+                            .padding(start = 4.dp, top = 2.dp, bottom = 2.dp, end = 8.dp)
+                            .size(width = 60.dp, height = 44.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(PrimaPalette.Coral)
                             .clickable(onClick = onUpload),

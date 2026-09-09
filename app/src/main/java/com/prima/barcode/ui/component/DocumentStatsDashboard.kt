@@ -63,7 +63,7 @@ fun DocumentStatsDashboard(
             ) {
                 DocStatLine(count = readyForUpload, label = stringResource(R.string.dashboard_pill_ready),   color = Color(0xFF2E8C5E))
                 DocStatLine(count = partial,        label = stringResource(R.string.dashboard_pill_partial), color = Color(0xFFC7943A))
-                DocStatLine(count = over,           label = "Over",                                          color = Color(0xFF2D6CE0))
+                DocStatLine(count = over,           label = stringResource(R.string.dashboard_pill_over),    color = Color(0xFF2D6CE0))
                 DocStatLine(count = errors,         label = stringResource(R.string.dashboard_pill_error),   color = Color(0xFFCE3A3A))
             }
         }

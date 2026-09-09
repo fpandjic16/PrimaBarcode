@@ -47,6 +47,14 @@ import com.prima.barcode.R
 
 private const val DB_SCHEMA_VERSION = "7.0.0"
 
+// The enum can't hold a resource lookup, so the label is resolved here instead — same
+// pattern as DocumentType.localizedDisplay() on the other screens.
+@Composable
+private fun TextSize.localizedLabel(): String = when (this) {
+    TextSize.NORMAL -> stringResource(R.string.text_size_normal)
+    TextSize.LARGER -> stringResource(R.string.text_size_larger)
+}
+
 @Composable
 fun SettingsScreen(
     user: User?,
@@ -195,7 +203,7 @@ fun SettingsScreen(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
-                                    size.label,
+                                    size.localizedLabel(),
                                     style = monoLabel.copy(
                                         color = if (selected) Color.White else PrimaPalette.Ink2,
                                         fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
@@ -406,8 +414,8 @@ fun SettingsScreen(
                 Column(modifier = Modifier.fillMaxWidth().background(Color.White)) {
                     ToggleRow(
                         icon = Icons.Outlined.Sync,
-                        label = "Enable background sync",
-                        description = "Upload in the background so you can keep working while documents are sent.",
+                        label = stringResource(R.string.settings_background_sync),
+                        description = stringResource(R.string.settings_background_sync_desc),
                         checked = backgroundSync,
                         onCheckedChange = { backgroundSync = it },
                     )
@@ -505,14 +513,15 @@ fun SettingsScreen(
                         Spacer(Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Insert system defaults" + if (pendingExtSystemConfig != null) " (pending)" else "",
+                                stringResource(R.string.settings_insert_defaults_dialog_title) +
+                                    if (pendingExtSystemConfig != null) " " + stringResource(R.string.settings_insert_defaults_pending) else "",
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     color = PrimaPalette.Ink,
                                     fontWeight = FontWeight.Normal,
                                 ),
                             )
                             Text(
-                                "Load, download, or import default external system settings. Applies when you save.",
+                                stringResource(R.string.settings_insert_defaults_desc),
                                 style = monoLabel.copy(color = PrimaPalette.Ink3),
                             )
                         }
@@ -575,14 +584,14 @@ fun SettingsScreen(
                         Spacer(Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Delete all documents and recordings",
+                                stringResource(R.string.settings_delete_all),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     color = SignOutRed,
                                     fontWeight = FontWeight.Medium,
                                 ),
                             )
                             Text(
-                                "Permanently deletes every downloaded document, line, and recording. Settings and sign-in stay untouched.",
+                                stringResource(R.string.settings_delete_all_desc),
                                 style = monoLabel.copy(color = PrimaPalette.Ink3),
                             )
                         }

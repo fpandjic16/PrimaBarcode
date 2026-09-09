@@ -441,6 +441,10 @@ private fun DocRow(
                             style = monoLabel.copy(color = PrimaPalette.Ink3, fontSize = (12 + sizeOffset).sp),
                         )
                         Text(
+                            doc.destinationCode,
+                            style = monoLabel.copy(color = PrimaPalette.Ink3, fontSize = (12 + sizeOffset).sp),
+                        )
+                        Text(
                             dateFmt.format(doc.documentDate ?: doc.creationDateTime),
                             style = monoLabel.copy(color = PrimaPalette.Ink3, fontSize = (12 + sizeOffset).sp),
                         )

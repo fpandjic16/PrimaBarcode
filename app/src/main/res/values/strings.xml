@@ -143,7 +143,6 @@
     <string name="filter_document_date">DOCUMENT DATE</string>
     <string name="filter_date_from">From</string>
     <string name="filter_date_to">To</string>
-    <string name="filter_destination_code">DESTINATION CODE</string>
     <string name="filter_source_code">SOURCE CODE</string>
     <string name="filter_responsibility_center">RESPONSIBILITY CENTER</string>
     <!-- Document filter -->
@@ -208,7 +207,6 @@
     <string name="btn_see_errors">See errors</string>
     <string name="btn_dismiss">Dismiss</string>
     <string name="dialog_save_changes_title">Save changes?</string>
-    <string name="filter_dropdown_any">— Any —</string>
     <!-- Ext system config (audit additions) -->
     <string name="ext_config_test_connection_desc">Signs in with your Windows credentials and runs an authenticated request against the server URL.</string>
     <string name="ext_config_defaults_saved">Defaults saved</string>
@@ -237,4 +235,17 @@
     <string name="upload_error_not_configured">External system not configured or not signed in</string>
     <string name="upload_error_sync_url_missing">Recording sync URL not configured</string>
     <string name="upload_error_unknown">Unknown error</string>
+    <string name="dashboard_pill_over">over</string>
+    <string name="scan_placeholder">Scan item · or press trigger</string>
+    <string name="settings_background_sync">Enable background sync</string>
+    <string name="text_size_normal">Normal</string>
+    <string name="text_size_larger">Larger</string>
+    <string name="ext_config_filter_by">Filter by</string>
+    <string name="ext_config_filter_location">Location</string>
+    <string name="ext_config_filter_rc">Responsibility Center</string>
+    <string name="settings_insert_defaults_pending">(pending)</string>
+    <string name="settings_insert_defaults_desc">Load, download, or import default external system settings. Applies when you save.</string>
+    <string name="settings_delete_all">Delete all documents and recordings</string>
+    <string name="settings_delete_all_desc">Permanently deletes every downloaded document, line, and recording. Settings and sign-in stay untouched.</string>
+    <string name="settings_background_sync_desc">Upload in the background so you can keep working while documents are sent.</string>
 </resources>

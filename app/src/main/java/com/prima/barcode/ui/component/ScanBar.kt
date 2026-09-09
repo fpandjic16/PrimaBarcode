@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.prima.barcode.R
 import com.prima.barcode.ui.theme.PrimaPalette
 
 /**
@@ -26,7 +28,7 @@ fun ScanBar(
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         ScanField(
-            placeholder = "Scan item · or press trigger",
+            placeholder = stringResource(R.string.scan_placeholder),
             onScan = onScan,
             onCameraTap = onCameraTap,
             dark = true,

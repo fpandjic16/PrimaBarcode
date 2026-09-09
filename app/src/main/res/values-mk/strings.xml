@@ -143,7 +143,6 @@
     <string name="filter_document_date">ДАТУМ НА ДОКУМЕНТ</string>
     <string name="filter_date_from">Од</string>
     <string name="filter_date_to">До</string>
-    <string name="filter_destination_code">ШИФРА НА ДЕСТИНАЦИЈА</string>
     <string name="filter_source_code">ШИФРА НА ИЗВОР</string>
     <string name="filter_responsibility_center">ЦЕНТАР НА ОДГОВОРНОСТ</string>
     <!-- Document filter -->
@@ -208,7 +207,6 @@
     <string name="btn_see_errors">Прикажи грешки</string>
     <string name="btn_dismiss">Затвори</string>
     <string name="dialog_save_changes_title">Да се зачуваат промените?</string>
-    <string name="filter_dropdown_any">— Било кој —</string>
     <!-- Ext system config (audit additions) -->
     <string name="ext_config_test_connection_desc">Се најавува со вашите Windows акредитиви и испраќа автентицирано барање до URL-то на серверот.</string>
     <string name="ext_config_defaults_saved">Стандардните поставки се зачувани</string>
@@ -237,4 +235,17 @@
     <string name="upload_error_not_configured">Надворешниот систем не е конфигуриран или не сте најавени</string>
     <string name="upload_error_sync_url_missing">URL-то за синхронизација на снимања не е конфигурирано</string>
     <string name="upload_error_unknown">Непозната грешка</string>
+    <string name="dashboard_pill_over">прекумерно</string>
+    <string name="scan_placeholder">Скенирајте артикл · или притиснете копче</string>
+    <string name="settings_background_sync">Овозможи синхронизација во заднина</string>
+    <string name="text_size_normal">Нормално</string>
+    <string name="text_size_larger">Поголемо</string>
+    <string name="ext_config_filter_by">Филтрирај по</string>
+    <string name="ext_config_filter_location">Локација</string>
+    <string name="ext_config_filter_rc">Центар на одговорност</string>
+    <string name="settings_insert_defaults_pending">(на чекање)</string>
+    <string name="settings_insert_defaults_desc">Вчитајте, преземете или увезете стандардни поставки на надворешниот систем. Се применува при зачувување.</string>
+    <string name="settings_delete_all">Избриши ги сите документи и записи</string>
+    <string name="settings_delete_all_desc">Трајно ги брише сите преземени документи, ставки и записи. Поставките и најавата остануваат недопрени.</string>
+    <string name="settings_background_sync_desc">Испраќањето се одвива во заднина, па можете да продолжите да работите додека документите се испраќаат.</string>
 </resources>

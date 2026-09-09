@@ -1,17 +1,14 @@
 package com.prima.barcode.ui.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Clear
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,8 +24,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.prima.barcode.data.model.DocumentFilter
 import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.LineStatus
-import com.prima.barcode.data.model.Location
-import com.prima.barcode.data.model.ResponsibilityCenter
 import com.prima.barcode.data.model.bgColor
 import com.prima.barcode.data.model.color
 import com.prima.barcode.ui.component.PrimaTopBar
@@ -73,8 +68,6 @@ fun DocumentFilterScreen(
     lockedSourceCode: String? = null,
     lockedRcCode: String? = null,
     showDocTypeFilter: Boolean = true,
-    locations: List<Location> = emptyList(),
-    rcs: List<ResponsibilityCenter> = emptyList(),
     onApply: (DocumentFilter) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -132,28 +125,37 @@ fun DocumentFilterScreen(
 
             // ── Status ────────────────────────────────────────────────────
             FilterSection(label = stringResource(R.string.doc_filter_status)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    LineStatus.entries.forEach { ls ->
-                        val selected = ls in selectedStates
-                        val bg = if (selected) ls.color else ls.bgColor
-                        val fg = if (selected) Color.White else ls.color
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(bg)
-                                .clickable {
-                                    selectedStates = if (selected) selectedStates - ls else selectedStates + ls
-                                }
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            contentAlignment = Alignment.Center,
+                // Two rows of two rather than one row of four — the longest label ("Over-qty",
+                // "PREKORAČENJE" in Croatian) doesn't fit four across and used to wrap the row
+                // raggedly over several lines. Equal weights keep the four chips a tidy grid.
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LineStatus.entries.chunked(2).forEach { rowStatuses ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text(
-                                ls.localizedLabel().uppercased,
-                                style = monoLabel.copy(color = fg, fontWeight = FontWeight.Medium),
-                            )
+                            rowStatuses.forEach { ls ->
+                                val selected = ls in selectedStates
+                                val bg = if (selected) ls.color else ls.bgColor
+                                val fg = if (selected) Color.White else ls.color
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(bg)
+                                        .clickable {
+                                            selectedStates = if (selected) selectedStates - ls else selectedStates + ls
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        ls.localizedLabel().uppercased,
+                                        style = monoLabel.copy(color = fg, fontWeight = FontWeight.Medium),
+                                        maxLines = 1,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -221,42 +223,6 @@ fun DocumentFilterScreen(
                 }
             }
 
-            // ── Destination code ──────────────────────────────────────────────────
-            FilterSection(label = stringResource(R.string.filter_destination_code)) {
-                FilterTextField(
-                    value         = destinationCode,
-                    onValueChange = { destinationCode = it },
-                    placeholder   = "e.g. MP1091",
-                )
-            }
-
-            // ── Source code ───────────────────────────────────────────────────────
-            FilterSection(label = stringResource(R.string.filter_source_code)) {
-                if (lockedSourceCode != null) {
-                    FilterLockedField(value = lockedSourceCode)
-                } else {
-                    FilterDropdown(
-                        placeholder   = "e.g. CS175",
-                        value         = sourceCode,
-                        options       = locations.map { it.code },
-                        onValueChange = { sourceCode = it },
-                    )
-                }
-            }
-
-            // ── Responsibility center ─────────────────────────────────────────────
-            FilterSection(label = stringResource(R.string.filter_responsibility_center)) {
-                if (lockedRcCode != null) {
-                    FilterLockedField(value = lockedRcCode)
-                } else {
-                    FilterDropdown(
-                        placeholder   = "e.g. CENT_SKL",
-                        value         = rcCode,
-                        options       = rcs.map { it.code },
-                        onValueChange = { rcCode = it },
-                    )
-                }
-            }
         }
 
         // ── Bottom action bar ─────────────────────────────────────────────────────────
@@ -375,110 +341,3 @@ private fun FilterDateChip(
     }
 }
 
-@Composable
-private fun FilterTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    enabled: Boolean = true,
-) {
-    OutlinedTextField(
-        value         = value,
-        onValueChange = onValueChange,
-        placeholder   = { Text(placeholder, style = monoLabel.copy(color = PrimaPalette.Ink3)) },
-        singleLine    = true,
-        enabled       = enabled,
-        modifier      = Modifier.fillMaxWidth(),
-        textStyle     = monoLabel.copy(color = PrimaPalette.Ink),
-        colors        = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor  = Color.White,
-            focusedContainerColor    = Color.White,
-            disabledContainerColor   = Color.White,
-            disabledTextColor        = Color(0xFF888888),
-            disabledBorderColor      = Color(0x18000000),
-        ),
-        trailingIcon  = {
-            if (value.isNotEmpty() && enabled) {
-                IconButton(onClick = { onValueChange("") }, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Outlined.Clear, null, tint = PrimaPalette.Ink3, modifier = Modifier.size(16.dp))
-                }
-            }
-        },
-    )
-}
-
-@Composable
-private fun FilterLockedField(value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color.White)
-            .border(1.dp, Color(0x18000000), RoundedCornerShape(8.dp))
-            .padding(horizontal = 10.dp, vertical = 11.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = value,
-            style = monoLabel.copy(color = Color(0xFF888888)),
-            modifier = Modifier.weight(1f),
-        )
-        Icon(Icons.Outlined.Lock, null, tint = Color(0xFFBBBBBB), modifier = Modifier.size(14.dp))
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FilterDropdown(
-    placeholder: String,
-    value: String,
-    options: List<String>,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Row(
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.White)
-                .border(1.dp, Color(0x28000000), RoundedCornerShape(8.dp))
-                .padding(horizontal = 10.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = value.ifEmpty { placeholder },
-                style = monoLabel.copy(color = if (value.isNotEmpty()) PrimaPalette.Ink else PrimaPalette.Ink3),
-                modifier = Modifier.weight(1f),
-            )
-            if (value.isNotEmpty()) {
-                Icon(
-                    Icons.Outlined.Clear,
-                    contentDescription = null,
-                    tint = PrimaPalette.Ink3,
-                    modifier = Modifier.size(14.dp).clickable { onValueChange(""); expanded = false },
-                )
-            } else {
-                Icon(Icons.Outlined.ArrowDropDown, null, tint = PrimaPalette.Ink3, modifier = Modifier.size(16.dp))
-            }
-        }
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.filter_dropdown_any), style = monoLabel) },
-                onClick = { onValueChange(""); expanded = false },
-            )
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option, style = monoLabel) },
-                    onClick = { onValueChange(option); expanded = false },
-                )
-            }
-        }
-    }
-}

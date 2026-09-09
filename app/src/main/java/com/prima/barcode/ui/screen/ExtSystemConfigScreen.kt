@@ -302,7 +302,7 @@ fun ExtSystemConfigScreen(
                             ConfigDivider()
                             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                                 Text(
-                                    "Filter by",
+                                    stringResource(R.string.ext_config_filter_by),
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Medium, color = PrimaPalette.Ink,
                                     ),
@@ -317,8 +317,8 @@ fun ExtSystemConfigScreen(
                                         ) {
                                             Text(
                                                 when (mode) {
-                                                    DocTypeFilterMode.LOCATION -> "Location"
-                                                    DocTypeFilterMode.RESPONSIBILITY_CENTER -> "Responsibility Center"
+                                                    DocTypeFilterMode.LOCATION -> stringResource(R.string.ext_config_filter_location)
+                                                    DocTypeFilterMode.RESPONSIBILITY_CENTER -> stringResource(R.string.ext_config_filter_rc)
                                                 },
                                                 style = monoLabel,
                                             )

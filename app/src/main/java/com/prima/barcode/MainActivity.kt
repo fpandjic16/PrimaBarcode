@@ -594,8 +594,6 @@ private fun PrimaBarcodeApp(
             DocumentFilterScreen(
                 initialFilter = docFilter,
                 showDocTypeFilter = false,
-                locations = locations,
-                rcs = rcs,
                 onApply = { newFilter ->
                     docFilter = newFilter
                     nav.popBackStack()
@@ -608,8 +606,6 @@ private fun PrimaBarcodeApp(
                 initialFilter = overviewFilter,
                 lockedSourceCode = overviewLockedSource,
                 lockedRcCode = overviewLockedRc,
-                locations = locations,
-                rcs = rcs,
                 onApply = { newFilter ->
                     overviewFilter = newFilter
                     nav.popBackStack()

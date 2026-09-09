@@ -143,7 +143,6 @@
     <string name="filter_document_date">DATUM DOKUMENTA</string>
     <string name="filter_date_from">Od</string>
     <string name="filter_date_to">Do</string>
-    <string name="filter_destination_code">ŠIFRA CILJA</string>
     <string name="filter_source_code">ŠIFRA VIRA</string>
     <string name="filter_responsibility_center">STROŠKOVNO MESTO</string>
     <!-- Document filter -->
@@ -208,7 +207,6 @@
     <string name="btn_see_errors">Prikaži napake</string>
     <string name="btn_dismiss">Zapri</string>
     <string name="dialog_save_changes_title">Shraniti spremembe?</string>
-    <string name="filter_dropdown_any">— Katerikoli —</string>
     <!-- Ext system config (audit additions) -->
     <string name="ext_config_test_connection_desc">Prijavi se z vašimi Windows poverilnicami in izvede overjeno zahtevo na URL strežnika.</string>
     <string name="ext_config_defaults_saved">Privzete nastavitve shranjene</string>
@@ -237,4 +235,17 @@
     <string name="upload_error_not_configured">Zunanji sistem ni konfiguriran ali niste prijavljeni</string>
     <string name="upload_error_sync_url_missing">URL za sinhronizacijo posnetkov ni konfiguriran</string>
     <string name="upload_error_unknown">Neznana napaka</string>
+    <string name="dashboard_pill_over">presežek</string>
+    <string name="scan_placeholder">Skenirajte artikel · ali pritisnite tipko</string>
+    <string name="settings_background_sync">Omogoči sinhronizacijo v ozadju</string>
+    <string name="text_size_normal">Normalno</string>
+    <string name="text_size_larger">Večje</string>
+    <string name="ext_config_filter_by">Filtriraj po</string>
+    <string name="ext_config_filter_location">Lokacija</string>
+    <string name="ext_config_filter_rc">Stroškovno mesto</string>
+    <string name="settings_insert_defaults_pending">(v čakanju)</string>
+    <string name="settings_insert_defaults_desc">Naložite, prenesite ali uvozite privzete nastavitve zunanjega sistema. Uporabi se ob shranjevanju.</string>
+    <string name="settings_delete_all">Izbriši vse dokumente in posnetke</string>
+    <string name="settings_delete_all_desc">Trajno izbriše vse prenesene dokumente, postavke in posnetke. Nastavitve in prijava ostanejo nedotaknjene.</string>
+    <string name="settings_background_sync_desc">Pošiljanje poteka v ozadju, tako da lahko med pošiljanjem dokumentov delate naprej.</string>
 </resources>

@@ -72,7 +72,6 @@ fun DownloadFilterScreen(
 
     var dateFrom        by remember { mutableStateOf<LocalDate?>(null) }
     var dateTo          by remember { mutableStateOf<LocalDate?>(null) }
-    var destinationCode by remember { mutableStateOf("") }
     var sourceCode      by remember { mutableStateOf(fixedSourceCode ?: "") }
     var rcCode          by remember { mutableStateOf(fixedRcCode ?: "") }
     var dateTarget      by remember { mutableStateOf<DlDateTarget?>(null) }
@@ -93,12 +92,13 @@ fun DownloadFilterScreen(
         if (!hasCredentials) showLogin = true
     }
 
+    // No destinationCode — the destination filter was dropped from this screen, so the field
+    // stays at DownloadFilter's default and no Destination_No clause is sent.
     fun currentFilter() = DownloadFilter(
-        dateFrom        = dateFrom,
-        dateTo          = dateTo,
-        destinationCode = destinationCode.trim(),
-        sourceCode      = sourceCode.trim(),
-        rcCode          = rcCode.trim(),
+        dateFrom   = dateFrom,
+        dateTo     = dateTo,
+        sourceCode = sourceCode.trim(),
+        rcCode     = rcCode.trim(),
     )
 
     fun onOkClick() {
@@ -144,10 +144,6 @@ fun DownloadFilterScreen(
                         modifier = Modifier.weight(1f),
                     )
                 }
-            }
-
-            DlFilterSection(label = stringResource(R.string.filter_destination_code)) {
-                DlTextField(value = destinationCode, onValueChange = { destinationCode = it }, placeholder = "e.g. MP1091")
             }
 
             if (fixedRcCode == null) DlFilterSection(label = stringResource(R.string.filter_source_code)) {
@@ -230,7 +226,6 @@ fun DownloadFilterScreen(
             OutlinedButton(
                 onClick = {
                     dateFrom = null; dateTo = null
-                    destinationCode = ""
                     sourceCode = fixedSourceCode ?: ""
                     rcCode = fixedRcCode ?: ""
                 },
@@ -349,30 +344,4 @@ private fun DlDateChip(
     }
 }
 
-@Composable
-private fun DlTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-) {
-    OutlinedTextField(
-        value         = value,
-        onValueChange = onValueChange,
-        placeholder   = { Text(placeholder, style = monoLabel.copy(color = PrimaPalette.Ink3)) },
-        singleLine    = true,
-        modifier      = Modifier.fillMaxWidth(),
-        textStyle     = monoLabel.copy(color = PrimaPalette.Ink),
-        colors        = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = Color.White,
-            focusedContainerColor   = Color.White,
-        ),
-        trailingIcon = {
-            if (value.isNotEmpty()) {
-                IconButton(onClick = { onValueChange("") }, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Outlined.Clear, null, tint = PrimaPalette.Ink3, modifier = Modifier.size(16.dp))
-                }
-            }
-        },
-    )
-}
 
