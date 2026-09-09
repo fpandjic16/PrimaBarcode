@@ -326,7 +326,7 @@ A single row, **"Server & endpoints"**, that opens the connection settings for t
 |---|---|
 | **Debugger active** | Shows the exact web addresses the app is about to contact before every download/upload — useful only for diagnosing connectivity issues with IT support. Leave off for normal daily use. |
 | **Export data** | Saves a full dump of everything on your device to a file — useful if IT support asks for diagnostic data. |
-| **Insert system defaults** | Lets IT/consultants load, download, or import a starter configuration for the External System connection. Not something you'd normally use day-to-day. |
+| **Insert system defaults** | Lets IT/consultants load, download, or import a starter configuration for the External System connection. A downloaded copy deliberately leaves out the QR sign-in key, so it is safe to pass around; importing such a file leaves the key already on the device untouched. Not something you'd normally use day-to-day. |
 | **Clear cache** *(red — destructive)* | Deletes **everything**: your sign-in, all settings, all documents and scans. Requires confirmation. Use only when told to by support (e.g. handing the device to a different user). |
 | **Delete all documents and recordings** *(red — destructive)* | Deletes all downloaded documents and scans, but **keeps** your settings and sign-in. Requires confirmation. Use this to fully reset your working data without having to sign in again. |
 

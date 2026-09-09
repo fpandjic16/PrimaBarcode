@@ -438,7 +438,7 @@ private fun PrimaBarcodeApp(
                 onDiscard = { nav.popBackStack() },
                 loadDefaults = { fileName -> appVm.loadExtSystemDefaults(fileName) },
                 listCompanies = { appVm.listExtSystemDefaultsCompanies() },
-                getDefaultsJsonText = { fileName -> appVm.getExtSystemDefaultsJsonText(fileName) },
+                getDefaultsJsonForExport = { fileName -> appVm.getExtSystemDefaultsJsonForExport(fileName) },
                 disabledDocTypes = disabledDocTypes,
                 onDisabledDocTypesChange = onDisabledDocTypesChange,
                 docTypeFilters = docTypeFilters,
@@ -491,7 +491,7 @@ private fun PrimaBarcodeApp(
                 loadExtSystemConfigDefaults = { fileName -> appVm.loadExtSystemDefaults(fileName) },
                 listExtSystemDefaultsCompanies = { appVm.listExtSystemDefaultsCompanies() },
                 parseExtSystemConfigJson = { json -> appVm.parseExtSystemConfigJson(json) },
-                getExtSystemDefaultsJsonText = { fileName -> appVm.getExtSystemDefaultsJsonText(fileName) },
+                getExtSystemDefaultsJsonForExport = { fileName -> appVm.getExtSystemDefaultsJsonForExport(fileName) },
                 onExport = {
                     val ts = exportTimestampFmt.format(Instant.now())
                     exportLauncher.launch("prima_export_${ts}.json")

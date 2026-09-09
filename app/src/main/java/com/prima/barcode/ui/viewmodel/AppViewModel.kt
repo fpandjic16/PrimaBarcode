@@ -36,6 +36,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 import com.prima.barcode.data.extsystem.NavBarcodeAppEntry
 import com.prima.barcode.data.extsystem.NavLocation
@@ -58,6 +60,9 @@ class AppViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val gson = Gson()
+
+    /** Separate instance so the exported configuration file stays readable. */
+    private val exportGson = GsonBuilder().setPrettyPrinting().create()
 
     private val _credentials = MutableStateFlow(extSystemCredentialStore.get())
     val credentials: StateFlow<ExtSystemCredentials?> = _credentials
@@ -291,7 +296,12 @@ class AppViewModel @Inject constructor(
             locationsUrl     = dto.locationsUrl.orEmpty(),
             recordingSyncUrl = dto.recordingSyncUrl.orEmpty(),
             domain           = dto.domain.orEmpty(),
-            loginQrKey       = dto.loginQrKey.orEmpty(),
+            // Absent or blank means "leave the key alone", never "clear it". Exported files
+            // carry no key (see getExtSystemDefaultsJsonForExport), so importing one must not
+            // silently kill QR sign-in on a device that already has a working key. Rotation
+            // still works: a file that does carry a key overwrites whatever is there.
+            loginQrKey       = dto.loginQrKey?.takeIf { it.isNotBlank() }
+                ?: extSystemConfig.value.loginQrKey,
         )
     }.onFailure { Timber.w(it, "parseExtSystemConfigJson failed") }.getOrNull()
 
@@ -303,10 +313,37 @@ class AppViewModel @Inject constructor(
      .getOrNull()
      ?.let { parseExtSystemConfigJson(it) }
 
-    /** Raw text of a bundled `ext_system_defaults_*.json` asset, for "download as file". */
-    fun getExtSystemDefaultsJsonText(fileName: String): String? = runCatching {
-        appContext.assets.open(fileName)
+    /**
+     * Text of a bundled `ext_system_defaults_*.json` asset for "download as file", with
+     * [ExtSystemConfig.loginQrKey] removed.
+     *
+     * The key must never leave the app this way. An exported file lands in shared storage and
+     * then travels by mail and chat, which is exactly how the one secret protecting printed
+     * login QR codes ends up somewhere it cannot be recalled. Devices are meant to pick the key
+     * up from the bundled assets ("Load built-in defaults") or from a configuration file
+     * prepared deliberately for a rotation, never from a copy someone exported here.
+     *
+     * A file exported here still round-trips: importing one leaves the device's existing key
+     * untouched rather than blanking it (see [parseExtSystemConfigJson]).
+     */
+    fun getExtSystemDefaultsJsonForExport(fileName: String): String? = runCatching {
+        val text = appContext.assets.open(fileName)
             .bufferedReader(Charsets.UTF_8).use { it.readText() }
+        val json = JsonParser.parseString(text).asJsonObject
+        json.remove(LOGIN_QR_KEY_FIELD)
+        val stripped = exportGson.toJson(json)
+
+        // Belt and braces. If the key is still in the text - a renamed field, a second copy
+        // somewhere in the file - refuse to write anything rather than hand it out; the caller
+        // already shows a save-failed toast. Leaking it silently is the worse failure.
+        val key = runCatching {
+            gson.fromJson(text, ExtSystemDefaultsDto::class.java).loginQrKey
+        }.getOrNull()
+        if (!key.isNullOrBlank() && stripped.contains(key)) {
+            Timber.e("Refusing to export %s: the login QR key survived stripping.", fileName)
+            return@runCatching null
+        }
+        stripped
     }.onFailure { Timber.w(it, "Failed to read $fileName") }.getOrNull()
 
     /**
@@ -464,3 +501,11 @@ class AppViewModel @Inject constructor(
     }
 
 }
+
+/**
+ * Name of the login QR key field in `ext_system_defaults_*.json`, mirroring
+ * `AppViewModel.ExtSystemDefaultsDto.loginQrKey`. Rename one and this must be renamed too,
+ * or the export quietly stops stripping the key - which is what the contains() guard in
+ * `getExtSystemDefaultsJsonForExport` exists to catch.
+ */
+private const val LOGIN_QR_KEY_FIELD = "loginQrKey"

@@ -66,7 +66,7 @@ fun SettingsScreen(
     onSaveExtSystemConfig: (ExtSystemConfig) -> Unit = {},
     loadExtSystemConfigDefaults: (fileName: String) -> ExtSystemConfig? = { null },
     parseExtSystemConfigJson: (String) -> ExtSystemConfig? = { null },
-    getExtSystemDefaultsJsonText: (fileName: String) -> String? = { null },
+    getExtSystemDefaultsJsonForExport: (fileName: String) -> String? = { null },
     listExtSystemDefaultsCompanies: () -> List<ExtSystemDefaultsCompany> = { emptyList() },
     onExport: () -> Unit = {},
     onClearCache: () -> Unit = {},
@@ -134,7 +134,7 @@ fun SettingsScreen(
 
     val downloadExtSystemDefaultsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
-            val text = getExtSystemDefaultsJsonText(downloadFileName)
+            val text = getExtSystemDefaultsJsonForExport(downloadFileName)
             val written = text != null && runCatching {
                 context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
             }.isSuccess

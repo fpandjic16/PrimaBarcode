@@ -56,7 +56,7 @@ fun ExtSystemConfigScreen(
     onSave: (ExtSystemConfig) -> Unit,
     onDiscard: () -> Unit = {},
     loadDefaults: (fileName: String) -> ExtSystemConfig? = { null },
-    getDefaultsJsonText: (fileName: String) -> String? = { null },
+    getDefaultsJsonForExport: (fileName: String) -> String? = { null },
     listCompanies: () -> List<ExtSystemDefaultsCompany> = { emptyList() },
     disabledDocTypes: Set<String> = emptySet(),
     onDisabledDocTypesChange: (Set<String>) -> Unit = {},
@@ -146,7 +146,7 @@ fun ExtSystemConfigScreen(
 
     val downloadLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
-            val text = getDefaultsJsonText(downloadFileName)
+            val text = getDefaultsJsonForExport(downloadFileName)
             val written = text != null && runCatching {
                 context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
             }.isSuccess
