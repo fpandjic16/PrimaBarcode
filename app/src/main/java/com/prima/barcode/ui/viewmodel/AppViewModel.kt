@@ -363,15 +363,18 @@ class AppViewModel @Inject constructor(
         var failures = 0
         for (doc in docs) {
             val docTypeCode = config.docTypeCodeFor(doc.type)
+            // Retail and warehouse share a Document_Type code, so the recording has to carry the
+            // same discriminator for NAV to attribute it. The value is the Retail_Location NAV
+            // itself reported for this document on download. Transport sheets take part in
+            // neither bucket (retailLocation == null) and keep sending no field at all rather
+            // than a false that would claim they're warehouse documents.
+            val retailLocation = if (doc.type.retailLocation != null) doc.isSourceRetail else null
             val rows = repository.getRecordings(doc.documentNo, doc.type.key)
             var failureMessage: String? = null
             for (row in rows) {
                 val recordingGuid = java.util.UUID.randomUUID().toString()
-                // Taken from the document type rather than Document.isSourceRetail so it can't
-                // disagree with the Retail_Location the download filtered on — the recording
-                // goes back up under exactly the bucket it came down in.
                 val result = extSystemClient.uploadRecording(
-                    url, row.toNavRecording(docTypeCode, recordingGuid, doc.type.retailLocation),
+                    url, row.toNavRecording(docTypeCode, recordingGuid, retailLocation),
                 )
                 when (result) {
                     // Delete each row as it's confirmed uploaded, so a retry after a
