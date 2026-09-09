@@ -42,18 +42,18 @@ class ExtSystemODataClient @Inject constructor() {
         // What the user typed always wins over the configured domain, so a login can be
         // corrected on the spot without touching Settings:
         //   DOMAIN\user / user@domain -> that domain
-        //   .\user                    -> no domain at all, deliberately overriding Settings
+        //   .\user  (and bare \user)  -> no domain at all, deliberately overriding Settings
         //                                (the Windows "this machine, not the domain" form)
         //   user                      -> fall back to Settings → Credential session
-        // The username handed to NTLM is always the bare one — parsing runs even when a
-        // configured domain exists, so "DOMAIN\user" plus a configured domain can't send
-        // the domain through twice.
-        val (typedDomain, username) = parseDomainUser(rawUsername)
-        val domain = when {
-            typedDomain == LOCAL_MACHINE -> ""
-            typedDomain.isNotBlank()     -> typedDomain
-            else                         -> configuredDomain.trim()
-        }
+        // A username written with a separator states its own domain and is taken at its
+        // word — including when what it states is "none", which is why the check is on the
+        // separator rather than on the parsed domain being non-blank. The username handed
+        // to NTLM is always the bare one, so "DOMAIN\user" plus a configured domain can't
+        // send the domain through twice.
+        val typed = rawUsername.trim()
+        val (typedDomain, username) = parseDomainUser(typed)
+        val statesOwnDomain = '\\' in typed || '@' in typed
+        val domain = if (statesOwnDomain) typedDomain else configuredDomain.trim()
         val auth = NtlmAuthenticator(domain, username, password)
         ntlmAuth = auth
         val okHttp = OkHttpClient.Builder()
@@ -162,17 +162,19 @@ class ExtSystemODataClient @Inject constructor() {
         private const val LOCAL_MACHINE = "."
 
         /**
-         * Splits a NAV login into (domain, bareUsername). Accepts `DOMAIN\user`
-         * and `user@domain`; returns an empty domain when none is present.
-         *
-         * Returns the domain part verbatim, including a lone `.`, so callers can tell
-         * "user explicitly asked for no domain" apart from "user gave no domain".
+         * Splits a NAV login into (domain, bareUsername). Accepts `DOMAIN\user` and
+         * `user@domain`. The domain comes back empty when none was given, and also for
+         * `.\user` — Windows' "this machine, not a domain" form is a statement of *no*
+         * domain, not a domain literally named ".".
          */
         fun parseDomainUser(raw: String): Pair<String, String> {
             val trimmed = raw.trim()
             return when {
-                '\\' in trimmed -> trimmed.substringBefore('\\') to trimmed.substringAfter('\\')
-                '@'  in trimmed -> trimmed.substringAfter('@')  to trimmed.substringBefore('@')
+                '\\' in trimmed -> {
+                    val domain = trimmed.substringBefore('\\')
+                    (if (domain == LOCAL_MACHINE) "" else domain) to trimmed.substringAfter('\\')
+                }
+                '@'  in trimmed -> trimmed.substringAfter('@') to trimmed.substringBefore('@')
                 else            -> "" to trimmed
             }
         }

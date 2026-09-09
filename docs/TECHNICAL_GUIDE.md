@@ -431,10 +431,12 @@ sealed class ExtSystemResult<out T> {
 | Typed username | Domain used | Username sent |
 |---|---|---|
 | `DOMAIN\user` / `user@domain` | `DOMAIN` — the typed one wins over Settings | `user` |
-| `.\user` | none — deliberately overrides a configured domain | `user` |
+| `.\user` (or bare `\user`) | none — deliberately overrides a configured domain | `user` |
 | `user` | `ExtSystemConfig.domain` (may be blank) | `user` |
 
-The typed value winning means a bad configured domain can be corrected at the login screen without going into Settings, and `.\user` (Windows' "this machine, not the domain" form) is the escape hatch for signing in with no domain at all against a configured one. `parseDomainUser` always runs, including when a domain is configured, so `DOMAIN\user` combined with a configured domain can't send the domain twice — the username handed to NTLM is always the bare one. Note a lone leading backslash (`\user`) parses as an empty domain and therefore falls through to Settings; only `.` is treated as an explicit "no domain".
+The typed value winning means a bad configured domain can be corrected at the login screen without going into Settings, and `.\user` (Windows' "this machine, not the domain" form) is the escape hatch for signing in with no domain at all against a configured one. `parseDomainUser` always runs, including when a domain is configured, so `DOMAIN\user` combined with a configured domain can't send the domain twice — the username handed to NTLM is always the bare one.
+
+`parseDomainUser` maps `.` to an empty domain rather than returning it verbatim, so the fallback decision in `buildClient` can't be driven off "is the parsed domain blank" — blank would then mean both "no domain given" and "no domain wanted". It keys off whether the typed username contains a separator at all (`\` or `@`) instead: a name written with one states its own domain and is taken at its word, even when what it states is none.
 
 **Credential TTL** (`ExtSystemCredentialStore`, `EncryptedSharedPreferences` file `ext_system_credentials`, AES-256-GCM/Keystore): `save(username, password, ttlHours)` stores `expiry = now + ttlHours*3_600_000L`; `get()` checks `now > expiry` on every read — if expired, clears and returns `null` (lazy expiry, not a background timer). `isValid() = get() != null`.
 
