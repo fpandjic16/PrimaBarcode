@@ -2,6 +2,7 @@ package com.prima.barcode.ui.screen
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -37,6 +38,23 @@ import com.prima.barcode.ui.theme.PrimaPalette
 import com.prima.barcode.ui.theme.monoLabel
 import androidx.compose.ui.res.stringResource
 import com.prima.barcode.R
+
+/**
+ * Puts the window in resize-on-keyboard mode.
+ *
+ * `SOFT_INPUT_ADJUST_RESIZE` is deprecated as of API 30, and its documented replacement is the
+ * `setDecorFitsSystemWindows(false)` + inset handling the caller already does. Below API 30 that
+ * replacement is not enough on its own: `WindowInsets.ime` — and so `Modifier.imePadding()` —
+ * only sees the keyboard while the window is in adjust-resize mode. The MC3300 runs API 27, so
+ * dropping the flag would quietly bring back the bug this whole window setup exists to fix, with
+ * the password field sitting behind the keyboard. It stays until minSdk reaches 30.
+ *
+ * Suppressed in its own function rather than at the call site, so the suppression covers this one
+ * line and doesn't hide some later deprecation inside [LoginSheet].
+ */
+@Suppress("DEPRECATION")
+private fun Window.resizeForSoftInput() =
+    setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
 
 @Composable
 fun LoginSheet(
@@ -105,7 +123,7 @@ fun LoginSheet(
             // WindowInsets/imePadding() below can't see this window's own keyboard state, and the
             // password field ends up hidden behind the IME on small screens (e.g. the MC3300).
             WindowCompat.setDecorFitsSystemWindows(window, false)
-            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+            window.resizeForSoftInput()
         }
         // Box so the camera overlay below can sit on top of the form rather than beside it.
         Box(modifier = Modifier.fillMaxSize()) {
