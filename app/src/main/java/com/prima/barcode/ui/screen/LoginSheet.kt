@@ -1,11 +1,16 @@
 package com.prima.barcode.ui.screen
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.view.WindowManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
@@ -13,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -21,7 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import com.prima.barcode.data.auth.parseLoginQr
+import com.prima.barcode.ui.component.CameraPreview
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.component.verticalScrollbar
 import com.prima.barcode.ui.theme.PrimaPalette
@@ -48,7 +57,18 @@ fun LoginSheet(
     var password by remember { mutableStateOf(initialPassword) }
     var visible  by remember { mutableStateOf(false) }
     var testing  by remember { mutableStateOf(false) }
-    var testError by remember { mutableStateOf<String?>(null) }
+    // One error line for both failure modes — a rejected sign-in and an unusable QR code.
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var cameraOpen by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    // Resolved here because the camera callback below isn't a composable scope.
+    val connectFailedMessage = stringResource(R.string.login_connect_failed)
+    val invalidQrMessage = stringResource(R.string.login_qr_invalid)
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) cameraOpen = true }
 
     fun submit() {
         val test = onTestConnection
@@ -56,12 +76,12 @@ fun LoginSheet(
             onSubmit(username.trim(), password)
             return
         }
-        testError = null
+        errorMessage = null
         testing = true
         test(username.trim(), password) { success, error ->
             testing = false
             if (success) onSubmit(username.trim(), password)
-            else testError = error ?: "Could not connect. Check your username and password and try again."
+            else errorMessage = error ?: connectFailedMessage
         }
     }
 
@@ -84,76 +104,121 @@ fun LoginSheet(
             WindowCompat.setDecorFitsSystemWindows(window, false)
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         }
-        Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
-            PrimaTopBar(
-                title = stringResource(R.string.login_title),
-                onBack = onDismiss,
-            )
-            val scrollState = rememberScrollState()
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .imePadding()
-                    .verticalScrollbar(scrollState)
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = 22.dp)
-                    .padding(top = 24.dp, bottom = 32.dp),
-            ) {
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text(stringResource(R.string.login_username)) },
-                    placeholder = { Text(stringResource(R.string.login_username_hint)) },
-                    singleLine = true,
-                    enabled = !testing,
-                    modifier = Modifier.fillMaxWidth(),
+        // Box so the camera overlay below can sit on top of the form rather than beside it.
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
+                PrimaTopBar(
+                    title = stringResource(R.string.login_title),
+                    onBack = onDismiss,
                 )
-                Spacer(Modifier.height(10.dp))
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text(stringResource(R.string.login_password)) },
-                    visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { visible = !visible }) {
-                            Icon(
-                                if (visible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                contentDescription = if (visible) stringResource(R.string.login_hide_password) else stringResource(R.string.login_show_password),
-                            )
-                        }
-                    },
-                    singleLine = true,
-                    enabled = !testing,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                testError?.let {
-                    Spacer(Modifier.height(8.dp))
-                    Text(it, style = monoLabel, color = Color(0xFFCE3A3A))
-                }
-
-                Spacer(Modifier.height(20.dp))
-
-                Button(
-                    onClick = ::submit,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    enabled = username.isNotBlank() && password.isNotBlank() && !testing,
+                val scrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .imePadding()
+                        .verticalScrollbar(scrollState)
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 22.dp)
+                        .padding(top = 24.dp, bottom = 32.dp),
                 ) {
-                    if (testing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp,
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = { username = it },
+                        label = { Text(stringResource(R.string.login_username)) },
+                        placeholder = { Text(stringResource(R.string.login_username_hint)) },
+                        singleLine = true,
+                        enabled = !testing,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text(stringResource(R.string.login_password)) },
+                        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { visible = !visible }) {
+                                Icon(
+                                    if (visible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                    contentDescription = if (visible) stringResource(R.string.login_hide_password) else stringResource(R.string.login_show_password),
+                                )
+                            }
+                        },
+                        singleLine = true,
+                        enabled = !testing,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = {
+                            errorMessage = null
+                            val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                                PackageManager.PERMISSION_GRANTED
+                            if (granted) cameraOpen = true
+                            else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        },
+                        enabled = !testing,
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                    ) {
+                        Icon(
+                            Icons.Outlined.QrCodeScanner,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
                         )
-                        return@Button
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.login_scan_qr), fontWeight = FontWeight.Medium)
                     }
-                    Text(ctaLabel, fontWeight = FontWeight.SemiBold)
+
+                    errorMessage?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(it, style = monoLabel, color = Color(0xFFCE3A3A))
+                    }
+
+                    Spacer(Modifier.height(20.dp))
+
+                    Button(
+                        onClick = ::submit,
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        enabled = username.isNotBlank() && password.isNotBlank() && !testing,
+                    ) {
+                        if (testing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp,
+                            )
+                            return@Button
+                        }
+                        Text(ctaLabel, fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        stringResource(R.string.login_footer, ttlLabel),
+                        style = monoLabel,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
                 }
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    stringResource(R.string.login_footer, ttlLabel),
-                    style = monoLabel,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
+            }
+
+            // Drawn last so it covers the form. continuous = false, so one read closes it.
+            if (cameraOpen) {
+                CameraPreview(
+                    continuous = false,
+                    onBarcode = { raw ->
+                        // The camera reads any symbology, so an ordinary product barcode can land
+                        // here — say so rather than leaving the fields silently unchanged.
+                        val scanned = parseLoginQr(raw)
+                        if (scanned != null) {
+                            username = scanned.username
+                            password = scanned.password
+                            errorMessage = null
+                        } else {
+                            errorMessage = invalidQrMessage
+                        }
+                        cameraOpen = false
+                    },
+                    onClose = { cameraOpen = false },
                 )
             }
         }

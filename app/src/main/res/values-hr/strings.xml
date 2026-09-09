@@ -248,4 +248,7 @@
     <string name="settings_delete_all">Izbriši sve dokumente i zapise</string>
     <string name="settings_delete_all_desc">Trajno briše sve preuzete dokumente, stavke i zapise. Postavke i prijava ostaju netaknute.</string>
     <string name="settings_background_sync_desc">Slanje se odvija u pozadini pa možete nastaviti raditi dok se dokumenti šalju.</string>
+    <string name="login_scan_qr">Skeniraj QR kod</string>
+    <string name="login_qr_invalid">Taj QR kod ne sadrži podatke za prijavu.</string>
+    <string name="login_connect_failed">Povezivanje nije uspjelo. Provjerite korisničko ime i lozinku pa pokušajte ponovno.</string>
 </resources>

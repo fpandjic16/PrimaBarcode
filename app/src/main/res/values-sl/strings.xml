@@ -248,4 +248,7 @@
     <string name="settings_delete_all">Izbriši vse dokumente in posnetke</string>
     <string name="settings_delete_all_desc">Trajno izbriše vse prenesene dokumente, postavke in posnetke. Nastavitve in prijava ostanejo nedotaknjene.</string>
     <string name="settings_background_sync_desc">Pošiljanje poteka v ozadju, tako da lahko med pošiljanjem dokumentov delate naprej.</string>
+    <string name="login_scan_qr">Skeniraj kodo QR</string>
+    <string name="login_qr_invalid">Ta koda QR ne vsebuje podatkov za prijavo.</string>
+    <string name="login_connect_failed">Povezava ni uspela. Preverite uporabniško ime in geslo ter poskusite znova.</string>
 </resources>

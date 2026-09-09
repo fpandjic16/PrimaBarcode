@@ -645,6 +645,16 @@ Two picker rows (RC, then Location filtered to that RC) opening bottom sheets (`
 ### `LoginSheet.kt`
 Full-screen `Dialog` with a `PrimaTopBar` back arrow (not a bottom sheet, see §B.7's Login flow note), username/password fields (visibility toggle), footer line naming the credential TTL, submit enabled only when both non-blank; only username is `.trim()`'d, password is sent as-typed. If `onTestConnection` is supplied, submit blocks on a live NAV auth check first (spinner + inline error on failure) before calling `onSubmit`.
 
+**QR sign-in** (2026-09): a "Scan QR code" button opens the shared `CameraPreview` (`continuous = false`, so one read closes it) and fills both fields from the scanned payload — it fills only, never auto-submits, so the operator sees what was captured and the usual test-on-submit still runs. Parsing lives in `data/auth/LoginQrPayload.kt`:
+
+```json
+{"username":"PRIMA-COMMERCE\\filip","password":"…"}
+```
+
+JSON rather than a delimited string because a Windows password may contain the very characters a delimiter would reserve (`|`, `:`, `,`); splitting on one would truncate such a password into something that merely looks like a wrong password at sign-in. The domain rides inside `username` exactly as if typed, so all the forms in §B.6.2 work. A payload that doesn't parse — most often the camera catching an ordinary product barcode — sets the same inline error line the failed-sign-in path uses, rather than leaving the fields silently unchanged.
+
+Operationally this is a provisioning aid for shared handhelds, and the printed code carries a **plaintext password** — it's worth the same handling as a written-down one (scoped service account, rotation, not left on a noticeboard).
+
 ### `RecordingScreen.kt` — the core scanning workflow (most complex screen)
 Internal state machine, `RecordingView` enum: `OVERVIEW, ACTIVE_LINE, KEYPAD` — `OVERVIEW` is the line list, `ACTIVE_LINE` shows one line's detail with +1/-1 steppers, `KEYPAD` is manual quantity entry for the active line. `handleScan` — see §B.9.3. Registers the DataWedge broadcast receiver via `DisposableEffect`. `handleBack()` — per-view back navigation (KEYPAD/ACTIVE_LINE back to OVERVIEW, OVERVIEW back to the caller). Sub-composables: `OverviewContent`, `ItemQtyDetails` (ACTIVE_LINE), `ItemQtyExtraDetails` (KEYPAD — the name is a holdover from an earlier iteration where it was shared with a since-removed flow; it's an ordinary quantity-entry composable, nothing to do with extra lines), private `StatusChip` (status pill shown in the top bar).
 

@@ -248,4 +248,7 @@
     <string name="settings_delete_all">Delete all documents and recordings</string>
     <string name="settings_delete_all_desc">Permanently deletes every downloaded document, line, and recording. Settings and sign-in stay untouched.</string>
     <string name="settings_background_sync_desc">Upload in the background so you can keep working while documents are sent.</string>
+    <string name="login_scan_qr">Scan QR code</string>
+    <string name="login_qr_invalid">That QR code does not contain sign-in details.</string>
+    <string name="login_connect_failed">Could not connect. Check your username and password and try again.</string>
 </resources>

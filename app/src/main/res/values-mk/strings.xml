@@ -248,4 +248,7 @@
     <string name="settings_delete_all">Избриши ги сите документи и записи</string>
     <string name="settings_delete_all_desc">Трајно ги брише сите преземени документи, ставки и записи. Поставките и најавата остануваат недопрени.</string>
     <string name="settings_background_sync_desc">Испраќањето се одвива во заднина, па можете да продолжите да работите додека документите се испраќаат.</string>
+    <string name="login_scan_qr">Скенирај QR код</string>
+    <string name="login_qr_invalid">Тој QR код не содржи податоци за најава.</string>
+    <string name="login_connect_failed">Поврзувањето не успеа. Проверете го корисничкото име и лозинката па обидете се повторно.</string>
 </resources>
