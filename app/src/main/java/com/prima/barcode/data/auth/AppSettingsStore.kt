@@ -37,6 +37,15 @@ class AppSettingsStore @Inject constructor(@param:ApplicationContext private val
         debuggerActive = prefs.getBoolean("debuggerActive", false),
     )
 
+    /**
+     * The language the user explicitly picked, or null if they never touched the setting.
+     * [get] can't answer this — it folds a missing key into [Language.ENGLISH] — and the
+     * difference matters at startup: an explicit choice must be re-applied, while "never
+     * chosen" has to be left alone so the device's own locale still decides.
+     */
+    fun savedLanguageOrNull(): Language? =
+        prefs.getString("language", null)?.let { saved -> Language.entries.firstOrNull { it.name == saved } }
+
     fun clear() = prefs.edit().clear().apply()
 
     fun save(settings: AppSettings) {

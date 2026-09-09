@@ -723,7 +723,19 @@ if (language != s.language) {
     AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(s.language.tag))
 }
 ```
-Only called from the Settings-save path, only when the language actually changed. On API 33+ this delegates to the platform `LocaleManager` (persisted by the OS); on older APIs, AppCompat persists it internally and recreates the Activity to re-resolve string resources. **Not** re-applied from `AppSettings.language` on cold start — persistence relies entirely on AppCompatDelegate's/LocaleManager's own storage, since language is only ever changed through this one code path (the two stay in sync in practice, but a developer restoring `AppSettings` from a backup/import should be aware `setApplicationLocales` would need to be re-invoked manually if ever bypassing this normal flow).
+Only called from the Settings-save path, only when the language actually changed. On API 33+ this delegates to the platform `LocaleManager` (persisted by the OS); on older APIs AppCompat applies it to activities as they're created and recreates the current one to re-resolve string resources.
+
+**Re-applied on cold start** (fixed 2026-09) by `PrimaBarcodeApplication.applySavedLanguage()`. This is required, not belt-and-braces: below API 33 `AppCompatDelegate` persists *nothing* unless the app declares `AppLocalesMetadataHolderService` with `autoStoreLocales` (this app does not), so the chosen locale used to survive only for the life of the process. The symptom was a language selection silently reverting after any restart, most visibly after an APK upgrade — `AppSettings.language` (plain SharedPreferences, survives upgrades) still said Croatian, so the Settings screen showed Croatian while every string rendered English. On the Zebra MC3300 (API 27) this hit on every launch.
+
+The startup pass is deliberately narrow — it only fills a gap, never overrides:
+
+| Startup state | Action |
+|---|---|
+| `AppCompatDelegate.getApplicationLocales()` non-empty | leave alone — a locale is already in effect, including one set from Android's own per-app language settings on API 33+ |
+| No stored language in `AppSettings` | leave alone — user never chose, so the device locale decides |
+| Stored language, no locale in effect | apply it |
+
+Distinguishing "never chose" from "chose English" needs `AppSettingsStore.savedLanguageOrNull()` rather than `get()`, since `get()` folds a missing key into `Language.ENGLISH` — using `get()` here would force English onto a Croatian-locale device on first launch. Adopting `autoStoreLocales` instead would also fix the original bug, but would put a second persistence mechanism alongside `AppSettings.language`; keeping the app's own store authoritative avoids the two disagreeing.
 
 ### B.11.4 `DocTypeFilterMode` — full effect trace
 Configured per document type in `ExtSystemConfigScreen` (persists **immediately**, not buffered like the rest of that screen — writes straight through `onDocTypeFiltersChange` → `appVm.saveSettings`). Consumed identically in three places in `MainActivity.kt` (main-menu filtering, doc-type "blocked" computation, and the `docs` route's `typeDocs`):
