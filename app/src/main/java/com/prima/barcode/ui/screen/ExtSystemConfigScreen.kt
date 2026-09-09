@@ -74,6 +74,7 @@ fun ExtSystemConfigScreen(
 ) {
     var serverBaseUrl             by remember { mutableStateOf(initial.serverBaseUrl) }
     var domain                   by remember { mutableStateOf(initial.domain) }
+    var loginQrKey               by remember { mutableStateOf(initial.loginQrKey) }
     var ttlHours                 by remember { mutableIntStateOf(initial.credentialTtlHours) }
     var documentLinesUrl         by remember { mutableStateOf(initial.documentLinesUrl) }
     val documentTypeCodes = remember {
@@ -103,6 +104,9 @@ fun ExtSystemConfigScreen(
         recordingSyncUrl = recordingSyncUrl.trim(),
         locationsUrl     = locationsUrl.trim(),
         domain           = domain.trim(),
+        // Carried through untouched: the QR key has no field on this screen, and rebuilding the
+        // config without it would wipe it every time these settings are saved.
+        loginQrKey       = loginQrKey,
     )
 
     fun applyConfig(c: ExtSystemConfig) {
@@ -113,6 +117,7 @@ fun ExtSystemConfigScreen(
         recordingSyncUrl = c.recordingSyncUrl
         locationsUrl = c.locationsUrl
         domain = c.domain
+        loginQrKey = c.loginQrKey
     }
 
     fun attemptExit() {
@@ -365,6 +370,7 @@ fun ExtSystemConfigScreen(
         LoginSheet(
             credentialTtlHours = ttlHours,
             ctaLabel           = stringResource(R.string.btn_test_connection),
+            loginQrKey         = loginQrKey,
             initialUsername    = savedCredentials?.username ?: "",
             initialPassword    = savedCredentials?.password ?: "",
             onDismiss          = { showLoginSheet = false },

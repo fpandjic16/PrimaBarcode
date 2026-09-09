@@ -2,7 +2,6 @@ package com.prima.barcode.data.auth
 
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import com.prima.barcode.BuildConfig
 import timber.log.Timber
 import java.util.Base64
 import javax.crypto.Cipher
@@ -30,11 +29,12 @@ import javax.crypto.spec.SecretKeySpec
  * GCM authenticates as well as encrypts, so a code made with a different key fails to decrypt
  * rather than yielding garbage credentials that would then fail confusingly against NAV.
  *
- * **What this does and doesn't protect.** The key lives in the APK, so this stops someone
- * photographing or glancing at a printed code — the realistic exposure — but not someone who
- * unpacks the app to recover the key. Treat a printed code as sensitive regardless. Rotating the
- * key means a new build (see `loginQrKey` in app/build.gradle.kts), which invalidates every code
- * issued under the old one.
+ * **What this does and doesn't protect.** The key travels in `ExtSystemConfig.loginQrKey`, which
+ * means it sits both in the bundled defaults inside the APK and in the device's settings. So this
+ * stops someone photographing or glancing at a printed code — the realistic exposure — but not
+ * someone who unpacks the app or reads a provisioned device. Treat a printed code as sensitive
+ * regardless. Rotating the key is an imported configuration, no new build, and it invalidates
+ * every code issued under the old one.
  */
 private data class LoginQrDto(
     @SerializedName("username") val username: String? = null,
@@ -57,8 +57,8 @@ private const val AES_KEY_BYTES = 32
  * The username is trimmed the way typed input is; the password deliberately isn't, since leading
  * or trailing whitespace can be a genuine part of it.
  */
-fun parseLoginQr(raw: String): ExtSystemCredentials? {
-    val key = loginQrKey() ?: return null
+fun parseLoginQr(raw: String, keyB64: String): ExtSystemCredentials? {
+    val key = decodeKey(keyB64) ?: return null
     return runCatching {
         val blob = Base64.getDecoder().decode(raw.trim())
         if (blob.size <= IV_BYTES) return null
@@ -82,14 +82,13 @@ fun parseLoginQr(raw: String): ExtSystemCredentials? {
     }
 }
 
-/** The build's QR key, or null (logged once per failure) when this build wasn't given a usable one. */
-private fun loginQrKey(): ByteArray? {
-    val configured = BuildConfig.LOGIN_QR_KEY
-    if (configured.isBlank()) {
-        Timber.w("No loginQrKey in this build — QR sign-in is inactive. Set it in local.properties.")
+/** The configured key, or null (with a reason logged) when this install hasn't got a usable one. */
+private fun decodeKey(keyB64: String): ByteArray? {
+    if (keyB64.isBlank()) {
+        Timber.w("No loginQrKey in the external system configuration — QR sign-in is inactive.")
         return null
     }
-    val bytes = runCatching { Base64.getDecoder().decode(configured) }.getOrNull()
+    val bytes = runCatching { Base64.getDecoder().decode(keyB64) }.getOrNull()
     if (bytes == null || bytes.size != AES_KEY_BYTES) {
         Timber.w("loginQrKey is not base64 for %d bytes — QR sign-in is inactive.", AES_KEY_BYTES)
         return null

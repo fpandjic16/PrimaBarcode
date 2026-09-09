@@ -14,6 +14,10 @@ data class ExtSystemConfig(
     // a domain embedded in the username itself (DOMAIN\user or user@domain) still works —
     // see ExtSystemODataClient.buildClient.
     val domain: String = "",
+    // AES-256 key (base64, 32 bytes) that login QR codes are encrypted with — see
+    // LoginQrPayload.kt. Carried in the config rather than the build so it can be rotated by
+    // importing a new configuration instead of shipping a new APK. Blank disables QR sign-in.
+    val loginQrKey: String = "",
 ) {
     fun docTypeCodeFor(type: DocumentType): String = documentTypeCodes[type] ?: ""
     val isConfigured: Boolean get() = serverBaseUrl.isNotBlank()

@@ -291,6 +291,7 @@ class AppViewModel @Inject constructor(
             locationsUrl     = dto.locationsUrl.orEmpty(),
             recordingSyncUrl = dto.recordingSyncUrl.orEmpty(),
             domain           = dto.domain.orEmpty(),
+            loginQrKey       = dto.loginQrKey.orEmpty(),
         )
     }.onFailure { Timber.w(it, "parseExtSystemConfigJson failed") }.getOrNull()
 
@@ -338,6 +339,7 @@ class AppViewModel @Inject constructor(
         val locationsUrl: String? = null,
         val recordingSyncUrl: String? = null,
         val domain: String? = null,
+        val loginQrKey: String? = null,
     )
 
     /** Uploads each doc; on success deletes it, on failure marks UploadFailed. Returns failure count. */

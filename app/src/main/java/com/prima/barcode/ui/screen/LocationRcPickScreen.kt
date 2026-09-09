@@ -47,6 +47,7 @@ fun LocationRcPickScreen(
     lastSyncedAt: Instant? = null,
     hasCredentials: Boolean = false,
     credentialTtlHours: Int = 24,
+    loginQrKey: String = "",
     onSelect: (rcCode: String, locationCode: String) -> Unit,
     onRefresh: () -> Unit = {},
     onSaveCredentials: (username: String, password: String) -> Unit = { _, _ -> },
@@ -224,6 +225,7 @@ fun LocationRcPickScreen(
         LoginSheet(
             credentialTtlHours = credentialTtlHours,
             ctaLabel = stringResource(R.string.btn_sign_in_sync),
+            loginQrKey = loginQrKey,
             onTestConnection = onTestConnection,
             onSubmit = { u, p ->
                 onSaveCredentials(u, p)

@@ -46,6 +46,9 @@ fun LoginSheet(
     ctaLabel: String = stringResource(R.string.btn_sign_in),
     initialUsername: String = "",
     initialPassword: String = "",
+    // ExtSystemConfig.loginQrKey. Blank (an install that hasn't loaded a configuration carrying
+    // one) leaves the QR button working but every code refused, which the error line reports.
+    loginQrKey: String = "",
     // When set, the entered credentials are verified against the NAV server (the same
     // check as ExtSystemConfigScreen's "Test connection") before onSubmit is called, so
     // signing in actually confirms the server accepted them rather than just capturing
@@ -208,7 +211,7 @@ fun LoginSheet(
                     onBarcode = { raw ->
                         // The camera reads any symbology, so an ordinary product barcode can land
                         // here — say so rather than leaving the fields silently unchanged.
-                        val scanned = parseLoginQr(raw)
+                        val scanned = parseLoginQr(raw, loginQrKey)
                         if (scanned != null) {
                             username = scanned.username
                             password = scanned.password

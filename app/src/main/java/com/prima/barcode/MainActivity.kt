@@ -405,6 +405,7 @@ private fun PrimaBarcodeApp(
                 lastSyncedAt = lastSyncedAt,
                 hasCredentials = appVm.extSystemCredentialStore.isValid(),
                 credentialTtlHours = extSystemConfig.credentialTtlHours,
+                loginQrKey = extSystemConfig.loginQrKey,
                 onSelect = { rc, loc ->
                     onRcCodeChange(rc)
                     onLocationCodeChange(loc)
@@ -617,6 +618,7 @@ private fun PrimaBarcodeApp(
             val dlFilterMode = docTypeFilters[selectedDocType.key] ?: DocTypeFilterMode.LOCATION
             DownloadFilterScreen(
                 hasCredentials  = appVm.extSystemCredentialStore.isValid(),
+                loginQrKey      = extSystemConfig.loginQrKey,
                 docType         = selectedDocType,
                 fixedSourceCode = if (dlFilterMode == DocTypeFilterMode.LOCATION) locationCode else null,
                 fixedRcCode     = if (dlFilterMode == DocTypeFilterMode.RESPONSIBILITY_CENTER) rcCode else null,
@@ -784,6 +786,7 @@ private fun PrimaBarcodeApp(
             ctaLabel           = stringResource(R.string.btn_sign_in),
             initialUsername    = appVm.extSystemCredentialStore.get()?.username ?: "",
             initialPassword    = appVm.extSystemCredentialStore.get()?.password ?: "",
+            loginQrKey         = extSystemConfig.loginQrKey,
             onDismiss          = { showUploadLoginSheet = false; pendingUploadAction = null },
             onTestConnection   = ::testSignIn,
             onSubmit           = { _, _ ->
@@ -798,6 +801,7 @@ private fun PrimaBarcodeApp(
         LoginSheet(
             credentialTtlHours = extSystemConfig.credentialTtlHours,
             ctaLabel           = stringResource(R.string.btn_sign_in),
+            loginQrKey         = extSystemConfig.loginQrKey,
             onDismiss          = { showMainLoginSheet = false },
             onTestConnection   = ::testSignIn,
             onSubmit           = { _, _ -> showMainLoginSheet = false },

@@ -2,9 +2,11 @@
 """
 Generates an encrypted PrimaBarcode login QR code.
 
-The app decrypts these with the key baked into its build (`loginQrKey` in local.properties).
-The same key must be passed here, so a code only works with builds carrying that key —
-rotating the key means rebuilding the app and reissuing every code.
+The app decrypts these with `loginQrKey` from its external system configuration — shipped in
+the bundled assets/ext_system_defaults_*.json and stored on the device once a configuration is
+loaded. The same key must be passed here, so a code only works on devices carrying that key.
+Rotating means putting a new key in the configuration, distributing it (Load built-in defaults
+or Import from file), and reissuing every code; no new APK is needed.
 
     # one-off, prints the payload to paste into any QR generator
     python make_login_qr.py --user 'PRIMA-COMMERCE\\filip' --key "$KEY"
@@ -12,7 +14,7 @@ rotating the key means rebuilding the app and reissuing every code.
     # writes filip.png directly (needs: pip install qrcode[pil])
     python make_login_qr.py --user 'PRIMA-COMMERCE\\filip' --key "$KEY" --out filip.png
 
-    # generate a fresh key to put in local.properties
+    # generate a fresh key to put in the configuration's "loginQrKey"
     python make_login_qr.py --new-key
 
 The password is prompted for rather than passed as an argument, so it doesn't end up in shell

@@ -58,6 +58,7 @@ private fun DocumentType.localizedDisplay(): String = when (this) {
 @Composable
 fun DownloadFilterScreen(
     hasCredentials: Boolean = false,
+    loginQrKey: String = "",
     docType: DocumentType? = null,
     fixedSourceCode: String? = null,
     fixedRcCode: String? = null,
@@ -291,6 +292,7 @@ fun DownloadFilterScreen(
 
     if (showLogin) {
         LoginSheet(
+            loginQrKey = loginQrKey,
             onTestConnection = onTestConnection,
             onSubmit = { username, password ->
                 showLogin = false
