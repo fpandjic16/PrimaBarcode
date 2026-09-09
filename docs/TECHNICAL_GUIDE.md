@@ -62,7 +62,7 @@ All of this lives under **Settings → External System Configuration** (`ExtSyst
 | Field | Purpose | Example |
 |---|---|---|
 | Server base URL | Root used only for the "Test connection" NTLM probe | `http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/` |
-| Domain | Windows/NTLM domain, merged with the typed username at login so users only ever type a bare username (added 2026-08) — leave blank to fall back to a domain embedded in the username itself (`DOMAIN\user`/`user@domain`) | `PRIMA` |
+| Domain | Windows/NTLM domain used when the user types a bare username at login (added 2026-08). A domain typed into the username overrides this, and `.\user` ignores it entirely — see §B.6.2 for the full resolution order | `PRIMA` |
 | Session duration | How long a signed-in session's credentials stay valid before requiring re-entry (8h / 24h / 48h / 7 days) | 168h |
 | Document lines URL | The **"Barcode App Entry"** OData endpoint — shared by all 5 document types | `.../Company('Prima Commerce d.o.o.')/BarcodeAppEntries` |
 | Per-document-type: enabled switch | Whether that document type is offered in the app at all | — |
@@ -426,7 +426,15 @@ sealed class ExtSystemResult<out T> {
   - `lmResponse = HMAC-MD5(key, serverChallenge+clientChallenge) + clientChallenge`
   - Manually lays out the Type-3 byte buffer (security-buffer descriptors + domain/username/lmResponse/ntResponse bytes), base64-encodes as the new `Authorization` header.
 
-**Domain parsing** (changed 2026-08): `ExtSystemConfig.domain` (Settings → External System Configuration → Credential session) is now a separate configured field — when non-blank, `ExtSystemODataClient.buildClient` uses it directly with the typed username as-is, so users only ever type a bare username on the login screen. When `domain` is blank, it falls back to the original behavior: a domain embedded in the typed username itself (`DOMAIN\user` or `user@domain`), split by `ExtSystemODataClient.parseDomainUser` at client-build time. The bundled per-company defaults files carry a `domain` field too (see §B.6.6).
+**Domain resolution** (2026-08, priority reversed 2026-09): there are two sources for the NTLM domain — `ExtSystemConfig.domain` (Settings → External System Configuration → Credential session, also carried in the bundled per-company defaults files, see §B.6.6) and a domain typed into the username itself. `ExtSystemODataClient.buildClient` resolves them in this order:
+
+| Typed username | Domain used | Username sent |
+|---|---|---|
+| `DOMAIN\user` / `user@domain` | `DOMAIN` — the typed one wins over Settings | `user` |
+| `.\user` | none — deliberately overrides a configured domain | `user` |
+| `user` | `ExtSystemConfig.domain` (may be blank) | `user` |
+
+The typed value winning means a bad configured domain can be corrected at the login screen without going into Settings, and `.\user` (Windows' "this machine, not the domain" form) is the escape hatch for signing in with no domain at all against a configured one. `parseDomainUser` always runs, including when a domain is configured, so `DOMAIN\user` combined with a configured domain can't send the domain twice — the username handed to NTLM is always the bare one. Note a lone leading backslash (`\user`) parses as an empty domain and therefore falls through to Settings; only `.` is treated as an explicit "no domain".
 
 **Credential TTL** (`ExtSystemCredentialStore`, `EncryptedSharedPreferences` file `ext_system_credentials`, AES-256-GCM/Keystore): `save(username, password, ttlHours)` stores `expiry = now + ttlHours*3_600_000L`; `get()` checks `now > expiry` on every read — if expired, clears and returns `null` (lazy expiry, not a background timer). `isValid() = get() != null`.
 

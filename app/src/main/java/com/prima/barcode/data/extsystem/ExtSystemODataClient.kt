@@ -39,11 +39,21 @@ class ExtSystemODataClient @Inject constructor() {
     }
 
     private fun buildClient(configuredDomain: String, rawUsername: String, password: String): HttpClient {
-        // A configured domain (Settings → Credential session) takes priority, so users only
-        // type a bare username on the login screen. Otherwise fall back to a domain embedded
-        // in the username itself, as DOMAIN\user or user@domain.
-        val (domain, username) = if (configuredDomain.isNotBlank()) configuredDomain to rawUsername.trim()
-            else parseDomainUser(rawUsername)
+        // What the user typed always wins over the configured domain, so a login can be
+        // corrected on the spot without touching Settings:
+        //   DOMAIN\user / user@domain -> that domain
+        //   .\user                    -> no domain at all, deliberately overriding Settings
+        //                                (the Windows "this machine, not the domain" form)
+        //   user                      -> fall back to Settings → Credential session
+        // The username handed to NTLM is always the bare one — parsing runs even when a
+        // configured domain exists, so "DOMAIN\user" plus a configured domain can't send
+        // the domain through twice.
+        val (typedDomain, username) = parseDomainUser(rawUsername)
+        val domain = when {
+            typedDomain == LOCAL_MACHINE -> ""
+            typedDomain.isNotBlank()     -> typedDomain
+            else                         -> configuredDomain.trim()
+        }
         val auth = NtlmAuthenticator(domain, username, password)
         ntlmAuth = auth
         val okHttp = OkHttpClient.Builder()
@@ -148,9 +158,15 @@ class ExtSystemODataClient @Inject constructor() {
     }
 
     companion object {
+        /** Windows' "this machine, not a domain" prefix — `.\user`. */
+        private const val LOCAL_MACHINE = "."
+
         /**
          * Splits a NAV login into (domain, bareUsername). Accepts `DOMAIN\user`
          * and `user@domain`; returns an empty domain when none is present.
+         *
+         * Returns the domain part verbatim, including a lone `.`, so callers can tell
+         * "user explicitly asked for no domain" apart from "user gave no domain".
          */
         fun parseDomainUser(raw: String): Pair<String, String> {
             val trimmed = raw.trim()
