@@ -28,8 +28,8 @@ The app is fully wired end-to-end: Room DB + DAOs, Hilt-injected ViewModels, Kto
 | UI | Jetpack Compose + Material 3 (BOM 2026.02.01) |
 | Navigation | Compose Navigation 2.8.2 |
 | Networking | Ktor Client 2.3.12 over OkHttp, custom NTLMv2 `Authenticator` (no external NTLM lib) |
-| Local DB | Room 2.7.0 (KSP-generated DAOs) |
-| DI | Hilt/Dagger 2.59 |
+| Local DB | Room 2.8.5 (KSP-generated DAOs) |
+| DI | Hilt/Dagger 2.60.1 |
 | Barcode | ML Kit 17.3.0 + CameraX 1.4.2 (fallback to hardware DataWedge scanning) |
 | Secure storage | androidx.security:security-crypto (NAV credentials, TTL-bound) |
 | Logging | Timber |

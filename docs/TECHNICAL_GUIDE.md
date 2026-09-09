@@ -884,8 +884,25 @@ A systematic sweep for orphaned files/functions/fields found and removed:
 ### `settings.gradle.kts`
 Single module `:app`. Repositories: `google()`, `mavenCentral()`, `gradlePluginPortal()`. `rootProject.name = "PrimaBarcode"`.
 
+### `build.gradle.kts` (root) — built-in Kotlin and why a `buildscript` block exists
+AGP 9 compiles Kotlin itself, so there is **no `org.jetbrains.kotlin.android` plugin** in this project, and adding one back would break the build — that plugin is incompatible with AGP 9's DSL. The consequence is that nothing in the `plugins` block declares the Kotlin version: AGP pins KGP to its own runtime dependency (2.2.10 for AGP 9.x) unless a newer one is put on the buildscript classpath, which is [the documented way](https://developer.android.com/r/tools/built-in-kotlin) to raise it. Hence:
+
+```kotlin
+buildscript {
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.21")
+    }
+}
+```
+
+This exists for KSP's sake (2026-09). Only KSP 2.3.1+ registers its generated sources through `android.sourceSets`; every older KSP uses the `kotlin.sourceSets` DSL that AGP 9 rejects, which is what previously forced `android.disallowKotlinSourceSets=false` into `gradle.properties` — see [google/ksp#2729](https://github.com/google/ksp/issues/2729). The KSP 2.3 line serves the Kotlin 2.3 line, so KGP had to move with it, and that property is now gone.
+
+Two things to keep straight when touching versions here: the classpath version is a **literal because the version catalog is not visible inside a `buildscript` block**, and it must stay equal to `kotlin` in the catalog, which pins the Compose compiler plugin. And KSP is *not* on this classpath — it is resolved through the `plugins` DSL alias, deliberately, since requesting a version for a plugin already on the buildscript classpath is an error.
+
 ### `gradle/libs.versions.toml`
-Only Compose/AndroidX/test/Hilt libraries and the 4 Gradle plugins are catalog aliases (`agp=9.2.1`, `hilt=2.59`, `kotlin=2.2.10`, `ksp=2.2.10-2.0.2`, `composeBom=2026.02.01`, etc.). Room/Ktor/CameraX/ML Kit/Gson/Timber/security-crypto/appcompat are plain string coordinates directly in `app/build.gradle.kts`, not catalog entries — keep this in mind when bumping versions.
+Only Compose/AndroidX/test/Hilt libraries and the 4 Gradle plugins are catalog aliases (`agp=9.2.1`, `hilt=2.60.1`, `kotlin=2.3.21`, `ksp=2.3.12`, `composeBom=2026.02.01`, etc.). Room/Ktor/CameraX/ML Kit/Gson/Timber/security-crypto/appcompat are plain string coordinates directly in `app/build.gradle.kts`, not catalog entries — keep this in mind when bumping versions.
+
+Note the KSP version format changed with the 2.3 line: older releases encoded the Kotlin version (`2.2.10-2.0.2`), current ones are plain KSP versions (`2.3.12`) covering a whole Kotlin minor. KSP 2.3.12 embeds the 2.3.20 compiler while the project builds with 2.3.21; that gap is deliberate on KSP's side, but if KSP ever complains about the compiler version, dropping `kotlin` to `2.3.20` (in both places above) is the fix.
 
 ### `AndroidManifest.xml`
 - Permissions: `INTERNET`, `CAMERA`, `VIBRATE`. `<uses-feature android:name="android.hardware.camera" android:required="false" />` — camera is optional; a device can run on the hardware wedge scanner alone.
