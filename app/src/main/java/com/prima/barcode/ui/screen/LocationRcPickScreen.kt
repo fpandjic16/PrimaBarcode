@@ -92,7 +92,10 @@ fun LocationRcPickScreen(
                         modifier = Modifier
                             .padding(end = 8.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0x20FFFFFF))
+                            // Coral, the palette's action colour — same fill as the upload
+                            // action in the recording top bar, so top-bar actions match. The
+                            // translucent white this replaced barely registered as a button.
+                            .background(PrimaPalette.Coral)
                             .clickable(onClick = { if (hasCredentials) onRefresh() else showLoginSheet = true })
                             .padding(horizontal = 10.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
