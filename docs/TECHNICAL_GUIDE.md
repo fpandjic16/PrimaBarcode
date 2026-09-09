@@ -647,13 +647,25 @@ Full-screen `Dialog` with a `PrimaTopBar` back arrow (not a bottom sheet, see §
 
 **QR sign-in** (2026-09): a "Scan QR code" button opens the shared `CameraPreview` (`continuous = false`, so one read closes it) and fills both fields from the scanned payload — it fills only, never auto-submits, so the operator sees what was captured and the usual test-on-submit still runs. Parsing lives in `data/auth/LoginQrPayload.kt`:
 
+The code is **encrypted** (2026-09), so a QR reader — or a photo of the code — yields nothing but base64. Base64 over:
+
+```
+[ 12-byte IV ][ AES-256-GCM ciphertext + 16-byte tag ]
+```
+
+wrapping this plaintext:
+
 ```json
 {"username":"PRIMA-COMMERCE\\filip","password":"…"}
 ```
 
-JSON rather than a delimited string because a Windows password may contain the very characters a delimiter would reserve (`|`, `:`, `,`); splitting on one would truncate such a password into something that merely looks like a wrong password at sign-in. The domain rides inside `username` exactly as if typed, so all the forms in §B.6.2 work. A payload that doesn't parse — most often the camera catching an ordinary product barcode — sets the same inline error line the failed-sign-in path uses, rather than leaving the fields silently unchanged.
+JSON rather than a delimited string because a Windows password may contain the very characters a delimiter would reserve (`|`, `:`, `,`); splitting on one would truncate such a password into something that merely looks like a wrong password at sign-in. The domain rides inside `username` exactly as if typed, so all the forms in §B.6.2 work. GCM authenticates as well as encrypts, so a code made under a different key fails outright instead of yielding garbage credentials that would fail confusingly against NAV. A payload that can't be read — a foreign code, a wrong-key code, or the camera catching an ordinary product barcode — sets the same inline error line the failed-sign-in path uses; the causes are deliberately not distinguished in the UI, since that distinction only helps someone probing the codes. Nothing about the payload is logged.
 
-Operationally this is a provisioning aid for shared handhelds, and the printed code carries a **plaintext password** — it's worth the same handling as a written-down one (scoped service account, rotation, not left on a noticeboard).
+**The key** is `loginQrKey` in `local.properties`, surfaced as `BuildConfig.LOGIN_QR_KEY` (base64, 32 bytes). It's kept out of source control on purpose: the key ships inside the APK either way, but anything committed stays in git history forever, so every retired key would remain readable in the repo long after rotation. Rotating = new value + new build, which invalidates every code issued under the old key. A checkout without the key builds and runs normally; QR sign-in just refuses every code and logs why.
+
+`tools/make_login_qr.py` generates codes (`--new-key` mints a key, `--out` writes a PNG). It prompts for the password rather than taking it as an argument, keeping it out of shell history and the process list.
+
+**What this protects against.** The key is in the APK, so this defeats someone photographing or glancing at a printed code — the realistic exposure for a code taped to a device or left on a desk — but not someone who unpacks the app to recover the key. It is obfuscation-grade, not a reason to treat printed codes as safe. Stronger options were considered and deferred: a per-device keypair in Android Keystore (private key non-exportable, so unpacking the APK gains nothing — but it binds each code to one device, and these are per-user), and a short-lived token redeemed against NAV (the only variant that is genuinely revocable, but it needs a NAV-side change). Either remains open if the threat model tightens.
 
 ### `RecordingScreen.kt` — the core scanning workflow (most complex screen)
 Internal state machine, `RecordingView` enum: `OVERVIEW, ACTIVE_LINE, KEYPAD` — `OVERVIEW` is the line list, `ACTIVE_LINE` shows one line's detail with +1/-1 steppers, `KEYPAD` is manual quantity entry for the active line. `handleScan` — see §B.9.3. Registers the DataWedge broadcast receiver via `DisposableEffect`. `handleBack()` — per-view back navigation (KEYPAD/ACTIVE_LINE back to OVERVIEW, OVERVIEW back to the caller). Sub-composables: `OverviewContent`, `ItemQtyDetails` (ACTIVE_LINE), `ItemQtyExtraDetails` (KEYPAD — the name is a holdover from an earlier iteration where it was shared with a since-removed flow; it's an ordinary quantity-entry composable, nothing to do with extra lines), private `StatusChip` (status pill shown in the top bar).

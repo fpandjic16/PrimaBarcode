@@ -1,9 +1,23 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
 }
+
+// AES-256 key (base64, 32 bytes) that login QR codes are encrypted with. Read from
+// local.properties, which is gitignored, rather than written into source: the key ships inside
+// the APK either way, but anything committed stays in git history forever, so every retired key
+// would remain readable in the repo long after rotation. Rotating means putting a new value here
+// and shipping a new build — codes made with the old key stop working, which is the point.
+//
+// Absent or malformed, QR sign-in simply refuses every code (see LoginQrPayload.kt); the rest of
+// the app builds and runs normally, so a checkout without the key is still fully usable.
+val loginQrKey: String = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}.getProperty("loginQrKey").orEmpty()
 
 android {
     namespace = "com.prima.barcode"
@@ -17,8 +31,10 @@ android {
         applicationId = "com.prima.barcode"
         minSdk = 26
         targetSdk = 36
-        versionCode = 23
-        versionName = "1.0.22"
+        versionCode = 24
+        versionName = "1.0.23"
+
+        buildConfigField("String", "LOGIN_QR_KEY", "\"$loginQrKey\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
