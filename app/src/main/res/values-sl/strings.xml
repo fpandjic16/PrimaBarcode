@@ -34,6 +34,7 @@
     <string name="doc_list_create_title">Dokument ni najden</string>
     <string name="doc_list_create_text">Dokument "%s" ne obstaja. Najprej prenesite dokumente iz ERP, nato začnite s skeniranjem.</string>
     <string name="doc_chip_error">Napaka</string>
+    <string name="doc_chip_sending">Pošiljanje</string>
     <string name="doc_status_empty">Prazno</string>
     <string name="doc_status_partial">Delno</string>
     <string name="doc_status_ready">Pripravljeno</string>

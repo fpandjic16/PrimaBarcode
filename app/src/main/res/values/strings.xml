@@ -34,6 +34,7 @@
     <string name="doc_list_create_title">Document not found</string>
     <string name="doc_list_create_text">Document "%s" does not exist. First download documents from ERP and then begin scanning.</string>
     <string name="doc_chip_error">Error</string>
+    <string name="doc_chip_sending">Sending</string>
     <string name="doc_status_empty">Empty</string>
     <string name="doc_status_partial">Partial</string>
     <string name="doc_status_ready">Ready</string>

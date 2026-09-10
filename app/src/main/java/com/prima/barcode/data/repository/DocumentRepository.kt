@@ -31,6 +31,7 @@ interface DocumentRepository {
     suspend fun deleteRecording(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int)
     suspend fun clearAll()
     suspend fun deleteDocumentRecordings(documentNo: String, type: String)
+    suspend fun recoverStalePendingUploads()
 }
 
 @Singleton
@@ -183,6 +184,35 @@ class DocumentRepositoryImpl @Inject constructor(
         db.withTransaction {
             db.recordingDao().deleteAllForDoc(documentNo, type)
             db.documentHeaderDao().updateState(documentNo, type, DocState.Downloaded.toDbString())
+        }
+    }
+
+    /**
+     * Clears PendingUpload left behind by an upload that never finished.
+     *
+     * PendingUpload is only ever set by a background upload running in `viewModelScope`. If that
+     * scope is gone — process killed, battery died, the Activity finished mid-send — the upload
+     * is not resumable and the flag is stale by definition, so anything still carrying it at
+     * startup is stranded and needs a way out.
+     *
+     * State is rebuilt from what actually survived: rows still queued mean the send stopped
+     * partway, so the document goes back to InProgress and can be retried; no rows left means
+     * everything was accepted and only the final delete was missed, so Downloaded is the honest
+     * description of what's on the device.
+     *
+     * Deliberately never deletes. A stale flag is not evidence a document was uploaded — the
+     * cheap cost of a document lingering after a completed send is worth far less than the risk
+     * of destroying work on the strength of a flag we already know is unreliable.
+     */
+    override suspend fun recoverStalePendingUploads() {
+        db.withTransaction {
+            db.documentHeaderDao().getAll()
+                .filter { it.docState.toDocState() == DocState.PendingUpload }
+                .forEach { header ->
+                    val remaining = db.recordingDao().getByDoc(header.documentNo, header.type)
+                    val recovered = if (remaining.isEmpty()) DocState.Downloaded else DocState.InProgress
+                    db.documentHeaderDao().updateState(header.documentNo, header.type, recovered.toDbString())
+                }
         }
     }
 

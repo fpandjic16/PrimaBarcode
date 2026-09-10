@@ -34,6 +34,7 @@
     <string name="doc_list_create_title">Документот не е пронајден</string>
     <string name="doc_list_create_text">Документот „%s“ не постои. Прво преземете ги документите од ERP, па потоа започнете со скенирање.</string>
     <string name="doc_chip_error">Грешка</string>
+    <string name="doc_chip_sending">Се испраќа</string>
     <string name="doc_status_empty">Празно</string>
     <string name="doc_status_partial">Делумно</string>
     <string name="doc_status_ready">Завршено</string>

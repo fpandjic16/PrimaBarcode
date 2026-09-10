@@ -98,7 +98,10 @@ fun DocumentListScreen(
         }
     }
 
-    val orders     = remember(filtered) { filtered.filter { it.state == DocState.Downloaded || it.state == DocState.InProgress || it.state is DocState.UploadFailed } }
+    // PendingUpload belongs here too. It is set the moment a background upload starts, and
+    // without it the document matched no tab at all and simply vanished from this screen while
+    // it was being sent — with no way back if the process died mid-upload.
+    val orders     = remember(filtered) { filtered.filter { it.state == DocState.Downloaded || it.state == DocState.InProgress || it.state == DocState.PendingUpload || it.state is DocState.UploadFailed } }
     val recordings = remember(filtered) {
         filtered.filter { doc ->
             doc.state == DocState.Completed ||
@@ -443,6 +446,7 @@ private fun DocRow(
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             DocScanStatusChip(status)
                             if (doc.state is DocState.UploadFailed) DocStateErrorChip()
+                            if (doc.state == DocState.PendingUpload) DocStateSendingChip()
                         }
                     }
                     Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(top = 2.dp)) {
@@ -500,6 +504,19 @@ private fun DocStateErrorChip() {
             .padding(horizontal = 8.dp, vertical = 3.dp),
     ) {
         Text(stringResource(R.string.doc_chip_error).uppercased, style = monoLabel.copy(color = Color.White, fontWeight = FontWeight.Medium))
+    }
+}
+
+/** Shown while a background upload is in flight, so the document doesn't look idle. */
+@Composable
+private fun DocStateSendingChip() {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(PrimaPalette.Teal)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+    ) {
+        Text(stringResource(R.string.doc_chip_sending).uppercased, style = monoLabel.copy(color = Color.White, fontWeight = FontWeight.Medium))
     }
 }
 

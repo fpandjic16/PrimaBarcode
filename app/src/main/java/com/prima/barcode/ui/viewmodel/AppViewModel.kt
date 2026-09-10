@@ -64,6 +64,13 @@ class AppViewModel @Inject constructor(
     /** Separate instance so the exported configuration file stays readable. */
     private val exportGson = GsonBuilder().setPrettyPrinting().create()
 
+    init {
+        // Any PendingUpload still on disk was left by an upload whose scope no longer exists —
+        // this ViewModel is only recreated once the previous one is gone, so nothing it started
+        // can still be running. Clearing it here is what gives a stranded document a way back.
+        viewModelScope.launch { repository.recoverStalePendingUploads() }
+    }
+
     private val _credentials = MutableStateFlow(extSystemCredentialStore.get())
     val credentials: StateFlow<ExtSystemCredentials?> = _credentials
 
