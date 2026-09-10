@@ -108,6 +108,11 @@ fun RecordingScreen(
     val showUpload = doc.lines.any { it.scanned > 0.0 }
     val context = LocalContext.current
     val hapticEngine = remember { HapticEngine(context) }
+    // No camera on some MC3300 configurations — hide the button rather than offer one that
+    // opens an empty preview.
+    val hasCamera = remember {
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+    }
     var cameraOpen by remember { mutableStateOf(false) }
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -355,6 +360,7 @@ fun RecordingScreen(
                             == PackageManager.PERMISSION_GRANTED) cameraOpen = true
                     else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                 },
+                showCamera = hasCamera,
                 containerColor = scanBarBg,
             )
         }
@@ -734,7 +740,7 @@ private fun ItemQtyExtraDetails(
         }
         Spacer(Modifier.height(16.dp))
 
-        // Keypad â€” phone layout (1-9 top, C/0/backspace bottom)
+        // Keypad — phone layout (1-9 top, C/0/backspace bottom)
         val keyRows = listOf(
             listOf("1", "2", "3"),
             listOf("4", "5", "6"),

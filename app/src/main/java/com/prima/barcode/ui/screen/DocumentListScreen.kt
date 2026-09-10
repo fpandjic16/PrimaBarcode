@@ -1,5 +1,9 @@
 package com.prima.barcode.ui.screen
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,6 +36,9 @@ import com.prima.barcode.data.model.bgColor
 import com.prima.barcode.data.model.color
 import com.prima.barcode.data.model.label
 import com.prima.barcode.data.model.scanStatus
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import com.prima.barcode.ui.component.CameraPreview
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.component.verticalScrollbar
 import com.prima.barcode.ui.component.ScanField
@@ -144,6 +151,16 @@ fun DocumentListScreen(
         if (found != null) onDocTap(found) else docNotFoundError = barcode
     }
 
+    val context = LocalContext.current
+    var cameraOpen by remember { mutableStateOf(false) }
+    val hasCamera = remember {
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+    }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) cameraOpen = true }
+
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
             title = docType.localizedDisplay(),
@@ -170,7 +187,12 @@ fun DocumentListScreen(
             ScanField(
                 placeholder = stringResource(R.string.doc_list_scan_placeholder),
                 onScan = { handleDocScan(it) },
-                onCameraTap = {},
+                onCameraTap = {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                            == PackageManager.PERMISSION_GRANTED) cameraOpen = true
+                    else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                },
+                showCamera = hasCamera,
                 dark = true,
             )
         }
@@ -321,6 +343,20 @@ fun DocumentListScreen(
             }
         }
     }
+
+    // Drawn last so it covers the list. continuous = false — one read closes the camera and
+    // takes the operator straight into the document, which is the whole point of scanning here.
+    if (cameraOpen) {
+        CameraPreview(
+            continuous = false,
+            onBarcode = { raw ->
+                cameraOpen = false
+                handleDocScan(raw)
+            },
+            onClose = { cameraOpen = false },
+        )
+    }
+    } // end Box
 
     docNotFoundError?.let { no ->
         AlertDialog(

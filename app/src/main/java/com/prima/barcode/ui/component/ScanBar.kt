@@ -20,6 +20,7 @@ fun ScanBar(
     onCameraTap: () -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color = PrimaPalette.Slate,
+    showCamera: Boolean = true,
 ) {
     Column(
         modifier = modifier
@@ -31,6 +32,7 @@ fun ScanBar(
             placeholder = stringResource(R.string.scan_placeholder),
             onScan = onScan,
             onCameraTap = onCameraTap,
+            showCamera = showCamera,
             dark = true,
         )
     }

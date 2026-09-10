@@ -52,6 +52,9 @@ fun ScanField(
     onCameraTap: () -> Unit,
     modifier: Modifier = Modifier,
     dark: Boolean = false,
+    // Some MC3300 configurations have no camera. Offering the button there gives the operator a
+    // control that cannot do anything, which is indistinguishable from a broken one.
+    showCamera: Boolean = true,
 ) {
     val context = LocalContext.current
     val imm = remember { context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager }
@@ -166,20 +169,22 @@ fun ScanField(
                 tint = if (dark) Color.White else PrimaPalette.Slate,
             )
         }
-        Spacer(Modifier.width(8.dp))
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(if (dark) PrimaPalette.Coral else PrimaPalette.Slate)
-                .clickable(onClick = onCameraTap),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.PhotoCamera,
-                contentDescription = stringResource(R.string.cd_open_camera),
-                tint = Color.White,
-            )
+        if (showCamera) {
+            Spacer(Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (dark) PrimaPalette.Coral else PrimaPalette.Slate)
+                    .clickable(onClick = onCameraTap),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.PhotoCamera,
+                    contentDescription = stringResource(R.string.cd_open_camera),
+                    tint = Color.White,
+                )
+            }
         }
     }
 }
