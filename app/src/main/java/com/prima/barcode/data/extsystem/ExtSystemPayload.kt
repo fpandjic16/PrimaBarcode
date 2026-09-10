@@ -26,12 +26,14 @@ data class NavBarcodeAppRecording(
 )
 
 // ── Mapping ───────────────────────────────────────────────────────────────────
-// recordingGuid is generated fresh for every upload attempt (not persisted) so a
-// retry after a lost success-response can never collide on the NAV-side key.
+// recordingGuid comes from the stored recording and is the same on every attempt. It used to be
+// generated per attempt, on the reasoning that a retry should not collide with the row NAV
+// already holds — but colliding is exactly what makes a retry safe. If NAV commits a row and the
+// response is lost, a fresh GUID makes the retry look like a new recording and the quantity is
+// counted twice; the same GUID lets NAV recognise it and reject the duplicate.
 
 fun RecordingEntity.toNavRecording(
     documentTypeCode: String,
-    recordingGuid: String,
     retailLocation: Boolean?,
 ): NavBarcodeAppRecording = NavBarcodeAppRecording(
     documentType             = documentTypeCode,

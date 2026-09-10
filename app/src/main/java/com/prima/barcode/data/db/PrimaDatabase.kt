@@ -13,7 +13,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         LocationEntity::class,
         ResponsibilityCenterEntity::class,
     ],
-    version = 16,
+    version = 17,
     exportSchema = true,
 )
 abstract class PrimaDatabase : RoomDatabase() {
@@ -244,6 +244,30 @@ abstract class PrimaDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE recordings_new RENAME TO recordings")
                 db.execSQL("CREATE INDEX index_recordings_documentNo_type ON recordings(documentNo, type)")
                 db.execSQL("CREATE INDEX index_recordings_documentLine ON recordings(documentLine)")
+            }
+        }
+
+        /**
+         * Gives every recording a stable identity for the ERP.
+         *
+         * Rows scanned before this column existed are backfilled with a generated GUID each,
+         * rather than left blank: work queued by an older install is exactly the work most likely
+         * to be retried, so it needs the same protection against being posted twice as anything
+         * scanned afterwards. The expression is the standard SQLite v4 UUID construction —
+         * random bytes with the version nibble and variant bits set — because SQLite has no
+         * UUID function of its own and NAV expects a well-formed GUID.
+         */
+        val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE recordings ADD COLUMN recordingGuid TEXT NOT NULL DEFAULT ''")
+                db.execSQL("""
+                    UPDATE recordings SET recordingGuid = lower(
+                        hex(randomblob(4)) || '-' ||
+                        hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' ||
+                        substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || '-' ||
+                        hex(randomblob(6))
+                    )
+                """.trimIndent())
             }
         }
     }

@@ -426,9 +426,8 @@ class AppViewModel @Inject constructor(
 
             var failureMessage: String? = null
             for (row in rows) {
-                val recordingGuid = java.util.UUID.randomUUID().toString()
                 val result = extSystemClient.uploadRecording(
-                    url, row.toNavRecording(docTypeCode, recordingGuid, retailLocation),
+                    url, row.toNavRecording(docTypeCode, retailLocation),
                 )
                 when (result) {
                     // Delete each row as it's confirmed uploaded, so a retry after a

@@ -113,7 +113,7 @@ One flat OData row **per individual scanned recording** — not one row per docu
 | `Document_No` | Document number |
 | `Document_Line_No` | Which line this recording applies to |
 | `Recording_Line_No` | Sequence number within that line's recordings |
-| `Recording_Guid` | A fresh random GUID generated for **every upload attempt** (not stored locally) — exists purely so a retry after a lost success response can never collide with a previous attempt on the ERP-side unique key |
+| `Recording_Guid` | The recording's stable identity, generated once when the scan is stored and **the same on every upload attempt** (2026-09). This is what makes a retry safe: if NAV commits a row and the response is lost, the retry carries the identity NAV already holds and can be rejected as a duplicate. Until 2026-09 a fresh GUID was generated per attempt, which had the opposite effect — the retry looked like a new recording and the quantity was counted twice |
 | `Barcode` | The scanned barcode string |
 | `Scanned_Quantity` | Quantity for this recording |
 | `Unit_Of_Measure_Code` | UoM for this recording |
@@ -443,7 +443,7 @@ The typed value winning means a bad configured domain can be corrected at the lo
 
 ### B.6.3 DTOs — `data/extsystem/ExtSystemPayload.kt`
 
-**`NavBarcodeAppRecording`** (upload) — see field table in §A.5.4. `recordingGuid` is generated inline in `AppViewModel.runUpload` (`UUID.randomUUID().toString()`) fresh on every attempt, never persisted to Room.
+**`NavBarcodeAppRecording`** (upload) — see field table in §A.5.4. `recordingGuid` is read straight off the stored `RecordingEntity`; it is generated once in `DocumentRepository.recordScan` when the scan is recorded and never regenerated, so every attempt for a row sends the same value. `setLineScanned` is the one place that mints a new one, because it replaces a line's recordings with a single aggregate row — a genuinely new recording.
 
 **`NavBarcodeAppEntry`** (download) — see field table in §A.5.3. Rows with `lineNo <= 0` are excluded from `lines` (treated as the header row). `documentDate` is parsed as `Instant.parse("${it}T00:00:00Z")`.
 
@@ -476,9 +476,10 @@ Entry points: `uploadToExtSystem` (blocking) and `uploadInBackground` (marks eve
 ```
 for each doc in docs:
     rows = repository.getRecordings(doc.documentNo, doc.type.key)
+    if rows is empty: continue                             // nothing to send, and the "else"
+                                                           // branch below would delete the doc
     for each row in rows (sequential):
-        recordingGuid = UUID.randomUUID().toString()      // fresh every attempt
-        result = extSystemClient.uploadRecording(url, row.toNavRecording(docTypeCode, recordingGuid))
+        result = extSystemClient.uploadRecording(url, row.toNavRecording(docTypeCode, retailLocation))
         if success: repository.deleteRecording(...)        // deleted immediately, one at a time
         if failure: failureMessage = result.message; break  // remaining rows NOT attempted this pass
     if failureMessage != null:

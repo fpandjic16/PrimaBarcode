@@ -9,6 +9,7 @@ import com.prima.barcode.data.model.Line
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.time.Instant
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -124,6 +125,8 @@ class DocumentRepositoryImpl @Inject constructor(
                     sourceCode = line.sourceCode,
                     unitOfMeasureCode = line.unitOfMeasureCode,
                     rcCode = header.rcCode,
+                    // Generated here, at the moment the scan becomes real, and never again.
+                    recordingGuid = UUID.randomUUID().toString(),
                 )
             )
             advanceToInProgressIfNeeded(documentNo, type)
@@ -152,6 +155,10 @@ class DocumentRepositoryImpl @Inject constructor(
                         sourceCode = line.sourceCode,
                         unitOfMeasureCode = line.unitOfMeasureCode,
                         rcCode = header.rcCode,
+                        // This replaces the line's recordings with a single aggregate row, so it
+                        // is a genuinely new recording and gets its own identity. Reusing one of
+                        // the GUIDs just deleted would tell NAV this is a row it already has.
+                        recordingGuid = UUID.randomUUID().toString(),
                     )
                 )
             }
