@@ -1,7 +1,9 @@
 package com.prima.barcode.ui.screen
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -31,6 +33,7 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import com.prima.barcode.data.auth.parseLoginQr
+import com.prima.barcode.data.barcode.DataWedgeManager
 import com.prima.barcode.ui.component.CameraPreview
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.component.verticalScrollbar
@@ -90,6 +93,42 @@ fun LoginSheet(
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted -> if (granted) cameraOpen = true }
+
+    // The MC3300 ships in configurations with no camera at all, where the button used to open a
+    // black overlay with nothing behind it. Hardware scanning below still covers those devices.
+    val hasCamera = remember {
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+    }
+
+    /** One path for both scanners: the camera and the hardware trigger read the same code. */
+    fun applyScannedQr(raw: String) {
+        // Any symbology can land here — an ordinary product barcode pulled on the trigger, or a
+        // code made under a different key. Say so rather than leaving the fields unchanged.
+        val scanned = parseLoginQr(raw, loginQrKey)
+        if (scanned != null) {
+            username = scanned.username
+            password = scanned.password
+            errorMessage = null
+        } else {
+            errorMessage = invalidQrMessage
+        }
+    }
+
+    // Registered for the sheet's lifetime rather than behind a button: on a barcode terminal the
+    // trigger is the natural gesture, and DataWedge already routes scans to the whole app
+    // (ACTIVITY_LIST "*"), so nothing but a listener was missing. No other screen that hosts this
+    // sheet registers the same receiver, so there is no double delivery.
+    val latestScan = rememberUpdatedState(::applyScannedQr)
+    DisposableEffect(Unit) {
+        val receiver = DataWedgeManager.createReceiver { raw -> latestScan.value(raw) }
+        if (Build.VERSION.SDK_INT >= 33) {
+            context.registerReceiver(receiver, DataWedgeManager.intentFilter(), Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            context.registerReceiver(receiver, DataWedgeManager.intentFilter())
+        }
+        onDispose { context.unregisterReceiver(receiver) }
+    }
 
     fun submit() {
         val test = onTestConnection
@@ -169,25 +208,27 @@ fun LoginSheet(
                         enabled = !testing,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    Spacer(Modifier.height(10.dp))
-                    OutlinedButton(
-                        onClick = {
-                            errorMessage = null
-                            val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
-                                PackageManager.PERMISSION_GRANTED
-                            if (granted) cameraOpen = true
-                            else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                        },
-                        enabled = !testing,
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                    ) {
-                        Icon(
-                            Icons.Outlined.QrCodeScanner,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.login_scan_qr), fontWeight = FontWeight.Medium)
+                    if (hasCamera) {
+                        Spacer(Modifier.height(10.dp))
+                        OutlinedButton(
+                            onClick = {
+                                errorMessage = null
+                                val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                                    PackageManager.PERMISSION_GRANTED
+                                if (granted) cameraOpen = true
+                                else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            },
+                            enabled = !testing,
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                        ) {
+                            Icon(
+                                Icons.Outlined.QrCodeScanner,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.login_scan_qr), fontWeight = FontWeight.Medium)
+                        }
                     }
 
                     errorMessage?.let {
@@ -227,16 +268,7 @@ fun LoginSheet(
                 CameraPreview(
                     continuous = false,
                     onBarcode = { raw ->
-                        // The camera reads any symbology, so an ordinary product barcode can land
-                        // here — say so rather than leaving the fields silently unchanged.
-                        val scanned = parseLoginQr(raw, loginQrKey)
-                        if (scanned != null) {
-                            username = scanned.username
-                            password = scanned.password
-                            errorMessage = null
-                        } else {
-                            errorMessage = invalidQrMessage
-                        }
+                        applyScannedQr(raw)
                         cameraOpen = false
                     },
                     onClose = { cameraOpen = false },

@@ -35,7 +35,20 @@ object DataWedgeManager {
                 putString("intent_delivery",       "2")
             })
         }
-        val pluginList = ArrayList<Bundle>().apply { add(intentPlugin) }
+        // QR is turned on explicitly because sign-in codes depend on it. Everything else is left
+        // to the device's own decoder settings (RESET_CONFIG "false" merges rather than replaces),
+        // so this doesn't quietly disable a symbology a site relies on for its labels.
+        // Devices whose scan engine is a 1D laser — the SE965 option on the MC3300 — cannot
+        // decode QR at all, and no profile setting changes that; those fall back to the camera,
+        // or to typing.
+        val barcodePlugin = Bundle().apply {
+            putString("PLUGIN_NAME",  "BARCODE")
+            putString("RESET_CONFIG", "false")
+            putBundle("PARAM_LIST", Bundle().apply {
+                putString("decoder_qrcode", "true")
+            })
+        }
+        val pluginList = ArrayList<Bundle>().apply { add(intentPlugin); add(barcodePlugin) }
 
         context.sendBroadcast(Intent(DW_ACTION).apply {
             putExtra("com.symbol.datawedge.api.SET_CONFIG", Bundle().apply {
