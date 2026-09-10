@@ -82,7 +82,7 @@ fun DocumentOverviewScreen(
     val errors     = remember(filtered) { filtered.filter { it.state is DocState.UploadFailed } }
     val atLocation = remember(filtered, locationCode, rcCode, docTypeFilters) {
         filtered.filter { doc ->
-            when (docTypeFilters[doc.type.key] ?: DocTypeFilterMode.LOCATION) {
+            when (docTypeFilters[doc.type.key] ?: doc.type.defaultFilterMode) {
                 DocTypeFilterMode.LOCATION -> doc.sourceCode == locationCode
                 DocTypeFilterMode.RESPONSIBILITY_CENTER -> doc.rcCode == rcCode
             }

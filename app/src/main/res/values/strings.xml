@@ -25,6 +25,8 @@
     <string name="doctype_retail_shipment">Retail Shipment</string>
     <string name="doctype_retail_receipt">Retail Whse. Receipt</string>
     <string name="doctype_transport_sheet">Transport Sheet</string>
+    <string name="doctype_complaint">Complaint</string>
+    <string name="doctype_inventory">Inventory</string>
     <!-- Doc list screen -->
     <string name="doc_list_tab_orders">ORDERS</string>
     <string name="doc_list_tab_recordings">RECORDINGS</string>

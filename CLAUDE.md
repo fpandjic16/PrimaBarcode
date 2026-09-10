@@ -96,7 +96,7 @@ Domain models live in `data/model/Models.kt`; Room entities in `data/db/Entities
 - `DocState` — sealed interface: `Downloaded / InProgress / Completed / PendingUpload / UploadFailed(reason)`; transitions are computed from recordings by `DocumentRepository` (advance/regress helpers), not set directly by the UI
 - `Line` — documentNo, lineNo, item, barcodeNo, expected/scanned qty, UoM; `LineStatus` (`EMPTY/PARTIAL/EXACT/OVER`) is computed from expected vs. scanned
 - `ExtraLine` — a recorded scan whose barcode didn't match any document line (`documentLine == 0` in the `RecordingEntity` table)
-- `DocumentType` — enum: `WAREHOUSE_SHIPMENT`, `WAREHOUSE_RECEIPT`, `RETAIL_SHIPMENT`, `RETAIL_RECEIPT`, `TRANSPORT_SHEET`
+- `DocumentType` — enum: `WAREHOUSE_SHIPMENT`, `WAREHOUSE_RECEIPT`, `RETAIL_SHIPMENT`, `RETAIL_RECEIPT`, `TRANSPORT_SHEET`, `COMPLAINT`, `INVENTORY`. Each carries `retailLocation` (the download/upload discriminator, null for types with their own `Document_Type` code) and `defaultFilterMode` (the scope a type falls back to until the user picks one — `COMPLAINT` defaults to responsibility centre, everything else to location)
 - Local persistence is recording-first: every scan writes a `RecordingEntity` row; documents/lines are freely replaced on re-download, but recordings (real user progress) are never deleted by a sync — `DocumentRepository.mergeDocument` re-attributes them to freshly downloaded lines by barcode match.
 
 ### NAV Integration

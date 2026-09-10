@@ -31,15 +31,31 @@ enum class DocTypeFilterMode { LOCATION, RESPONSIBILITY_CENTER }
  * alone no longer identifies a bucket. Every download filter and every uploaded recording for
  * these four carries `Retail_Location` alongside the code to disambiguate.
  *
- * Null means the type doesn't participate: transport sheets are neither, and get no
+ * Null means the type doesn't participate: transport sheets, complaints and inventory each carry
+ * their own `Document_Type` code, so there is nothing to disambiguate — they get no
  * `Retail_Location` clause on download nor the field on upload.
+ *
+ * [defaultFilterMode] is the scope a type falls back to until the user sets one in Settings.
+ * Location suits the document types that move goods between two places; complaints are tracked
+ * by responsibility centre instead.
  */
-enum class DocumentType(val key: String, val display: String, val retailLocation: Boolean? = null) {
+enum class DocumentType(
+    val key: String,
+    val display: String,
+    val retailLocation: Boolean? = null,
+    val defaultFilterMode: DocTypeFilterMode = DocTypeFilterMode.LOCATION,
+) {
     WAREHOUSE_SHIPMENT("WHSE_SHIP", "Warehouse Shipment",    retailLocation = false),
     WAREHOUSE_RECEIPT( "WHSE_RCPT", "Warehouse Receipt",     retailLocation = false),
     RETAIL_SHIPMENT(   "RT_SHIP",   "Retail Shipment",       retailLocation = true),
     RETAIL_RECEIPT(    "RT_RCPT",   "Retail Whse. Receipt",  retailLocation = true),
     TRANSPORT_SHEET(   "TRANSPORT", "Transport Sheet"),
+    COMPLAINT(         "COMPLAINT", "Complaint",             defaultFilterMode = DocTypeFilterMode.RESPONSIBILITY_CENTER),
+    // Counted against quantities NAV supplies, exactly like the document types above, so nothing
+    // about scanning, status colours or upload differs. Note the consequence: an item found on
+    // the shelf that NAV didn't send is still rejected as "barcode not found" (§A.3), the same as
+    // everywhere else in the app.
+    INVENTORY(         "INVENTORY", "Inventory"),
 }
 
 data class Item(

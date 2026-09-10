@@ -10,7 +10,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AssignmentReturn
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Inventory
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.MoveToInbox
 import androidx.compose.material.icons.outlined.Person
@@ -64,6 +66,8 @@ private fun DocumentType.localizedDisplay(): String = when (this) {
     DocumentType.RETAIL_SHIPMENT    -> stringResource(R.string.doctype_retail_shipment)
     DocumentType.RETAIL_RECEIPT     -> stringResource(R.string.doctype_retail_receipt)
     DocumentType.TRANSPORT_SHEET    -> stringResource(R.string.doctype_transport_sheet)
+    DocumentType.COMPLAINT          -> stringResource(R.string.doctype_complaint)
+    DocumentType.INVENTORY          -> stringResource(R.string.doctype_inventory)
 }
 
 @Composable
@@ -213,6 +217,8 @@ private fun DocumentTypeList(summary: DocTypeSummary, onClick: () -> Unit) {
         DocumentType.WAREHOUSE_RECEIPT                                -> Icons.Outlined.MoveToInbox
         DocumentType.RETAIL_RECEIPT                                   -> Icons.Outlined.Store
         DocumentType.TRANSPORT_SHEET                                  -> Icons.Outlined.Description
+        DocumentType.COMPLAINT                                        -> Icons.Outlined.AssignmentReturn
+        DocumentType.INVENTORY                                        -> Icons.Outlined.Inventory
     }
 
     // A type with no location or responsibility centre behind it looks and behaves like any

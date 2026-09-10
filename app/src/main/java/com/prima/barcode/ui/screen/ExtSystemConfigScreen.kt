@@ -48,6 +48,8 @@ private fun DocumentType.localizedDisplay(): String = when (this) {
     DocumentType.RETAIL_SHIPMENT    -> stringResource(R.string.doctype_retail_shipment)
     DocumentType.RETAIL_RECEIPT     -> stringResource(R.string.doctype_retail_receipt)
     DocumentType.TRANSPORT_SHEET    -> stringResource(R.string.doctype_transport_sheet)
+    DocumentType.COMPLAINT          -> stringResource(R.string.doctype_complaint)
+    DocumentType.INVENTORY          -> stringResource(R.string.doctype_inventory)
 }
 
 @Composable
@@ -316,7 +318,7 @@ fun ExtSystemConfigScreen(
                                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                                     listOf(DocTypeFilterMode.LOCATION, DocTypeFilterMode.RESPONSIBILITY_CENTER).forEachIndexed { idx, mode ->
                                         SegmentedButton(
-                                            selected = (docTypeFilters[type.key] ?: DocTypeFilterMode.LOCATION) == mode,
+                                            selected = (docTypeFilters[type.key] ?: type.defaultFilterMode) == mode,
                                             onClick = { onDocTypeFiltersChange(docTypeFilters + (type.key to mode)) },
                                             shape = SegmentedButtonDefaults.itemShape(idx, 2),
                                         ) {

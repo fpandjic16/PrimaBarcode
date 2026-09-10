@@ -25,6 +25,8 @@
     <string name="doctype_retail_shipment">Maloprodajna odprema</string>
     <string name="doctype_retail_receipt">Maloprodajni prejem</string>
     <string name="doctype_transport_sheet">Transportni list</string>
+    <string name="doctype_complaint">Reklamacija</string>
+    <string name="doctype_inventory">Inventura</string>
     <!-- Doc list screen -->
     <string name="doc_list_tab_orders">NAROČILA</string>
     <string name="doc_list_tab_recordings">SNEMANJA</string>

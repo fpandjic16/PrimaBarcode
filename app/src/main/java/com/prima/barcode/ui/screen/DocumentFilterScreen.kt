@@ -60,6 +60,8 @@ private fun DocumentType.localizedDisplay(): String = when (this) {
     DocumentType.RETAIL_SHIPMENT    -> stringResource(R.string.doctype_retail_shipment)
     DocumentType.RETAIL_RECEIPT     -> stringResource(R.string.doctype_retail_receipt)
     DocumentType.TRANSPORT_SHEET    -> stringResource(R.string.doctype_transport_sheet)
+    DocumentType.COMPLAINT          -> stringResource(R.string.doctype_complaint)
+    DocumentType.INVENTORY          -> stringResource(R.string.doctype_inventory)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

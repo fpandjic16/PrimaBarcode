@@ -10,7 +10,9 @@
     "WAREHOUSE_RECEIPT": "RECEIPT",
     "RETAIL_SHIPMENT": "SHIPMENT",
     "RETAIL_RECEIPT": "RECEIPT",
-    "TRANSPORT_SHEET": "TRANSPORT"
+    "TRANSPORT_SHEET": "TRANSPORT",
+    "COMPLAINT": "COMPLAINT",
+    "INVENTORY": "INVENTORY"
   },
   "locationsUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/LocationList",
   "recordingSyncUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppRecordings"

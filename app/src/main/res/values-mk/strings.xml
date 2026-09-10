@@ -25,6 +25,8 @@
     <string name="doctype_retail_shipment">Малопродажна испорака</string>
     <string name="doctype_retail_receipt">Малопродажен прием</string>
     <string name="doctype_transport_sheet">Транспортен лист</string>
+    <string name="doctype_complaint">Рекламација</string>
+    <string name="doctype_inventory">Инвентура</string>
     <!-- Doc list screen -->
     <string name="doc_list_tab_orders">НАРАЧКИ</string>
     <string name="doc_list_tab_recordings">СНИМАЊА</string>

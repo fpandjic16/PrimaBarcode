@@ -267,7 +267,7 @@ private fun PrimaBarcodeApp(
 
     val filteredDocs = documents.filter { doc ->
         doc.hasProgress ||
-            when (docTypeFilters[doc.type.key] ?: DocTypeFilterMode.LOCATION) {
+            when (docTypeFilters[doc.type.key] ?: doc.type.defaultFilterMode) {
                 DocTypeFilterMode.LOCATION -> location != null && doc.sourceCode == location.code
                 DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
             }
@@ -275,7 +275,7 @@ private fun PrimaBarcodeApp(
 
     val locationsManaged = extSystemConfig.locationsUrl.isNotBlank()
     val docTypes = DocumentType.entries.map { type ->
-        val filterMode = docTypeFilters[type.key] ?: DocTypeFilterMode.LOCATION
+        val filterMode = docTypeFilters[type.key] ?: type.defaultFilterMode
         val blocked = locationsManaged && when (filterMode) {
             DocTypeFilterMode.LOCATION -> locations.isEmpty()
             DocTypeFilterMode.RESPONSIBILITY_CENTER -> rcs.isEmpty()
@@ -509,7 +509,7 @@ private fun PrimaBarcodeApp(
                 doc.type == selectedDocType &&
                     (
                         doc.hasProgress ||
-                        when (docTypeFilters[selectedDocType.key] ?: DocTypeFilterMode.LOCATION) {
+                        when (docTypeFilters[selectedDocType.key] ?: selectedDocType.defaultFilterMode) {
                             DocTypeFilterMode.LOCATION -> location != null && doc.sourceCode == location.code
                             DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
                         }
@@ -615,7 +615,7 @@ private fun PrimaBarcodeApp(
             )
         }
         composable("download_filter") {
-            val dlFilterMode = docTypeFilters[selectedDocType.key] ?: DocTypeFilterMode.LOCATION
+            val dlFilterMode = docTypeFilters[selectedDocType.key] ?: selectedDocType.defaultFilterMode
             DownloadFilterScreen(
                 hasCredentials  = appVm.extSystemCredentialStore.isValid(),
                 loginQrKey      = extSystemConfig.loginQrKey,
