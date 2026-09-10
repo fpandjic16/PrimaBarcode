@@ -409,6 +409,14 @@ class AppViewModel @Inject constructor(
             // than a false that would claim they're warehouse documents.
             val retailLocation = if (doc.type.retailLocation != null) doc.isSourceRetail else null
             val rows = repository.getRecordings(doc.documentNo, doc.type.key)
+
+            // A document with nothing recorded has nothing to send, and must never reach the
+            // branch below: with no rows the send loop doesn't run, no failure is reported, and
+            // the "succeeded" path deletes the document. That is how tapping UPLOAD on a list
+            // holding freshly downloaded documents silently discarded them. Callers filter these
+            // out; this is the backstop, because the failure is invisible when it happens.
+            if (rows.isEmpty()) continue
+
             var failureMessage: String? = null
             for (row in rows) {
                 val recordingGuid = java.util.UUID.randomUUID().toString()
@@ -452,8 +460,12 @@ class AppViewModel @Inject constructor(
      */
     fun uploadInBackground(docs: List<Document>) {
         viewModelScope.launch {
-            docs.forEach { repository.updateDocState(it.documentNo, it.type.key, DocState.PendingUpload) }
-            runUpload(docs)
+            // Mark only what runUpload will actually attempt. It skips documents with no
+            // recordings, so marking those PendingUpload first would strand them in a state no
+            // screen renders and nothing resets.
+            val uploadable = docs.filter { doc -> doc.lines.any { it.scanned > 0.0 } }
+            uploadable.forEach { repository.updateDocState(it.documentNo, it.type.key, DocState.PendingUpload) }
+            runUpload(uploadable)
         }
     }
 

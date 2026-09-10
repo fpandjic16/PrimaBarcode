@@ -121,6 +121,16 @@ fun DocumentListScreen(
         else -> emptyList()
     }
 
+    // Only documents with real progress may be uploaded. The Orders tab lists Downloaded
+    // documents too, and handing one of those to runUpload is destructive: it finds zero
+    // recordings, the send loop never runs, nothing reports a failure, and the document is
+    // deleted from the device as if it had been uploaded. DocumentOverviewScreen has always
+    // filtered this way; this screen did not, so UPLOAD here silently discarded freshly
+    // downloaded work.
+    val uploadableDocs = remember(visibleDocs) {
+        visibleDocs.filter { doc -> doc.lines.any { it.scanned > 0.0 } }
+    }
+
     fun handleDocScan(barcode: String) {
         val found = documents.firstOrNull { it.documentNo == barcode }
         if (found != null) onDocTap(found) else docNotFoundError = barcode
@@ -236,7 +246,7 @@ fun DocumentListScreen(
                             .fillMaxWidth().height(64.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .background(PrimaPalette.Coral)
-                            .clickable { onUpload(visibleDocs) },
+                            .clickable { onUpload(uploadableDocs) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -262,7 +272,7 @@ fun DocumentListScreen(
                             .weight(1f).height(64.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .background(PrimaPalette.Coral)
-                            .clickable { onUpload(visibleDocs) },
+                            .clickable { onUpload(uploadableDocs) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -291,7 +301,7 @@ fun DocumentListScreen(
                             .weight(1f).height(64.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .background(PrimaPalette.Coral)
-                            .clickable { onUpload(visibleDocs) },
+                            .clickable { onUpload(uploadableDocs) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
