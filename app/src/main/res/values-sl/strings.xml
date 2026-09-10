@@ -153,7 +153,7 @@
     <string name="doc_filter_type">VRSTA DOKUMENTA</string>
     <!-- Location / RC -->
     <string name="lrc_title">Lokacija in SM</string>
-    <string name="lrc_refresh_list">Osveži seznam</string>
+    <string name="lrc_refresh_list">Osveži</string>
     <string name="lrc_select_subtitle">Izberite stroškovno mesto in lokacijo</string>
     <string name="lrc_synced_at">Sinhronizirano %s</string>
     <string name="lrc_section_rc">Stroškovno mesto</string>
@@ -252,4 +252,6 @@
     <string name="login_scan_qr">Skeniraj kodo QR</string>
     <string name="login_qr_invalid">Ta koda QR ne vsebuje podatkov za prijavo.</string>
     <string name="login_connect_failed">Povezava ni uspela. Preverite uporabniško ime in geslo ter poskusite znova.</string>
+    <string name="main_blocked_title">Potrebna lokacija</string>
+    <string name="main_blocked_text">Izberite lokacijo ali center odgovornosti pred odpiranjem dokumentov.</string>
 </resources>

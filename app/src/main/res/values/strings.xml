@@ -153,7 +153,7 @@
     <string name="doc_filter_type">DOCUMENT TYPE</string>
     <!-- Location / RC -->
     <string name="lrc_title">Location &amp; RC</string>
-    <string name="lrc_refresh_list">Refresh list</string>
+    <string name="lrc_refresh_list">Refresh</string>
     <string name="lrc_select_subtitle">Select responsibility center and location</string>
     <string name="lrc_synced_at">Synced %s</string>
     <string name="lrc_section_rc">Responsibility Center</string>
@@ -252,4 +252,6 @@
     <string name="login_scan_qr">Scan QR code</string>
     <string name="login_qr_invalid">That QR code does not contain sign-in details.</string>
     <string name="login_connect_failed">Could not connect. Check your username and password and try again.</string>
+    <string name="main_blocked_title">Location required</string>
+    <string name="main_blocked_text">Choose a location or responsibility centre before opening documents.</string>
 </resources>

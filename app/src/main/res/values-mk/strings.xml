@@ -153,7 +153,7 @@
     <string name="doc_filter_type">ТИП НА ДОКУМЕНТ</string>
     <!-- Location / RC -->
     <string name="lrc_title">Локација и ЦО</string>
-    <string name="lrc_refresh_list">Освежи листа</string>
+    <string name="lrc_refresh_list">Освежи</string>
     <string name="lrc_select_subtitle">Изберете центар на одговорност и локација</string>
     <string name="lrc_synced_at">Синхронизирано %s</string>
     <string name="lrc_section_rc">Центар на одговорност</string>
@@ -252,4 +252,6 @@
     <string name="login_scan_qr">Скенирај QR код</string>
     <string name="login_qr_invalid">Тој QR код не содржи податоци за најава.</string>
     <string name="login_connect_failed">Поврзувањето не успеа. Проверете го корисничкото име и лозинката па обидете се повторно.</string>
+    <string name="main_blocked_title">Потребна е локација</string>
+    <string name="main_blocked_text">Изберете локација или центар на одговорност пред отворање документи.</string>
 </resources>

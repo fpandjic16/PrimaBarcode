@@ -153,7 +153,7 @@
     <string name="doc_filter_type">VRSTA DOKUMENTA</string>
     <!-- Location / RC -->
     <string name="lrc_title">Lokacija i CC</string>
-    <string name="lrc_refresh_list">Osvježi popis</string>
+    <string name="lrc_refresh_list">Osvježi</string>
     <string name="lrc_select_subtitle">Odaberite centar odgovornosti i lokaciju</string>
     <string name="lrc_synced_at">Sinkronizirano %s</string>
     <string name="lrc_section_rc">Centar odgovornosti</string>
@@ -252,4 +252,6 @@
     <string name="login_scan_qr">Skeniraj QR kod</string>
     <string name="login_qr_invalid">Taj QR kod ne sadrži podatke za prijavu.</string>
     <string name="login_connect_failed">Povezivanje nije uspjelo. Provjerite korisničko ime i lozinku pa pokušajte ponovno.</string>
+    <string name="main_blocked_title">Potrebna lokacija</string>
+    <string name="main_blocked_text">Odaberite lokaciju ili centar odgovornosti prije otvaranja dokumenata.</string>
 </resources>

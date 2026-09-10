@@ -13,18 +13,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.MoveToInbox
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Store
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -80,6 +84,8 @@ fun MainMenuScreen(
     onShowErrors: () -> Unit = {},
     onUserInfoTap: () -> Unit = {},
 ) {
+    var showBlockedError by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
             title = user?.displayName ?: stringResource(R.string.settings_not_signed_in),
@@ -179,9 +185,24 @@ fun MainMenuScreen(
                 Text(stringResource(R.string.main_documents_header), style = monoLabel.copy(color = PrimaPalette.Ink3))
             }
             items(docTypes) { dt ->
-                DocumentTypeList(summary = dt, onClick = { onTypeTap(dt.type) })
+                DocumentTypeList(
+                    summary = dt,
+                    // Blocked types are still tappable — the tap is what earns the explanation.
+                    onClick = { if (dt.blocked) showBlockedError = true else onTypeTap(dt.type) },
+                )
             }
         }
+    }
+
+    if (showBlockedError) {
+        AlertDialog(
+            onDismissRequest = { showBlockedError = false },
+            title = { Text(stringResource(R.string.main_blocked_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.main_blocked_text)) },
+            confirmButton = {
+                Button(onClick = { showBlockedError = false }) { Text(stringResource(R.string.btn_ok)) }
+            },
+        )
     }
 }
 
@@ -194,14 +215,16 @@ private fun DocumentTypeList(summary: DocTypeSummary, onClick: () -> Unit) {
         DocumentType.TRANSPORT_SHEET                                  -> Icons.Outlined.Description
     }
 
+    // A type with no location or responsibility centre behind it looks and behaves like any
+    // other row here: it stays tappable, and the caller answers the tap with an explanation.
+    // Greying it out only told the operator "no" without telling them why or what to do.
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(if (summary.blocked) 0.45f else 1f)
             .clip(RoundedCornerShape(14.dp))
             .background(Color.White)
             .border(1.dp, Color(0x18000000), RoundedCornerShape(14.dp))
-            .clickable(enabled = !summary.blocked, onClick = onClick)
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -221,17 +244,13 @@ private fun DocumentTypeList(summary: DocTypeSummary, onClick: () -> Unit) {
             }
         }
         Spacer(Modifier.width(8.dp))
-        if (summary.blocked) {
-            Icon(Icons.Outlined.Lock, contentDescription = null, tint = PrimaPalette.Ink4, modifier = Modifier.size(18.dp))
-        } else {
-            Text(
-                summary.count.toString(),
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontFamily = com.prima.barcode.ui.theme.GeistMono,
-                    color = if (summary.count > 0) PrimaPalette.Ink else PrimaPalette.Ink4,
-                    fontWeight = FontWeight.Medium,
-                ),
-            )
-        }
+        Text(
+            summary.count.toString(),
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontFamily = com.prima.barcode.ui.theme.GeistMono,
+                color = if (summary.count > 0) PrimaPalette.Ink else PrimaPalette.Ink4,
+                fontWeight = FontWeight.Medium,
+            ),
+        )
     }
 }
