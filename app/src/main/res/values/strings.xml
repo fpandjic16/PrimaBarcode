@@ -254,4 +254,5 @@
     <string name="login_connect_failed">Could not connect. Check your username and password and try again.</string>
     <string name="main_blocked_title">Location required</string>
     <string name="main_blocked_text">Choose a location or responsibility centre before opening documents.</string>
+    <string name="recording_lines_progress">%1$d/%2$d lines</string>
 </resources>

@@ -254,4 +254,5 @@
     <string name="login_connect_failed">Povezava ni uspela. Preverite uporabniško ime in geslo ter poskusite znova.</string>
     <string name="main_blocked_title">Potrebna lokacija</string>
     <string name="main_blocked_text">Izberite lokacijo ali center odgovornosti pred odpiranjem dokumentov.</string>
+    <string name="recording_lines_progress">%1$d/%2$d vrstic</string>
 </resources>

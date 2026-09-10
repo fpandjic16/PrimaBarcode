@@ -96,6 +96,14 @@ fun RecordingScreen(
     // a genuine re-scan of the same barcode after this window still counts normally.
     var lastHandledBarcode by remember { mutableStateOf<String?>(null) }
     var lastHandledAtMs by remember { mutableStateOf(0L) }
+    // Per-line running totals, used only to judge the warnings below. `onScan` writes to the
+    // database asynchronously, so `doc.lines` still carries the pre-scan total when the next scan
+    // arrives. Two quick trigger pulls therefore measured against the same base and the over-scan
+    // warning never fired — easy to hit with BARCODE|UOM|QTY labels, where one scan can carry a
+    // large quantity and two of them pass `expected` long before the flow catches up. The
+    // recordings themselves were always correct; only the operator's feedback was wrong.
+    // maxOf keeps this safe against a lagging emission: the database wins as soon as it is ahead.
+    val scannedRunningTotal = remember { mutableStateMapOf<Int, Double>() }
     val sizeOffset = LocalTextSizeOffset.current
     val showUpload = doc.lines.any { it.scanned > 0.0 }
     val context = LocalContext.current
@@ -127,7 +135,6 @@ fun RecordingScreen(
         val parsedUom = if (parsedQty != null) pipeParts[1] else null
 
         val matchedLine = doc.lines.find { it.barcodeNo == barcode }
-        val wasExact = matchedLine?.status == LineStatus.EXACT
         if (matchedLine == null) {
             scanErrorFlash = true
             if (hapticEnabled) hapticEngine.error()
@@ -135,9 +142,14 @@ fun RecordingScreen(
         } else {
             val qty = parsedQty ?: matchedLine.scanningQty
             onScan(barcode, qty)
-            val newScanned = matchedLine.scanned + qty
+            val base = maxOf(matchedLine.scanned, scannedRunningTotal[matchedLine.lineNo] ?: 0.0)
+            val newScanned = base + qty
+            scannedRunningTotal[matchedLine.lineNo] = newScanned
             val newStatus = LineStatus.of(newScanned, matchedLine.expected)
-            if (!wasExact && newStatus == LineStatus.EXACT && hapticEnabled) hapticEngine.confirm()
+            // Judged from the same running base, so the "line just became exact" pulse fires on
+            // the scan that actually completes the line rather than on a stale reading.
+            val wasExactNow = LineStatus.of(base, matchedLine.expected) == LineStatus.EXACT
+            if (!wasExactNow && newStatus == LineStatus.EXACT && hapticEnabled) hapticEngine.confirm()
             tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, matchedLine.item.name, qty, Instant.now(), newStatus)) + tape
             if (warnOnOver && newStatus == LineStatus.OVER) {
                 overScanWarning = OverScanInfo(matchedLine.item.no, matchedLine.item.name, barcode, matchedLine.expected, newScanned)
@@ -184,12 +196,14 @@ fun RecordingScreen(
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
             title = when (view) {
-                RecordingView.OVERVIEW -> stringResource(R.string.recording_title)
+                // The document number belongs in the title: it is what the operator is actually
+                // working on, and "Recordings" alone doesn't identify anything.
+                RecordingView.OVERVIEW -> "${stringResource(R.string.recording_title)} · ${doc.documentNo}"
                 RecordingView.ACTIVE_LINE, RecordingView.KEYPAD -> activeLine?.item?.no ?: doc.documentNo
             },
             subtitle = when (view) {
                 RecordingView.OVERVIEW -> buildString {
-                    append("${doc.documentNo} · ${doc.linesExact}/${doc.linesTotal} lines")
+                    append(stringResource(R.string.recording_lines_progress, doc.linesExact, doc.linesTotal))
                     if (docTypeCode.isNotBlank()) append(" · $docTypeCode")
                 }
                 RecordingView.ACTIVE_LINE -> null
@@ -284,7 +298,9 @@ fun RecordingScreen(
                         onIncrement = { if (hapticEnabled) hapticEngine.bump(); localScanned = ((localScanned ?: line.scanned) + 1.0).coerceAtLeast(0.0) },
                         onDecrement = { if (hapticEnabled) hapticEngine.bump(); localScanned = ((localScanned ?: line.scanned) - 1.0).coerceAtLeast(0.0) },
                         onTypeQuantity = { typedQty = ""; view = RecordingView.KEYPAD },
-                        onApply = { if (hapticEnabled) hapticEngine.confirm(); onLineUpdate(line.lineNo, localScanned ?: line.scanned); view = RecordingView.OVERVIEW; activeLineNo = null },
+                        // A manual edit replaces the line's total outright and can move it down,
+                        // so the running base has to go with it.
+                        onApply = { if (hapticEnabled) hapticEngine.confirm(); scannedRunningTotal.remove(line.lineNo); onLineUpdate(line.lineNo, localScanned ?: line.scanned); view = RecordingView.OVERVIEW; activeLineNo = null },
                     )
                 }
                 RecordingView.KEYPAD -> activeLine?.let { line ->
@@ -308,6 +324,7 @@ fun RecordingScreen(
                         onConfirm = {
                             if (hapticEnabled) hapticEngine.confirm()
                             val qty = typedQty.toDoubleOrNull()?.coerceAtLeast(0.0) ?: line.scanned
+                            scannedRunningTotal.remove(line.lineNo)
                             onLineUpdate(line.lineNo, qty)
                             if (warnOnOver && qty > line.expected) {
                                 overScanWarning = OverScanInfo(line.item.no, line.item.name, line.barcodeNo, line.expected, qty)
@@ -318,6 +335,7 @@ fun RecordingScreen(
                         },
                         onConfirmRequired = {
                             if (hapticEnabled) hapticEngine.confirm()
+                            scannedRunningTotal.remove(line.lineNo)
                             onLineUpdate(line.lineNo, line.expected)
                             localScanned = null
                             activeLineNo = null
@@ -352,24 +370,6 @@ fun RecordingScreen(
     } // end Box
 
 
-    overScanWarning?.let { info ->
-        AlertDialog(
-            onDismissRequest = { overScanWarning = null },
-            title = { Text(stringResource(R.string.recording_overscan_title), fontWeight = FontWeight.Bold, color = LineStatus.OVER.color) },
-            text = {
-                Text(
-                    stringResource(
-                        R.string.recording_overscan_body,
-                        info.itemNo, info.itemName, info.barcode, info.expected.formatQty(), info.scanned.formatQty(),
-                    )
-                )
-            },
-            confirmButton = {
-                Button(onClick = { overScanWarning = null }) { Text(stringResource(R.string.btn_ok), fontWeight = FontWeight.SemiBold) }
-            },
-        )
-    }
-
     barcodeNotFoundError?.let { barcode ->
         AlertDialog(
             onDismissRequest = { barcodeNotFoundError = null },
@@ -395,6 +395,29 @@ fun RecordingScreen(
             },
             confirmButton = {
                 Button(onClick = { uomMismatchWarning = null }) { Text(stringResource(R.string.btn_ok), fontWeight = FontWeight.SemiBold) }
+            },
+        )
+    }
+
+    // Composed last, so it sits on top when a scan raises more than one warning at once. Only a
+    // BARCODE|UOM|QTY label can do that — it carries a unit of measure to disagree about and a
+    // quantity large enough to overshoot in the same scan — and previously the UoM dialog was
+    // composed after this one and covered it, which read as "over-scan is never reported".
+    // Over-scan is the more consequential of the two, so it gets the front.
+    overScanWarning?.let { info ->
+        AlertDialog(
+            onDismissRequest = { overScanWarning = null },
+            title = { Text(stringResource(R.string.recording_overscan_title), fontWeight = FontWeight.Bold, color = LineStatus.OVER.color) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.recording_overscan_body,
+                        info.itemNo, info.itemName, info.barcode, info.expected.formatQty(), info.scanned.formatQty(),
+                    )
+                )
+            },
+            confirmButton = {
+                Button(onClick = { overScanWarning = null }) { Text(stringResource(R.string.btn_ok), fontWeight = FontWeight.SemiBold) }
             },
         )
     }
