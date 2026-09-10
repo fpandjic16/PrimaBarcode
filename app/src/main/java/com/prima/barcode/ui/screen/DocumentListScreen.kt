@@ -471,7 +471,7 @@ private fun DocRow(
                 if (doc.state is DocState.UploadFailed && showErrorDetails) {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        (doc.state as DocState.UploadFailed).reason,
+                        doc.state.reason,
                         style = monoLabel.copy(color = Color(0xFFCE3A3A), fontSize = (12 + sizeOffset).sp),
                         maxLines = 2,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
