@@ -206,8 +206,8 @@ fun DocumentOverviewScreen(
                         modifier = Modifier
                             .fillMaxWidth().height(64.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(PrimaPalette.Coral)
-                            .clickable { onUpload(uploadableDocs) },
+                            .background(if (uploadableDocs.isNotEmpty()) PrimaPalette.Coral else PrimaPalette.Coral.copy(alpha = 0.35f))
+                            .clickable(enabled = uploadableDocs.isNotEmpty()) { onUpload(uploadableDocs) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -196,9 +196,9 @@ fun RecordingScreen(
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
             title = when (view) {
-                // The document number belongs in the title: it is what the operator is actually
-                // working on, and "Recordings" alone doesn't identify anything.
-                RecordingView.OVERVIEW -> "${stringResource(R.string.recording_title)} · ${doc.documentNo}"
+                // The document number alone: it is what the operator is working on, and the
+                // screen they came from already said this is recording.
+                RecordingView.OVERVIEW -> doc.documentNo
                 RecordingView.ACTIVE_LINE, RecordingView.KEYPAD -> activeLine?.item?.no ?: doc.documentNo
             },
             subtitle = when (view) {

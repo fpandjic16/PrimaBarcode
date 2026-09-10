@@ -133,6 +133,9 @@ fun DocumentListScreen(
     val uploadableDocs = remember(visibleDocs) {
         visibleDocs.filter { doc -> doc.lines.any { it.scanned > 0.0 } }
     }
+    // Nothing recorded means nothing to send. Showing the button live in that state invited the
+    // tap that used to delete the documents, and still promises an action that would do nothing.
+    val canUpload = uploadableDocs.isNotEmpty()
 
     fun handleDocScan(barcode: String) {
         val found = documents.firstOrNull { it.documentNo == barcode }
@@ -248,8 +251,8 @@ fun DocumentListScreen(
                         modifier = Modifier
                             .fillMaxWidth().height(64.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(PrimaPalette.Coral)
-                            .clickable { onUpload(uploadableDocs) },
+                            .background(if (canUpload) PrimaPalette.Coral else PrimaPalette.Coral.copy(alpha = 0.35f))
+                            .clickable(enabled = canUpload) { onUpload(uploadableDocs) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -274,8 +277,8 @@ fun DocumentListScreen(
                         modifier = Modifier
                             .weight(1f).height(64.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(PrimaPalette.Coral)
-                            .clickable { onUpload(uploadableDocs) },
+                            .background(if (canUpload) PrimaPalette.Coral else PrimaPalette.Coral.copy(alpha = 0.35f))
+                            .clickable(enabled = canUpload) { onUpload(uploadableDocs) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -303,8 +306,8 @@ fun DocumentListScreen(
                         modifier = Modifier
                             .weight(1f).height(64.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(PrimaPalette.Coral)
-                            .clickable { onUpload(uploadableDocs) },
+                            .background(if (canUpload) PrimaPalette.Coral else PrimaPalette.Coral.copy(alpha = 0.35f))
+                            .clickable(enabled = canUpload) { onUpload(uploadableDocs) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -64,7 +64,6 @@
     <string name="upload_error_line_single">%d vrstica</string>
     <string name="upload_error_line_plural">%d vrstic</string>
     <!-- Recording -->
-    <string name="recording_title">Snemanje</string>
     <string name="recording_barcode_not_found_title">Črtna koda ni najdena</string>
     <string name="recording_barcode_not_found_text">Črtna koda %s ne obstaja na tem dokumentu.</string>
     <string name="recording_barcode_prefix">Črtna koda: </string>

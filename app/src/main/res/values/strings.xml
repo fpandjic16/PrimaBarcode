@@ -64,7 +64,6 @@
     <string name="upload_error_line_single">%d line</string>
     <string name="upload_error_line_plural">%d lines</string>
     <!-- Recording -->
-    <string name="recording_title">Recording</string>
     <string name="recording_barcode_not_found_title">Barcode not found</string>
     <string name="recording_barcode_not_found_text">Barcode %s does not exist on this document.</string>
     <string name="recording_barcode_prefix">Barcode: </string>

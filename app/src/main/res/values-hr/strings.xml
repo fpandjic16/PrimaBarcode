@@ -64,7 +64,6 @@
     <string name="upload_error_line_single">%d redak</string>
     <string name="upload_error_line_plural">%d redaka</string>
     <!-- Recording -->
-    <string name="recording_title">Snimanje</string>
     <string name="recording_barcode_not_found_title">Barkod nije pronađen</string>
     <string name="recording_barcode_not_found_text">Barkod %s ne postoji na ovom dokumentu.</string>
     <string name="recording_barcode_prefix">Barkod: </string>

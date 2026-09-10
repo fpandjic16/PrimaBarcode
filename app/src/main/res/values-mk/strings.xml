@@ -64,7 +64,6 @@
     <string name="upload_error_line_single">%d ставка</string>
     <string name="upload_error_line_plural">%d ставки</string>
     <!-- Recording -->
-    <string name="recording_title">Снимање</string>
     <string name="recording_barcode_not_found_title">Баркодот не е пронајден</string>
     <string name="recording_barcode_not_found_text">Баркодот %s не постои на овој документ.</string>
     <string name="recording_barcode_prefix">Баркод: </string>
