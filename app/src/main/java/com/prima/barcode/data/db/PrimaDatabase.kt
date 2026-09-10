@@ -23,6 +23,111 @@ abstract class PrimaDatabase : RoomDatabase() {
     abstract fun locationDao(): LocationDao
 
     companion object {
+        /**
+         * Rebuilds both tables that changed shape in v8.
+         *
+         * `documentHeader.downloadedAt` became `creationDateTime` and gained a nullable
+         * `documentDate`; `recordings` lost its `uploaded` column and that column's index. SQLite
+         * on Android 8.1 (the MC3300) predates both RENAME COLUMN and DROP COLUMN, so each table
+         * is recreated and copied — the same create-copy-drop-rename shape as [MIGRATION_12_13].
+         *
+         * Dropping `documentHeader` while `documentLine` and `recordings` still declare a
+         * CASCADE foreign key to it is only safe because Room disables foreign key enforcement
+         * for the duration of a migration; with enforcement on, the drop would cascade and take
+         * every line and recording with it. [MIGRATION_12_13] already relies on this.
+         */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE documentHeader_new (
+                        documentNo TEXT NOT NULL,
+                        type TEXT NOT NULL,
+                        destinationCode TEXT NOT NULL,
+                        sourceCode TEXT NOT NULL,
+                        rcCode TEXT NOT NULL,
+                        ownerUserId TEXT NOT NULL,
+                        creationDateTime INTEGER NOT NULL,
+                        documentDate INTEGER,
+                        docState TEXT NOT NULL,
+                        PRIMARY KEY(documentNo, type)
+                    )
+                """.trimIndent())
+                // downloadedAt carries over as creationDateTime; documentDate did not exist yet,
+                // and it is nullable precisely because the ERP may not supply one.
+                db.execSQL("""
+                    INSERT INTO documentHeader_new
+                    SELECT documentNo, type, destinationCode, sourceCode, rcCode, ownerUserId,
+                           downloadedAt, NULL, docState
+                    FROM documentHeader
+                """.trimIndent())
+                db.execSQL("DROP TABLE documentHeader")
+                db.execSQL("ALTER TABLE documentHeader_new RENAME TO documentHeader")
+
+                db.execSQL("""
+                    CREATE TABLE recordings_new (
+                        documentNo TEXT NOT NULL,
+                        type TEXT NOT NULL,
+                        documentLine INTEGER NOT NULL,
+                        recordingLineNo INTEGER NOT NULL,
+                        barcodeNo TEXT NOT NULL,
+                        quantity REAL NOT NULL,
+                        creationDateTime INTEGER NOT NULL,
+                        format TEXT,
+                        userId TEXT NOT NULL,
+                        destinationCode TEXT NOT NULL,
+                        sourceCode TEXT NOT NULL,
+                        PRIMARY KEY(documentNo, type, documentLine, recordingLineNo),
+                        FOREIGN KEY(documentNo, type) REFERENCES documentHeader(documentNo, type) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    INSERT INTO recordings_new
+                    SELECT documentNo, type, documentLine, recordingLineNo, barcodeNo, quantity,
+                           creationDateTime, format, userId, destinationCode, sourceCode
+                    FROM recordings
+                """.trimIndent())
+                db.execSQL("DROP TABLE recordings")
+                db.execSQL("ALTER TABLE recordings_new RENAME TO recordings")
+                db.execSQL("CREATE INDEX index_recordings_documentNo_type ON recordings(documentNo, type)")
+                db.execSQL("CREATE INDEX index_recordings_documentLine ON recordings(documentLine)")
+            }
+        }
+
+        /** v9 introduced the reference-data tables; no existing data to carry over. */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS locations (
+                        code TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        rcCode TEXT NOT NULL,
+                        PRIMARY KEY(code)
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS responsibility_centers (
+                        code TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        short TEXT,
+                        PRIMARY KEY(code)
+                    )
+                """.trimIndent())
+            }
+        }
+
+        /**
+         * v10 added the unit of measure to lines and recordings. Existing rows get an empty
+         * string: the app treats a blank UoM as "no expectation stated", which is the honest
+         * description of data recorded before the field existed — inventing a unit here would
+         * make old recordings claim a UoM nobody ever scanned.
+         */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE documentLine ADD COLUMN unitOfMeasureCode TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE recordings ADD COLUMN unitOfMeasureCode TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE documentLine ADD COLUMN scanningQty REAL NOT NULL DEFAULT 1.0")
