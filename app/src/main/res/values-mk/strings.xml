@@ -236,6 +236,13 @@
     <string name="ext_config_server_url_empty">URL-то на серверот е празно</string>
     <string name="upload_error_not_configured">Надворешниот систем не е конфигуриран или не сте најавени</string>
     <string name="upload_error_sync_url_missing">URL-то за синхронизација на снимања не е конфигурирано</string>
+    <string name="upload_error_needs_review">%d скенирани артикли повеќе не се на овој документ. Прегледајте ги пред испраќање.</string>
+    <string name="review_title">Артикли за преглед</string>
+    <string name="review_intro">Овие артикли беа скенирани, но нивната ставка во меѓувреме е отстранета од документот во ERP. Додека не ги решите, ништо не се испраќа.</string>
+    <string name="review_row_line">Ставка %d</string>
+    <string name="review_discard">Отфрли скенирања</string>
+    <string name="review_discard_title">Да се отфрлат овие скенирања?</string>
+    <string name="review_discard_text">%d скенирања ќе бидат избришани од уредот и никогаш испратени. Направете го тоа кога стоката ќе ја тргнете од палетата.</string>
     <string name="upload_error_unknown">Непозната грешка</string>
     <string name="dashboard_pill_over">прекумерно</string>
     <string name="scan_placeholder">Скенирајте артикл · или притиснете копче</string>

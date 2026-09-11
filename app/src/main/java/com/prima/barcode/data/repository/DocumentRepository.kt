@@ -28,7 +28,9 @@ interface DocumentRepository {
     suspend fun setLineScanned(documentNo: String, type: String, lineNo: Int, scanned: Double, userId: String)
     suspend fun updateDocState(documentNo: String, type: String, state: DocState)
     suspend fun deleteDocument(documentNo: String, type: String)
-    suspend fun getRecordings(documentNo: String, type: String): List<RecordingEntity>
+    suspend fun getUploadableRecordings(documentNo: String, type: String): List<RecordingEntity>
+    suspend fun getOrphanedRecordings(documentNo: String, type: String): List<RecordingEntity>
+    suspend fun discardOrphanedScans(documentNo: String, type: String)
     suspend fun deleteRecording(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int)
     suspend fun clearAll()
     suspend fun deleteDocumentRecordings(documentNo: String, type: String)
@@ -84,15 +86,62 @@ class DocumentRepositoryImpl @Inject constructor(
      * always recomputed from the merged recordings.
      */
     private suspend fun mergeDocument(doc: Document, type: String) {
-        val recordings = db.recordingDao().getByDoc(doc.documentNo, type)
-        val state = computeStateAfterMerge(doc.lines, recordings)
-        db.documentHeaderDao().upsert(doc.toEntity().copy(docState = state.toDbString()))
+        // Header first: documentLine has a foreign key to it, so a new document needs its parent
+        // row before any line can be inserted. docState is corrected at the end.
+        db.documentHeaderDao().upsert(doc.toEntity())
         db.documentLineDao().deleteAllForDoc(doc.documentNo, type)
         db.documentLineDao().upsertAll(doc.lines.map { it.toEntity(type) })
+
+        // Only once the new lines are in place, so matching runs against what NAV just sent.
+        reattachOrphansByBarcode(doc.documentNo, type)
+
+        // State last, from recordings as they stand after re-attachment — computing it earlier
+        // would measure against line numbers that re-attachment is about to change.
+        val recordings = db.recordingDao().getByDoc(doc.documentNo, type)
+        db.documentHeaderDao().updateState(
+            doc.documentNo, type, computeStateAfterMerge(doc.lines, recordings).toDbString(),
+        )
+    }
+
+    /**
+     * Moves recordings whose line has gone onto whichever line now carries the same barcode.
+     *
+     * This is for NAV renumbering a line rather than removing the item: without it, every
+     * recording on a renumbered line would be treated as surplus at once. What genuinely has no
+     * home stays orphaned and is surfaced for review instead.
+     *
+     * `recordingGuid` is carried across untouched — it is the recording's identity for NAV and
+     * what makes a retry safe. Only its position within the document changes. The row has to be
+     * deleted and re-inserted rather than updated because `documentLine` is part of the primary
+     * key.
+     *
+     * Several lines sharing a barcode resolves to the lowest line number, matching what
+     * `RecordingScreen.handleScan` already does when a scan could land on more than one line.
+     */
+    private suspend fun reattachOrphansByBarcode(documentNo: String, type: String) {
+        val orphans = db.recordingDao().getOrphansByDoc(documentNo, type)
+        if (orphans.isEmpty()) return
+
+        val lineNoByBarcode = db.documentLineDao().getByDoc(documentNo, type)
+            .sortedBy { it.lineNo }
+            .groupBy { it.barcodeNo }
+            .mapValues { (_, sameBarcode) -> sameBarcode.first().lineNo }
+
+        for (orphan in orphans) {
+            val target = lineNoByBarcode[orphan.barcodeNo] ?: continue
+            db.recordingDao().deleteByPk(documentNo, type, orphan.documentLine, orphan.recordingLineNo)
+            val nextNo = db.recordingDao().getNextRecordingLineNo(documentNo, type, target)
+            db.recordingDao().insert(orphan.copy(documentLine = target, recordingLineNo = nextNo))
+        }
     }
 
     private fun computeStateAfterMerge(lines: List<Line>, recordings: List<RecordingEntity>): DocState {
         if (recordings.isEmpty()) return DocState.Downloaded
+        // A document with no lines is not complete. `lines.all { }` is vacuously true over an
+        // empty list, so a document whose lines NAV had all removed used to be written as
+        // Completed — showing an empty status chip, with upload greyed out because no line has
+        // progress, and nothing able to move it again.
+        if (lines.isEmpty()) return DocState.InProgress
         val scannedByLine = recordings.groupBy { it.documentLine }
             .mapValues { (_, recs) -> recs.sumOf { it.quantity } }
         val allExact = lines.all { line -> (scannedByLine[line.lineNo] ?: 0.0) == line.expected }
@@ -176,8 +225,32 @@ class DocumentRepositoryImpl @Inject constructor(
         db.documentHeaderDao().deleteByKey(documentNo, type)
     }
 
-    override suspend fun getRecordings(documentNo: String, type: String): List<RecordingEntity> =
-        db.recordingDao().getByDoc(documentNo, type)
+    /** The only recordings that may be sent: everything still attached to a real line. */
+    override suspend fun getUploadableRecordings(documentNo: String, type: String): List<RecordingEntity> =
+        db.recordingDao().getLinkedByDoc(documentNo, type)
+
+    override suspend fun getOrphanedRecordings(documentNo: String, type: String): List<RecordingEntity> =
+        db.recordingDao().getOrphansByDoc(documentNo, type)
+
+    /**
+     * Drops the scans the operator has reviewed and decided are surplus.
+     *
+     * The one place recordings are deleted without having reached NAV, and it takes a deliberate
+     * action to get here — a scan is evidence that goods were physically in someone's hands, so
+     * discarding it is the operator's call to make after taking them off the pallet, never the
+     * app's to make quietly during a sync.
+     */
+    override suspend fun discardOrphanedScans(documentNo: String, type: String) {
+        db.withTransaction {
+            db.recordingDao().deleteOrphansByDoc(documentNo, type)
+            // The document may now be back to untouched, or merely no longer blocked.
+            val lines = db.documentLineDao().getByDoc(documentNo, type).map { it.toDomain(0.0) }
+            val recordings = db.recordingDao().getByDoc(documentNo, type)
+            db.documentHeaderDao().updateState(
+                documentNo, type, computeStateAfterMerge(lines, recordings).toDbString(),
+            )
+        }
+    }
 
     override suspend fun deleteRecording(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int) {
         db.recordingDao().deleteByPk(documentNo, type, documentLine, recordingLineNo)

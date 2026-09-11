@@ -236,6 +236,13 @@
     <string name="ext_config_server_url_empty">URL poslužitelja je prazan</string>
     <string name="upload_error_not_configured">Vanjski sustav nije konfiguriran ili niste prijavljeni</string>
     <string name="upload_error_sync_url_missing">URL za sinkronizaciju snimanja nije konfiguriran</string>
+    <string name="upload_error_needs_review">%d skeniranih artikala više nije na ovom dokumentu. Pregledajte ih prije slanja.</string>
+    <string name="review_title">Artikli za pregled</string>
+    <string name="review_intro">Ovi artikli su skenirani, ali je njihova linija u međuvremenu uklonjena s dokumenta u ERP-u. Dok ih ne riješite, ništa se ne šalje.</string>
+    <string name="review_row_line">Linija %d</string>
+    <string name="review_discard">Odbaci skeniranja</string>
+    <string name="review_discard_title">Odbaciti ova skeniranja?</string>
+    <string name="review_discard_text">%d skeniranja bit će obrisana s uređaja i nikad poslana. Učinite to kad robu maknete s palete.</string>
     <string name="upload_error_unknown">Nepoznata pogreška</string>
     <string name="dashboard_pill_over">prekoračenje</string>
     <string name="scan_placeholder">Skenirajte artikl · ili pritisnite tipku</string>

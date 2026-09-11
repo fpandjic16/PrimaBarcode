@@ -236,6 +236,13 @@
     <string name="ext_config_server_url_empty">Server URL is empty</string>
     <string name="upload_error_not_configured">External system not configured or not signed in</string>
     <string name="upload_error_sync_url_missing">Recording sync URL not configured</string>
+    <string name="upload_error_needs_review">%d scanned items are no longer on this document. Review them before uploading.</string>
+    <string name="review_title">Items for review</string>
+    <string name="review_intro">These items were scanned, but their line has since been removed from the document in the ERP. Nothing is sent until you deal with them.</string>
+    <string name="review_row_line">Line %d</string>
+    <string name="review_discard">Discard scans</string>
+    <string name="review_discard_title">Discard these scans?</string>
+    <string name="review_discard_text">%d scans will be deleted from this device and never sent. Do this once the goods are off the pallet.</string>
     <string name="upload_error_unknown">Unknown error</string>
     <string name="dashboard_pill_over">over</string>
     <string name="scan_placeholder">Scan item · or press trigger</string>

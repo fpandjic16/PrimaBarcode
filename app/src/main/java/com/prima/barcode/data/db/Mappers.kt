@@ -6,6 +6,7 @@ import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.Item
 import com.prima.barcode.data.model.Line
 import com.prima.barcode.data.model.Location
+import com.prima.barcode.data.model.OrphanedScan
 import com.prima.barcode.data.model.ResponsibilityCenter
 import java.time.Instant
 
@@ -47,21 +48,41 @@ fun DocumentLineEntity.toDomain(scanned: Double): Line = Line(
     scanningQty = scanningQty,
 )
 
-fun DocumentHeaderWithLines.toDomain(): Document = Document(
-    documentNo = document.documentNo,
-    type = document.type.toDocumentType(),
-    destinationCode = document.destinationCode,
-    sourceCode = document.sourceCode,
-    rcCode = document.rcCode,
-    isSourceRetail = document.isSourceRetail,
-    creationDateTime = Instant.ofEpochMilli(document.creationDateTime),
-    documentDate = document.documentDate?.let { Instant.ofEpochMilli(it) },
-    lines = lines.sortedBy { it.lineNo }.map { lineEntity ->
-        val scanned = recordings.filter { it.documentLine == lineEntity.lineNo }.sumOf { it.quantity }
-        lineEntity.toDomain(scanned)
-    },
-    state = document.docState.toDocState(),
-)
+fun DocumentHeaderWithLines.toDomain(): Document {
+    val lineNos = lines.mapTo(HashSet()) { it.lineNo }
+    return Document(
+        documentNo = document.documentNo,
+        type = document.type.toDocumentType(),
+        destinationCode = document.destinationCode,
+        sourceCode = document.sourceCode,
+        rcCode = document.rcCode,
+        isSourceRetail = document.isSourceRetail,
+        creationDateTime = Instant.ofEpochMilli(document.creationDateTime),
+        documentDate = document.documentDate?.let { Instant.ofEpochMilli(it) },
+        lines = lines.sortedBy { it.lineNo }.map { lineEntity ->
+            val scanned = recordings.filter { it.documentLine == lineEntity.lineNo }.sumOf { it.quantity }
+            lineEntity.toDomain(scanned)
+        },
+        state = document.docState.toDocState(),
+        // Recordings pointing at a line this document no longer has. Building them here rather
+        // than with another query is free: both lists are already in hand, and the line loop
+        // above would otherwise be the only thing that ever looks at recordings — which is
+        // exactly why these went unnoticed.
+        orphanedScans = recordings
+            .filter { it.documentLine !in lineNos }
+            .sortedWith(compareBy({ it.documentLine }, { it.recordingLineNo }))
+            .map { rec ->
+                OrphanedScan(
+                    barcodeNo = rec.barcodeNo,
+                    quantity = rec.quantity,
+                    unitOfMeasureCode = rec.unitOfMeasureCode,
+                    lineNo = rec.documentLine,
+                    at = runCatching { Instant.parse(rec.creationDateTime) }.getOrNull(),
+                    userId = rec.userId,
+                )
+            },
+    )
+}
 
 // ── Domain -> Entity ──────────────────────────────────────────────────────────
 

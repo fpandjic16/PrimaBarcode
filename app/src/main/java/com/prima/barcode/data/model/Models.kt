@@ -78,6 +78,24 @@ data class Line(
     val status: LineStatus get() = LineStatus.of(scanned, expected)
 }
 
+/**
+ * A recording left without a line, because NAV dropped that line from the document after the
+ * operator had already scanned it.
+ *
+ * There is no [Item] here on purpose: the line that carried the item number and description is
+ * gone, and the barcode is the only thing the scan itself recorded. Inventing a name would be
+ * guessing at what the operator scanned.
+ */
+data class OrphanedScan(
+    val barcodeNo: String,
+    val quantity: Double,
+    val unitOfMeasureCode: String,
+    val lineNo: Int,
+    /** Null if the stored timestamp can't be parsed — worth showing the scan anyway. */
+    val at: Instant?,
+    val userId: String,
+)
+
 data class Document(
     val documentNo: String,
     val type: DocumentType,
@@ -89,12 +107,15 @@ data class Document(
     val documentDate: Instant? = null,
     val lines: List<Line>,
     val state: DocState,
+    /** Scans whose line NAV removed. Blocks upload until the operator resolves them. */
+    val orphanedScans: List<OrphanedScan> = emptyList(),
 ) {
     val linesExact: Int get() = lines.count { it.status == LineStatus.EXACT }
     val linesTotal: Int get() = lines.size
     val scannedQty: Double get() = lines.sumOf { it.scanned }
     val expectedQty: Double get() = lines.sumOf { it.expected }
     val hasProgress: Boolean get() = lines.any { it.scanned > 0.0 }
+    val needsReview: Boolean get() = orphanedScans.isNotEmpty()
 }
 
 sealed interface DocState {

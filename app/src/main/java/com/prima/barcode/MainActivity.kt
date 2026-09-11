@@ -701,6 +701,11 @@ private fun PrimaBarcodeApp(
                 UploadErrorScreen(
                     document = currentDoc,
                     onBack = { nav.popBackStack() },
+                    onDiscardOrphans = {
+                        appVm.discardOrphanedScans(currentDoc.documentNo, currentDoc.type) {
+                            nav.popBackStack()
+                        }
+                    },
                     onRetryUpload = {
                         requireCredentials {
                             if (backgroundSync) {

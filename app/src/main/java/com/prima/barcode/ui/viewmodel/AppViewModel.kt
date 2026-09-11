@@ -408,6 +408,27 @@ class AppViewModel @Inject constructor(
         extSystemClient.configure(config, creds)
         var failures = 0
         for (doc in docs) {
+            // Checked before a single row goes out. A document holding scans whose line NAV has
+            // since removed would otherwise send a Document_Line_No that no longer exists there,
+            // and because the send loop breaks on the first failure, that one row would block
+            // every legitimate recording behind it on every retry.
+            //
+            // All-or-nothing per document, not "send the good rows and flag the rest": a
+            // partially posted document while the operator is still deciding about the remainder
+            // leaves nobody able to say afterwards what had already gone through.
+            val orphans = repository.getOrphanedRecordings(doc.documentNo, doc.type.key)
+            if (orphans.isNotEmpty()) {
+                repository.updateDocState(
+                    doc.documentNo,
+                    doc.type.key,
+                    DocState.UploadFailed(
+                        appContext.getString(R.string.upload_error_needs_review, orphans.size)
+                    ),
+                )
+                failures++
+                continue
+            }
+
             val docTypeCode = config.docTypeCodeFor(doc.type)
             // Retail and warehouse share a Document_Type code, so the recording has to carry the
             // same discriminator for NAV to attribute it. The value is the Retail_Location NAV
@@ -415,7 +436,9 @@ class AppViewModel @Inject constructor(
             // neither bucket (retailLocation == null) and keep sending no field at all rather
             // than a false that would claim they're warehouse documents.
             val retailLocation = if (doc.type.retailLocation != null) doc.isSourceRetail else null
-            val rows = repository.getRecordings(doc.documentNo, doc.type.key)
+            // Line-attached recordings only. The check above should have caught anything else,
+            // but this is the query that decides what actually leaves the device.
+            val rows = repository.getUploadableRecordings(doc.documentNo, doc.type.key)
 
             // A document with nothing recorded has nothing to send, and must never reach the
             // branch below: with no rows the send loop doesn't run, no failure is reported, and
@@ -469,7 +492,11 @@ class AppViewModel @Inject constructor(
             // Mark only what runUpload will actually attempt. It skips documents with no
             // recordings, so marking those PendingUpload first would strand them in a state no
             // screen renders and nothing resets.
-            val uploadable = docs.filter { doc -> doc.lines.any { it.scanned > 0.0 } }
+            //
+            // Documents needing review are deliberately included even though no line shows
+            // progress: runUpload is what raises their error, so filtering them out here would
+            // turn Retry into a no-op that closes the screen as if it had worked.
+            val uploadable = docs.filter { doc -> doc.lines.any { it.scanned > 0.0 } || doc.needsReview }
             uploadable.forEach { repository.updateDocState(it.documentNo, it.type.key, DocState.PendingUpload) }
             runUpload(uploadable)
         }
@@ -500,6 +527,14 @@ class AppViewModel @Inject constructor(
     fun clearDocumentRecordings(documentNo: String, type: DocumentType) {
         viewModelScope.launch {
             repository.deleteDocumentRecordings(documentNo, type.key)
+        }
+    }
+
+    /** Operator has reviewed the surplus scans and confirmed the goods are off the document. */
+    fun discardOrphanedScans(documentNo: String, type: DocumentType, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            repository.discardOrphanedScans(documentNo, type.key)
+            onDone()
         }
     }
 

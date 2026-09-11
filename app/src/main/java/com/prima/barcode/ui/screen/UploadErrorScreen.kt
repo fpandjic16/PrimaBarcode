@@ -9,12 +9,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.prima.barcode.data.model.DocState
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.DocumentType
+import com.prima.barcode.data.model.formatQty
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.theme.LocalTextSizeOffset
 import com.prima.barcode.ui.theme.PrimaPalette
@@ -53,9 +59,11 @@ fun UploadErrorScreen(
     document: Document,
     onBack: () -> Unit,
     onRetryUpload: () -> Unit,
+    onDiscardOrphans: () -> Unit = {},
 ) {
     val sizeOffset = LocalTextSizeOffset.current
     val errorReason = (document.state as? DocState.UploadFailed)?.reason ?: stringResource(R.string.upload_error_unknown)
+    var confirmDiscard by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
         PrimaTopBar(
@@ -160,6 +168,48 @@ fun UploadErrorScreen(
                     ),
                 )
             }
+
+            // The scans the operator has to decide about. Shown here rather than on a screen of
+            // its own because this is where the block is explained, and the two belong together.
+            if (document.orphanedScans.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color.White)
+                        .border(1.dp, Color(0x28C7943A), RoundedCornerShape(14.dp))
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.review_title),
+                        style = monoLabel.copy(
+                            color = Color(0xFFC7943A),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = (12 + sizeOffset).sp,
+                        ),
+                    )
+                    Text(
+                        stringResource(R.string.review_intro),
+                        style = monoLabel.copy(
+                            color = PrimaPalette.Ink3,
+                            fontSize = (11 + sizeOffset).sp,
+                            lineHeight = (17 + sizeOffset).sp,
+                        ),
+                    )
+                    HorizontalDivider(color = Color(0x0F000000), thickness = 1.dp)
+                    document.orphanedScans.forEach { scan ->
+                        ErrorInfoRow(
+                            label = scan.barcodeNo,
+                            // The item number and name lived on the line that is gone, so the
+                            // barcode and the quantity are all the scan itself can tell us.
+                            value = "${scan.quantity.formatQty()} ${scan.unitOfMeasureCode}".trim() +
+                                " · " + stringResource(R.string.review_row_line, scan.lineNo),
+                            sizeOffset = sizeOffset,
+                        )
+                    }
+                }
+            }
         }
 
         // Bottom action bar
@@ -169,16 +219,46 @@ fun UploadErrorScreen(
                 .background(Color.White)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
-            Button(
-                onClick = onRetryUpload,
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaPalette.Coral),
-            ) {
-                Icon(Icons.Outlined.CloudUpload, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(stringResource(R.string.btn_retry_upload), style = monoLabel.copy(color = Color.White, fontWeight = FontWeight.Medium))
+            // Retry cannot succeed while surplus scans remain — the upload check would raise the
+            // same error again — so the only action offered is the one that can actually move
+            // this forward. It returns on its own once the scans are resolved.
+            if (document.orphanedScans.isNotEmpty()) {
+                Button(
+                    onClick = { confirmDiscard = true },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC7943A)),
+                ) {
+                    Text(stringResource(R.string.review_discard), style = monoLabel.copy(color = Color.White, fontWeight = FontWeight.Medium))
+                }
+            } else {
+                Button(
+                    onClick = onRetryUpload,
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaPalette.Coral),
+                ) {
+                    Icon(Icons.Outlined.CloudUpload, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.btn_retry_upload), style = monoLabel.copy(color = Color.White, fontWeight = FontWeight.Medium))
+                }
             }
         }
+    }
+
+    if (confirmDiscard) {
+        AlertDialog(
+            onDismissRequest = { confirmDiscard = false },
+            title = { Text(stringResource(R.string.review_discard_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.review_discard_text, document.orphanedScans.size)) },
+            confirmButton = {
+                Button(
+                    onClick = { confirmDiscard = false; onDiscardOrphans() },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCE3A3A)),
+                ) { Text(stringResource(R.string.review_discard), fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                Button(onClick = { confirmDiscard = false }) { Text(stringResource(R.string.btn_cancel)) }
+            },
+        )
     }
 }
 

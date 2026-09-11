@@ -139,8 +139,11 @@ fun DocumentListScreen(
     // deleted from the device as if it had been uploaded. DocumentOverviewScreen has always
     // filtered this way; this screen did not, so UPLOAD here silently discarded freshly
     // downloaded work.
+    // A document needing review counts as uploadable so that pressing UPLOAD is what surfaces it:
+    // runUpload turns it into a visible error. Left out, a document whose scanned lines were all
+    // removed in the ERP would sit here looking ordinary with no way to reach the review at all.
     val uploadableDocs = remember(visibleDocs) {
-        visibleDocs.filter { doc -> doc.lines.any { it.scanned > 0.0 } }
+        visibleDocs.filter { doc -> doc.lines.any { it.scanned > 0.0 } || doc.needsReview }
     }
     // Nothing recorded means nothing to send. Showing the button live in that state invited the
     // tap that used to delete the documents, and still promises an action that would do nothing.

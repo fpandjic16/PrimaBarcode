@@ -61,14 +61,14 @@ data/
 ### Screens
 
 - **MainMenuScreen** — Document type list with counts/status bars; context strip for location/RC switching
-- **RecordingScreen** — Core scanning interface: per-line progress, docked ScanBar, hardware wedge + camera fallback, keypad entry, extra ("not on document") lines, over-scan/UoM-mismatch warnings
+- **RecordingScreen** — Core scanning interface: per-line progress, docked ScanBar, hardware wedge + camera fallback, keypad entry, over-scan/UoM-mismatch warnings
 - **DocumentListScreen** — Per-doc-type list with tabs, create/delete, filter, upload
 - **DocumentOverviewScreen** — Cross-type dashboard (errors/ready/partial/over tabs)
 - **DocumentFilterScreen** / **DownloadFilterScreen** — Filter builders for the list/overview and for NAV downloads
 - **LocationRcPickScreen** — Location/RC switcher with NAV refresh
 - **ExtSystemConfigScreen** — NAV endpoint URLs, doc type codes, credential TTL, JSON import/export of defaults
 - **SettingsScreen** — Text size, language, scan behavior toggles, cache/export/sign-out, embeds ext-system config
-- **LoginSheet** — Bottom-sheet NAV credential capture (summoned on Download/Upload, not app launch)
+- **LoginSheet** — Full-screen NAV credential capture (summoned on Download/Upload, not app launch); QR sign-in via hardware scanner or camera
 - **UploadErrorScreen** — Failure detail + retry for a single document
 
 ### Design System
@@ -92,17 +92,17 @@ data/
 
 Domain models live in `data/model/Models.kt`; Room entities in `data/db/Entities.kt`; `data/db/Mappers.kt` converts between them.
 
-- `Document` — documentNo, type, destination/source/RC codes, lines[], extraLines[] (not-on-document scans), `DocState`
+- `Document` — documentNo, type, destination/source/RC codes, lines[], `orphanedScans[]`, `DocState`
 - `DocState` — sealed interface: `Downloaded / InProgress / Completed / PendingUpload / UploadFailed(reason)`; transitions are computed from recordings by `DocumentRepository` (advance/regress helpers), not set directly by the UI
 - `Line` — documentNo, lineNo, item, barcodeNo, expected/scanned qty, UoM; `LineStatus` (`EMPTY/PARTIAL/EXACT/OVER`) is computed from expected vs. scanned
-- `ExtraLine` — a recorded scan whose barcode didn't match any document line (`documentLine == 0` in the `RecordingEntity` table)
+- `OrphanedScan` — a recording whose line NAV has since removed from the document. Surfaced on `Document.orphanedScans`, computed in `Mappers.toDomain` by diffing recordings against the line rows. Blocks upload (`runUpload` refuses the document and writes `UploadFailed`) until the operator discards them from `UploadErrorScreen`. There is no "scan an item not on the document" feature — that was removed in `247d903`; these arise only after the fact, from an ERP-side edit
 - `DocumentType` — enum: `WAREHOUSE_SHIPMENT`, `WAREHOUSE_RECEIPT`, `RETAIL_SHIPMENT`, `RETAIL_RECEIPT`, `TRANSPORT_SHEET`, `COMPLAINT`, `INVENTORY`. Each carries `retailLocation` (the download/upload discriminator, null for types with their own `Document_Type` code) and `defaultFilterMode` (the scope a type falls back to until the user picks one — `COMPLAINT` defaults to responsibility centre, everything else to location)
-- Local persistence is recording-first: every scan writes a `RecordingEntity` row; documents/lines are freely replaced on re-download, but recordings (real user progress) are never deleted by a sync — `DocumentRepository.mergeDocument` re-attributes them to freshly downloaded lines by barcode match.
+- Local persistence is recording-first: every scan writes a `RecordingEntity` row; documents/lines are freely replaced on re-download, but recordings (real user progress) are never deleted by a sync. `DocumentRepository.mergeDocument` re-attaches recordings by barcode when NAV renumbers a line; anything that still has no line becomes an `OrphanedScan`, and only an explicit operator action ever deletes it.
 
 ### NAV Integration
 
 - `ExtSystemODataClient` (Ktor over a preconfigured OkHttp client) talks to NAV's OData V4 endpoints for locations, document lines, and recording upload; auth is a hand-rolled NTLMv2 `okhttp3.Authenticator` (`NtlmAuthenticator`, includes an inline MD4 implementation — Android's `MessageDigest` has no MD4).
 - Login is username+password only; the domain travels inside the username as `user@domain` or `DOMAIN\user`, split by `ExtSystemODataClient.parseDomainUser`.
 - `network_security_config.xml` permits cleartext traffic globally — NAV is reached over the local LAN, not HTTPS.
-- Endpoint URLs, per-doc-type codes, and credential TTL are user-configurable (`ExtSystemConfigScreen`); `assets/ext_system_defaults.json` seeds sane defaults and can be re-imported from Settings.
+- Endpoint URLs, per-doc-type codes, and credential TTL are user-configurable (`ExtSystemConfigScreen`); `assets/ext_system_defaults_*.json` (one per company) seed sane defaults and can be re-imported from Settings.
 - Credentials are cached in `ExtSystemCredentialStore` (`EncryptedSharedPreferences`, AES-256-GCM) with a TTL; expired credentials are wiped on next read.
