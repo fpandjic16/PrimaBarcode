@@ -436,39 +436,66 @@ class AppViewModel @Inject constructor(
             // neither bucket (retailLocation == null) and keep sending no field at all rather
             // than a false that would claim they're warehouse documents.
             val retailLocation = if (doc.type.retailLocation != null) doc.isSourceRetail else null
-            // Line-attached recordings only. The check above should have caught anything else,
-            // but this is the query that decides what actually leaves the device.
-            val rows = repository.getUploadableRecordings(doc.documentNo, doc.type.key)
+            // Line-attached and not yet accepted. The check above should have caught anything
+            // else, but this is the query that decides what actually leaves the device.
+            val rows = repository.getQueuedRecordings(doc.documentNo, doc.type.key)
 
-            // A document with nothing recorded has nothing to send, and must never reach the
-            // branch below: with no rows the send loop doesn't run, no failure is reported, and
-            // the "succeeded" path deletes the document. That is how tapping UPLOAD on a list
-            // holding freshly downloaded documents silently discarded them. Callers filter these
-            // out; this is the backstop, because the failure is invisible when it happens.
-            if (rows.isEmpty()) continue
+            if (rows.isEmpty()) {
+                // Nothing queued means one of two very different things. A document that never
+                // held a recording is freshly downloaded and must be left alone — deleting those
+                // is the bug 220f284 fixed. One whose rows have all been accepted is finished,
+                // and this is where it is finally removed, taking its sent rows with it.
+                if (repository.hasAnyRecordings(doc.documentNo, doc.type.key)) {
+                    repository.deleteDocument(doc.documentNo, doc.type.key)
+                }
+                continue
+            }
 
-            var failureMessage: String? = null
+            var lastFailure: String? = null
+            var failedRows = 0
+            var connectionLost = false
+
             for (row in rows) {
                 val result = extSystemClient.uploadRecording(
                     url, row.toNavRecording(docTypeCode, retailLocation),
                 )
                 when (result) {
-                    // Delete each row as it's confirmed uploaded, so a retry after a
-                    // partial failure only resends what NAV hasn't received yet.
-                    is ExtSystemResult.Success -> repository.deleteRecording(
+                    // Marked, not deleted. The row stays until the whole document goes, so the
+                    // document keeps showing everything the operator scanned while it is only
+                    // partly sent.
+                    is ExtSystemResult.Success -> repository.markRecordingSent(
                         doc.documentNo, doc.type.key, row.documentLine, row.recordingLineNo,
                     )
                     is ExtSystemResult.Failure -> {
-                        failureMessage = result.message
-                        break
+                        repository.recordRecordingFailure(
+                            doc.documentNo, doc.type.key, row.documentLine, row.recordingLineNo,
+                            result.message,
+                        )
+                        lastFailure = result.message
+                        failedRows++
+                        // A real status code means the server answered and objected to this row,
+                        // so the rest are worth trying. `code` left at its -1 default means no
+                        // response came back at all — the server or the network is gone, and
+                        // continuing would spend a connect timeout per remaining row to learn
+                        // the same thing again.
+                        if (result.code <= 0) {
+                            connectionLost = true
+                            break
+                        }
                     }
                 }
             }
-            if (failureMessage != null) {
-                repository.updateDocState(doc.documentNo, doc.type.key, DocState.UploadFailed(failureMessage))
-                failures++
-            } else {
+
+            if (lastFailure == null) {
                 repository.deleteDocument(doc.documentNo, doc.type.key)
+            } else {
+                // A dropped connection is best described by the error itself; individually
+                // refused rows are better described by how many, with the detail per row on the
+                // error screen.
+                val reason = if (connectionLost) lastFailure
+                else appContext.getString(R.string.upload_error_rows_failed, failedRows, rows.size)
+                repository.updateDocState(doc.documentNo, doc.type.key, DocState.UploadFailed(reason))
+                failures++
             }
         }
         return failures
@@ -534,6 +561,14 @@ class AppViewModel @Inject constructor(
     fun discardOrphanedScans(documentNo: String, type: DocumentType, onDone: () -> Unit = {}) {
         viewModelScope.launch {
             repository.discardOrphanedScans(documentNo, type.key)
+            onDone()
+        }
+    }
+
+    /** Operator has given up on rows the ERP keeps refusing, so the document can be closed. */
+    fun discardFailedScans(documentNo: String, type: DocumentType, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            repository.discardFailedScans(documentNo, type.key)
             onDone()
         }
     }

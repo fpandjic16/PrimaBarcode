@@ -113,7 +113,7 @@ One flat OData row **per individual scanned recording** — not one row per docu
 | `Document_No` | Document number |
 | `Document_Line_No` | Which line this recording applies to |
 | `Recording_Line_No` | Sequence number within that line's recordings |
-| `Recording_Guid` | The recording's stable identity, generated once when the scan is stored and **the same on every upload attempt** (2026-09). This is what makes a retry safe: if NAV commits a row and the response is lost, the retry carries the identity NAV already holds and can be rejected as a duplicate. Until 2026-09 a fresh GUID was generated per attempt, which had the opposite effect — the retry looked like a new recording and the quantity was counted twice |
+| `Recording_Guid` | The recording's stable identity, generated once when the scan is stored and **the same on every upload attempt** (2026-09; a fresh GUID per attempt before that). **It does not make a retry safe.** The Barcode App Recordings table validates nothing and never refuses a row — a duplicate is recorded and appears as surplus — so a repeated GUID is merely *identifiable* after the fact, not rejected. It exists so that a NAV-side guard could be added cheaply, and so support can trace one scan. The window it cannot close: a row NAV commits whose response is lost is indistinguishable from a failure on the device, and will be sent again |
 | `Barcode` | The scanned barcode string |
 | `Scanned_Quantity` | Quantity for this recording |
 | `Unit_Of_Measure_Code` | UoM for this recording |
@@ -122,7 +122,14 @@ One flat OData row **per individual scanned recording** — not one row per docu
 | `Source_Code` | Source location code |
 | `Destination_Code` | Destination code |
 
-**Upload semantics to know for support**: rows are sent **sequentially, one POST per row**. Each row that succeeds is deleted from the device *immediately*, before the next row is sent. If a row fails, the loop stops for that document — rows already sent are already gone (success), remaining rows stay queued locally for the next retry. This means a "partial failure" is completely safe and expected: retrying only resends what genuinely didn't make it.
+**Upload semantics to know for support** (reworked 2026-09): rows are sent **sequentially, one POST per row**. A row the ERP accepts is **marked sent** (`recordings.sentAt`), not deleted — it stays on the device, still counting towards the document's scanned quantities, until the whole document is removed. A document is removed once nothing is left queued.
+
+A refused row is recorded with its reason (`recordings.lastError`) and **the send continues with the next row**. Only a failure with no HTTP response at all — `ExtSystemResult.Failure.code` left at its `-1` default, meaning the server or network is gone — aborts the rest of the document; continuing there would spend a connect timeout per remaining row to learn the same thing.
+
+Two consequences worth holding on to:
+
+- A partly-sent document shows **all** of its scanned quantities, not just the unsent remainder. Before this, quantities fell as the upload progressed and a partial failure looked like lost work — which invites re-scanning, and since the ERP refuses nothing, the re-scan is silently recorded as surplus.
+- A row refused for its own content (a field too long, a wrong type) fails identically on every retry. It no longer blocks the rows behind it, but it does keep the document open, so `UploadErrorScreen` lists refused rows with their reasons and offers an explicit discard.
 
 ## A.6 Business Settings Reference (functional)
 

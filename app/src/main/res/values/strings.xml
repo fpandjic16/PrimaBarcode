@@ -237,6 +237,13 @@
     <string name="upload_error_not_configured">External system not configured or not signed in</string>
     <string name="upload_error_sync_url_missing">Recording sync URL not configured</string>
     <string name="upload_error_needs_review">%d scanned items are no longer on this document. Review them before uploading.</string>
+    <string name="upload_error_rows_failed">%1$d of %2$d scans were refused. The rest were sent.</string>
+    <string name="upload_sent_progress">%1$d of %2$d scans sent</string>
+    <string name="failed_title">Refused scans</string>
+    <string name="failed_intro">The ERP would not accept these scans. Everything else on this document has been sent. They will be refused again on every retry, so discard them once they have been dealt with another way.</string>
+    <string name="failed_discard">Discard refused</string>
+    <string name="failed_discard_title">Discard refused scans?</string>
+    <string name="failed_discard_text">%d scans will be deleted from this device and never sent.</string>
     <string name="review_title">Items for review</string>
     <string name="review_intro">These items were scanned, but their line has since been removed from the document in the ERP. Nothing is sent until you deal with them.</string>
     <string name="review_row_line">Line %d</string>

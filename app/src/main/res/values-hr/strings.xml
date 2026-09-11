@@ -237,6 +237,13 @@
     <string name="upload_error_not_configured">Vanjski sustav nije konfiguriran ili niste prijavljeni</string>
     <string name="upload_error_sync_url_missing">URL za sinkronizaciju snimanja nije konfiguriran</string>
     <string name="upload_error_needs_review">%d skeniranih artikala više nije na ovom dokumentu. Pregledajte ih prije slanja.</string>
+    <string name="upload_error_rows_failed">%1$d od %2$d skeniranja odbijeno. Ostalo je poslano.</string>
+    <string name="upload_sent_progress">%1$d od %2$d skeniranja poslano</string>
+    <string name="failed_title">Odbijena skeniranja</string>
+    <string name="failed_intro">Vanjski sustav nije prihvatio ova skeniranja. Sve ostalo s ovog dokumenta je poslano. Bit će odbijena i pri svakom sljedećem pokušaju, pa ih odbacite kad se riješe na drugi način.</string>
+    <string name="failed_discard">Odbaci odbijena</string>
+    <string name="failed_discard_title">Odbaciti odbijena skeniranja?</string>
+    <string name="failed_discard_text">%d skeniranja bit će obrisana s uređaja i nikad poslana.</string>
     <string name="review_title">Artikli za pregled</string>
     <string name="review_intro">Ovi artikli su skenirani, ali je njihova linija u međuvremenu uklonjena s dokumenta u ERP-u. Dok ih ne riješite, ništa se ne šalje.</string>
     <string name="review_row_line">Linija %d</string>

@@ -58,6 +58,7 @@ abstract class DatabaseModule {
                 PrimaDatabase.MIGRATION_14_15,
                 PrimaDatabase.MIGRATION_15_16,
                 PrimaDatabase.MIGRATION_16_17,
+                PrimaDatabase.MIGRATION_17_18,
             ).build()
 
         @Provides

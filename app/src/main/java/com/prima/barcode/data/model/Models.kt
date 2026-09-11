@@ -96,6 +96,21 @@ data class OrphanedScan(
     val userId: String,
 )
 
+/**
+ * A queued recording the ERP refused, kept together with the reason.
+ *
+ * Unlike an [OrphanedScan] this still belongs to a real line — it is the row itself the ERP would
+ * not take, typically a field it considers too long or of the wrong type. Such a row fails again
+ * on every retry, so the operator needs to see it and decide.
+ */
+data class FailedScan(
+    val barcodeNo: String,
+    val quantity: Double,
+    val unitOfMeasureCode: String,
+    val lineNo: Int,
+    val error: String,
+)
+
 data class Document(
     val documentNo: String,
     val type: DocumentType,
@@ -109,13 +124,22 @@ data class Document(
     val state: DocState,
     /** Scans whose line NAV removed. Blocks upload until the operator resolves them. */
     val orphanedScans: List<OrphanedScan> = emptyList(),
+    /** Queued scans the ERP rejected; they will not go through on their own. */
+    val failedScans: List<FailedScan> = emptyList(),
+    /** Already accepted by the ERP, still held locally until the whole document is removed. */
+    val sentScans: Int = 0,
+    /** Still waiting to be sent — including [failedScans], which are queued but stuck. */
+    val pendingScans: Int = 0,
 ) {
     val linesExact: Int get() = lines.count { it.status == LineStatus.EXACT }
     val linesTotal: Int get() = lines.size
     val scannedQty: Double get() = lines.sumOf { it.scanned }
     val expectedQty: Double get() = lines.sumOf { it.expected }
     val hasProgress: Boolean get() = lines.any { it.scanned > 0.0 }
-    val needsReview: Boolean get() = orphanedScans.isNotEmpty()
+    val needsReview: Boolean get() = orphanedScans.isNotEmpty() || failedScans.isNotEmpty()
+    /** Everything recorded on this document, sent or not — what the operator actually scanned. */
+    val totalScans: Int get() = sentScans + pendingScans
+    val partlySent: Boolean get() = sentScans > 0 && pendingScans > 0
 }
 
 sealed interface DocState {

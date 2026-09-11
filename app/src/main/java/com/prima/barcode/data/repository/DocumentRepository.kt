@@ -28,10 +28,19 @@ interface DocumentRepository {
     suspend fun setLineScanned(documentNo: String, type: String, lineNo: Int, scanned: Double, userId: String)
     suspend fun updateDocState(documentNo: String, type: String, state: DocState)
     suspend fun deleteDocument(documentNo: String, type: String)
-    suspend fun getUploadableRecordings(documentNo: String, type: String): List<RecordingEntity>
+    suspend fun getQueuedRecordings(documentNo: String, type: String): List<RecordingEntity>
     suspend fun getOrphanedRecordings(documentNo: String, type: String): List<RecordingEntity>
+    suspend fun hasAnyRecordings(documentNo: String, type: String): Boolean
+    suspend fun markRecordingSent(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int)
+    suspend fun recordRecordingFailure(
+        documentNo: String,
+        type: String,
+        documentLine: Int,
+        recordingLineNo: Int,
+        error: String,
+    )
     suspend fun discardOrphanedScans(documentNo: String, type: String)
-    suspend fun deleteRecording(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int)
+    suspend fun discardFailedScans(documentNo: String, type: String)
     suspend fun clearAll()
     suspend fun deleteDocumentRecordings(documentNo: String, type: String)
     suspend fun recoverStalePendingUploads()
@@ -225,12 +234,44 @@ class DocumentRepositoryImpl @Inject constructor(
         db.documentHeaderDao().deleteByKey(documentNo, type)
     }
 
-    /** The only recordings that may be sent: everything still attached to a real line. */
-    override suspend fun getUploadableRecordings(documentNo: String, type: String): List<RecordingEntity> =
-        db.recordingDao().getLinkedByDoc(documentNo, type)
+    /** What still has to go: attached to a real line, and not yet accepted by the ERP. */
+    override suspend fun getQueuedRecordings(documentNo: String, type: String): List<RecordingEntity> =
+        db.recordingDao().getQueuedByDoc(documentNo, type)
 
     override suspend fun getOrphanedRecordings(documentNo: String, type: String): List<RecordingEntity> =
         db.recordingDao().getOrphansByDoc(documentNo, type)
+
+    /**
+     * Whether anything was ever recorded here, sent or not.
+     *
+     * Upload needs this to tell two states apart that both leave nothing queued: a freshly
+     * downloaded document, which must be left alone, and one whose rows have all been accepted,
+     * which should be removed. Getting that backwards is how downloaded documents were once
+     * deleted without being sent.
+     */
+    override suspend fun hasAnyRecordings(documentNo: String, type: String): Boolean =
+        db.recordingDao().getByDoc(documentNo, type).isNotEmpty()
+
+    override suspend fun markRecordingSent(
+        documentNo: String,
+        type: String,
+        documentLine: Int,
+        recordingLineNo: Int,
+    ) {
+        db.recordingDao().markSent(
+            documentNo, type, documentLine, recordingLineNo, Instant.now().toString(),
+        )
+    }
+
+    override suspend fun recordRecordingFailure(
+        documentNo: String,
+        type: String,
+        documentLine: Int,
+        recordingLineNo: Int,
+        error: String,
+    ) {
+        db.recordingDao().recordFailure(documentNo, type, documentLine, recordingLineNo, error)
+    }
 
     /**
      * Drops the scans the operator has reviewed and decided are surplus.
@@ -240,6 +281,24 @@ class DocumentRepositoryImpl @Inject constructor(
      * discarding it is the operator's call to make after taking them off the pallet, never the
      * app's to make quietly during a sync.
      */
+    /**
+     * Drops queued rows the ERP keeps refusing, once the operator has decided to give up on them.
+     *
+     * The alternative is a document that can never finish: a row rejected for its own content —
+     * a field too long, a wrong type — fails identically on every retry, and with the send no
+     * longer stopping at the first failure it is the only thing left holding the document open.
+     */
+    override suspend fun discardFailedScans(documentNo: String, type: String) {
+        db.withTransaction {
+            db.recordingDao().deleteFailedByDoc(documentNo, type)
+            val lines = db.documentLineDao().getByDoc(documentNo, type).map { it.toDomain(0.0) }
+            val recordings = db.recordingDao().getByDoc(documentNo, type)
+            db.documentHeaderDao().updateState(
+                documentNo, type, computeStateAfterMerge(lines, recordings).toDbString(),
+            )
+        }
+    }
+
     override suspend fun discardOrphanedScans(documentNo: String, type: String) {
         db.withTransaction {
             db.recordingDao().deleteOrphansByDoc(documentNo, type)
@@ -250,10 +309,6 @@ class DocumentRepositoryImpl @Inject constructor(
                 documentNo, type, computeStateAfterMerge(lines, recordings).toDbString(),
             )
         }
-    }
-
-    override suspend fun deleteRecording(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int) {
-        db.recordingDao().deleteByPk(documentNo, type, documentLine, recordingLineNo)
     }
 
     override suspend fun clearAll() {

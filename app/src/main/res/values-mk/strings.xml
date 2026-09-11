@@ -237,6 +237,13 @@
     <string name="upload_error_not_configured">Надворешниот систем не е конфигуриран или не сте најавени</string>
     <string name="upload_error_sync_url_missing">URL-то за синхронизација на снимања не е конфигурирано</string>
     <string name="upload_error_needs_review">%d скенирани артикли повеќе не се на овој документ. Прегледајте ги пред испраќање.</string>
+    <string name="upload_error_rows_failed">%1$d од %2$d скенирања одбиени. Остатокот е испратен.</string>
+    <string name="upload_sent_progress">%1$d од %2$d скенирања испратени</string>
+    <string name="failed_title">Одбиени скенирања</string>
+    <string name="failed_intro">Надворешниот систем не ги прифати овие скенирања. Сè друго од овој документ е испратено. Ќе бидат одбиени и при секој следен обид, па отфрлете ги кога ќе се решат на друг начин.</string>
+    <string name="failed_discard">Отфрли одбиени</string>
+    <string name="failed_discard_title">Да се отфрлат одбиените скенирања?</string>
+    <string name="failed_discard_text">%d скенирања ќе бидат избришани од уредот и никогаш испратени.</string>
     <string name="review_title">Артикли за преглед</string>
     <string name="review_intro">Овие артикли беа скенирани, но нивната ставка во меѓувреме е отстранета од документот во ERP. Додека не ги решите, ништо не се испраќа.</string>
     <string name="review_row_line">Ставка %d</string>

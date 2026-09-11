@@ -26,11 +26,17 @@ data class NavBarcodeAppRecording(
 )
 
 // ── Mapping ───────────────────────────────────────────────────────────────────
-// recordingGuid comes from the stored recording and is the same on every attempt. It used to be
-// generated per attempt, on the reasoning that a retry should not collide with the row NAV
-// already holds — but colliding is exactly what makes a retry safe. If NAV commits a row and the
-// response is lost, a fresh GUID makes the retry look like a new recording and the quantity is
-// counted twice; the same GUID lets NAV recognise it and reject the duplicate.
+// recordingGuid comes from the stored recording and is the same on every attempt, rather than
+// being generated per attempt as it once was.
+//
+// Be careful about what that does and does not buy. The Barcode App Recordings table performs no
+// validation and never refuses a row: a duplicate is simply recorded, and shows up as surplus.
+// So a stable GUID does not make a retry safe by itself — it only makes a duplicate *identifiable*
+// afterwards, and gives NAV something to check against if a guard is ever added there.
+//
+// The window it cannot close: if NAV commits a row and the response is lost, the device cannot
+// distinguish that from a failure and will send it again. Nothing on this side can tell those
+// apart; only a NAV-side check on this GUID could.
 
 fun RecordingEntity.toNavRecording(
     documentTypeCode: String,

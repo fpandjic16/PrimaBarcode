@@ -69,6 +69,25 @@ data class RecordingEntity(
      * appends, and the entity's field order has to match the table's column order.
      */
     val recordingGuid: String,
+    /**
+     * When the ERP accepted this row (ISO-8601), or null while it is still queued.
+     *
+     * Rows are marked rather than deleted on success, and the whole document is removed once
+     * nothing is left queued. Deleting them one by one made the document's quantities fall as the
+     * upload progressed, so a partly-sent document looked like it had lost work — and re-scanning
+     * to "finish" it posts duplicates, which this ERP records as surplus rather than rejecting.
+     *
+     * Carrying the timestamp rather than a bare flag costs nothing and answers "when did this
+     * leave the device", which is the question support actually asks.
+     */
+    val sentAt: String? = null,
+    /**
+     * Message from the last failed attempt; null if never attempted, or never failed.
+     *
+     * Distinguishes "still queued, untried" from "tried and rejected", which is what lets the
+     * operator be shown the rows that will never go through on their own.
+     */
+    val lastError: String? = null,
 )
 
 @Entity(tableName = "locations")

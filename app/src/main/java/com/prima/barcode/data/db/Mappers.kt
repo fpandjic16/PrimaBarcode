@@ -3,6 +3,7 @@ package com.prima.barcode.data.db
 import com.prima.barcode.data.model.DocState
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.DocumentType
+import com.prima.barcode.data.model.FailedScan
 import com.prima.barcode.data.model.Item
 import com.prima.barcode.data.model.Line
 import com.prima.barcode.data.model.Location
@@ -59,6 +60,10 @@ fun DocumentHeaderWithLines.toDomain(): Document {
         isSourceRetail = document.isSourceRetail,
         creationDateTime = Instant.ofEpochMilli(document.creationDateTime),
         documentDate = document.documentDate?.let { Instant.ofEpochMilli(it) },
+        // Sums sent and queued alike. A row already accepted by the ERP is still something the
+        // operator scanned, and dropping it from the total would make a partly-sent document look
+        // like it had lost work — which invites re-scanning, and this ERP records the duplicate as
+        // surplus rather than refusing it.
         lines = lines.sortedBy { it.lineNo }.map { lineEntity ->
             val scanned = recordings.filter { it.documentLine == lineEntity.lineNo }.sumOf { it.quantity }
             lineEntity.toDomain(scanned)
@@ -68,8 +73,11 @@ fun DocumentHeaderWithLines.toDomain(): Document {
         // than with another query is free: both lists are already in hand, and the line loop
         // above would otherwise be the only thing that ever looks at recordings — which is
         // exactly why these went unnoticed.
+        // Only queued ones are actionable. An orphan already accepted by the ERP is history: it
+        // will go when the document goes, and asking the operator to decide about it would be
+        // asking them to undo something that already happened.
         orphanedScans = recordings
-            .filter { it.documentLine !in lineNos }
+            .filter { it.sentAt == null && it.documentLine !in lineNos }
             .sortedWith(compareBy({ it.documentLine }, { it.recordingLineNo }))
             .map { rec ->
                 OrphanedScan(
@@ -81,6 +89,20 @@ fun DocumentHeaderWithLines.toDomain(): Document {
                     userId = rec.userId,
                 )
             },
+        failedScans = recordings
+            .filter { it.sentAt == null && it.lastError != null && it.documentLine in lineNos }
+            .sortedWith(compareBy({ it.documentLine }, { it.recordingLineNo }))
+            .map { rec ->
+                FailedScan(
+                    barcodeNo = rec.barcodeNo,
+                    quantity = rec.quantity,
+                    unitOfMeasureCode = rec.unitOfMeasureCode,
+                    lineNo = rec.documentLine,
+                    error = rec.lastError.orEmpty(),
+                )
+            },
+        sentScans = recordings.count { it.sentAt != null },
+        pendingScans = recordings.count { it.sentAt == null },
     )
 }
 

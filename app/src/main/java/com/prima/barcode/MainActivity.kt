@@ -706,6 +706,11 @@ private fun PrimaBarcodeApp(
                             nav.popBackStack()
                         }
                     },
+                    onDiscardFailed = {
+                        appVm.discardFailedScans(currentDoc.documentNo, currentDoc.type) {
+                            nav.popBackStack()
+                        }
+                    },
                     onRetryUpload = {
                         requireCredentials {
                             if (backgroundSync) {

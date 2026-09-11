@@ -33,6 +33,7 @@ interface RecordingDao {
         """
         SELECT * FROM recordings AS r
         WHERE r.documentNo = :documentNo AND r.type = :type
+          AND r.sentAt IS NULL
           AND NOT EXISTS (
             SELECT 1 FROM documentLine AS l
             WHERE l.documentNo = r.documentNo AND l.type = r.type AND l.lineNo = r.documentLine
@@ -43,15 +44,16 @@ interface RecordingDao {
     suspend fun getOrphansByDoc(documentNo: String, type: String): List<RecordingEntity>
 
     /**
-     * The complement of [getOrphansByDoc] — everything that still belongs to a real line, and
-     * therefore the only thing that may be uploaded. Ordered, unlike [getByDoc]: the upload loop
-     * stops at the first failure, so which rows survive a partial failure should not depend on
-     * whatever order SQLite happens to return.
+     * What the upload should send: still attached to a real line, and not yet accepted.
+     *
+     * Ordered deliberately. Rows are attempted in this order and the operator is shown progress
+     * against it, so it should not depend on whatever order SQLite happens to return.
      */
     @Query(
         """
         SELECT * FROM recordings AS r
         WHERE r.documentNo = :documentNo AND r.type = :type
+          AND r.sentAt IS NULL
           AND EXISTS (
             SELECT 1 FROM documentLine AS l
             WHERE l.documentNo = r.documentNo AND l.type = r.type AND l.lineNo = r.documentLine
@@ -59,12 +61,56 @@ interface RecordingDao {
         ORDER BY r.documentLine, r.recordingLineNo
         """
     )
-    suspend fun getLinkedByDoc(documentNo: String, type: String): List<RecordingEntity>
+    suspend fun getQueuedByDoc(documentNo: String, type: String): List<RecordingEntity>
+
+    @Query(
+        """
+        UPDATE recordings SET sentAt = :sentAt, lastError = NULL
+        WHERE documentNo = :documentNo AND type = :type
+          AND documentLine = :documentLine AND recordingLineNo = :recordingLineNo
+        """
+    )
+    suspend fun markSent(
+        documentNo: String,
+        type: String,
+        documentLine: Int,
+        recordingLineNo: Int,
+        sentAt: String,
+    )
+
+    @Query(
+        """
+        UPDATE recordings SET lastError = :error
+        WHERE documentNo = :documentNo AND type = :type
+          AND documentLine = :documentLine AND recordingLineNo = :recordingLineNo
+        """
+    )
+    suspend fun recordFailure(
+        documentNo: String,
+        type: String,
+        documentLine: Int,
+        recordingLineNo: Int,
+        error: String,
+    )
+
+    /**
+     * Rows the operator has reviewed and given up on — still queued, and carrying a reason they
+     * failed. Never touches anything already accepted.
+     */
+    @Query(
+        """
+        DELETE FROM recordings
+        WHERE documentNo = :documentNo AND type = :type
+          AND sentAt IS NULL AND lastError IS NOT NULL
+        """
+    )
+    suspend fun deleteFailedByDoc(documentNo: String, type: String)
 
     @Query(
         """
         DELETE FROM recordings
         WHERE documentNo = :documentNo AND type = :type
+          AND sentAt IS NULL
           AND NOT EXISTS (
             SELECT 1 FROM documentLine AS l
             WHERE l.documentNo = recordings.documentNo

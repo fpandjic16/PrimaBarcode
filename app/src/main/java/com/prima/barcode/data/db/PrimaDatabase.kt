@@ -13,7 +13,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         LocationEntity::class,
         ResponsibilityCenterEntity::class,
     ],
-    version = 17,
+    version = 18,
     exportSchema = true,
 )
 abstract class PrimaDatabase : RoomDatabase() {
@@ -268,6 +268,20 @@ abstract class PrimaDatabase : RoomDatabase() {
                         hex(randomblob(6))
                     )
                 """.trimIndent())
+            }
+        }
+
+        /**
+         * Lets a recording be marked as sent instead of deleted, and remember why it failed.
+         *
+         * Both columns are nullable with no backfill, and that is the correct starting state:
+         * anything already on a device is queued and has not been attempted, which is exactly
+         * what null means for each.
+         */
+        val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE recordings ADD COLUMN sentAt TEXT")
+                db.execSQL("ALTER TABLE recordings ADD COLUMN lastError TEXT")
             }
         }
     }
