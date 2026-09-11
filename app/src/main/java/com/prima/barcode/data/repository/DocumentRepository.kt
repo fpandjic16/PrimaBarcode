@@ -119,10 +119,11 @@ class DocumentRepositoryImpl @Inject constructor(
      * recording on a renumbered line would be treated as surplus at once. What genuinely has no
      * home stays orphaned and is surfaced for review instead.
      *
-     * `recordingGuid` is carried across untouched — it is the recording's identity for NAV and
-     * what makes a retry safe. Only its position within the document changes. The row has to be
-     * deleted and re-inserted rather than updated because `documentLine` is part of the primary
-     * key.
+     * `recordingGuid` is carried across untouched: re-attachment moves a recording's position
+     * within the document, it does not create a new one, and the GUID is how that same scan stays
+     * identifiable to the ERP afterwards. The row has to be deleted and re-inserted rather than
+     * updated because `documentLine` is part of the primary key — `sentAt` and `lastError` ride
+     * along with it, so a row already accepted stays accepted.
      *
      * Several lines sharing a barcode resolves to the lowest line number, matching what
      * `RecordingScreen.handleScan` already does when a scan could land on more than one line.
