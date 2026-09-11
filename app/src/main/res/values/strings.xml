@@ -239,6 +239,8 @@
     <string name="upload_error_needs_review">%d scanned items are no longer on this document. Review them before uploading.</string>
     <string name="upload_error_rows_failed">%1$d of %2$d scans were refused. The rest were sent.</string>
     <string name="upload_sent_progress">%1$d of %2$d scans sent</string>
+    <string name="sent_orphan_title">Sent, line since removed</string>
+    <string name="sent_orphan_intro">These scans reached the ERP while their line still existed, and the line has been removed there since. They are already recorded in the ERP, so nothing here can undo them — correct it in the ERP if it matters.</string>
     <string name="failed_title">Refused scans</string>
     <string name="failed_intro">The ERP would not accept these scans. Everything else on this document has been sent. They will be refused again on every retry, so discard them once they have been dealt with another way.</string>
     <string name="failed_discard">Discard refused</string>

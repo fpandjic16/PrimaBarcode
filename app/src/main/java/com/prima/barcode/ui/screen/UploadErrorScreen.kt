@@ -181,6 +181,48 @@ fun UploadErrorScreen(
                 )
             }
 
+            // Reported, not offered for action. These already reached the ERP, so there is no
+            // button: discarding them here would change nothing there, and offering one would
+            // suggest otherwise. Neutral styling on purpose — it is information, not a problem
+            // the operator is being asked to fix on this device.
+            if (document.sentOrphanedScans.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color.White)
+                        .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.sent_orphan_title),
+                        style = monoLabel.copy(
+                            color = PrimaPalette.Ink3,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = (12 + sizeOffset).sp,
+                        ),
+                    )
+                    Text(
+                        stringResource(R.string.sent_orphan_intro),
+                        style = monoLabel.copy(
+                            color = PrimaPalette.Ink3,
+                            fontSize = (11 + sizeOffset).sp,
+                            lineHeight = (17 + sizeOffset).sp,
+                        ),
+                    )
+                    HorizontalDivider(color = Color(0x0F000000), thickness = 1.dp)
+                    document.sentOrphanedScans.forEach { scan ->
+                        ErrorInfoRow(
+                            label = scan.barcodeNo,
+                            value = "${scan.quantity.formatQty()} ${scan.unitOfMeasureCode}".trim() +
+                                " · " + stringResource(R.string.review_row_line, scan.lineNo),
+                            sizeOffset = sizeOffset,
+                        )
+                    }
+                }
+            }
+
             // Rows the ERP refused. Separate from the orphans below: these still belong to a real
             // line, the ERP simply would not take them, and they fail the same way every retry.
             if (document.failedScans.isNotEmpty()) {

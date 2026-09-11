@@ -126,6 +126,16 @@ data class Document(
     val orphanedScans: List<OrphanedScan> = emptyList(),
     /** Queued scans the ERP rejected; they will not go through on their own. */
     val failedScans: List<FailedScan> = emptyList(),
+    /**
+     * Scans that reached the ERP while their line still existed, and whose line the ERP has
+     * since removed.
+     *
+     * Reportable, not actionable: the row is already recorded in the ERP, so discarding it here
+     * would change nothing there — only an ERP-side correction would. Deliberately kept out of
+     * [needsReview] so it neither blocks the upload nor asks the operator for a decision they
+     * cannot carry out from the device.
+     */
+    val sentOrphanedScans: List<OrphanedScan> = emptyList(),
     /** Already accepted by the ERP, still held locally until the whole document is removed. */
     val sentScans: Int = 0,
     /** Still waiting to be sent — including [failedScans], which are queued but stuck. */

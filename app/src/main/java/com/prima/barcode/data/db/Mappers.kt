@@ -101,6 +101,21 @@ fun DocumentHeaderWithLines.toDomain(): Document {
                     error = rec.lastError.orEmpty(),
                 )
             },
+        // Sent while their line still existed, orphaned by an ERP-side edit afterwards. Only
+        // reachable on a document left partly sent, since a fully sent one is removed outright.
+        sentOrphanedScans = recordings
+            .filter { it.sentAt != null && it.documentLine !in lineNos }
+            .sortedWith(compareBy({ it.documentLine }, { it.recordingLineNo }))
+            .map { rec ->
+                OrphanedScan(
+                    barcodeNo = rec.barcodeNo,
+                    quantity = rec.quantity,
+                    unitOfMeasureCode = rec.unitOfMeasureCode,
+                    lineNo = rec.documentLine,
+                    at = runCatching { Instant.parse(rec.creationDateTime) }.getOrNull(),
+                    userId = rec.userId,
+                )
+            },
         sentScans = recordings.count { it.sentAt != null },
         pendingScans = recordings.count { it.sentAt == null },
     )

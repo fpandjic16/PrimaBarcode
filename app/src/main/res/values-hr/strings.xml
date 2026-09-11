@@ -239,6 +239,8 @@
     <string name="upload_error_needs_review">%d skeniranih artikala više nije na ovom dokumentu. Pregledajte ih prije slanja.</string>
     <string name="upload_error_rows_failed">%1$d od %2$d skeniranja odbijeno. Ostalo je poslano.</string>
     <string name="upload_sent_progress">%1$d od %2$d skeniranja poslano</string>
+    <string name="sent_orphan_title">Poslano, linija poslije uklonjena</string>
+    <string name="sent_orphan_intro">Ova skeniranja su otišla u vanjski sustav dok je njihova linija još postojala, a linija je ondje u međuvremenu uklonjena. Zapis je već u vanjskom sustavu, pa se odavde ne može poništiti — ispravite u vanjskom sustavu ako je bitno.</string>
     <string name="failed_title">Odbijena skeniranja</string>
     <string name="failed_intro">Vanjski sustav nije prihvatio ova skeniranja. Sve ostalo s ovog dokumenta je poslano. Bit će odbijena i pri svakom sljedećem pokušaju, pa ih odbacite kad se riješe na drugi način.</string>
     <string name="failed_discard">Odbaci odbijena</string>

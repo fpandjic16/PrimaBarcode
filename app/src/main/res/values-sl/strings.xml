@@ -239,6 +239,8 @@
     <string name="upload_error_needs_review">%d skeniranih artiklov ni več na tem dokumentu. Preglejte jih pred pošiljanjem.</string>
     <string name="upload_error_rows_failed">%1$d od %2$d skeniranj zavrnjenih. Ostalo je bilo poslano.</string>
     <string name="upload_sent_progress">%1$d od %2$d skeniranj poslanih</string>
+    <string name="sent_orphan_title">Poslano, vrstica pozneje odstranjena</string>
+    <string name="sent_orphan_intro">Ta skeniranja so bila poslana v zunanji sistem, ko je njihova vrstica še obstajala, vrstica pa je bila tam medtem odstranjena. Zapis je že v zunanjem sistemu, zato ga od tu ni mogoče razveljaviti — popravite v zunanjem sistemu, če je pomembno.</string>
     <string name="failed_title">Zavrnjena skeniranja</string>
     <string name="failed_intro">Zunanji sistem teh skeniranj ni sprejel. Vse ostalo s tega dokumenta je bilo poslano. Zavrnjena bodo tudi ob vsakem naslednjem poskusu, zato jih zavrzite, ko se rešijo drugače.</string>
     <string name="failed_discard">Zavrzi zavrnjena</string>
