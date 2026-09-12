@@ -148,8 +148,22 @@ interface RecordingDao {
     @Query("DELETE FROM recordings WHERE documentNo = :documentNo AND type = :type AND sentAt IS NULL")
     suspend fun deleteQueuedForDoc(documentNo: String, type: String)
 
-    @Query("DELETE FROM recordings WHERE documentNo = :documentNo AND type = :type AND documentLine = :lineNo")
-    suspend fun deleteAllForLine(documentNo: String, type: String, lineNo: Int)
+    /**
+     * Clears one line's queued scans, leaving anything the ERP has already accepted in place.
+     *
+     * Replaced a delete that took the sent rows too. It backed a manual quantity edit, so an edit
+     * on a partly-sent line wiped the device's record of what the ERP held and re-queued the whole
+     * new total — which the ERP then recorded a second time, as surplus, since it refuses nothing.
+     */
+    @Query("""
+        DELETE FROM recordings
+        WHERE documentNo = :documentNo AND type = :type AND documentLine = :lineNo
+          AND sentAt IS NULL
+        """)
+    suspend fun deleteQueuedForLine(documentNo: String, type: String, lineNo: Int)
+
+    @Query("SELECT COALESCE(SUM(quantity), 0) FROM recordings WHERE documentNo = :documentNo AND type = :type AND documentLine = :lineNo AND sentAt IS NOT NULL")
+    suspend fun getSentQuantityForLine(documentNo: String, type: String, lineNo: Int): Double
 
     @Query("DELETE FROM recordings WHERE documentNo = :documentNo AND type = :type")
     suspend fun deleteAllForDoc(documentNo: String, type: String)

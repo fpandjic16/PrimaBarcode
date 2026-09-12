@@ -36,7 +36,7 @@ fun String.toDocumentType(): DocumentType =
 
 // ── Entity -> Domain ──────────────────────────────────────────────────────────
 
-fun DocumentLineEntity.toDomain(scanned: Double): Line = Line(
+fun DocumentLineEntity.toDomain(scanned: Double, sent: Double = 0.0): Line = Line(
     documentNo = documentNo,
     lineNo = lineNo,
     item = Item(itemNo, itemName),
@@ -47,6 +47,7 @@ fun DocumentLineEntity.toDomain(scanned: Double): Line = Line(
     sourceCode = sourceCode,
     unitOfMeasureCode = unitOfMeasureCode,
     scanningQty = scanningQty,
+    sentQuantity = sent,
 )
 
 fun DocumentHeaderWithLines.toDomain(): Document {
@@ -65,8 +66,13 @@ fun DocumentHeaderWithLines.toDomain(): Document {
         // like it had lost work — which invites re-scanning, and this ERP records the duplicate as
         // surplus rather than refusing it.
         lines = lines.sortedBy { it.lineNo }.map { lineEntity ->
-            val scanned = recordings.filter { it.documentLine == lineEntity.lineNo }.sumOf { it.quantity }
-            lineEntity.toDomain(scanned)
+            val onLine = recordings.filter { it.documentLine == lineEntity.lineNo }
+            // Split out here, from a list already in hand, because the ERP-accepted part is the
+            // floor a manual quantity edit may not go below — see Line.sentQuantity.
+            lineEntity.toDomain(
+                scanned = onLine.sumOf { it.quantity },
+                sent = onLine.filter { it.sentAt != null }.sumOf { it.quantity },
+            )
         },
         state = document.docState.toDocState(),
         // Recordings pointing at a line this document no longer has. Building them here rather

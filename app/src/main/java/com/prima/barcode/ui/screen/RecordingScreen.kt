@@ -43,6 +43,7 @@ import com.prima.barcode.ui.component.ScanBar
 import com.prima.barcode.ui.component.StatusProgressBar
 import com.prima.barcode.ui.theme.LocalTextSizeOffset
 import com.prima.barcode.ui.theme.PrimaPalette
+import com.prima.barcode.ui.theme.PrimaStatus
 import com.prima.barcode.ui.theme.monoCounter
 import com.prima.barcode.ui.theme.monoLabel
 import kotlinx.coroutines.delay
@@ -68,7 +69,13 @@ fun RecordingScreen(
     docTypeCode: String = "",
     onBack: () -> Unit,
     onScan: (barcode: String, multiplier: Double) -> Unit,
-    onLineUpdate: (lineNo: Int, newScanned: Double) -> Unit,
+    /**
+     * [onRefused] fires when the edit asked to go below what the ERP already holds for the line,
+     * and is handed that quantity. The screen blocks most of those itself — the steppers stop at
+     * the floor — but the keypad can type any number, and a background upload can raise the floor
+     * while this screen is open, so the authoritative refusal still has to come back from below.
+     */
+    onLineUpdate: (lineNo: Int, newScanned: Double, onRefused: (Double) -> Unit) -> Unit,
     onUpload: () -> Unit = {},
     hapticEnabled: Boolean = true,
     soundEnabled: Boolean = true,
@@ -82,6 +89,7 @@ fun RecordingScreen(
     var scanErrorFlash by remember { mutableStateOf(false) }
     var localScanned by remember(activeLineNo) { mutableStateOf<Double?>(null) }
     var overScanWarning by remember { mutableStateOf<OverScanInfo?>(null) }
+    var sentFloorWarning by remember { mutableStateOf<SentFloorInfo?>(null) }
     var barcodeNotFoundError by remember { mutableStateOf<String?>(null) }
     var uomMismatchWarning by remember { mutableStateOf<UomMismatchInfo?>(null) }
     // The hardware trigger (DataWedge) and the camera can both be "live" at the same time —
@@ -303,12 +311,31 @@ fun RecordingScreen(
                     val displayLine = localScanned?.let { line.copy(scanned = it) } ?: line
                     ItemQtyDetails(
                         line = displayLine,
-                        onIncrement = { if (hapticEnabled) hapticEngine.bump(); localScanned = ((localScanned ?: line.scanned) + 1.0).coerceAtLeast(0.0) },
-                        onDecrement = { if (hapticEnabled) hapticEngine.bump(); localScanned = ((localScanned ?: line.scanned) - 1.0).coerceAtLeast(0.0) },
+                        onIncrement = { if (hapticEnabled) hapticEngine.bump(); localScanned = ((localScanned ?: line.scanned) + 1.0).coerceAtLeast(line.sentQuantity) },
+                        // Stops at the ERP-accepted quantity, not at zero. Below that there is
+                        // nothing the device can give back, so the stepper simply doesn't go
+                        // there — the operator finds the floor by feel instead of by rejection.
+                        onDecrement = {
+                            val next = (localScanned ?: line.scanned) - 1.0
+                            if (next < line.sentQuantity && line.hasSentQuantity) {
+                                sentFloorWarning = SentFloorInfo(line.item.no, line.sentQuantity, line.unitOfMeasureCode)
+                            } else {
+                                if (hapticEnabled) hapticEngine.bump()
+                                localScanned = next.coerceAtLeast(line.sentQuantity)
+                            }
+                        },
                         onTypeQuantity = { typedQty = ""; view = RecordingView.KEYPAD },
-                        // A manual edit replaces the line's total outright and can move it down,
-                        // so the running base has to go with it.
-                        onApply = { if (hapticEnabled) hapticEngine.confirm(); scannedRunningTotal.remove(line.lineNo); onLineUpdate(line.lineNo, localScanned ?: line.scanned); view = RecordingView.OVERVIEW; activeLineNo = null },
+                        // A manual edit replaces the line's queued total outright and can move it
+                        // down, so the running base has to go with it.
+                        onApply = {
+                            if (hapticEnabled) hapticEngine.confirm()
+                            scannedRunningTotal.remove(line.lineNo)
+                            onLineUpdate(line.lineNo, localScanned ?: line.scanned) { sent ->
+                                sentFloorWarning = SentFloorInfo(line.item.no, sent, line.unitOfMeasureCode)
+                            }
+                            view = RecordingView.OVERVIEW
+                            activeLineNo = null
+                        },
                     )
                 }
                 RecordingView.KEYPAD -> activeLine?.let { line ->
@@ -330,24 +357,39 @@ fun RecordingScreen(
                             }
                         },
                         onConfirm = {
-                            if (hapticEnabled) hapticEngine.confirm()
                             val qty = typedQty.toDoubleOrNull()?.coerceAtLeast(0.0) ?: line.scanned
-                            scannedRunningTotal.remove(line.lineNo)
-                            onLineUpdate(line.lineNo, qty)
-                            if (warnOnOver && qty > line.expected) {
-                                overScanWarning = OverScanInfo(line.item.no, line.item.name, line.barcodeNo, line.expected, qty)
+                            // The keypad can type any number, so this is where a below-floor edit
+                            // is actually caught. Refused, not clamped: quietly writing a number
+                            // the operator didn't type would read as the app agreeing with them.
+                            if (qty < line.sentQuantity) {
+                                sentFloorWarning = SentFloorInfo(line.item.no, line.sentQuantity, line.unitOfMeasureCode)
+                            } else {
+                                if (hapticEnabled) hapticEngine.confirm()
+                                scannedRunningTotal.remove(line.lineNo)
+                                onLineUpdate(line.lineNo, qty) { sent ->
+                                    sentFloorWarning = SentFloorInfo(line.item.no, sent, line.unitOfMeasureCode)
+                                }
+                                if (warnOnOver && qty > line.expected) {
+                                    overScanWarning = OverScanInfo(line.item.no, line.item.name, line.barcodeNo, line.expected, qty)
+                                }
+                                localScanned = null
+                                activeLineNo = null
+                                view = RecordingView.OVERVIEW
                             }
-                            localScanned = null
-                            activeLineNo = null
-                            view = RecordingView.OVERVIEW
                         },
                         onConfirmRequired = {
-                            if (hapticEnabled) hapticEngine.confirm()
-                            scannedRunningTotal.remove(line.lineNo)
-                            onLineUpdate(line.lineNo, line.expected)
-                            localScanned = null
-                            activeLineNo = null
-                            view = RecordingView.OVERVIEW
+                            if (line.expected < line.sentQuantity) {
+                                sentFloorWarning = SentFloorInfo(line.item.no, line.sentQuantity, line.unitOfMeasureCode)
+                            } else {
+                                if (hapticEnabled) hapticEngine.confirm()
+                                scannedRunningTotal.remove(line.lineNo)
+                                onLineUpdate(line.lineNo, line.expected) { sent ->
+                                    sentFloorWarning = SentFloorInfo(line.item.no, sent, line.unitOfMeasureCode)
+                                }
+                                localScanned = null
+                                activeLineNo = null
+                                view = RecordingView.OVERVIEW
+                            }
                         },
                     )
                 }
@@ -428,7 +470,34 @@ fun RecordingScreen(
         )
     }
 
+    // Composed after the over-scan dialog: a single edit cannot raise both, so nothing is being
+    // ranked here — it just has to sit above the keypad it was raised from.
+    sentFloorWarning?.let { info ->
+        AlertDialog(
+            onDismissRequest = { sentFloorWarning = null },
+            title = { Text(stringResource(R.string.recording_sent_floor_title), fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.recording_sent_floor_body,
+                        info.itemNo,
+                        "${info.sent.formatQty()} ${info.uom}".trim(),
+                    )
+                )
+            },
+            confirmButton = {
+                Button(onClick = { sentFloorWarning = null }) { Text(stringResource(R.string.btn_ok), fontWeight = FontWeight.SemiBold) }
+            },
+        )
+    }
+
 }
+
+private data class SentFloorInfo(
+    val itemNo: String,
+    val sent: Double,
+    val uom: String,
+)
 
 private data class OverScanInfo(
     val itemNo: String,
@@ -573,6 +642,14 @@ private fun ItemQtyDetails(
         ) {
             val metaStyle = monoLabel.copy(color = PrimaPalette.Ink3, fontSize = (13 + sizeOffset).sp)
             Text(stringResource(R.string.recording_barcode_prefix) + line.barcodeNo, style = metaStyle)
+            // Says the floor out loud, so the stepper refusing to go lower isn't a mystery.
+            if (line.hasSentQuantity) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    stringResource(R.string.recording_sent_floor_hint, line.sentQuantity.formatQty()),
+                    style = metaStyle.copy(color = PrimaStatus.Exact),
+                )
+            }
             Spacer(Modifier.height(4.dp))
 
             Text(

@@ -13,6 +13,18 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Outcome of a manual quantity edit.
+ *
+ * [BelowSent] exists so the refusal can be explained rather than swallowed: the operator asked
+ * for a number the device cannot deliver, and needs to know the floor and why it is there.
+ */
+sealed interface SetQuantityResult {
+    data object Applied : SetQuantityResult
+    /** Refused — [sent] of this line is already in the ERP and cannot be taken back from here. */
+    data class BelowSent(val sent: Double) : SetQuantityResult
+}
+
 interface DocumentRepository {
     fun observeAll(): Flow<List<Document>>
     fun observeDocument(documentNo: String, type: String): Flow<Document?>
@@ -27,7 +39,13 @@ interface DocumentRepository {
         userId: String,
         quantity: Double,
     )
-    suspend fun setLineScanned(documentNo: String, type: String, lineNo: Int, scanned: Double, userId: String)
+    suspend fun setLineScanned(
+        documentNo: String,
+        type: String,
+        lineNo: Int,
+        scanned: Double,
+        userId: String,
+    ): SetQuantityResult
     suspend fun updateDocState(documentNo: String, type: String, state: DocState)
     suspend fun deleteDocument(documentNo: String, type: String)
     suspend fun getQueuedRecordings(documentNo: String, type: String): List<RecordingEntity>
@@ -199,38 +217,70 @@ class DocumentRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun setLineScanned(documentNo: String, type: String, lineNo: Int, scanned: Double, userId: String) {
-        db.withTransaction {
-            db.recordingDao().deleteAllForLine(documentNo, type, lineNo)
-            if (scanned > 0.0) {
-                val line = db.documentLineDao().getByKey(documentNo, type, lineNo) ?: return@withTransaction
-                val header = db.documentHeaderDao().getByKey(documentNo, type) ?: return@withTransaction
-                val nextNo = db.recordingDao().getNextRecordingLineNo(documentNo, type, lineNo)
-                db.recordingDao().insert(
-                    RecordingEntity(
-                        documentNo = documentNo,
-                        type = type,
-                        documentLine = lineNo,
-                        recordingLineNo = nextNo,
-                        barcodeNo = line.barcodeNo,
-                        quantity = scanned,
-                        creationDateTime = Instant.now().toString(),
-                        userId = userId,
-                        destinationCode = line.destinationCode,
-                        sourceCode = line.sourceCode,
-                        unitOfMeasureCode = line.unitOfMeasureCode,
-                        rcCode = header.rcCode,
-                        // This replaces the line's recordings with a single aggregate row, so it
-                        // is a genuinely new recording and gets its own identity. Reusing one of
-                        // the GUIDs just deleted would tell NAV this is a row it already has.
-                        recordingGuid = UUID.randomUUID().toString(),
-                    )
+    /**
+     * Sets a line's total by hand — the +/- steppers and the keypad.
+     *
+     * Only the *queued* part of the line moves. A scan the ERP has accepted is immutable here:
+     * this ERP's recordings table validates nothing and never refuses a row, so there is no
+     * delete, no correction, and no way to unsend a quantity from the device. Editing one would
+     * mean the device forgetting what the ERP still holds.
+     *
+     * So an edit below the sent quantity is **refused**, not clamped — a silent clamp would show
+     * the operator a number they didn't ask for and leave them thinking the correction went
+     * through. It returns [SetQuantityResult.BelowSent] with the floor, and the caller explains it.
+     *
+     * This used to delete every recording on the line, sent ones included, and re-queue the whole
+     * new total. On a partly-sent line that sent the accepted quantity a second time, which the
+     * ERP recorded as surplus, and rewrote the scans' attribution and timestamps to the operator
+     * doing the editing.
+     */
+    override suspend fun setLineScanned(
+        documentNo: String,
+        type: String,
+        lineNo: Int,
+        scanned: Double,
+        userId: String,
+    ): SetQuantityResult = db.withTransaction {
+        val sent = db.recordingDao().getSentQuantityForLine(documentNo, type, lineNo)
+        if (scanned < sent) return@withTransaction SetQuantityResult.BelowSent(sent)
+
+        db.recordingDao().deleteQueuedForLine(documentNo, type, lineNo)
+        // What the edit actually changes: the difference between the requested total and what is
+        // already beyond recall. Zero means the operator asked for exactly the sent quantity, and
+        // the line is then made up entirely of ERP-accepted rows.
+        val queued = scanned - sent
+        val line = db.documentLineDao().getByKey(documentNo, type, lineNo)
+        val header = db.documentHeaderDao().getByKey(documentNo, type)
+        // A missing line or header skips the insert but never the state refresh below — the queued
+        // rows are already gone by this point, and leaving the document's state describing them
+        // would strand it in a state nothing on the device can still justify.
+        if (queued > 0.0 && line != null && header != null) {
+            val nextNo = db.recordingDao().getNextRecordingLineNo(documentNo, type, lineNo)
+            db.recordingDao().insert(
+                RecordingEntity(
+                    documentNo = documentNo,
+                    type = type,
+                    documentLine = lineNo,
+                    recordingLineNo = nextNo,
+                    barcodeNo = line.barcodeNo,
+                    quantity = queued,
+                    creationDateTime = Instant.now().toString(),
+                    userId = userId,
+                    destinationCode = line.destinationCode,
+                    sourceCode = line.sourceCode,
+                    unitOfMeasureCode = line.unitOfMeasureCode,
+                    rcCode = header.rcCode,
+                    // This replaces the line's queued recordings with a single aggregate row, so
+                    // it is a genuinely new recording and gets its own identity. Reusing one of
+                    // the GUIDs just deleted would tell NAV this is a row it already has.
+                    recordingGuid = UUID.randomUUID().toString(),
                 )
-            }
-            advanceToInProgressIfNeeded(documentNo, type)
-            regressFromCompletedIfNeeded(documentNo, type)
-            regressToDownloadedIfNeeded(documentNo, type)
+            )
         }
+        advanceToInProgressIfNeeded(documentNo, type)
+        regressFromCompletedIfNeeded(documentNo, type)
+        regressToDownloadedIfNeeded(documentNo, type)
+        SetQuantityResult.Applied
     }
 
     override suspend fun updateDocState(documentNo: String, type: String, state: DocState) {

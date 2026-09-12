@@ -283,4 +283,8 @@
     <string name="recordings_tree_hold_hint">Hold this row for 5 s to delete all unsent recordings.</string>
     <string name="recordings_tree_orphans">Recordings without a line</string>
     <string name="recordings_tree_orphans_desc">Their line was removed in the external system. Upload the document to review them.</string>
+    <!-- Sent-quantity floor on a manual edit -->
+    <string name="recording_sent_floor_hint">%s already sent</string>
+    <string name="recording_sent_floor_title">Quantity cannot go lower</string>
+    <string name="recording_sent_floor_body">%1$s: %2$s has already been sent to the external system and cannot be taken back from here. You can raise the quantity, but not go below that. To correct what was sent, fix it in the external system.</string>
 </resources>

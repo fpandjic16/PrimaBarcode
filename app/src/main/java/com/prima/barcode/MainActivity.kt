@@ -675,7 +675,9 @@ private fun PrimaBarcodeApp(
                             vm.recordScan(line.lineNo, barcode, user?.id.orEmpty(), multiplier)
                         }
                     },
-                    onLineUpdate = { lineNo, newScanned -> vm.setLineScanned(lineNo, newScanned, user?.id.orEmpty()) },
+                    onLineUpdate = { lineNo, newScanned, onRefused ->
+                        vm.setLineScanned(lineNo, newScanned, user?.id.orEmpty(), onRefused)
+                    },
                     onUpload = {
                         requireCredentials {
                             if (backgroundSync) {

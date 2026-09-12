@@ -283,4 +283,8 @@
     <string name="recordings_tree_hold_hint">Držite to vrstico 5 s za izbris vseh neposlanih zapisov.</string>
     <string name="recordings_tree_orphans">Zapisi brez vrstice</string>
     <string name="recordings_tree_orphans_desc">Njihova vrstica je bila odstranjena v zunanjem sistemu. Pošljite dokument, da jih pregledate.</string>
+    <!-- Sent-quantity floor on a manual edit -->
+    <string name="recording_sent_floor_hint">%s že poslano</string>
+    <string name="recording_sent_floor_title">Količina ne more nižje</string>
+    <string name="recording_sent_floor_body">%1$s: %2$s je že poslano v zunanji sistem in od tu ni mogoče preklicati. Količino lahko povečate, ne morete pa je spustiti pod to vrednost. Popravek poslanega naredite v zunanjem sistemu.</string>
 </resources>

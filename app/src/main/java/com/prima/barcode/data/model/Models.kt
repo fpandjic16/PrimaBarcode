@@ -74,8 +74,21 @@ data class Line(
     val sourceCode: String,
     val unitOfMeasureCode: String,
     val scanningQty: Double = 1.0,
+    /**
+     * How much of [scanned] the ERP has already accepted — the floor a manual edit cannot go
+     * below.
+     *
+     * The device cannot take back what the ERP holds: this ERP's recordings table validates
+     * nothing and never refuses a row, so there is no delete, no correction, and no way to undo
+     * a posted quantity from here. A manual edit therefore only ever moves the *queued* part of
+     * the line, and an edit that would require unsending something is refused outright rather
+     * than quietly clamped.
+     */
+    val sentQuantity: Double = 0.0,
 ) {
     val status: LineStatus get() = LineStatus.of(scanned, expected)
+    /** True once part of this line is in the ERP, which makes [sentQuantity] a hard lower bound. */
+    val hasSentQuantity: Boolean get() = sentQuantity > 0.0
 }
 
 /**

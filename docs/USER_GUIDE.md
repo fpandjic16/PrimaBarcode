@@ -238,6 +238,12 @@ Tap any line to open its detail view, where you can:
 - Tap the big number to open a **numeric keypad** and type an exact quantity, then confirm.
 - Tap **Apply** to save your change and return to the overview.
 
+Typing a total **replaces** the line's quantity, it doesn't add to it.
+
+**What you cannot lower.** If part of this line has already been sent to the central system — which happens when an upload was interrupted partway through — the detail view says so (*"3 already sent"*) and the quantity will not go below that number. The −1 button stops there, and typing something lower is refused with an explanation.
+
+The reason is that the central system's recording table accepts everything and refuses nothing: there is no way to delete or correct a quantity from the device once it has gone. The app therefore never pretends to take it back. You can always go **up**, and to correct what was already sent, it has to be fixed in the central system.
+
 ### 9.4 Uploading from here
 
 If there's any scanning activity on the document, a small **Upload** button appears in the top bar, letting you upload without going back to the list.
@@ -385,7 +391,12 @@ Shows who's currently signed in, and a **Sign out** option (immediate, no confir
 You likely don't have a location selected, or your company hasn't configured that document type yet. Pick a location ([§5](#5-choosing-your-location--responsibility-center)) and try again; if it's still locked, contact your administrator.
 
 ### 18.2 "I scanned the wrong quantity"
-Tap into the line and either use −1/+1, or tap the number to type the correct total directly — this replaces the line's recorded quantity, it doesn't add to it.
+Tap into the line and either use −1/+1, or tap the number to type the correct total directly — this replaces the line's recorded quantity, it doesn't add to it. You cannot go below whatever has already been sent to the central system; see [§9.3](#93-editing-a-line-manually).
+
+### 18.2a "The previous shift left their work on the device"
+That is normal — documents and scans stay on the device, they are not tied to whoever is signed in. You will see their documents, and the **RECORDINGS** section on the Main Menu shows exactly what was scanned, when, and by whom.
+
+Pressing **UPLOAD** sends **everything** waiting on that document, including their scans. That is usually what you want — the work would otherwise sit there until they came back — and the central system still records each scan under the person who actually made it, not under you. If you would rather not send someone else's work, check the RECORDINGS tree first and talk to them.
 
 ### 18.3 "I keep getting 'Barcode not found' for an item that's clearly on the document"
 Nothing is ever recorded for a rejected scan, so there's nothing to undo — just figure out the mismatch and rescan. Most common causes: you're on the wrong document (double-check the document number in the top bar), the label's barcode doesn't byte-for-byte match what's on the document (a re-print, a different symbology, or stray characters), or — if it's a special `Barcode|UoM|Qty` label — see [§18.7](#187-the-barcode-scanned-as-garbagewrong-characters). If you're confident the item genuinely belongs on the document and it's still not matching, flag it to the office — the document's data may need correcting on the central-system side.

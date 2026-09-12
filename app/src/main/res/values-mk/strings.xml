@@ -283,4 +283,8 @@
     <string name="recordings_tree_hold_hint">Држете го овој ред 5 с за бришење на сите неиспратени записи.</string>
     <string name="recordings_tree_orphans">Записи без ставка</string>
     <string name="recordings_tree_orphans_desc">Нивната ставка е отстранета во надворешниот систем. Испратете го документот за да ги прегледате.</string>
+    <!-- Sent-quantity floor on a manual edit -->
+    <string name="recording_sent_floor_hint">%s веќе испратено</string>
+    <string name="recording_sent_floor_title">Количината не може пониско</string>
+    <string name="recording_sent_floor_body">%1$s: %2$s е веќе испратено во надворешниот систем и оттука не може да се повлече. Количината можете да ја зголемите, но не и да ја спуштите под таа вредност. Исправката на испратеното се прави во надворешниот систем.</string>
 </resources>

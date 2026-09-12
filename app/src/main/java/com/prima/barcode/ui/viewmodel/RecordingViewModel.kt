@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.repository.DocumentRepository
+import com.prima.barcode.data.repository.SetQuantityResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,9 +31,15 @@ class RecordingViewModel @Inject constructor(
         }
     }
 
-    fun setLineScanned(lineNo: Int, scanned: Double, userId: String) {
+    /**
+     * [onRefused] is handed the quantity the ERP already holds for this line, when the edit asked
+     * to go below it. The repository refuses rather than clamps, so somebody has to say why —
+     * silently snapping the number back would look like the app had simply ignored the operator.
+     */
+    fun setLineScanned(lineNo: Int, scanned: Double, userId: String, onRefused: (Double) -> Unit = {}) {
         viewModelScope.launch {
-            repository.setLineScanned(documentNo, type, lineNo, scanned, userId)
+            val result = repository.setLineScanned(documentNo, type, lineNo, scanned, userId)
+            if (result is SetQuantityResult.BelowSent) onRefused(result.sent)
         }
     }
 }

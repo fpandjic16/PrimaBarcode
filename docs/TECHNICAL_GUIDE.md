@@ -150,9 +150,20 @@ These map 1:1 to the User Guide's Settings section but framed for support/consul
 | Upload fails with an ERP validation message | Business-system-side issue (e.g. a malformed field, a locked document) | `UploadErrorScreen`'s full error text — read verbatim, it's the ERP's own response body (truncated to 300 characters) |
 | Upload fails with "Not signed in" / "not configured" | Session expired, or a URL/field is blank in External System Configuration | Re-authenticate; verify config fields |
 | "NTLM not enabled" / "credentials rejected" on Test Connection | Distinguishes ERP-side NTLM misconfiguration (phase 0 — no challenge issued at all) from genuinely wrong credentials (phase 2 + 401) | `NtlmAuthenticator.phaseReached`, surfaced in the Test Connection result dialog's message |
-| A document with real progress "disappeared" from Orders | It has moved to Recordings (Completed) or Errors (Upload Failed) — never silently deleted by download | Check Recordings/Errors tabs |
+| A document with real progress "disappeared" from Orders | Nothing but a successful upload removes it. Downloads never delete a document holding recordings | Check the RECORDINGS section on the main menu, and the Errors tab |
+| An operator finds someone else's unfinished work on the device | Expected. See "The device is shared, the sign-in is not" below | `RecordingEntity.userId` per row; nothing filters by it |
 | Barcode with `|` scans as garbage | Printed with Code 39 symbology, which cannot encode `|` | Reprint the label as Code 128 |
 | A scan is rejected as "Barcode not found" even though the item is on the document | The scanned value doesn't byte-for-byte match that line's `Barcode` field (wrong symbology, stray whitespace, wrong `\|UOM\|QTY` suffix) | Compare the raw scanned value against the line's `Barcode` field; reprint the label if needed |
+
+### The device is shared, the sign-in is not
+
+Documents and recordings belong to the **device**, not to the signed-in user. There is no user column on `documentHeader`, no user predicate in any query, and `AppViewModel.signOut()` clears only the credential store — the database is untouched. So an operator who forgets to upload at the end of a shift leaves everything on the device, and the next operator sees all of it: the documents, the scan totals, and the RECORDINGS tree down to individual scans.
+
+Upload is scoped the same way. `getQueuedRecordings` filters on `sentAt IS NULL` and line attachment only, so pressing UPLOAD sends **every** queued row on the document regardless of who scanned it.
+
+Attribution survives that, per row. `RecordingEntity.userId` is stamped when the scan is recorded and travels to NAV as `Source_User_ID`, so each row arrives under whoever actually scanned it — not under whoever pressed UPLOAD. The one thing the app does not do is *tell* the second operator that some of what they are about to send is not theirs.
+
+This is a deliberate consequence of the recording-first design, not an oversight: work is never withheld from whoever is holding the device, which is what makes an abandoned shift recoverable at all. If per-user scoping is ever wanted, `userId` is already on every row, and the cheap first step would be a warning on upload when the queued rows carry more than one user — not a filter, which would strand the first operator's work until they personally came back.
 
 ---
 
@@ -311,17 +322,24 @@ Not a Room entity — a plain data class `{ document: DocumentHeaderEntity, line
 | `mergeDocument(doc, type)` (private, suspend) | Refreshes header + fully replaces lines from the download, recomputes docState from whatever recordings already exist locally — see §B.4.1 for the exact code path |
 | `computeStateAfterMerge(lines, recordings)` (private) | `Downloaded` if no recordings; else `Completed` if every line's summed recordings exactly equal `expected`; else `InProgress`. Never returns `PendingUpload`/`UploadFailed` — those are only set via `updateDocState` from outside, and any subsequent merge will silently overwrite them |
 | `recordScan(documentNo, type, lineNo, barcodeNo, userId, quantity)` (suspend, transactional) | Looks up line+header, generates next `recordingLineNo`, **inserts** a new recording (always additive, never updates existing rows), calls `advanceToInProgressIfNeeded` + `regressFromCompletedIfNeeded` |
-| `setLineScanned(documentNo, type, lineNo, scanned, userId)` (suspend, transactional) | **Deletes all recordings for that line**, then inserts one fresh recording with the exact new total if `scanned > 0`. Runs all three state helpers (including `regressToDownloadedIfNeeded`, since zeroing a line could empty the doc entirely). This is the one path that legitimately deletes real-line recording rows — it's a deliberate user-driven overwrite |
+| `setLineScanned(documentNo, type, lineNo, scanned, userId): SetQuantityResult` (suspend, transactional) | Moves only the **queued** part of a line. Refuses with `BelowSent(sent)` if `scanned` is under what the ERP already holds for the line; otherwise deletes the line's queued recordings and inserts one fresh recording of `scanned - sent` when that is positive. Runs all three state helpers (including `regressToDownloadedIfNeeded`, since zeroing a line could empty the doc entirely). This is the one path that legitimately deletes real-line recording rows — a deliberate user-driven overwrite |
 | `updateDocState(documentNo, type, state)` (suspend) | Direct state write — used by the upload flow for `PendingUpload`/`UploadFailed` |
 | `deleteDocument(documentNo, type)` (suspend) | Deletes header, cascades lines+recordings — used on upload success |
-| `getRecordings(documentNo, type): List<RecordingEntity>` (suspend) | Pass-through, used by the upload flow to enumerate rows to send |
-| `deleteRecording(documentNo, type, documentLine, recordingLineNo)` (suspend) | Raw single-row delete, no state recomputation — used by the upload flow to delete a row the instant its POST succeeds |
+| `getQueuedRecordings(documentNo, type)` / `getOrphanedRecordings(...)` (suspend) | What the upload flow enumerates: line-attached rows still `sentAt IS NULL`, and the orphans that block the document before a single row goes out |
+| `markRecordingSent(documentNo, type, documentLine, recordingLineNo)` (suspend) | Stamps `sentAt` the instant a row's POST succeeds. Replaced a delete — rows are kept until the whole document goes, so a partly-sent document still shows everything the operator scanned |
+| `deleteQueuedRecording(documentNo, type, documentLine, recordingLineNo)` (suspend, transactional) | Single-row delete from the recordings tree, `sentAt IS NULL` only; recomputes state |
 | `clearAll()` (suspend) | Deletes all headers, cascades everything — full local wipe ("Clear cache") |
-| `deleteDocumentRecordings(documentNo, type)` (suspend, transactional) | Deletes all recordings for a doc, force-resets state to `Downloaded` — the long-press "delete recordings" UI action |
+| `deleteDocumentRecordings(documentNo, type)` (suspend, transactional) | Deletes a document's **queued** recordings and recomputes state from what remains — the 5s-hold action on the recordings tree |
 
 **"Never delete recordings" — where deletions actually happen and why each is safe:**
-- `setLineScanned`, `deleteRecording`, `deleteDocumentRecordings` — explicit, user-initiated corrections.
+- `setLineScanned`, `deleteQueuedRecording`, `deleteDocumentRecordings`, `discardOrphanedScans`, `discardFailedScans` — explicit, user-initiated corrections, and every one of them is scoped to `sentAt IS NULL`. Nothing the ERP has accepted is ever deleted except with its whole document.
 - `deleteDocument`, `clearAll` — explicit whole-document/whole-DB deletion, never invoked from background sync/merge paths.
+
+**The sent quantity is a floor (2026-09).** `Line.sentQuantity` carries the part of `Line.scanned` the ERP has already accepted, summed in `Mappers.toDomain` from the recordings already in hand. A manual edit may raise a line freely but may not go below that number, and the refusal is explicit — `SetQuantityResult.BelowSent(sent)` back to `RecordingViewModel`, which hands it to `RecordingScreen`'s dialog.
+
+Why a refusal rather than a clamp: this ERP's recordings table validates nothing and never refuses a row, so there is no delete, no correction, and no way to unsend a posted quantity from the device. A silent clamp would write a number the operator did not type and let them walk away believing the correction went through.
+
+Before this, `setLineScanned` deleted **every** recording on the line — sent ones included — and re-queued the whole new total. On a partly-sent line that meant the device forgot what the ERP held, sent the accepted quantity a second time (recorded there as surplus), and rewrote the scans' `userId` and timestamp to whoever was editing. Enforced in three places, deliberately: the stepper stops at the floor, the keypad checks the typed value, and the repository is the authority — the UI cannot see a floor a background upload raised while the screen was open.
 - `recordScan` — never deletes anything, purely additive.
 - `replaceDownloadedDocuments` explicitly checks `hasRecordings` before deleting a header no longer present in a fresh download; `mergeDocument` itself never touches the `recordings` table at all, only `documentHeader`/`documentLine`.
 
@@ -450,7 +468,7 @@ The typed value winning means a bad configured domain can be corrected at the lo
 
 ### B.6.3 DTOs — `data/extsystem/ExtSystemPayload.kt`
 
-**`NavBarcodeAppRecording`** (upload) — see field table in §A.5.4. `recordingGuid` is read straight off the stored `RecordingEntity`; it is generated once in `DocumentRepository.recordScan` when the scan is recorded and never regenerated, so every attempt for a row sends the same value. `setLineScanned` is the one place that mints a new one, because it replaces a line's recordings with a single aggregate row — a genuinely new recording.
+**`NavBarcodeAppRecording`** (upload) — see field table in §A.5.4. `recordingGuid` is read straight off the stored `RecordingEntity`; it is generated once in `DocumentRepository.recordScan` when the scan is recorded and never regenerated, so every attempt for a row sends the same value. `setLineScanned` is the one place that mints a new one, because it replaces a line's *queued* recordings with a single aggregate row — a genuinely new recording. It never touches the sent ones, so a GUID the ERP already holds is never reused or dropped.
 
 **`NavBarcodeAppEntry`** (download) — see field table in §A.5.3. Rows with `lineNo <= 0` are excluded from `lines` (treated as the header row). `documentDate` is parsed as `Instant.parse("${it}T00:00:00Z")`.
 
