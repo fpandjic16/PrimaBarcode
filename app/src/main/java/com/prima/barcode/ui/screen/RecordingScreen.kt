@@ -368,7 +368,6 @@ fun RecordingScreen(
         CameraPreview(
             onBarcode = { barcode -> handleScan(barcode) },
             onClose = { cameraOpen = false },
-            debounceMs = debounceTime,
         )
     }
     } // end Box

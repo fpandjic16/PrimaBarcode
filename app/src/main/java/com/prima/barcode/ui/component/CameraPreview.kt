@@ -47,7 +47,6 @@ private val RETICLE_H = 170.dp
 fun CameraPreview(
     onBarcode: (String) -> Unit,
     onClose: () -> Unit,
-    debounceMs: Int = 500,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -56,7 +55,6 @@ fun CameraPreview(
 
     val latestOnBarcode = rememberUpdatedState(onBarcode)
     val latestOnClose = rememberUpdatedState(onClose)
-    val latestDebounceMs = rememberUpdatedState(debounceMs)
 
     val density = LocalDensity.current
     val reticleWpx = with(density) { RETICLE_W.toPx() }
@@ -67,7 +65,9 @@ fun CameraPreview(
         val analysisExecutor = Executors.newSingleThreadExecutor()
         var cameraProvider: ProcessCameraProvider? = null
         var toneGen: ToneGenerator? = null
-        var lastScanMs = 0L
+        // One accepted read per opening of the preview. Not a time window: the rule here is
+        // "one read", and a window has to be guessed at.
+        var consumed = false
 
         val future = ProcessCameraProvider.getInstance(context)
         future.addListener({
@@ -93,15 +93,17 @@ fun CameraPreview(
                                 )
                             },
                         ) { barcode ->
-                            val now = System.currentTimeMillis()
-                            if (now - lastScanMs < latestDebounceMs.value) return@BarcodeAnalyzer
-                            lastScanMs = now
+                            // The analyser runs on its own executor and keeps working through
+                            // frames already in flight while the close below travels to the main
+                            // thread. Without this latch a neighbouring label drifting into the
+                            // reticle in that gap would be reported as a second scan the operator
+                            // never asked for — and because BarcodeAnalyzer's own guard is keyed
+                            // on the value, a *different* code passes it unimpeded.
+                            if (consumed) return@BarcodeAnalyzer
+                            consumed = true
                             mainExecutor.execute {
                                 runCatching { toneGen?.startTone(ToneGenerator.TONE_PROP_BEEP, 80) }
                                 latestOnBarcode.value(barcode)
-                                // One read, then close. The camera is the fallback input here —
-                                // holding it open was only ever the continuous-scanning option,
-                                // which is gone.
                                 latestOnClose.value()
                             }
                         }
