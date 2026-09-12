@@ -103,6 +103,8 @@
     <string name="settings_debounce_desc">Minimum ms before the same barcode counts again</string>
     <string name="settings_haptic">Haptic feedback</string>
     <string name="settings_haptic_desc">Vibrate on scan confirmation and errors</string>
+    <string name="settings_sound">Scan sounds</string>
+    <string name="settings_sound_desc">Beep on a scan that lands, a different tone on one that doesn\'t</string>
     <string name="settings_warn_over">Warn on over-scan</string>
     <string name="settings_warn_over_desc">Confirm when scanned quantity exceeds expected</string>
     <string name="settings_last_scanned">Last scanned lines</string>

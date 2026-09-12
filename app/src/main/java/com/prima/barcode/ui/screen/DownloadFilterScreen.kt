@@ -62,6 +62,7 @@ fun DownloadFilterScreen(
     hasCredentials: Boolean = false,
     loginQrKey: String = "",
     hapticEnabled: Boolean = true,
+    soundEnabled: Boolean = true,
     docType: DocumentType? = null,
     fixedSourceCode: String? = null,
     fixedRcCode: String? = null,
@@ -297,6 +298,7 @@ fun DownloadFilterScreen(
         LoginSheet(
             loginQrKey = loginQrKey,
             hapticEnabled = hapticEnabled,
+            soundEnabled = soundEnabled,
             onTestConnection = onTestConnection,
             onSubmit = { username, password ->
                 showLogin = false

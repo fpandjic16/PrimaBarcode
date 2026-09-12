@@ -114,6 +114,7 @@ class MainActivity : AppCompatActivity() {
             var lastScannedLines by remember { mutableStateOf(initialSettings.lastScannedLines) }
             var debounceTime     by remember { mutableStateOf(initialSettings.debounceTime) }
             var hapticEnabled     by remember { mutableStateOf(initialSettings.hapticEnabled) }
+            var soundEnabled      by remember { mutableStateOf(initialSettings.soundEnabled) }
             var warnOnOver       by remember { mutableStateOf(initialSettings.warnOnOver) }
             var backgroundSync   by remember { mutableStateOf(initialSettings.backgroundSync) }
             var disabledDocTypes by remember { mutableStateOf(initialSettings.disabledDocTypes) }
@@ -129,6 +130,7 @@ class MainActivity : AppCompatActivity() {
                 lastScannedLines = lastScannedLines,
                 debounceTime     = debounceTime,
                 hapticEnabled    = hapticEnabled,
+                soundEnabled     = soundEnabled,
                 warnOnOver          = warnOnOver,
                 backgroundSync      = backgroundSync,
                 lastLocationCode = locationCode,
@@ -151,6 +153,7 @@ class MainActivity : AppCompatActivity() {
                 lastScannedLines = s.lastScannedLines
                 debounceTime = s.debounceTime
                 hapticEnabled = s.hapticEnabled
+                soundEnabled = s.soundEnabled
                 warnOnOver = s.warnOnOver
                 backgroundSync = s.backgroundSync
                 debuggerActive = s.debuggerActive
@@ -169,6 +172,7 @@ class MainActivity : AppCompatActivity() {
                     lastScannedLines          = lastScannedLines,
                     debounceTime              = debounceTime,
                     hapticEnabled             = hapticEnabled,
+                    soundEnabled              = soundEnabled,
                     warnOnOver                = warnOnOver,
                     backgroundSync            = backgroundSync,
                     disabledDocTypes          = disabledDocTypes,
@@ -210,6 +214,7 @@ private fun PrimaBarcodeApp(
     lastScannedLines: Int,
     debounceTime: Int,
     hapticEnabled: Boolean,
+    soundEnabled: Boolean,
     warnOnOver: Boolean,
     backgroundSync: Boolean,
     disabledDocTypes: Set<String>,
@@ -399,6 +404,7 @@ private fun PrimaBarcodeApp(
                 credentialTtlHours = extSystemConfig.credentialTtlHours,
                 loginQrKey = extSystemConfig.loginQrKey,
                 hapticEnabled = hapticEnabled,
+                soundEnabled = soundEnabled,
                 onSelect = { rc, loc ->
                     onRcCodeChange(rc)
                     onLocationCodeChange(loc)
@@ -424,6 +430,7 @@ private fun PrimaBarcodeApp(
         composable("ext_system_config") {
             ExtSystemConfigScreen(
                 hapticEnabled = hapticEnabled,
+                soundEnabled = soundEnabled,
                 initial = extSystemConfig,
                 onSave  = { config ->
                     appVm.saveExtSystemConfig(config)
@@ -465,6 +472,7 @@ private fun PrimaBarcodeApp(
                 lastScannedLines = lastScannedLines,
                 debounceTime = debounceTime,
                 hapticEnabled = hapticEnabled,
+                soundEnabled = soundEnabled,
                 warnOnOver = warnOnOver,
                 backgroundSync = backgroundSync,
                 lastLocationCode = locationCode,
@@ -510,6 +518,7 @@ private fun PrimaBarcodeApp(
             }
             DocumentListScreen(
                 hapticEnabled = hapticEnabled,
+                soundEnabled = soundEnabled,
                 docType = selectedDocType,
                 locationCode = location?.code ?: "",
                 docTypeCode = extSystemConfig.docTypeCodeFor(selectedDocType),
@@ -614,6 +623,7 @@ private fun PrimaBarcodeApp(
                 hasCredentials  = appVm.extSystemCredentialStore.isValid(),
                 loginQrKey      = extSystemConfig.loginQrKey,
                 hapticEnabled   = hapticEnabled,
+                soundEnabled    = soundEnabled,
                 docType         = selectedDocType,
                 fixedSourceCode = if (dlFilterMode == DocTypeFilterMode.LOCATION) locationCode else null,
                 fixedRcCode     = if (dlFilterMode == DocTypeFilterMode.RESPONSIBILITY_CENTER) rcCode else null,
@@ -680,6 +690,7 @@ private fun PrimaBarcodeApp(
                     },
                     lastScannedLines = lastScannedLines,
                     hapticEnabled = hapticEnabled,
+                    soundEnabled = soundEnabled,
                     debounceTime = debounceTime,
                     warnOnOver = warnOnOver,
                 )
@@ -792,6 +803,7 @@ private fun PrimaBarcodeApp(
             initialPassword    = appVm.extSystemCredentialStore.get()?.password ?: "",
             loginQrKey         = extSystemConfig.loginQrKey,
             hapticEnabled      = hapticEnabled,
+            soundEnabled       = soundEnabled,
             onDismiss          = { showUploadLoginSheet = false; pendingUploadAction = null },
             onTestConnection   = ::testSignIn,
             onSubmit           = { _, _ ->
@@ -808,6 +820,7 @@ private fun PrimaBarcodeApp(
             ctaLabel           = stringResource(R.string.btn_sign_in),
             loginQrKey         = extSystemConfig.loginQrKey,
             hapticEnabled      = hapticEnabled,
+            soundEnabled       = soundEnabled,
             onDismiss          = { showMainLoginSheet = false },
             onTestConnection   = ::testSignIn,
             onSubmit           = { _, _ -> showMainLoginSheet = false },

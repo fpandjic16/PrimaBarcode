@@ -103,6 +103,8 @@
     <string name="settings_debounce_desc">Minimalno ms prije nego isti barkod ponovo broji</string>
     <string name="settings_haptic">Haptička povratna informacija</string>
     <string name="settings_haptic_desc">Vibrira pri potvrdi i greškama skeniranja</string>
+    <string name="settings_sound">Zvuk skeniranja</string>
+    <string name="settings_sound_desc">Pisak kad skeniranje pogodi, drugi ton kad ne</string>
     <string name="settings_warn_over">Upozori pri prekoračenju</string>
     <string name="settings_warn_over_desc">Potvrdi kada skenirana količina premašuje očekivanu</string>
     <string name="settings_last_scanned">Zadnji skenirani redci</string>

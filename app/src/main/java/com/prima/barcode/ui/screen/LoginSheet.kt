@@ -35,6 +35,7 @@ import androidx.core.view.WindowCompat
 import com.prima.barcode.data.auth.parseLoginQr
 import com.prima.barcode.data.barcode.DataWedgeManager
 import com.prima.barcode.data.haptic.HapticEngine
+import com.prima.barcode.data.sound.rememberSoundEngine
 import com.prima.barcode.ui.component.CameraPreview
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.component.verticalScrollbar
@@ -72,6 +73,7 @@ fun LoginSheet(
     // one) leaves the QR button working but every code refused, which the error line reports.
     loginQrKey: String = "",
     hapticEnabled: Boolean = true,
+    soundEnabled: Boolean = true,
     // When set, the entered credentials are verified against the NAV server (the same
     // check as ExtSystemConfigScreen's "Test connection") before onSubmit is called, so
     // signing in actually confirms the server accepted them rather than just capturing
@@ -102,6 +104,7 @@ fun LoginSheet(
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
     }
     val hapticEngine = remember { HapticEngine(context) }
+    val soundEngine = rememberSoundEngine()
 
     /** One path for both scanners: the camera and the hardware trigger read the same code. */
     fun applyScannedQr(raw: String) {
@@ -110,6 +113,7 @@ fun LoginSheet(
         val scanned = parseLoginQr(raw, loginQrKey)
         if (scanned != null) {
             if (hapticEnabled) hapticEngine.confirm()
+            if (soundEnabled) soundEngine.confirm()
             username = scanned.username
             password = scanned.password
             errorMessage = null
@@ -117,6 +121,7 @@ fun LoginSheet(
             // The error line is easy to miss when the operator is looking at the scanner rather
             // than the screen, which on a barcode terminal is most of the time.
             if (hapticEnabled) hapticEngine.error()
+            if (soundEnabled) soundEngine.error()
             errorMessage = invalidQrMessage
         }
     }

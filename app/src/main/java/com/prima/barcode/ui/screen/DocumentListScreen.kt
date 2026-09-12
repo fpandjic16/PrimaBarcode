@@ -39,6 +39,7 @@ import com.prima.barcode.data.model.scanStatus
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.prima.barcode.data.haptic.HapticEngine
+import com.prima.barcode.data.sound.rememberSoundEngine
 import com.prima.barcode.ui.component.CameraPreview
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.component.verticalScrollbar
@@ -90,6 +91,7 @@ fun DocumentListScreen(
     filter: DocumentFilter = DocumentFilter(),
     onOpenFilter: () -> Unit = {},
     hapticEnabled: Boolean = true,
+    soundEnabled: Boolean = true,
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var docNotFoundError by remember { mutableStateOf<String?>(null) }
@@ -155,9 +157,11 @@ fun DocumentListScreen(
         val found = documents.firstOrNull { it.documentNo == barcode }
         if (found != null) {
             if (hapticEnabled) hapticEngine.confirm()
+            if (soundEnabled) soundEngine.confirm()
             onDocTap(found)
         } else {
             if (hapticEnabled) hapticEngine.error()
+            if (soundEnabled) soundEngine.error()
             docNotFoundError = barcode
         }
     }
@@ -171,6 +175,7 @@ fun DocumentListScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted -> if (granted) cameraOpen = true }
     val hapticEngine = remember { HapticEngine(context) }
+    val soundEngine = rememberSoundEngine()
 
     Box(modifier = Modifier.fillMaxSize()) {
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {

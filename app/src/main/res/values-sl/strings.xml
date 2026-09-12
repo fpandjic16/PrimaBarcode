@@ -103,6 +103,8 @@
     <string name="settings_debounce_desc">Najmanj ms, preden ista črtna koda spet šteje</string>
     <string name="settings_haptic">Haptična povratna informacija</string>
     <string name="settings_haptic_desc">Vibriranje ob potrditvi skeniranja in napakah</string>
+    <string name="settings_sound">Zvok skeniranja</string>
+    <string name="settings_sound_desc">Pisk, ko skeniranje uspe, drugačen ton, ko ne</string>
     <string name="settings_warn_over">Opozori ob presežku</string>
     <string name="settings_warn_over_desc">Potrdi, ko skenirana količina presega pričakovano</string>
     <string name="settings_last_scanned">Zadnje skenirane vrstice</string>

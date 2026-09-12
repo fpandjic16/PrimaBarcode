@@ -82,6 +82,7 @@ fun SettingsScreen(
     var lastScannedLines by remember { mutableStateOf(initial.lastScannedLines) }
     var debounceTime by remember { mutableStateOf(initial.debounceTime) }
     var hapticEnabled by remember { mutableStateOf(initial.hapticEnabled) }
+    var soundEnabled by remember { mutableStateOf(initial.soundEnabled) }
     var warnOnOver by remember { mutableStateOf(initial.warnOnOver) }
     var backgroundSync by remember { mutableStateOf(initial.backgroundSync) }
     var debuggerActive by remember { mutableStateOf(initial.debuggerActive) }
@@ -93,6 +94,7 @@ fun SettingsScreen(
         lastScannedLines = lastScannedLines,
         debounceTime = debounceTime,
         hapticEnabled = hapticEnabled,
+        soundEnabled = soundEnabled,
         warnOnOver = warnOnOver,
         backgroundSync = backgroundSync,
         debuggerActive = debuggerActive,
@@ -327,6 +329,14 @@ fun SettingsScreen(
                         description = stringResource(R.string.settings_haptic_desc),
                         checked = hapticEnabled,
                         onCheckedChange = { hapticEnabled = it },
+                    )
+                    SettingsDivider()
+                    ToggleRow(
+                        icon = Icons.Outlined.VolumeUp,
+                        label = stringResource(R.string.settings_sound),
+                        description = stringResource(R.string.settings_sound_desc),
+                        checked = soundEnabled,
+                        onCheckedChange = { soundEnabled = it },
                     )
                     SettingsDivider()
                     ToggleRow(

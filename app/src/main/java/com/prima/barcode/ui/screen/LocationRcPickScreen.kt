@@ -49,6 +49,7 @@ fun LocationRcPickScreen(
     credentialTtlHours: Int = 24,
     loginQrKey: String = "",
     hapticEnabled: Boolean = true,
+    soundEnabled: Boolean = true,
     onSelect: (rcCode: String, locationCode: String) -> Unit,
     onRefresh: () -> Unit = {},
     onSaveCredentials: (username: String, password: String) -> Unit = { _, _ -> },
@@ -228,6 +229,7 @@ fun LocationRcPickScreen(
             ctaLabel = stringResource(R.string.btn_sign_in_sync),
             loginQrKey = loginQrKey,
             hapticEnabled = hapticEnabled,
+            soundEnabled = soundEnabled,
             onTestConnection = onTestConnection,
             onSubmit = { u, p ->
                 onSaveCredentials(u, p)

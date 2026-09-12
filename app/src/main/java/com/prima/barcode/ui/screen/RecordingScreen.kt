@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import com.prima.barcode.data.haptic.HapticEngine
+import com.prima.barcode.data.sound.rememberSoundEngine
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -75,6 +76,7 @@ fun RecordingScreen(
     onUpload: () -> Unit = {},
     lastScannedLines: Int = 5,
     hapticEnabled: Boolean = true,
+    soundEnabled: Boolean = true,
     debounceTime: Int = 500,
     warnOnOver: Boolean = true,
 ) {
@@ -107,6 +109,10 @@ fun RecordingScreen(
     val showUpload = doc.lines.any { it.scanned > 0.0 }
     val context = LocalContext.current
     val hapticEngine = remember { HapticEngine(context) }
+    // Sound marks the outcome of a scan and nothing else — not the keypad, not the steppers. A
+    // tone on every key press is noise the operator learns to ignore, which costs the tones that
+    // matter their meaning.
+    val soundEngine = rememberSoundEngine()
     // No camera on some MC3300 configurations — hide the button rather than offer one that
     // opens an empty preview.
     val hasCamera = remember {
@@ -142,9 +148,14 @@ fun RecordingScreen(
         if (matchedLine == null) {
             scanErrorFlash = true
             if (hapticEnabled) hapticEngine.error()
+            if (soundEnabled) soundEngine.error()
             barcodeNotFoundError = barcode
         } else {
             val qty = parsedQty ?: matchedLine.scanningQty
+            // Every accepted scan, not only the one that completes a line. This is the signal the
+            // camera used to give on its own, and the operator's confirmation that the pull
+            // counted — the haptic below marks something else, that the line is now exact.
+            if (soundEnabled) soundEngine.confirm()
             onScan(barcode, qty)
             val base = maxOf(matchedLine.scanned, scannedRunningTotal[matchedLine.lineNo] ?: 0.0)
             val newScanned = base + qty

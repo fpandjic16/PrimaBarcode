@@ -103,6 +103,8 @@
     <string name="settings_debounce_desc">Минимум ms пред истиот баркод повторно да се брои</string>
     <string name="settings_haptic">Вибрациска повратна информација</string>
     <string name="settings_haptic_desc">Вибрира при потврда на скенирање и грешки</string>
+    <string name="settings_sound">Звук на скенирање</string>
+    <string name="settings_sound_desc">Бип кога скенирањето успее, друг тон кога не</string>
     <string name="settings_warn_over">Предупреди при прекумерно скенирање</string>
     <string name="settings_warn_over_desc">Потврди кога скенираната количина ја надминува очекуваната</string>
     <string name="settings_last_scanned">Последно скенирани ставки</string>

@@ -20,6 +20,7 @@ class AppSettingsStore @Inject constructor(@param:ApplicationContext private val
         lastScannedLines = prefs.getInt("lastScannedLines", 5),
         debounceTime     = prefs.getInt("debounceTime", 500),
         hapticEnabled    = prefs.getBoolean("hapticEnabled", true),
+        soundEnabled     = prefs.getBoolean("soundEnabled", true),
         warnOnOver          = prefs.getBoolean("warnOnOver", true),
         backgroundSync      = prefs.getBoolean("backgroundSync", false),
         lastLocationCode = prefs.getString("lastLocationCode", "") ?: "",
@@ -55,6 +56,7 @@ class AppSettingsStore @Inject constructor(@param:ApplicationContext private val
             .putInt    ("lastScannedLines",   settings.lastScannedLines)
             .putInt    ("debounceTime",        settings.debounceTime)
             .putBoolean("hapticEnabled",      settings.hapticEnabled)
+            .putBoolean("soundEnabled",       settings.soundEnabled)
             .putBoolean("warnOnOver",          settings.warnOnOver)
             .putBoolean("backgroundSync",      settings.backgroundSync)
             .putString ("lastLocationCode",   settings.lastLocationCode)

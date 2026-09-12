@@ -1,7 +1,5 @@
 package com.prima.barcode.ui.component
 
-import android.media.AudioManager
-import android.media.ToneGenerator
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
@@ -63,8 +61,11 @@ fun CameraPreview(
     DisposableEffect(lifecycleOwner) {
         val mainExecutor = ContextCompat.getMainExecutor(context)
         val analysisExecutor = Executors.newSingleThreadExecutor()
+        // No tone here any more. The beep used to live in this component, which meant the camera
+        // was audible and the hardware trigger silent, and neither obeyed any setting. Callers now
+        // sound the outcome themselves, so both inputs behave the same and the operator can turn
+        // it off.
         var cameraProvider: ProcessCameraProvider? = null
-        var toneGen: ToneGenerator? = null
         // One accepted read per opening of the preview. Not a time window: the rule here is
         // "one read", and a window has to be guessed at.
         var consumed = false
@@ -74,7 +75,6 @@ fun CameraPreview(
             runCatching {
                 val provider = future.get()
                 cameraProvider = provider
-                toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80)
 
                 val preview = Preview.Builder().build().also {
                     it.setSurfaceProvider(previewView.surfaceProvider)
@@ -102,7 +102,6 @@ fun CameraPreview(
                             if (consumed) return@BarcodeAnalyzer
                             consumed = true
                             mainExecutor.execute {
-                                runCatching { toneGen?.startTone(ToneGenerator.TONE_PROP_BEEP, 80) }
                                 latestOnBarcode.value(barcode)
                                 latestOnClose.value()
                             }
@@ -135,7 +134,6 @@ fun CameraPreview(
         onDispose {
             cameraProvider?.unbindAll()
             analysisExecutor.shutdown()
-            toneGen?.release()
         }
     }
 

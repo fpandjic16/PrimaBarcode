@@ -74,6 +74,7 @@ fun ExtSystemConfigScreen(
     ) -> Unit = { _, _, _, cb -> cb(false, "Test connection is not wired up") },
     onImportJson: ((json: String) -> ExtSystemConfig?)? = null,
     hapticEnabled: Boolean = true,
+    soundEnabled: Boolean = true,
 ) {
     var serverBaseUrl             by remember { mutableStateOf(initial.serverBaseUrl) }
     var domain                   by remember { mutableStateOf(initial.domain) }
@@ -375,6 +376,7 @@ fun ExtSystemConfigScreen(
             ctaLabel           = stringResource(R.string.btn_test_connection),
             loginQrKey         = loginQrKey,
             hapticEnabled      = hapticEnabled,
+            soundEnabled       = soundEnabled,
             initialUsername    = savedCredentials?.username ?: "",
             initialPassword    = savedCredentials?.password ?: "",
             onDismiss          = { showLoginSheet = false },
