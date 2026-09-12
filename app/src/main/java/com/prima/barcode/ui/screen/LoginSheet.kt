@@ -263,10 +263,9 @@ fun LoginSheet(
                 }
             }
 
-            // Drawn last so it covers the form. continuous = false, so one read closes it.
+            // Drawn last so it covers the form. One read closes it.
             if (cameraOpen) {
                 CameraPreview(
-                    continuous = false,
                     onBarcode = { raw ->
                         applyScannedQr(raw)
                         cameraOpen = false

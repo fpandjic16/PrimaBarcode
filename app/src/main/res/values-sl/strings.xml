@@ -99,10 +99,8 @@
     <string name="settings_uppercase_desc">Prikaži vse oznake vmesnika z velikimi črkami</string>
     <string name="settings_language">Jezik</string>
     <string name="settings_language_desc">Za popoln učinek je potreben ponovni zagon</string>
-    <string name="settings_continuous_scan">Neprekinjeno skeniranje</string>
-    <string name="settings_continuous_scan_desc">Kamera ostane odprta po vsakem skeniranju artikla</string>
     <string name="settings_debounce">Čas zakasnitve</string>
-    <string name="settings_debounce_desc">Najmanjši razmik med skeniranji v ms (samo neprekinjeno)</string>
+    <string name="settings_debounce_desc">Najmanj ms, preden ista črtna koda spet šteje</string>
     <string name="settings_haptic">Haptična povratna informacija</string>
     <string name="settings_haptic_desc">Vibriranje ob potrditvi skeniranja in napakah</string>
     <string name="settings_warn_over">Opozori ob presežku</string>

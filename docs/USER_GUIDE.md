@@ -189,7 +189,7 @@ You'll see:
 You can scan in three ways:
 1. **Hardware scanner trigger** (if your device has one) — just point and scan; it works anywhere on this screen.
 2. **Scan bar** at the bottom — tap the keyboard icon to type a barcode manually if needed, or the camera icon to scan visually.
-3. **Camera** — tap the camera icon in the scan bar; point your camera at the barcode. It beeps and vibrates on a successful read. Unless "Continuous scanning" is on in Settings, the camera closes itself after one successful scan.
+3. **Camera** — tap the camera icon in the scan bar; point your camera at the barcode. It beeps and vibrates on a successful read, then closes itself. The camera is the fallback input, so it always does one scan at a time; use the hardware trigger for a run of items.
 
 **What happens when you scan:**
 - **Matches a line** → that line's scanned quantity goes up (usually by 1, or by whatever the document specifies per scan), and the line/document status updates live.
@@ -307,8 +307,7 @@ Open Settings via the gear icon on the Main Menu. **Settings are buffered** — 
 ### Scanning
 | Setting | What it does |
 |---|---|
-| **Continuous scanning** | Keeps the camera open to scan multiple items in a row, instead of closing after each scan. |
-| **Debounce time** | Minimum time between camera scans in continuous mode (200ms–2s) — prevents the same label being scanned twice by accident. |
+| **Debounce time** | How long the same barcode is ignored after it is read (200ms–2s). The hardware trigger and the camera can both be live at once, so without this one physical scan could be counted twice. |
 | **Haptic feedback** | Vibrate on scan confirmation and errors. |
 | **Warn on over-scan** | Show a warning when you scan more than the expected quantity for a line. |
 | **Last scanned lines** | How many recent scans are shown in the "LAST SCANS" tape while scanning (0 hides it entirely, up to 5). |

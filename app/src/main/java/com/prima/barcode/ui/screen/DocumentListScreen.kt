@@ -347,11 +347,10 @@ fun DocumentListScreen(
         }
     }
 
-    // Drawn last so it covers the list. continuous = false — one read closes the camera and
-    // takes the operator straight into the document, which is the whole point of scanning here.
+    // Drawn last so it covers the list. One read closes the camera and takes the operator
+    // straight into the document, which is the whole point of scanning here.
     if (cameraOpen) {
         CameraPreview(
-            continuous = false,
             onBarcode = { raw ->
                 cameraOpen = false
                 handleDocScan(raw)

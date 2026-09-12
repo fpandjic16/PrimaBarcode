@@ -99,10 +99,8 @@
     <string name="settings_uppercase_desc">Прикажи ги сите ознаки во интерфејсот со големи букви</string>
     <string name="settings_language">Јазик</string>
     <string name="settings_language_desc">Потребно е рестартирање за целосен ефект</string>
-    <string name="settings_continuous_scan">Непрекинато скенирање</string>
-    <string name="settings_continuous_scan_desc">Камерата останува отворена по секое скенирање на артикл</string>
     <string name="settings_debounce">Време на задржување</string>
-    <string name="settings_debounce_desc">Минимум ms помеѓу скенирања (само непрекинато)</string>
+    <string name="settings_debounce_desc">Минимум ms пред истиот баркод повторно да се брои</string>
     <string name="settings_haptic">Вибрациска повратна информација</string>
     <string name="settings_haptic_desc">Вибрира при потврда на скенирање и грешки</string>
     <string name="settings_warn_over">Предупреди при прекумерно скенирање</string>

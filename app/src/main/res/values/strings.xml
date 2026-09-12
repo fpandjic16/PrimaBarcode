@@ -99,10 +99,8 @@
     <string name="settings_uppercase_desc">Display all UI labels in uppercase</string>
     <string name="settings_language">Language</string>
     <string name="settings_language_desc">Restart required for full effect</string>
-    <string name="settings_continuous_scan">Continuous scanning</string>
-    <string name="settings_continuous_scan_desc">Camera stays open after each item scan</string>
     <string name="settings_debounce">Debounce time</string>
-    <string name="settings_debounce_desc">Minimum ms between scans (continuous only)</string>
+    <string name="settings_debounce_desc">Minimum ms before the same barcode counts again</string>
     <string name="settings_haptic">Haptic feedback</string>
     <string name="settings_haptic_desc">Vibrate on scan confirmation and errors</string>
     <string name="settings_warn_over">Warn on over-scan</string>

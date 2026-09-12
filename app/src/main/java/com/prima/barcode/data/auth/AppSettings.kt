@@ -9,7 +9,6 @@ data class AppSettings(
     val uppercaseText: Boolean = false,
     val language: Language = Language.ENGLISH,
     val lastScannedLines: Int = 5,
-    val autoScan: Boolean = false,
     val debounceTime: Int = 500,
     val hapticEnabled: Boolean = true,
     val warnOnOver: Boolean = true,

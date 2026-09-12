@@ -45,7 +45,6 @@ private val RETICLE_H = 170.dp
 
 @Composable
 fun CameraPreview(
-    continuous: Boolean,
     onBarcode: (String) -> Unit,
     onClose: () -> Unit,
     debounceMs: Int = 500,
@@ -57,7 +56,6 @@ fun CameraPreview(
 
     val latestOnBarcode = rememberUpdatedState(onBarcode)
     val latestOnClose = rememberUpdatedState(onClose)
-    val latestContinuous = rememberUpdatedState(continuous)
     val latestDebounceMs = rememberUpdatedState(debounceMs)
 
     val density = LocalDensity.current
@@ -101,7 +99,10 @@ fun CameraPreview(
                             mainExecutor.execute {
                                 runCatching { toneGen?.startTone(ToneGenerator.TONE_PROP_BEEP, 80) }
                                 latestOnBarcode.value(barcode)
-                                if (!latestContinuous.value) latestOnClose.value()
+                                // One read, then close. The camera is the fallback input here —
+                                // holding it open was only ever the continuous-scanning option,
+                                // which is gone.
+                                latestOnClose.value()
                             }
                         }
                         imageAnalysis.setAnalyzer(analysisExecutor, analyzer)

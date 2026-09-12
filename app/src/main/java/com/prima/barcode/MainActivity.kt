@@ -112,7 +112,6 @@ class MainActivity : AppCompatActivity() {
             var uppercaseText    by remember { mutableStateOf(initialSettings.uppercaseText) }
             var language         by remember { mutableStateOf(initialSettings.language) }
             var lastScannedLines by remember { mutableStateOf(initialSettings.lastScannedLines) }
-            var autoScan         by remember { mutableStateOf(initialSettings.autoScan) }
             var debounceTime     by remember { mutableStateOf(initialSettings.debounceTime) }
             var hapticEnabled     by remember { mutableStateOf(initialSettings.hapticEnabled) }
             var warnOnOver       by remember { mutableStateOf(initialSettings.warnOnOver) }
@@ -128,7 +127,6 @@ class MainActivity : AppCompatActivity() {
                 uppercaseText    = uppercaseText,
                 language         = language,
                 lastScannedLines = lastScannedLines,
-                autoScan         = autoScan,
                 debounceTime     = debounceTime,
                 hapticEnabled    = hapticEnabled,
                 warnOnOver          = warnOnOver,
@@ -151,7 +149,6 @@ class MainActivity : AppCompatActivity() {
                 uppercaseText = s.uppercaseText
                 language = s.language
                 lastScannedLines = s.lastScannedLines
-                autoScan = s.autoScan
                 debounceTime = s.debounceTime
                 hapticEnabled = s.hapticEnabled
                 warnOnOver = s.warnOnOver
@@ -170,7 +167,6 @@ class MainActivity : AppCompatActivity() {
                     uppercaseText             = uppercaseText,
                     language                  = language,
                     lastScannedLines          = lastScannedLines,
-                    autoScan                  = autoScan,
                     debounceTime              = debounceTime,
                     hapticEnabled             = hapticEnabled,
                     warnOnOver                = warnOnOver,
@@ -212,7 +208,6 @@ private fun PrimaBarcodeApp(
     uppercaseText: Boolean,
     language: Language,
     lastScannedLines: Int,
-    autoScan: Boolean,
     debounceTime: Int,
     hapticEnabled: Boolean,
     warnOnOver: Boolean,
@@ -257,9 +252,6 @@ private fun PrimaBarcodeApp(
                 locations.find { it.rc == rc.code }?.let { onLocationCodeChange(it.code) }
             }
         }
-    }
-    LaunchedEffect(autoScan, debounceTime) {
-        DataWedgeManager.setContinuousScan(context, autoScan, debounceTime)
     }
 
     val documents by appVm.documents.collectAsState()
@@ -469,7 +461,6 @@ private fun PrimaBarcodeApp(
                 uppercaseText = uppercaseText,
                 language = language,
                 lastScannedLines = lastScannedLines,
-                autoScan = autoScan,
                 debounceTime = debounceTime,
                 hapticEnabled = hapticEnabled,
                 warnOnOver = warnOnOver,
@@ -684,7 +675,6 @@ private fun PrimaBarcodeApp(
                         }
                     },
                     lastScannedLines = lastScannedLines,
-                    autoScan = autoScan,
                     hapticEnabled = hapticEnabled,
                     debounceTime = debounceTime,
                     warnOnOver = warnOnOver,

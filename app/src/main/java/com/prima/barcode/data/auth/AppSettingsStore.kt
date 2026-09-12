@@ -18,7 +18,6 @@ class AppSettingsStore @Inject constructor(@param:ApplicationContext private val
         uppercaseText    = prefs.getBoolean("uppercaseText", false),
         language         = Language.entries.firstOrNull { it.name == prefs.getString("language", null) } ?: Language.ENGLISH,
         lastScannedLines = prefs.getInt("lastScannedLines", 5),
-        autoScan         = prefs.getBoolean("autoScan", false),
         debounceTime     = prefs.getInt("debounceTime", 500),
         hapticEnabled    = prefs.getBoolean("hapticEnabled", true),
         warnOnOver          = prefs.getBoolean("warnOnOver", true),
@@ -54,7 +53,6 @@ class AppSettingsStore @Inject constructor(@param:ApplicationContext private val
             .putBoolean("uppercaseText",      settings.uppercaseText)
             .putString ("language",           settings.language.name)
             .putInt    ("lastScannedLines",   settings.lastScannedLines)
-            .putBoolean("autoScan",           settings.autoScan)
             .putInt    ("debounceTime",        settings.debounceTime)
             .putBoolean("hapticEnabled",      settings.hapticEnabled)
             .putBoolean("warnOnOver",          settings.warnOnOver)

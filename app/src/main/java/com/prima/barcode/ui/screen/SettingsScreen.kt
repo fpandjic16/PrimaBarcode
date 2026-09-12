@@ -80,7 +80,6 @@ fun SettingsScreen(
     var uppercaseText by remember { mutableStateOf(initial.uppercaseText) }
     var language by remember { mutableStateOf(initial.language) }
     var lastScannedLines by remember { mutableStateOf(initial.lastScannedLines) }
-    var autoScan by remember { mutableStateOf(initial.autoScan) }
     var debounceTime by remember { mutableStateOf(initial.debounceTime) }
     var hapticEnabled by remember { mutableStateOf(initial.hapticEnabled) }
     var warnOnOver by remember { mutableStateOf(initial.warnOnOver) }
@@ -92,7 +91,6 @@ fun SettingsScreen(
         uppercaseText = uppercaseText,
         language = language,
         lastScannedLines = lastScannedLines,
-        autoScan = autoScan,
         debounceTime = debounceTime,
         hapticEnabled = hapticEnabled,
         warnOnOver = warnOnOver,
@@ -273,14 +271,6 @@ fun SettingsScreen(
 
             item {
                 Column(modifier = Modifier.fillMaxWidth().background(Color.White)) {
-                    ToggleRow(
-                        icon = Icons.Outlined.QrCodeScanner,
-                        label = stringResource(R.string.settings_continuous_scan),
-                        description = stringResource(R.string.settings_continuous_scan_desc),
-                        checked = autoScan,
-                        onCheckedChange = { autoScan = it },
-                    )
-                    SettingsDivider()
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

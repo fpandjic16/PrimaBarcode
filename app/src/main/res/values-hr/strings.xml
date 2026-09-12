@@ -99,10 +99,8 @@
     <string name="settings_uppercase_desc">Prikaži sve oznake sučelja velikim slovima</string>
     <string name="settings_language">Jezik</string>
     <string name="settings_language_desc">Potrebno je ponovo pokrenuti za puni učinak</string>
-    <string name="settings_continuous_scan">Kontinuirano skeniranje</string>
-    <string name="settings_continuous_scan_desc">Kamera ostaje otvorena nakon svakog skeniranja</string>
     <string name="settings_debounce">Vrijeme čekanja</string>
-    <string name="settings_debounce_desc">Minimalno ms između skeniranja (samo kontinuirano)</string>
+    <string name="settings_debounce_desc">Minimalno ms prije nego isti barkod ponovo broji</string>
     <string name="settings_haptic">Haptička povratna informacija</string>
     <string name="settings_haptic_desc">Vibrira pri potvrdi i greškama skeniranja</string>
     <string name="settings_warn_over">Upozori pri prekoračenju</string>

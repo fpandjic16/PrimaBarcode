@@ -74,7 +74,6 @@ fun RecordingScreen(
     onLineUpdate: (lineNo: Int, newScanned: Double) -> Unit,
     onUpload: () -> Unit = {},
     lastScannedLines: Int = 5,
-    autoScan: Boolean = false,
     hapticEnabled: Boolean = true,
     debounceTime: Int = 500,
     warnOnOver: Boolean = true,
@@ -367,7 +366,6 @@ fun RecordingScreen(
     }
     if (cameraOpen) {
         CameraPreview(
-            continuous = autoScan,
             onBarcode = { barcode -> handleScan(barcode) },
             onClose = { cameraOpen = false },
             debounceMs = debounceTime,
