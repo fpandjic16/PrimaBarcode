@@ -37,16 +37,20 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.LineStatus
 import com.prima.barcode.data.model.Location
 import com.prima.barcode.data.model.ResponsibilityCenter
 import com.prima.barcode.data.model.User
+import com.prima.barcode.data.model.color
+import com.prima.barcode.data.model.scanStatus
 import com.prima.barcode.ui.component.DocumentStatsDashboard
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.component.verticalScrollbar
 import com.prima.barcode.ui.component.StatusProgressBar
 import com.prima.barcode.ui.theme.PrimaPalette
+import com.prima.barcode.ui.theme.PrimaStatus
 import com.prima.barcode.ui.theme.monoLabel
 import com.prima.barcode.ui.theme.uppercased
 import androidx.compose.ui.res.stringResource
@@ -76,6 +80,8 @@ fun MainMenuScreen(
     location: Location?,
     rc: ResponsibilityCenter?,
     docTypes: List<DocTypeSummary>,
+    /** Documents that already carry scans — the ZAPISI section. Empty hides the section. */
+    recordedDocs: List<Document> = emptyList(),
     shiftScans: Int = 0,
     shiftErrors: Int = 0,
     shiftReady: Int = 0,
@@ -87,6 +93,7 @@ fun MainMenuScreen(
     onDocumentOverview: () -> Unit,
     onShowErrors: () -> Unit = {},
     onUserInfoTap: () -> Unit = {},
+    onRecordedDocTap: (Document) -> Unit = {},
 ) {
     var showBlockedError by remember { mutableStateOf(false) }
 
@@ -195,6 +202,17 @@ fun MainMenuScreen(
                     onClick = { if (dt.blocked) showBlockedError = true else onTypeTap(dt.type) },
                 )
             }
+            // Documents in progress, across every type. Hidden entirely when nothing is scanned,
+            // so an idle device still opens on nothing but the document types.
+            if (recordedDocs.isNotEmpty()) {
+                item {
+                    Spacer(Modifier.height(4.dp))
+                    Text(stringResource(R.string.main_recordings_header), style = monoLabel.copy(color = PrimaPalette.Ink3))
+                }
+                items(recordedDocs, key = { "rec-${it.type.key}-${it.documentNo}" }) { doc ->
+                    RecordedDocumentRow(doc = doc, onClick = { onRecordedDocTap(doc) })
+                }
+            }
         }
     }
 
@@ -207,6 +225,57 @@ fun MainMenuScreen(
                 Button(onClick = { showBlockedError = false }) { Text(stringResource(R.string.btn_ok)) }
             },
         )
+    }
+}
+
+/** One document in the ZAPISI section: what it is, how much of it has already gone to the ERP. */
+@Composable
+private fun RecordedDocumentRow(doc: Document, onClick: () -> Unit) {
+    val status = doc.scanStatus()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White)
+            .border(1.dp, Color(0x18000000), RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(status.color))
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                doc.documentNo,
+                style = monoLabel.copy(color = PrimaPalette.Ink, fontWeight = FontWeight.Bold),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                doc.type.localizedDisplay(),
+                style = monoLabel.copy(color = PrimaPalette.Ink3),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                doc.totalScans.toString(),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontFamily = com.prima.barcode.ui.theme.GeistMono,
+                    color = PrimaPalette.Ink,
+                    fontWeight = FontWeight.Medium,
+                ),
+            )
+            if (doc.sentScans > 0) {
+                Text(
+                    stringResource(R.string.recordings_sent_chip, doc.sentScans),
+                    style = monoLabel.copy(color = PrimaStatus.Exact),
+                )
+            }
+        }
     }
 }
 

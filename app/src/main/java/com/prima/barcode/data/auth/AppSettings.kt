@@ -8,7 +8,6 @@ data class AppSettings(
     val textSize: TextSize = TextSize.NORMAL,
     val uppercaseText: Boolean = false,
     val language: Language = Language.ENGLISH,
-    val lastScannedLines: Int = 5,
     val debounceTime: Int = 500,
     val hapticEnabled: Boolean = true,
     val soundEnabled: Boolean = true,

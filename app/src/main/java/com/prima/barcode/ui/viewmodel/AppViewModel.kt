@@ -551,12 +551,6 @@ class AppViewModel @Inject constructor(
         }
     }
 
-    fun clearDocumentRecordings(documentNo: String, type: DocumentType) {
-        viewModelScope.launch {
-            repository.deleteDocumentRecordings(documentNo, type.key)
-        }
-    }
-
     /** Operator has reviewed the surplus scans and confirmed the goods are off the document. */
     fun discardOrphanedScans(documentNo: String, type: DocumentType, onDone: () -> Unit = {}) {
         viewModelScope.launch {

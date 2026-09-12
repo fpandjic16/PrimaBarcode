@@ -19,6 +19,7 @@
     <string name="dashboard_pill_error">грешка</string>
     <!-- Main menu -->
     <string name="main_documents_header">ДОКУМЕНТИ</string>
+    <string name="main_recordings_header">ЗАПИСИ</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Магацинска испорака</string>
     <string name="doctype_warehouse_receipt">Магацински прием</string>
@@ -29,7 +30,6 @@
     <string name="doctype_inventory">Инвентура</string>
     <!-- Doc list screen -->
     <string name="doc_list_tab_orders">НАРАЧКИ</string>
-    <string name="doc_list_tab_recordings">СНИМАЊА</string>
     <string name="doc_list_tab_errors">ГРЕШКИ</string>
     <string name="doc_list_empty">Нема документи</string>
     <string name="doc_list_scan_placeholder">Скенирај број на документ…</string>
@@ -107,8 +107,6 @@
     <string name="settings_sound_desc">Бип кога скенирањето успее, друг тон кога не</string>
     <string name="settings_warn_over">Предупреди при прекумерно скенирање</string>
     <string name="settings_warn_over_desc">Потврди кога скенираната количина ја надминува очекуваната</string>
-    <string name="settings_last_scanned">Последно скенирани ставки</string>
-    <string name="settings_last_scanned_desc">Ставки прикажани во лентата за скенирање (0 = скриено)</string>
     <string name="settings_server_endpoints">Сервер и крајни точки</string>
     <string name="settings_server_endpoints_desc">Основен OData URL, домен, URL-адреси на страници со документи</string>
     <string name="settings_export">Извези податоци</string>
@@ -193,7 +191,8 @@
     <string name="ext_config_import_read_error">Датотеката не можеше да се прочита</string>
     <!-- Document recordings -->
     <string name="doc_delete_recordings_title">Да се избришат снимањата?</string>
-    <string name="doc_delete_recordings_text">Сите снимања за %s ќе бидат избришани и документот ќе биде вратен во почетна состојба.</string>
+    <string name="doc_delete_recordings_text">Сите неиспратени записи за %s ќе бидат избришани.</string>
+    <string name="doc_delete_recordings_kept">%d записи се веќе испратени во надворешниот систем и остануваат непроменети.</string>
         <!-- Accessibility -->
     <string name="cd_filter">Филтер</string>
     <string name="cd_clear">Исчисти</string>
@@ -272,4 +271,16 @@
     <string name="main_blocked_title">Потребна е локација</string>
     <string name="main_blocked_text">Изберете локација или центар на одговорност пред отворање документи.</string>
     <string name="recording_lines_progress">%1$d/%2$d ставки</string>
+    <!-- Recordings tree -->
+    <string name="recordings_sent_chip">%d испратени</string>
+    <string name="recordings_tree_empty">Овој документ нема ставки.</string>
+    <string name="recordings_tree_sent">Испратено</string>
+    <string name="recordings_tree_queued">Чека</string>
+    <string name="recordings_tree_no_scans">Нема записи на оваа ставка</string>
+    <string name="recordings_tree_delete_title">Да се избрише записот?</string>
+    <string name="recordings_tree_delete_text">Записот %1$s, количина %2$s, ќе биде отстранет од ставката.</string>
+    <string name="recordings_tree_sent_locked">Веќе е испратено во надворешниот систем — оттука повеќе не може да се избрише.</string>
+    <string name="recordings_tree_hold_hint">Држете го овој ред 5 с за бришење на сите неиспратени записи.</string>
+    <string name="recordings_tree_orphans">Записи без ставка</string>
+    <string name="recordings_tree_orphans_desc">Нивната ставка е отстранета во надворешниот систем. Испратете го документот за да ги прегледате.</string>
 </resources>

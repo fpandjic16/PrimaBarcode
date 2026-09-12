@@ -7,7 +7,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -23,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,8 +53,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import androidx.compose.ui.res.stringResource
 import com.prima.barcode.R
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 private val dateFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
     .withZone(ZoneId.systemDefault())
@@ -86,7 +82,6 @@ fun DocumentListScreen(
     onDownload: () -> Unit,
     onUpload: (List<Document>) -> Unit,
     onErrorTap: (Document) -> Unit = {},
-    onDeleteRecordings: (Document) -> Unit = {},
     onClearErrors: () -> Unit = {},
     filter: DocumentFilter = DocumentFilter(),
     onOpenFilter: () -> Unit = {},
@@ -95,7 +90,6 @@ fun DocumentListScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var docNotFoundError by remember { mutableStateOf<String?>(null) }
-    var showDeleteDialog by remember { mutableStateOf<Document?>(null) }
     var showClearErrorsDialog by remember { mutableStateOf(false) }
     val filtered = remember(documents, locationCode, filter) {
         documents.filter { doc ->
@@ -115,25 +109,19 @@ fun DocumentListScreen(
     // without it the document matched no tab at all and simply vanished from this screen while
     // it was being sent — with no way back if the process died mid-upload.
     val orders     = remember(filtered) { filtered.filter { it.state == DocState.Downloaded || it.state == DocState.InProgress || it.state == DocState.PendingUpload || it.state is DocState.UploadFailed } }
-    val recordings = remember(filtered) {
-        filtered.filter { doc ->
-            doc.state == DocState.Completed ||
-            doc.state is DocState.UploadFailed ||
-            (doc.state == DocState.InProgress && doc.lines.any { it.scanned > 0.0 })
-        }
-    }
     val errors     = remember(filtered) { filtered.filter { it.state is DocState.UploadFailed } }
 
+    // The RECORDINGS tab is gone: it listed the same documents this tab already holds, and what it
+    // was really for — seeing what has been scanned — now lives in the ZAPISI section of the main
+    // menu, which shows the individual scans rather than just the documents carrying them.
     val tabs = listOf(
         stringResource(R.string.doc_list_tab_orders) to orders.size,
-        stringResource(R.string.doc_list_tab_recordings) to recordings.size,
         stringResource(R.string.doc_list_tab_errors) to errors.size,
     )
 
     val visibleDocs = when (selectedTab) {
         0    -> orders
-        1    -> recordings
-        2    -> errors
+        1    -> errors
         else -> emptyList()
     }
 
@@ -268,10 +256,9 @@ fun DocumentListScreen(
                 items(visibleDocs, key = { it.documentNo }) { doc ->
                     DocRow(
                         doc = doc,
-                        showErrorDetails = selectedTab == 2,
-                        onLongHold = if (selectedTab == 1) { { showDeleteDialog = doc } } else null,
+                        showErrorDetails = selectedTab == 1,
                         onClick = {
-                            if (selectedTab == 2 && doc.state is DocState.UploadFailed) onErrorTap(doc)
+                            if (selectedTab == 1 && doc.state is DocState.UploadFailed) onErrorTap(doc)
                             else onDocTap(doc)
                         },
                     )
@@ -288,21 +275,6 @@ fun DocumentListScreen(
         ) {
             when (selectedTab) {
                 1 -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth().height(64.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(if (canUpload) PrimaPalette.Coral else PrimaPalette.Coral.copy(alpha = 0.35f))
-                            .clickable(enabled = canUpload) { onUpload(uploadableDocs) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Outlined.CloudUpload, null, tint = Color.White, modifier = Modifier.size(18.dp))
-                            Text(stringResource(R.string.btn_upload).uppercased, style = monoLabel.copy(color = Color.White, fontWeight = FontWeight.Medium))
-                        }
-                    }
-                }
-                2 -> {
                     Box(
                         modifier = Modifier
                             .weight(1f).height(64.dp)
@@ -385,23 +357,6 @@ fun DocumentListScreen(
         )
     }
 
-    showDeleteDialog?.let { doc ->
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = null },
-            title = { Text(stringResource(R.string.doc_delete_recordings_title), fontWeight = FontWeight.Bold) },
-            text = { Text(stringResource(R.string.doc_delete_recordings_text, doc.documentNo)) },
-            confirmButton = {
-                Button(
-                    onClick = { showDeleteDialog = null; onDeleteRecordings(doc) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCE3A3A)),
-                ) { Text(stringResource(R.string.btn_clear), fontWeight = FontWeight.Bold) }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = { showDeleteDialog = null }) { Text(stringResource(R.string.btn_cancel)) }
-            },
-        )
-    }
-
     if (showClearErrorsDialog) {
         AlertDialog(
             onDismissRequest = { showClearErrorsDialog = false },
@@ -439,14 +394,11 @@ private fun com.prima.barcode.data.model.LineStatus.localizedLabel(): String = w
 private fun DocRow(
     doc: Document,
     showErrorDetails: Boolean = false,
-    onLongHold: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     val sizeOffset = LocalTextSizeOffset.current
     val status = doc.scanStatus()
     val statusColor = status.color
-    val coroutineScope = rememberCoroutineScope()
-    var holdProgress by remember { mutableFloatStateOf(0f) }
 
     Box(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -454,29 +406,7 @@ private fun DocRow(
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
                 .background(statusColor.copy(alpha = 0.10f))
-                .let { m ->
-                    if (onLongHold == null) m.clickable(onClick = onClick)
-                    else m.pointerInput(onClick, onLongHold) {
-                        detectTapGestures(
-                            onTap = { onClick() },
-                            onPress = {
-                                val job = coroutineScope.launch {
-                                    var elapsed = 0L
-                                    while (elapsed < 5000L) {
-                                        delay(16L)
-                                        elapsed += 16L
-                                        holdProgress = elapsed / 5000f
-                                    }
-                                    holdProgress = 0f
-                                    onLongHold()
-                                }
-                                tryAwaitRelease()
-                                job.cancel()
-                                holdProgress = 0f
-                            },
-                        )
-                    }
-                },
+                .clickable(onClick = onClick),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(modifier = Modifier.width(6.dp).fillMaxHeight().background(statusColor))
@@ -534,19 +464,6 @@ private fun DocRow(
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                 }
-            }
-        }
-        if (holdProgress > 0f) {
-            Box(
-                modifier = Modifier.matchParentSize().background(Color(0x28000000)),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(
-                    progress = { holdProgress },
-                    color = PrimaPalette.Coral,
-                    trackColor = Color(0x40FFFFFF),
-                    modifier = Modifier.size(40.dp),
-                )
             }
         }
     }

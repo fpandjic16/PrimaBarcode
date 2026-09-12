@@ -16,6 +16,8 @@ import javax.inject.Singleton
 interface DocumentRepository {
     fun observeAll(): Flow<List<Document>>
     fun observeDocument(documentNo: String, type: String): Flow<Document?>
+    /** Individual recordings for one document — what [observeDocument] sums away. */
+    fun observeRecordings(documentNo: String, type: String): Flow<List<RecordingEntity>>
     suspend fun replaceDownloadedDocuments(type: DocumentType, docs: List<Document>)
     suspend fun recordScan(
         documentNo: String,
@@ -42,6 +44,7 @@ interface DocumentRepository {
     suspend fun discardOrphanedScans(documentNo: String, type: String)
     suspend fun discardFailedScans(documentNo: String, type: String)
     suspend fun clearAll()
+    suspend fun deleteQueuedRecording(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int)
     suspend fun deleteDocumentRecordings(documentNo: String, type: String)
     suspend fun recoverStalePendingUploads()
 }
@@ -68,6 +71,9 @@ class DocumentRepositoryImpl @Inject constructor(
         ) { header, lines, recordings ->
             header?.let { DocumentHeaderWithLines(it, lines, recordings).toDomain() }
         }
+
+    override fun observeRecordings(documentNo: String, type: String): Flow<List<RecordingEntity>> =
+        db.recordingDao().observeByDoc(documentNo, type)
 
     override suspend fun replaceDownloadedDocuments(type: DocumentType, docs: List<Document>) {
         db.withTransaction {
@@ -292,11 +298,7 @@ class DocumentRepositoryImpl @Inject constructor(
     override suspend fun discardFailedScans(documentNo: String, type: String) {
         db.withTransaction {
             db.recordingDao().deleteFailedByDoc(documentNo, type)
-            val lines = db.documentLineDao().getByDoc(documentNo, type).map { it.toDomain(0.0) }
-            val recordings = db.recordingDao().getByDoc(documentNo, type)
-            db.documentHeaderDao().updateState(
-                documentNo, type, computeStateAfterMerge(lines, recordings).toDbString(),
-            )
+            refreshStateFromRecordings(documentNo, type)
         }
     }
 
@@ -304,11 +306,7 @@ class DocumentRepositoryImpl @Inject constructor(
         db.withTransaction {
             db.recordingDao().deleteOrphansByDoc(documentNo, type)
             // The document may now be back to untouched, or merely no longer blocked.
-            val lines = db.documentLineDao().getByDoc(documentNo, type).map { it.toDomain(0.0) }
-            val recordings = db.recordingDao().getByDoc(documentNo, type)
-            db.documentHeaderDao().updateState(
-                documentNo, type, computeStateAfterMerge(lines, recordings).toDbString(),
-            )
+            refreshStateFromRecordings(documentNo, type)
         }
     }
 
@@ -316,11 +314,41 @@ class DocumentRepositoryImpl @Inject constructor(
         db.documentHeaderDao().deleteAll()
     }
 
+    /** Removes a single scan the operator judged wrong. Refuses silently if it has already gone. */
+    override suspend fun deleteQueuedRecording(
+        documentNo: String,
+        type: String,
+        documentLine: Int,
+        recordingLineNo: Int,
+    ) {
+        db.withTransaction {
+            db.recordingDao().deleteQueuedByPk(documentNo, type, documentLine, recordingLineNo)
+            refreshStateFromRecordings(documentNo, type)
+        }
+    }
+
+    /**
+     * Clears a document's scans so the operator can start it again.
+     *
+     * Only the queued ones. This used to take everything and force the document back to
+     * Downloaded, which was harmless while accepted scans were deleted the moment the ERP
+     * confirmed them — there was nothing else to take. Now that they are kept, wiping them would
+     * mean the device forgets what it has already sent, while the ERP still holds it. The state is
+     * recomputed from whatever remains rather than assumed.
+     */
     override suspend fun deleteDocumentRecordings(documentNo: String, type: String) {
         db.withTransaction {
-            db.recordingDao().deleteAllForDoc(documentNo, type)
-            db.documentHeaderDao().updateState(documentNo, type, DocState.Downloaded.toDbString())
+            db.recordingDao().deleteQueuedForDoc(documentNo, type)
+            refreshStateFromRecordings(documentNo, type)
         }
+    }
+
+    private suspend fun refreshStateFromRecordings(documentNo: String, type: String) {
+        val lines = db.documentLineDao().getByDoc(documentNo, type).map { it.toDomain(0.0) }
+        val recordings = db.recordingDao().getByDoc(documentNo, type)
+        db.documentHeaderDao().updateState(
+            documentNo, type, computeStateAfterMerge(lines, recordings).toDbString(),
+        )
     }
 
     /**

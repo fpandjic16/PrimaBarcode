@@ -393,7 +393,7 @@ data class DownloadFilter(
 )
 ```
 
-Other `Models.kt` types: `User`, `Location`, `ResponsibilityCenter`, `Item(no, name)`, `Line` (computed `status`), `Document` (computed `linesExact`, `linesTotal`, `scannedQty`, `expectedQty`, `hasProgress`), `TapeEntry` (scan-log UI model, `isError = lineStatus == null`), `Double.formatQty()` extension.
+Other `Models.kt` types: `User`, `Location`, `ResponsibilityCenter`, `Item(no, name)`, `Line` (computed `status`), `Document` (computed `linesExact`, `linesTotal`, `scannedQty`, `expectedQty`, `hasProgress`, `totalScans`, `partlySent`), `ScanRecord` + `LineScans` (the recordings tree's UI models — see `RecordingsTreeScreen`), `Double.formatQty()` extension.
 
 ### Supporting: `DatabaseExporter`
 `data/export/DatabaseExporter.kt` — `suspend fun exportTo(uri: Uri)`, reads all headers/lines/recordings via DAOs, wraps as `{exportedAt, documentHeaders, documentLines, recordings}`, Gson-pretty-prints to the given `Uri`. Debug/support tool, invoked from `SettingsScreen`'s "Export data".
@@ -537,10 +537,9 @@ Plain (unencrypted) `SharedPreferences("app_settings")`.
 | textSize | `TextSize` enum | NORMAL |
 | uppercaseText | Boolean | false |
 | language | `Language` enum | ENGLISH |
-| lastScannedLines | Int | 5 |
-| autoScan | Boolean | false |
 | debounceTime | Int (ms) | 500 |
 | hapticEnabled | Boolean | true |
+| soundEnabled | Boolean | true |
 | warnOnOver | Boolean | true |
 | backgroundSync | Boolean | false |
 | lastLocationCode / lastRcCode | String | "" |
@@ -635,10 +634,16 @@ val matchedLine = doc.lines.find { it.barcodeNo == barcode }
 ## B.10 Screens (`ui/screen/`) — Reference
 
 ### `MainMenuScreen.kt`
-`data class DocTypeSummary(type, short, count, statusMini: List<LineStatus>, blocked: Boolean = false)`. Home screen: `PrimaTopBar` → `DocumentStatsDashboard` (tap → Dashboard) → RC/Location pill row (either cell → Location/RC pick) → "DOCUMENTS" `LazyColumn` of type rows (icon, label, mini `StatusProgressBar`, count badge or 🔒 if `blocked`, dimmed+non-interactive when blocked).
+`data class DocTypeSummary(type, count, statusMini: List<LineStatus>, blocked: Boolean = false)`. Home screen: `PrimaTopBar` → `DocumentStatsDashboard` (tap → Dashboard) → RC/Location pill row (either cell → Location/RC pick) → "DOCUMENTS" `LazyColumn` of type rows (icon, label, mini `StatusProgressBar`, count badge) → **"RECORDINGS"** section.
+
+A blocked type is *not* dimmed: it stays tappable and the tap raises the "choose a location first" dialog. Greying it out only told the operator "no" without telling them why.
+
+The RECORDINGS section lists the documents that carry scans, across every type, newest document date first, and hides itself entirely when there are none. Its source is `MainActivity`'s `recordedDocs`, built from **all** `documents` on `totalScans > 0` rather than from `filteredDocs` on `hasProgress` — both of those narrowings key off a line's scanned quantity, and an orphaned scan belongs to no line, so a document whose scans were all orphaned would vanish from the one list meant to hold everything scanned. Tapping a row opens `RecordingsTreeScreen`.
 
 ### `DocumentListScreen.kt`
-Three tabs — **Orders** (`Downloaded`/`InProgress`/`UploadFailed`), **Recordings** (`Completed`/`UploadFailed`/`InProgress`-with-scans), **Errors** (`UploadFailed`). Client-side filters: location match OR `doc.hasProgress` override, plus `DocumentFilter`. Dark `ScanField` (`handleDocScan`) offers doc creation if not found, gated by `canCreateDoc`. `DocRow` supports a 5s (5000ms, 16ms tick) long-press on the Recordings tab → delete-recordings confirmation; releasing early cancels. Bottom bar varies per tab (Download+Upload / Upload / Clear-errors+Upload).
+Two tabs — **Orders** (`Downloaded`/`InProgress`/`PendingUpload`/`UploadFailed`) and **Errors** (`UploadFailed`). Client-side filters: location match OR `doc.hasProgress` override, plus `DocumentFilter`. Dark `ScanField` (`handleDocScan`) reports a document it cannot find; there is no doc creation. Bottom bar varies per tab (Download+Upload / Clear-errors+Upload), and UPLOAD is dimmed and inert unless something is actually queued.
+
+The third tab, **Recordings**, was removed along with the 5-second long-press that lived on it: the tab listed documents Orders already held, and the thing it was really for — seeing what has been scanned — is now the main menu's RECORDINGS section, which shows individual scans rather than the documents carrying them. The long-press moved to `RecordingsTreeScreen`'s summary card.
 
 ### `DocumentOverviewScreen.kt` (the "Dashboard")
 Cross-type view, 3 tabs: **Errors**, **My Location** (per-type `DocTypeFilterMode` match), **All**. Opening the filter from the "My Location" tab locks source/RC to the current selection. Empty-state green checkmark + "No issues" shown on any empty tab, not just Errors.
@@ -695,6 +700,17 @@ Internal state machine, `RecordingView` enum: `OVERVIEW, ACTIVE_LINE, KEYPAD` �
 
 ### `SettingsScreen.kt`
 Buffered-edit-then-confirm-on-exit pattern (identical to `ExtSystemConfigScreen`'s): every field is local `remember` state; `attemptExit()` compares the rebuilt `AppSettings` (plus `pendingExtSystemConfig != null`) against `initial`; only diverges → "Save changes?" dialog. Sections: Appearance, Scanning, Sync, External System Configuration (single row → `ExtSystemConfigScreen`), Debug (Debugger active, Export data, **Insert system defaults** [3-option picker, stages into `pendingExtSystemConfig`, only persisted via Settings' own save], **Clear cache** [red, wipes credentials+settings+documents], **Delete all documents and recordings** [red, wipes only documents/recordings, not settings/sign-in]), System Info (read-only version/schema info), Account (avatar/name, immediate Sign out — no confirmation).
+
+### `RecordingsTreeScreen.kt` + `RecordingsTreeViewModel`
+Route `recordings/{documentNo}/{type}`, same argument shape as `recording/...`. Shows every line of the document and, indented under each, the individual scans making up its quantity — including lines with none (`Item C 0/3`), because what is *missing* is as much of the picture as what was scanned.
+
+The scans do not come from `Document`. `Mappers.toDomain` sums recordings into each line's quantity and only the exceptional ones (orphaned, failed) survive as objects, and `observeAll()` rebuilds every document on any database change — putting the individual scans on `Document` would multiply the cost of the app's busiest path for one screen. The ViewModel `combine`s `observeDocument` with the new `observeRecordings` (a thin wrapper over `RecordingDao.observeByDoc`, already sorted by `documentLine, recordingLineNo`) into `RecordingsTreeState(document, tree: List<LineScans>)`.
+
+Deletion, two levels:
+- **One scan** — only while `sentAt IS NULL`. A sent row shows a lock instead of a bin, and tapping it explains why: the row is in the ERP, so deleting it locally changes nothing there and only makes the device forget what it has sent. `deleteQueuedRecording` → `deleteQueuedByPk`, then state recomputed from what remains.
+- **All queued scans** — the 5-second hold on the summary card, inherited from the old Recordings tab. `deleteDocumentRecordings` now takes only queued rows (see §B.6), and the dialog says how many are already sent and staying.
+
+Orphans get their own branch at the bottom rather than being left out: the screen shows a total at the top, and omitting them would make it quietly disagree with itself. They are read-only here — discarding an orphan is the decision `UploadErrorScreen` asks for explicitly.
 
 ### `UploadErrorScreen.kt`
 Read-only failed-upload detail: header card, document-info card, full raw error-message card (`(document.state as DocState.UploadFailed).reason`), "Retry Upload" button.

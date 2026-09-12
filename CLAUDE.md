@@ -44,7 +44,7 @@ app/src/main/java/com/prima/barcode/
 ├── di/                          # Hilt modules (DatabaseModule)
 └── ui/
     ├── theme/                   # Color.kt, Type.kt, Shape.kt, Theme.kt, Language.kt
-    ├── component/               # Reusable Compose components (ScanBar, ScanTape, CameraPreview, ...)
+    ├── component/               # Reusable Compose components (ScanBar, ScanField, CameraPreview, ...)
     ├── screen/                  # Full screens
     └── viewmodel/                # AppViewModel (app-wide state/sync), RecordingViewModel (per-document)
 data/

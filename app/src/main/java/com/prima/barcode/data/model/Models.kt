@@ -160,16 +160,30 @@ sealed interface DocState {
     data class  UploadFailed(val reason: String) : DocState
 }
 
-data class TapeEntry(
-    val id: String,
-    val barcode: String,
-    val itemName: String?,
+/**
+ * One recorded scan, as the recordings tree shows it.
+ *
+ * Deliberately not carried on [Document]: `Mappers.toDomain` sums recordings into each line and
+ * `observeAll()` rebuilds every document on any database change, so putting the individual scans
+ * there would multiply the cost of the app's busiest path for the benefit of one screen. The tree
+ * observes them separately instead.
+ */
+data class ScanRecord(
+    val lineNo: Int,
+    val recordingLineNo: Int,
+    val barcodeNo: String,
     val quantity: Double,
-    val at: Instant,
-    val lineStatus: LineStatus?,
-) {
-    val isError: Boolean get() = lineStatus == null
-}
+    val at: Instant?,
+    val userId: String,
+    /** Already accepted by the ERP. Such a scan can be shown but never deleted from here. */
+    val sent: Boolean,
+)
+
+/** A document line together with the scans recorded against it — one branch of the tree. */
+data class LineScans(
+    val line: Line,
+    val scans: List<ScanRecord>,
+)
 
 /** Show no decimal places for whole numbers; otherwise show up to 5 significant decimal places. */
 fun Double.formatQty(): String {

@@ -19,6 +19,7 @@
     <string name="dashboard_pill_error">greška</string>
     <!-- Main menu -->
     <string name="main_documents_header">DOKUMENTI</string>
+    <string name="main_recordings_header">ZAPISI</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Skladišna otpremnica</string>
     <string name="doctype_warehouse_receipt">Skladišna primka</string>
@@ -29,7 +30,6 @@
     <string name="doctype_inventory">Inventura</string>
     <!-- Doc list screen -->
     <string name="doc_list_tab_orders">NALOZI</string>
-    <string name="doc_list_tab_recordings">ZAPISI</string>
     <string name="doc_list_tab_errors">GREŠKE</string>
     <string name="doc_list_empty">Nema dokumenata</string>
     <string name="doc_list_scan_placeholder">Skeniraj broj dokumenta…</string>
@@ -107,8 +107,6 @@
     <string name="settings_sound_desc">Pisak kad skeniranje pogodi, drugi ton kad ne</string>
     <string name="settings_warn_over">Upozori pri prekoračenju</string>
     <string name="settings_warn_over_desc">Potvrdi kada skenirana količina premašuje očekivanu</string>
-    <string name="settings_last_scanned">Zadnji skenirani redci</string>
-    <string name="settings_last_scanned_desc">Redci prikazani u vrpci skeniranja (0 = skriveno)</string>
     <string name="settings_server_endpoints">Poslužitelj i krajnje točke</string>
     <string name="settings_server_endpoints_desc">OData osnovni URL, domena, URL-ovi stranica dokumenata</string>
     <string name="settings_export">Izvezi podatke</string>
@@ -193,7 +191,8 @@
     <string name="ext_config_import_read_error">Datoteka se ne može pročitati</string>
     <!-- Document recordings -->
     <string name="doc_delete_recordings_title">Obrisati snimanja?</string>
-    <string name="doc_delete_recordings_text">Sva snimanja za %s bit ce izbrisana i dokument ce biti vracen u pocetno stanje.</string>
+    <string name="doc_delete_recordings_text">Svi neposlani zapisi za %s bit će obrisani.</string>
+    <string name="doc_delete_recordings_kept">%d zapisa je već poslano u vanjski sustav i ostaju nepromijenjeni.</string>
         <!-- Accessibility -->
     <string name="cd_filter">Filtar</string>
     <string name="cd_clear">Obriši</string>
@@ -272,4 +271,16 @@
     <string name="main_blocked_title">Potrebna lokacija</string>
     <string name="main_blocked_text">Odaberite lokaciju ili centar odgovornosti prije otvaranja dokumenata.</string>
     <string name="recording_lines_progress">%1$d/%2$d stavki</string>
+    <!-- Recordings tree -->
+    <string name="recordings_sent_chip">%d poslano</string>
+    <string name="recordings_tree_empty">Ovaj dokument nema stavki.</string>
+    <string name="recordings_tree_sent">Poslano</string>
+    <string name="recordings_tree_queued">Čeka</string>
+    <string name="recordings_tree_no_scans">Nema zapisa na ovoj stavci</string>
+    <string name="recordings_tree_delete_title">Obrisati zapis?</string>
+    <string name="recordings_tree_delete_text">Zapis %1$s, količina %2$s, bit će uklonjen sa stavke.</string>
+    <string name="recordings_tree_sent_locked">Već je poslano u vanjski sustav — odavde se više ne može obrisati.</string>
+    <string name="recordings_tree_hold_hint">Držite ovaj redak 5 s za brisanje svih neposlanih zapisa.</string>
+    <string name="recordings_tree_orphans">Zapisi bez stavke</string>
+    <string name="recordings_tree_orphans_desc">Njihova je stavka uklonjena u vanjskom sustavu. Pošaljite dokument da ih pregledate.</string>
 </resources>

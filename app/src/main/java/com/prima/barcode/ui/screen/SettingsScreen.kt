@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -79,7 +78,6 @@ fun SettingsScreen(
     var textSize by remember { mutableStateOf(initial.textSize) }
     var uppercaseText by remember { mutableStateOf(initial.uppercaseText) }
     var language by remember { mutableStateOf(initial.language) }
-    var lastScannedLines by remember { mutableStateOf(initial.lastScannedLines) }
     var debounceTime by remember { mutableStateOf(initial.debounceTime) }
     var hapticEnabled by remember { mutableStateOf(initial.hapticEnabled) }
     var soundEnabled by remember { mutableStateOf(initial.soundEnabled) }
@@ -91,7 +89,6 @@ fun SettingsScreen(
         textSize = textSize,
         uppercaseText = uppercaseText,
         language = language,
-        lastScannedLines = lastScannedLines,
         debounceTime = debounceTime,
         hapticEnabled = hapticEnabled,
         soundEnabled = soundEnabled,
@@ -346,64 +343,6 @@ fun SettingsScreen(
                         checked = warnOnOver,
                         onCheckedChange = { warnOnOver = it },
                     )
-                    SettingsDivider()
-                    var lastScannedExpanded by remember { mutableStateOf(false) }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { lastScannedExpanded = !lastScannedExpanded }
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        SettingsIcon(Icons.AutoMirrored.Outlined.List)
-                        Spacer(Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                stringResource(R.string.settings_last_scanned),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = PrimaPalette.Ink,
-                                    fontWeight = FontWeight.Normal,
-                                ),
-                            )
-                            Text(
-                                stringResource(R.string.settings_last_scanned_desc),
-                                style = monoLabel.copy(color = PrimaPalette.Ink3),
-                            )
-                        }
-                        Text(
-                            lastScannedLines.toString(),
-                            style = monoLabel.copy(color = PrimaPalette.Ink3, fontWeight = FontWeight.Medium),
-                        )
-                    }
-                    if (lastScannedExpanded) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 74.dp, end = 20.dp, bottom = 14.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            (0..5).forEach { n ->
-                                val selected = n == lastScannedLines
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (selected) PrimaPalette.Slate else PrimaPalette.CreamAlt)
-                                        .clickable { lastScannedLines = n; lastScannedExpanded = false }
-                                        .padding(vertical = 8.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        n.toString(),
-                                        style = monoLabel.copy(
-                                            color = if (selected) Color.White else PrimaPalette.Ink2,
-                                            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-                                        ),
-                                    )
-                                }
-                            }
-                        }
-                    }
                 }
             }
 

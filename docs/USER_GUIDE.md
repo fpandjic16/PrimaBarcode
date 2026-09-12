@@ -14,7 +14,8 @@ This guide explains what every screen does, what every button and toggle means, 
 4. [The Main Menu](#4-the-main-menu)
 5. [Choosing Your Location & Responsibility Center](#5-choosing-your-location--responsibility-center)
 6. [Document Types](#6-document-types)
-7. [The Document List](#7-the-document-list-orders--recordings--errors)
+7. [The Document List](#7-the-document-list-orders--errors)
+7a. [The RECORDINGS Section](#7a-the-recordings-section)
 8. [Downloading Documents](#8-downloading-documents)
 9. [Scanning a Document (Recording Screen)](#9-scanning-a-document-recording-screen)
 10. [Understanding Warnings You May See](#10-understanding-warnings-you-may-see)
@@ -96,11 +97,12 @@ This is the home screen you land on every time you open the app.
 - **Top bar**: shows your name once signed in (or a prompt to sign in). A round avatar button top-left (your initials once signed in) opens your **User Info** — user ID, name, Responsibility Center, Location, and a sign-out button; tapping it while signed out opens the sign-in screen instead. A gear ⚙️ icon top-right opens **Settings**.
 - **Today card** (tap it anywhere): a summary of today's activity — total lines scanned, and counts of Ready / Partial / Over / Error documents. Tapping this card opens the **Dashboard**.
 - **Location/RC bar**: two side-by-side pills showing your current Responsibility Center code and Location code. Tap **either one** to open the Location & RC picker and change them.
-- **Document type list**: one row per document type (Warehouse Shipment, Warehouse Receipt, Retail Shipment, Retail Whse. Receipt, Transport Sheet), each showing:
+- **Document type list**: one row per document type (Warehouse Shipment, Warehouse Receipt, Retail Shipment, Retail Whse. Receipt, Transport Sheet, Complaint, Inventory), each showing:
   - An icon and the type's name.
   - A thin colored mini-bar (if there's any activity) previewing the mix of statuses across that type's documents.
-  - A count of how many documents of that type you currently have, **or** a 🔒 lock icon if that type is currently blocked (e.g. no location selected yet, or the type has no matching reference data). Locked rows are dimmed and can't be tapped.
-  - Tapping an unlocked row opens that type's **Document List**.
+  - A count of how many documents of that type you currently have.
+  - Tapping a row opens that type's **Document List**. If the type can't be opened yet — no location or responsibility centre selected — the tap tells you so instead of doing nothing.
+- **RECORDINGS section**: every document you have scanned anything into, across all types. Hidden until you scan something. See [§7a](#7a-the-recordings-section).
 
 ---
 
@@ -125,33 +127,63 @@ Open this screen by tapping either pill on the Main Menu.
 | **Retail Shipment** | Goods going out from a store to a customer |
 | **Retail Whse. Receipt** | Goods/returns coming in from a store back to a warehouse |
 | **Transport Sheet** | Inter-location transfer documents |
+| **Complaint** | Goods returned against a complaint (scoped by responsibility centre by default) |
+| **Inventory** | Stocktaking documents |
 
 Which of these you see (and whether they're filtered by Location or by Responsibility Center) depends on how your company has configured the app — ask your administrator/consultant if a type behaves unexpectedly.
 
 ---
 
-## 7. The Document List (Orders / Recordings / Errors)
+## 7. The Document List (Orders / Errors)
 
-Reached by tapping a document type on the Main Menu. Shows all documents of that type, split into three tabs:
+Reached by tapping a document type on the Main Menu. Shows all documents of that type, split into two tabs:
 
 | Tab | Shows |
 |---|---|
-| **ORDERS** | Documents you haven't finished yet — freshly downloaded, or in progress |
-| **RECORDINGS** | Documents that are complete, failed to upload, or have any scanning activity at all |
+| **ORDERS** | Documents you haven't finished yet — freshly downloaded, in progress, being sent, or failed |
 | **ERRORS** | Documents that failed to upload |
 
 **Each document row** shows: document number, a colored status chip (Ready/Partial/Empty/Over-qty), the source location, and the document date. If it's in the Errors tab, an extra red "ERROR" chip appears, along with the failure reason.
 
 **Scanning/typing a document number** in the scan bar at the top jumps straight to that document if it exists. If it doesn't, you'll see a message that it needs to be downloaded from the central system first — there's no way to create or scan against a document that hasn't been officially released yet.
 
-**Deleting a document's recordings**: on the **Recordings** tab, press and hold a row for about 5 seconds (you'll see a progress ring fill in). This opens a confirmation to wipe all scans for that document and reset it back to its downloaded state — use this if you need to start a document over from scratch. Releasing early cancels the hold.
+**Deleting a document's recordings** has moved to the **RECORDINGS** section of the Main Menu — see [§7a](#7a-the-recordings-section).
 
 **Bottom buttons** change per tab:
 - **Orders**: `DOWNLOAD` and `UPLOAD`.
-- **Recordings**: a single full-width `UPLOAD`.
 - **Errors**: `CLEAR ERRORS` (removes failed documents from your device without uploading them — use with care) and `UPLOAD` (retries them).
 
+`UPLOAD` is greyed out and does nothing when there is nothing waiting to be sent.
+
 The funnel/filter icon (top-right) turns **coral/orange** when a filter is currently active — see [§15](#15-filtering-documents).
+
+---
+
+## 7a. The RECORDINGS Section
+
+Below the document types on the Main Menu, a **RECORDINGS** section lists every document you have scanned anything into, whatever its type, newest first. It is hidden when you haven't scanned anything yet. Each row shows the document number, its type, how many scans it holds, and how many of those have already gone to the central system.
+
+Tapping a row opens that document's scans as a **tree**:
+
+```
+ITEM-A            2/5
+   1 PCS   Waiting   12.09. 08:14
+   1 PCS   Waiting   12.09. 08:15
+ITEM-B            1/1
+   1 PCS   Sent      12.09. 08:17
+ITEM-C            0/3
+   No recordings on this line
+```
+
+Every line of the document appears, including ones you haven't touched — seeing `0/3` is the point. Under each line sit the individual scans that add up to its quantity, each with its quantity, the time, and whether it has been **Sent** or is still **Waiting**.
+
+**Deleting one scan**: tap the red bin on its row and confirm. The line's quantity drops by that amount.
+
+A scan that has already been **Sent** shows a padlock instead of a bin. It cannot be deleted here: it is already recorded in the central system, and removing it from the device would only make the device forget what it sent. Correct it in the central system instead.
+
+**Deleting every unsent scan on the document**: press and hold the summary card at the top for about 5 seconds (a progress ring fills in; releasing early cancels). The confirmation tells you how many scans have already been sent — those stay.
+
+If the central system removed a line *after* you scanned it, those scans appear at the bottom under **Recordings without a line**. You cannot delete them here — press UPLOAD on the document and the review will ask you what to do with them.
 
 ---
 
@@ -178,11 +210,13 @@ This is the core screen — opened by tapping any document from a list.
 ### 9.1 Overview
 
 You'll see:
-- A subtitle showing the document number, how many lines are exact out of total, and (if configured) the document type code.
+- The **document number** as the screen's title, with how many lines are exact out of total beneath it.
 - A summary bar: source/destination codes on the left, total scanned/expected on the right (turns green once everything is exact).
 - A thin progress bar summarizing every line's status at a glance.
 - The full list of expected lines — item number, item name, and a large scanned/expected counter in that line's status color.
-- At the bottom: a **scan bar** to type/scan a barcode, and a collapsible **"LAST SCANS" tape** showing your most recent scans.
+- At the bottom: a **scan bar** to type/scan a barcode.
+
+To review what you have scanned, line by line and scan by scan, use the **RECORDINGS** section on the Main Menu ([§7a](#7a-the-recordings-section)). It replaced the old "last scans" tape, which forgot everything the moment you left this screen.
 
 ### 9.2 Scanning
 
@@ -308,9 +342,9 @@ Open Settings via the gear icon on the Main Menu. **Settings are buffered** — 
 | Setting | What it does |
 |---|---|
 | **Debounce time** | How long the same barcode is ignored after it is read (200ms–2s). The hardware trigger and the camera can both be live at once, so without this one physical scan could be counted twice. |
-| **Haptic feedback** | Vibrate on scan confirmation and errors. |
+| **Haptic feedback** | Vibrate on scan confirmation and errors — on document scanning and QR sign-in alike. |
+| **Scan sounds** | Beep on a scan that lands, a different tone on one that doesn't. Same two input paths as the vibration. |
 | **Warn on over-scan** | Show a warning when you scan more than the expected quantity for a line. |
-| **Last scanned lines** | How many recent scans are shown in the "LAST SCANS" tape while scanning (0 hides it entirely, up to 5). |
 
 ### Sync
 | Setting | What it does |
@@ -357,13 +391,13 @@ Tap into the line and either use −1/+1, or tap the number to type the correct 
 Nothing is ever recorded for a rejected scan, so there's nothing to undo — just figure out the mismatch and rescan. Most common causes: you're on the wrong document (double-check the document number in the top bar), the label's barcode doesn't byte-for-byte match what's on the document (a re-print, a different symbology, or stray characters), or — if it's a special `Barcode|UoM|Qty` label — see [§18.7](#187-the-barcode-scanned-as-garbagewrong-characters). If you're confident the item genuinely belongs on the document and it's still not matching, flag it to the office — the document's data may need correcting on the central-system side.
 
 ### 18.4 "A document I was working on disappeared from Orders"
-Check the **Recordings** tab — if you'd already made progress on it, it lives there instead once it's Complete, or moves to Errors if an upload attempt failed.
+It stays on **Orders** all the way through, including while it's being sent and after a failed send. If it's genuinely gone, it uploaded successfully — documents leave the device once everything on them has been accepted. Anything you've scanned into is also listed under **RECORDINGS** on the Main Menu, so check there too.
 
 ### 18.5 "My upload failed"
 Open the document from the **Errors** tab to read the exact reason, then tap **Retry Upload**. If the message isn't clear (e.g. a technical server error), relay the exact text to IT support.
 
 ### 18.6 "I want to start a document completely over"
-On the Recordings tab, press and hold the document row for ~5 seconds and confirm — this wipes all scans for that document and resets it to its freshly-downloaded state.
+Open it from **RECORDINGS** on the Main Menu, then press and hold the summary card at the top for ~5 seconds and confirm. This wipes every scan that hasn't been sent yet. Scans already accepted by the central system stay — they're recorded there, and the confirmation tells you how many there are.
 
 ### 18.7 "The barcode scanned as garbage/wrong characters"
 If it's a special `Barcode|UoM|Qty` label, verify with the office that it was printed as **Code 128** — the older Code 39 symbology cannot represent the `|` character correctly and will scan as gibberish.

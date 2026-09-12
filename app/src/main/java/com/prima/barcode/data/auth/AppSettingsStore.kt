@@ -17,7 +17,6 @@ class AppSettingsStore @Inject constructor(@param:ApplicationContext private val
         textSize         = TextSize.entries.firstOrNull { it.name == prefs.getString("textSize", null) } ?: TextSize.NORMAL,
         uppercaseText    = prefs.getBoolean("uppercaseText", false),
         language         = Language.entries.firstOrNull { it.name == prefs.getString("language", null) } ?: Language.ENGLISH,
-        lastScannedLines = prefs.getInt("lastScannedLines", 5),
         debounceTime     = prefs.getInt("debounceTime", 500),
         hapticEnabled    = prefs.getBoolean("hapticEnabled", true),
         soundEnabled     = prefs.getBoolean("soundEnabled", true),
@@ -53,7 +52,6 @@ class AppSettingsStore @Inject constructor(@param:ApplicationContext private val
             .putString ("textSize",          settings.textSize.name)
             .putBoolean("uppercaseText",      settings.uppercaseText)
             .putString ("language",           settings.language.name)
-            .putInt    ("lastScannedLines",   settings.lastScannedLines)
             .putInt    ("debounceTime",        settings.debounceTime)
             .putBoolean("hapticEnabled",      settings.hapticEnabled)
             .putBoolean("soundEnabled",       settings.soundEnabled)

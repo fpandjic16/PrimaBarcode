@@ -19,6 +19,7 @@
     <string name="dashboard_pill_error">error</string>
     <!-- Main menu -->
     <string name="main_documents_header">DOCUMENTS</string>
+    <string name="main_recordings_header">RECORDINGS</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Warehouse Shipment</string>
     <string name="doctype_warehouse_receipt">Warehouse Receipt</string>
@@ -29,7 +30,6 @@
     <string name="doctype_inventory">Inventory</string>
     <!-- Doc list screen -->
     <string name="doc_list_tab_orders">ORDERS</string>
-    <string name="doc_list_tab_recordings">RECORDINGS</string>
     <string name="doc_list_tab_errors">ERRORS</string>
     <string name="doc_list_empty">No documents</string>
     <string name="doc_list_scan_placeholder">Scan document number…</string>
@@ -107,8 +107,6 @@
     <string name="settings_sound_desc">Beep on a scan that lands, a different tone on one that doesn\'t</string>
     <string name="settings_warn_over">Warn on over-scan</string>
     <string name="settings_warn_over_desc">Confirm when scanned quantity exceeds expected</string>
-    <string name="settings_last_scanned">Last scanned lines</string>
-    <string name="settings_last_scanned_desc">Lines shown in scan tape (0 = hidden)</string>
     <string name="settings_server_endpoints">Server &amp; endpoints</string>
     <string name="settings_server_endpoints_desc">OData base URL, domain, document page URLs</string>
     <string name="settings_export">Export data</string>
@@ -193,7 +191,8 @@
     <string name="ext_config_import_read_error">Could not read file</string>
     <!-- Document recordings -->
     <string name="doc_delete_recordings_title">Delete recordings?</string>
-    <string name="doc_delete_recordings_text">All recordings for %s will be deleted and the document will be reset to its initial state.</string>
+    <string name="doc_delete_recordings_text">All unsent recordings for %s will be deleted.</string>
+    <string name="doc_delete_recordings_kept">%d recordings have already been sent to the external system and stay as they are.</string>
         <!-- Accessibility -->
     <string name="cd_filter">Filter</string>
     <string name="cd_clear">Clear</string>
@@ -272,4 +271,16 @@
     <string name="main_blocked_title">Location required</string>
     <string name="main_blocked_text">Choose a location or responsibility centre before opening documents.</string>
     <string name="recording_lines_progress">%1$d/%2$d lines</string>
+    <!-- Recordings tree -->
+    <string name="recordings_sent_chip">%d sent</string>
+    <string name="recordings_tree_empty">This document has no lines.</string>
+    <string name="recordings_tree_sent">Sent</string>
+    <string name="recordings_tree_queued">Waiting</string>
+    <string name="recordings_tree_no_scans">No recordings on this line</string>
+    <string name="recordings_tree_delete_title">Delete recording?</string>
+    <string name="recordings_tree_delete_text">The recording of %1$s, quantity %2$s, will be removed from the line.</string>
+    <string name="recordings_tree_sent_locked">Already sent to the external system — it can no longer be deleted here.</string>
+    <string name="recordings_tree_hold_hint">Hold this row for 5 s to delete all unsent recordings.</string>
+    <string name="recordings_tree_orphans">Recordings without a line</string>
+    <string name="recordings_tree_orphans_desc">Their line was removed in the external system. Upload the document to review them.</string>
 </resources>

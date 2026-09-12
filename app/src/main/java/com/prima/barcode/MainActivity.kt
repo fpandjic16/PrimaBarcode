@@ -71,6 +71,7 @@ import com.prima.barcode.ui.screen.LocationRcPickScreen
 import com.prima.barcode.ui.screen.LoginSheet
 import com.prima.barcode.ui.screen.MainMenuScreen
 import com.prima.barcode.ui.screen.RecordingScreen
+import com.prima.barcode.ui.screen.RecordingsTreeScreen
 import com.prima.barcode.ui.screen.SettingsScreen
 import com.prima.barcode.ui.screen.UserInfoScreen
 import com.prima.barcode.ui.theme.Language
@@ -78,6 +79,7 @@ import com.prima.barcode.ui.theme.PrimaBarcodeTheme
 import com.prima.barcode.ui.theme.TextSize
 import com.prima.barcode.ui.viewmodel.AppViewModel
 import com.prima.barcode.ui.viewmodel.RecordingViewModel
+import com.prima.barcode.ui.viewmodel.RecordingsTreeViewModel
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
@@ -111,7 +113,6 @@ class MainActivity : AppCompatActivity() {
             var textSize         by remember { mutableStateOf(initialSettings.textSize) }
             var uppercaseText    by remember { mutableStateOf(initialSettings.uppercaseText) }
             var language         by remember { mutableStateOf(initialSettings.language) }
-            var lastScannedLines by remember { mutableStateOf(initialSettings.lastScannedLines) }
             var debounceTime     by remember { mutableStateOf(initialSettings.debounceTime) }
             var hapticEnabled     by remember { mutableStateOf(initialSettings.hapticEnabled) }
             var soundEnabled      by remember { mutableStateOf(initialSettings.soundEnabled) }
@@ -127,7 +128,6 @@ class MainActivity : AppCompatActivity() {
                 textSize         = textSize,
                 uppercaseText    = uppercaseText,
                 language         = language,
-                lastScannedLines = lastScannedLines,
                 debounceTime     = debounceTime,
                 hapticEnabled    = hapticEnabled,
                 soundEnabled     = soundEnabled,
@@ -150,7 +150,6 @@ class MainActivity : AppCompatActivity() {
                 textSize = s.textSize
                 uppercaseText = s.uppercaseText
                 language = s.language
-                lastScannedLines = s.lastScannedLines
                 debounceTime = s.debounceTime
                 hapticEnabled = s.hapticEnabled
                 soundEnabled = s.soundEnabled
@@ -169,7 +168,6 @@ class MainActivity : AppCompatActivity() {
                     textSize                  = textSize,
                     uppercaseText             = uppercaseText,
                     language                  = language,
-                    lastScannedLines          = lastScannedLines,
                     debounceTime              = debounceTime,
                     hapticEnabled             = hapticEnabled,
                     soundEnabled              = soundEnabled,
@@ -211,7 +209,6 @@ private fun PrimaBarcodeApp(
     textSize: TextSize,
     uppercaseText: Boolean,
     language: Language,
-    lastScannedLines: Int,
     debounceTime: Int,
     hapticEnabled: Boolean,
     soundEnabled: Boolean,
@@ -291,6 +288,17 @@ private fun PrimaBarcodeApp(
         )
     }.filter { it.type.key !in disabledDocTypes }
 
+    // The ZAPISI section: work in progress across every type, newest document first. Deliberately
+    // not filtered by disabledDocTypes — a type switched off mid-job would otherwise take the
+    // operator's only view of those scans with it.
+    // Built from documents rather than filteredDocs, and on totalScans rather than hasProgress:
+    // both of those narrowings key off a line's scanned quantity, and a scan whose line the ERP
+    // has since removed adds to no line at all. A document whose scans were all orphaned would
+    // drop out of the one list that is supposed to hold everything the operator has scanned.
+    val recordedDocs = documents
+        .filter { it.totalScans > 0 }
+        .sortedByDescending { it.documentDate ?: it.creationDateTime }
+
     val shiftScans  = filteredDocs.sumOf { d -> d.lines.count { it.scanned > 0 } }
     val errorDocs   = filteredDocs.filter { it.state is DocState.UploadFailed }
     val readyDocs   = filteredDocs.filter { it.state !is DocState.UploadFailed && it.scanStatus() == LineStatus.EXACT }
@@ -362,6 +370,7 @@ private fun PrimaBarcodeApp(
                 location = location,
                 rc = rc,
                 docTypes = docTypes,
+                recordedDocs = recordedDocs,
                 shiftScans = shiftScans,
                 shiftErrors = errorDocs.size,
                 shiftReady = readyDocs.size,
@@ -379,6 +388,7 @@ private fun PrimaBarcodeApp(
                     if (appVm.extSystemCredentialStore.isValid()) nav.navigate("user_info")
                     else showMainLoginSheet = true
                 },
+                onRecordedDocTap = { doc -> nav.navigate("recordings/${doc.documentNo}/${doc.type.key}") },
             )
         }
         composable("user_info") {
@@ -469,7 +479,6 @@ private fun PrimaBarcodeApp(
                 textSize = textSize,
                 uppercaseText = uppercaseText,
                 language = language,
-                lastScannedLines = lastScannedLines,
                 debounceTime = debounceTime,
                 hapticEnabled = hapticEnabled,
                 soundEnabled = soundEnabled,
@@ -547,7 +556,6 @@ private fun PrimaBarcodeApp(
                     }
                 },
                 onErrorTap = { doc -> nav.navigate("upload_error/${doc.documentNo}") },
-                onDeleteRecordings = { doc -> appVm.clearDocumentRecordings(doc.documentNo, doc.type) },
                 onClearErrors = { appVm.clearErrorDocs() },
                 filter = docFilter,
                 onOpenFilter = { nav.navigate("filter") },
@@ -688,11 +696,29 @@ private fun PrimaBarcodeApp(
                             }
                         }
                     },
-                    lastScannedLines = lastScannedLines,
-                    hapticEnabled = hapticEnabled,
+                        hapticEnabled = hapticEnabled,
                     soundEnabled = soundEnabled,
                     debounceTime = debounceTime,
                     warnOnOver = warnOnOver,
+                )
+            }
+        }
+        composable(
+            route = "recordings/{documentNo}/{type}",
+            arguments = listOf(
+                navArgument("documentNo") { type = NavType.StringType },
+                navArgument("type") { type = NavType.StringType },
+            ),
+        ) {
+            val vm: RecordingsTreeViewModel = hiltViewModel()
+            val treeState by vm.state.collectAsState()
+            treeState.document?.let { currentDoc ->
+                RecordingsTreeScreen(
+                    document = currentDoc,
+                    tree = treeState.tree,
+                    onBack = { nav.popBackStack() },
+                    onDeleteScan = { scan -> vm.deleteScan(scan) },
+                    onDeleteAllQueued = { vm.deleteAllQueued() },
                 )
             }
         }

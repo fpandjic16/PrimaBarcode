@@ -35,21 +35,17 @@ import androidx.activity.compose.BackHandler
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.Line
 import com.prima.barcode.data.model.LineStatus
-import com.prima.barcode.data.model.TapeEntry
 import com.prima.barcode.data.model.color
 import com.prima.barcode.data.model.formatQty
 import com.prima.barcode.data.model.scanStatus
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.component.ScanBar
-import com.prima.barcode.ui.component.ScanTape
 import com.prima.barcode.ui.component.StatusProgressBar
 import com.prima.barcode.ui.theme.LocalTextSizeOffset
 import com.prima.barcode.ui.theme.PrimaPalette
 import com.prima.barcode.ui.theme.monoCounter
 import com.prima.barcode.ui.theme.monoLabel
 import kotlinx.coroutines.delay
-import java.time.Instant
-import java.util.UUID
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -74,7 +70,6 @@ fun RecordingScreen(
     onScan: (barcode: String, multiplier: Double) -> Unit,
     onLineUpdate: (lineNo: Int, newScanned: Double) -> Unit,
     onUpload: () -> Unit = {},
-    lastScannedLines: Int = 5,
     hapticEnabled: Boolean = true,
     soundEnabled: Boolean = true,
     debounceTime: Int = 500,
@@ -84,7 +79,6 @@ fun RecordingScreen(
     var activeLineNo by remember { mutableStateOf<Int?>(null) }
     val activeLine = activeLineNo?.let { no -> doc.lines.find { it.lineNo == no } }
     var typedQty by remember { mutableStateOf("") }
-    var tape by remember { mutableStateOf(emptyList<TapeEntry>()) }
     var scanErrorFlash by remember { mutableStateOf(false) }
     var localScanned by remember(activeLineNo) { mutableStateOf<Double?>(null) }
     var overScanWarning by remember { mutableStateOf<OverScanInfo?>(null) }
@@ -165,7 +159,6 @@ fun RecordingScreen(
             // the scan that actually completes the line rather than on a stale reading.
             val wasExactNow = LineStatus.of(base, matchedLine.expected) == LineStatus.EXACT
             if (!wasExactNow && newStatus == LineStatus.EXACT && hapticEnabled) hapticEngine.confirm()
-            tape = listOf(TapeEntry(UUID.randomUUID().toString(), barcode, matchedLine.item.name, qty, Instant.now(), newStatus)) + tape
             if (warnOnOver && newStatus == LineStatus.OVER) {
                 overScanWarning = OverScanInfo(matchedLine.item.no, matchedLine.item.name, barcode, matchedLine.expected, newScanned)
             }
@@ -362,7 +355,6 @@ fun RecordingScreen(
         }
 
         if (view == RecordingView.OVERVIEW) {
-            ScanTape(tape = tape, maxLines = lastScannedLines)
             ScanBar(
                 onScan = { handleScan(it) },
                 onCameraTap = {

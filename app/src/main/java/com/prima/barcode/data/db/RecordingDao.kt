@@ -127,6 +127,27 @@ interface RecordingDao {
     @Query("DELETE FROM recordings WHERE documentNo = :documentNo AND type = :type AND documentLine = :documentLine AND recordingLineNo = :recordingLineNo")
     suspend fun deleteByPk(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int)
 
+    /**
+     * Deletes one recording only while it is still queued.
+     *
+     * The `sentAt IS NULL` clause is the rule itself, not a convenience: a scan the ERP has
+     * already accepted cannot be taken back from here, and removing it locally would only cost
+     * the device its record of what it sent. Enforced in the query so no caller can bypass it.
+     */
+    @Query(
+        """
+        DELETE FROM recordings
+        WHERE documentNo = :documentNo AND type = :type
+          AND documentLine = :documentLine AND recordingLineNo = :recordingLineNo
+          AND sentAt IS NULL
+        """
+    )
+    suspend fun deleteQueuedByPk(documentNo: String, type: String, documentLine: Int, recordingLineNo: Int)
+
+    /** Clears a document's queued scans, leaving anything already accepted by the ERP in place. */
+    @Query("DELETE FROM recordings WHERE documentNo = :documentNo AND type = :type AND sentAt IS NULL")
+    suspend fun deleteQueuedForDoc(documentNo: String, type: String)
+
     @Query("DELETE FROM recordings WHERE documentNo = :documentNo AND type = :type AND documentLine = :lineNo")
     suspend fun deleteAllForLine(documentNo: String, type: String, lineNo: Int)
 
