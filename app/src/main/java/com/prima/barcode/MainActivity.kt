@@ -398,6 +398,7 @@ private fun PrimaBarcodeApp(
                 hasCredentials = appVm.extSystemCredentialStore.isValid(),
                 credentialTtlHours = extSystemConfig.credentialTtlHours,
                 loginQrKey = extSystemConfig.loginQrKey,
+                hapticEnabled = hapticEnabled,
                 onSelect = { rc, loc ->
                     onRcCodeChange(rc)
                     onLocationCodeChange(loc)
@@ -422,6 +423,7 @@ private fun PrimaBarcodeApp(
         }
         composable("ext_system_config") {
             ExtSystemConfigScreen(
+                hapticEnabled = hapticEnabled,
                 initial = extSystemConfig,
                 onSave  = { config ->
                     appVm.saveExtSystemConfig(config)
@@ -507,6 +509,7 @@ private fun PrimaBarcodeApp(
                     )
             }
             DocumentListScreen(
+                hapticEnabled = hapticEnabled,
                 docType = selectedDocType,
                 locationCode = location?.code ?: "",
                 docTypeCode = extSystemConfig.docTypeCodeFor(selectedDocType),
@@ -610,6 +613,7 @@ private fun PrimaBarcodeApp(
             DownloadFilterScreen(
                 hasCredentials  = appVm.extSystemCredentialStore.isValid(),
                 loginQrKey      = extSystemConfig.loginQrKey,
+                hapticEnabled   = hapticEnabled,
                 docType         = selectedDocType,
                 fixedSourceCode = if (dlFilterMode == DocTypeFilterMode.LOCATION) locationCode else null,
                 fixedRcCode     = if (dlFilterMode == DocTypeFilterMode.RESPONSIBILITY_CENTER) rcCode else null,
@@ -787,6 +791,7 @@ private fun PrimaBarcodeApp(
             initialUsername    = appVm.extSystemCredentialStore.get()?.username ?: "",
             initialPassword    = appVm.extSystemCredentialStore.get()?.password ?: "",
             loginQrKey         = extSystemConfig.loginQrKey,
+            hapticEnabled      = hapticEnabled,
             onDismiss          = { showUploadLoginSheet = false; pendingUploadAction = null },
             onTestConnection   = ::testSignIn,
             onSubmit           = { _, _ ->
@@ -802,6 +807,7 @@ private fun PrimaBarcodeApp(
             credentialTtlHours = extSystemConfig.credentialTtlHours,
             ctaLabel           = stringResource(R.string.btn_sign_in),
             loginQrKey         = extSystemConfig.loginQrKey,
+            hapticEnabled      = hapticEnabled,
             onDismiss          = { showMainLoginSheet = false },
             onTestConnection   = ::testSignIn,
             onSubmit           = { _, _ -> showMainLoginSheet = false },

@@ -61,6 +61,7 @@ private fun DocumentType.localizedDisplay(): String = when (this) {
 fun DownloadFilterScreen(
     hasCredentials: Boolean = false,
     loginQrKey: String = "",
+    hapticEnabled: Boolean = true,
     docType: DocumentType? = null,
     fixedSourceCode: String? = null,
     fixedRcCode: String? = null,
@@ -295,6 +296,7 @@ fun DownloadFilterScreen(
     if (showLogin) {
         LoginSheet(
             loginQrKey = loginQrKey,
+            hapticEnabled = hapticEnabled,
             onTestConnection = onTestConnection,
             onSubmit = { username, password ->
                 showLogin = false
