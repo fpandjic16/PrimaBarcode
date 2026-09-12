@@ -149,18 +149,39 @@ interface RecordingDao {
     suspend fun deleteQueuedForDoc(documentNo: String, type: String)
 
     /**
-     * Clears one line's queued scans, leaving anything the ERP has already accepted in place.
+     * One line's queued scans, newest first — the order a manual reduction consumes them in.
      *
-     * Replaced a delete that took the sent rows too. It backed a manual quantity edit, so an edit
-     * on a partly-sent line wiped the device's record of what the ERP held and re-queued the whole
-     * new total — which the ERP then recorded a second time, as surplus, since it refuses nothing.
+     * Lowering a quantity means undoing the most recent scans, so the newest rows go first and
+     * the older ones survive untouched, keeping their own timestamp, user and GUID.
      */
     @Query("""
-        DELETE FROM recordings
+        SELECT * FROM recordings
         WHERE documentNo = :documentNo AND type = :type AND documentLine = :lineNo
           AND sentAt IS NULL
+        ORDER BY recordingLineNo DESC
         """)
-    suspend fun deleteQueuedForLine(documentNo: String, type: String, lineNo: Int)
+    suspend fun getQueuedForLineNewestFirst(documentNo: String, type: String, lineNo: Int): List<RecordingEntity>
+
+    /**
+     * Trims a queued scan that a reduction only partly consumed.
+     *
+     * Deliberately keeps the row's identity — its GUID, user and timestamp. The row has never
+     * been sent, so the ERP has never seen that GUID, and it is still the same person's scan;
+     * only part of it was taken back.
+     */
+    @Query("""
+        UPDATE recordings SET quantity = :quantity
+        WHERE documentNo = :documentNo AND type = :type
+          AND documentLine = :documentLine AND recordingLineNo = :recordingLineNo
+          AND sentAt IS NULL
+        """)
+    suspend fun updateQueuedQuantity(
+        documentNo: String,
+        type: String,
+        documentLine: Int,
+        recordingLineNo: Int,
+        quantity: Double,
+    )
 
     @Query("SELECT COALESCE(SUM(quantity), 0) FROM recordings WHERE documentNo = :documentNo AND type = :type AND documentLine = :lineNo AND sentAt IS NOT NULL")
     suspend fun getSentQuantityForLine(documentNo: String, type: String, lineNo: Int): Double

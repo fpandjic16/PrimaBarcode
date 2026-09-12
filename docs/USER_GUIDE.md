@@ -240,6 +240,8 @@ Tap any line to open its detail view, where you can:
 
 Typing a total **replaces** the line's quantity, it doesn't add to it.
 
+**What happens to the individual recordings.** Raising the quantity adds one new recording for the difference, exactly as a scan would. Lowering it undoes your **most recent** scans and stops — older recordings stay exactly as they were, with their own time and the name of whoever made them. So if three separate scans of 1 make up a line and you press −1, two of those three survive untouched. You can see all of this in the RECORDINGS tree ([§7a](#7a-the-recordings-section)).
+
 **What you cannot lower.** If part of this line has already been sent to the central system — which happens when an upload was interrupted partway through — the detail view says so (*"3 already sent"*) and the quantity will not go below that number. The −1 button stops there, and typing something lower is refused with an explanation.
 
 The reason is that the central system's recording table accepts everything and refuses nothing: there is no way to delete or correct a quantity from the device once it has gone. The app therefore never pretends to take it back. You can always go **up**, and to correct what was already sent, it has to be fixed in the central system.

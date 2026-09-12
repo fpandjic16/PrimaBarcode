@@ -14,6 +14,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * Slack for comparing quantities, which are Doubles summed across rows.
+ *
+ * Without it a reduction that lands exactly on the current total can leave a residue of ~1e-16
+ * behind and insert or trim a row for it. Quantities are shown to five decimal places, so
+ * anything this far down is arithmetic noise, not something the operator asked for.
+ */
+private const val QTY_EPSILON = 1e-9
+
+/**
  * Outcome of a manual quantity edit.
  *
  * [BelowSent] exists so the refusal can be explained rather than swallowed: the operator asked
@@ -229,10 +238,15 @@ class DocumentRepositoryImpl @Inject constructor(
      * the operator a number they didn't ask for and leave them thinking the correction went
      * through. It returns [SetQuantityResult.BelowSent] with the floor, and the caller explains it.
      *
-     * This used to delete every recording on the line, sent ones included, and re-queue the whole
-     * new total. On a partly-sent line that sent the accepted quantity a second time, which the
-     * ERP recorded as surplus, and rewrote the scans' attribution and timestamps to the operator
-     * doing the editing.
+     * Within the queued part the edit is a delta, not a rewrite. Going up appends one row, the way
+     * a scan would. Going down consumes the queued rows newest-first and stops, trimming the last
+     * one it only partly needs; everything older survives with its own timestamp, user and GUID.
+     *
+     * Both halves of that replaced a single destructive overwrite. It deleted *every* recording on
+     * the line and re-queued the whole new total, which on a partly-sent line sent the accepted
+     * quantity a second time — recorded in the ERP as surplus — and on any line collapsed the
+     * per-scan history into one row stamped with the editing operator and the current time. On a
+     * shared device that quietly re-attributed the previous operator's unsent work.
      */
     override suspend fun setLineScanned(
         documentNo: String,
@@ -244,38 +258,61 @@ class DocumentRepositoryImpl @Inject constructor(
         val sent = db.recordingDao().getSentQuantityForLine(documentNo, type, lineNo)
         if (scanned < sent) return@withTransaction SetQuantityResult.BelowSent(sent)
 
-        db.recordingDao().deleteQueuedForLine(documentNo, type, lineNo)
-        // What the edit actually changes: the difference between the requested total and what is
-        // already beyond recall. Zero means the operator asked for exactly the sent quantity, and
-        // the line is then made up entirely of ERP-accepted rows.
-        val queued = scanned - sent
-        val line = db.documentLineDao().getByKey(documentNo, type, lineNo)
-        val header = db.documentHeaderDao().getByKey(documentNo, type)
-        // A missing line or header skips the insert but never the state refresh below — the queued
-        // rows are already gone by this point, and leaving the document's state describing them
-        // would strand it in a state nothing on the device can still justify.
-        if (queued > 0.0 && line != null && header != null) {
-            val nextNo = db.recordingDao().getNextRecordingLineNo(documentNo, type, lineNo)
-            db.recordingDao().insert(
-                RecordingEntity(
-                    documentNo = documentNo,
-                    type = type,
-                    documentLine = lineNo,
-                    recordingLineNo = nextNo,
-                    barcodeNo = line.barcodeNo,
-                    quantity = queued,
-                    creationDateTime = Instant.now().toString(),
-                    userId = userId,
-                    destinationCode = line.destinationCode,
-                    sourceCode = line.sourceCode,
-                    unitOfMeasureCode = line.unitOfMeasureCode,
-                    rcCode = header.rcCode,
-                    // This replaces the line's queued recordings with a single aggregate row, so
-                    // it is a genuinely new recording and gets its own identity. Reusing one of
-                    // the GUIDs just deleted would tell NAV this is a row it already has.
-                    recordingGuid = UUID.randomUUID().toString(),
-                )
-            )
+        // What the edit may actually move: everything above the quantity already beyond recall.
+        val targetQueued = scanned - sent
+        val queuedRows = db.recordingDao().getQueuedForLineNewestFirst(documentNo, type, lineNo)
+        val currentQueued = queuedRows.sumOf { it.quantity }
+        val delta = targetQueued - currentQueued
+
+        when {
+            // Going up appends, exactly as a scan would — the existing rows are somebody's work
+            // and there is no reason for an increase to touch them.
+            delta > QTY_EPSILON -> {
+                val line = db.documentLineDao().getByKey(documentNo, type, lineNo)
+                val header = db.documentHeaderDao().getByKey(documentNo, type)
+                if (line != null && header != null) {
+                    db.recordingDao().insert(
+                        RecordingEntity(
+                            documentNo = documentNo,
+                            type = type,
+                            documentLine = lineNo,
+                            recordingLineNo = db.recordingDao().getNextRecordingLineNo(documentNo, type, lineNo),
+                            barcodeNo = line.barcodeNo,
+                            quantity = delta,
+                            creationDateTime = Instant.now().toString(),
+                            userId = userId,
+                            destinationCode = line.destinationCode,
+                            sourceCode = line.sourceCode,
+                            unitOfMeasureCode = line.unitOfMeasureCode,
+                            rcCode = header.rcCode,
+                            // A genuinely new recording, so a genuinely new identity.
+                            recordingGuid = UUID.randomUUID().toString(),
+                        )
+                    )
+                }
+            }
+            // Going down undoes the most recent scans and stops. Older rows survive untouched,
+            // keeping their own time, user and GUID.
+            //
+            // This used to replace every queued row on the line with one aggregate stamped with
+            // the editing operator and the current time. That threw away the per-scan history the
+            // recordings tree now shows, and — on a shared device — re-attributed the previous
+            // operator's unsent work to whoever happened to lower the number.
+            delta < -QTY_EPSILON -> {
+                var remaining = -delta
+                for (row in queuedRows) {
+                    if (remaining <= QTY_EPSILON) break
+                    if (row.quantity <= remaining + QTY_EPSILON) {
+                        db.recordingDao().deleteQueuedByPk(documentNo, type, lineNo, row.recordingLineNo)
+                        remaining -= row.quantity
+                    } else {
+                        db.recordingDao().updateQueuedQuantity(
+                            documentNo, type, lineNo, row.recordingLineNo, row.quantity - remaining,
+                        )
+                        remaining = 0.0
+                    }
+                }
+            }
         }
         advanceToInProgressIfNeeded(documentNo, type)
         regressFromCompletedIfNeeded(documentNo, type)
