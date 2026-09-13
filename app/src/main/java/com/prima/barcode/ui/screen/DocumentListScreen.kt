@@ -141,6 +141,19 @@ fun DocumentListScreen(
     // tap that used to delete the documents, and still promises an action that would do nothing.
     val canUpload = uploadableDocs.isNotEmpty()
 
+    val context = LocalContext.current
+    var cameraOpen by remember { mutableStateOf(false) }
+    val hasCamera = remember {
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+    }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) cameraOpen = true }
+    val hapticEngine = remember { HapticEngine(context) }
+    val soundEngine = rememberSoundEngine()
+
+    // Declared after the engines it uses, and it has to stay that way: a local function can only
+    // capture locals that already exist above it.
     fun handleDocScan(barcode: String) {
         val found = documents.firstOrNull { it.documentNo == barcode }
         if (found != null) {
@@ -153,17 +166,6 @@ fun DocumentListScreen(
             docNotFoundError = barcode
         }
     }
-
-    val context = LocalContext.current
-    var cameraOpen by remember { mutableStateOf(false) }
-    val hasCamera = remember {
-        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
-    }
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted -> if (granted) cameraOpen = true }
-    val hapticEngine = remember { HapticEngine(context) }
-    val soundEngine = rememberSoundEngine()
 
     Box(modifier = Modifier.fillMaxSize()) {
     Column(modifier = Modifier.fillMaxSize().background(PrimaPalette.Cream)) {
