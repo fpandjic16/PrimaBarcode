@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
@@ -91,15 +92,39 @@ class AppViewModel @Inject constructor(
     val credentials: StateFlow<ExtSystemCredentials?> = _credentials
 
     /**
-     * True while rows are going to the ERP, by either path.
+     * How many ERP operations are running right now, in either direction.
      *
-     * Guards the profile switch. `DocState.PendingUpload` cannot do that job on its own: it
+     * Guards the change of operator. `DocState.PendingUpload` cannot do that job on its own: it
      * survives process death, which is the whole reason `recoverStalePendingUploads` exists, so a
      * stale flag would block switching forever. This one is in memory and therefore honest about
      * *this* process.
+     *
+     * A count, not a flag: a background upload and a download can overlap, and whichever finished
+     * first would lower a shared boolean while the other was still writing.
      */
-    private val _uploadInFlight = MutableStateFlow(false)
-    val uploadInFlight: StateFlow<Boolean> = _uploadInFlight
+    private val _erpWorkCount = MutableStateFlow(0)
+
+    /** True while anything at all is talking to the ERP. See [duringErpWork]. */
+    val erpWorkInFlight: StateFlow<Boolean> =
+        _erpWorkCount.map { it > 0 }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /**
+     * Runs [block] with the change of operator held off.
+     *
+     * Downloads need this every bit as much as uploads do, and are the easier half to forget:
+     * `replaceDownloadedDocuments` resolves `provider.current()`, which throws once sign-out has
+     * released the database — and it throws inside a coroutine, so it takes the process with it.
+     */
+    private suspend fun <T> duringErpWork(block: suspend () -> T): T {
+        _erpWorkCount.update { it + 1 }
+        return try {
+            block()
+        } finally {
+            // finally, not after: a cancelled scope would otherwise leave the count raised and
+            // lock the operator out of changing profile for the life of the process.
+            _erpWorkCount.update { it - 1 }
+        }
+    }
 
     val locations: StateFlow<List<Location>> = locationDao.observeLocations()
         .map { it.map { e -> e.toDomain() } }
@@ -119,7 +144,7 @@ class AppViewModel @Inject constructor(
     fun downloadLocations(onComplete: (error: String?) -> Unit = {}) {
         viewModelScope.launch {
             _isRefreshingLocations.value = true
-            val error = realDownloadLocations()
+            val error = duringErpWork { realDownloadLocations() }
             if (error == null) _lastLocationSyncAt.value = Instant.now()
             _isRefreshingLocations.value = false
             onComplete(error)
@@ -205,53 +230,55 @@ class AppViewModel @Inject constructor(
             val typesToDownload = if (docType != null) listOf(docType) else DocumentType.entries
             var failures = 0
             val errorMessages = mutableListOf<String>()
-            for (type in typesToDownload) {
-                val typeCode = config.docTypeCodeFor(type)
-                val filterStr = buildODataFilterString(filter, typeCode, type)
-                val finalUrl = if (filterStr != null) appendODataFilter(config.documentLinesUrl, filterStr) else config.documentLinesUrl
-                val result = extSystemClient.downloadRaw(finalUrl)
-                when (result) {
-                    is ExtSystemResult.Success -> {
-                        val now = Instant.now()
-                        val typeToken = object : TypeToken<NavODataList<NavBarcodeAppEntry>>() {}.type
-                        val odata = gson.fromJson<NavODataList<NavBarcodeAppEntry>>(result.data, typeToken)
-                        val documents = odata.value.groupBy { it.documentNo }.map { (docNo, rows) ->
-                            val first = rows.first()
-                            val lines = rows.filter { it.lineNo > 0 }.map { row ->
-                                Line(
-                                    documentNo        = docNo,
-                                    lineNo            = row.lineNo,
-                                    item              = Item(row.itemNo, row.description),
-                                    barcodeNo         = row.barcodeNo,
-                                    expected          = row.qtyOutstanding,
-                                    scanned           = 0.0,
-                                    destinationCode   = row.destinationCode,
-                                    sourceCode        = row.sourceCode,
-                                    unitOfMeasureCode = row.unitOfMeasureCode,
-                                    scanningQty       = row.scanningQty,
+            duringErpWork {
+                for (type in typesToDownload) {
+                    val typeCode = config.docTypeCodeFor(type)
+                    val filterStr = buildODataFilterString(filter, typeCode, type)
+                    val finalUrl = if (filterStr != null) appendODataFilter(config.documentLinesUrl, filterStr) else config.documentLinesUrl
+                    val result = extSystemClient.downloadRaw(finalUrl)
+                    when (result) {
+                        is ExtSystemResult.Success -> {
+                            val now = Instant.now()
+                            val typeToken = object : TypeToken<NavODataList<NavBarcodeAppEntry>>() {}.type
+                            val odata = gson.fromJson<NavODataList<NavBarcodeAppEntry>>(result.data, typeToken)
+                            val documents = odata.value.groupBy { it.documentNo }.map { (docNo, rows) ->
+                                val first = rows.first()
+                                val lines = rows.filter { it.lineNo > 0 }.map { row ->
+                                    Line(
+                                        documentNo        = docNo,
+                                        lineNo            = row.lineNo,
+                                        item              = Item(row.itemNo, row.description),
+                                        barcodeNo         = row.barcodeNo,
+                                        expected          = row.qtyOutstanding,
+                                        scanned           = 0.0,
+                                        destinationCode   = row.destinationCode,
+                                        sourceCode        = row.sourceCode,
+                                        unitOfMeasureCode = row.unitOfMeasureCode,
+                                        scanningQty       = row.scanningQty,
+                                    )
+                                }
+                                Document(
+                                    documentNo       = docNo,
+                                    type             = type,
+                                    destinationCode  = first.destinationCode,
+                                    sourceCode       = first.sourceCode,
+                                    rcCode           = first.rcCode,
+                                    isSourceRetail   = first.isRetailLocation,
+                                    creationDateTime = now,
+                                    documentDate     = runCatching {
+                                        first.documentDate?.let { Instant.parse("${it}T00:00:00Z") } ?: now
+                                    }.getOrDefault(now),
+                                    lines            = lines,
+                                    state            = DocState.Downloaded,
                                 )
                             }
-                            Document(
-                                documentNo       = docNo,
-                                type             = type,
-                                destinationCode  = first.destinationCode,
-                                sourceCode       = first.sourceCode,
-                                rcCode           = first.rcCode,
-                                isSourceRetail   = first.isRetailLocation,
-                                creationDateTime = now,
-                                documentDate     = runCatching {
-                                    first.documentDate?.let { Instant.parse("${it}T00:00:00Z") } ?: now
-                                }.getOrDefault(now),
-                                lines            = lines,
-                                state            = DocState.Downloaded,
-                            )
+                            repository.replaceDownloadedDocuments(type, documents)
                         }
-                        repository.replaceDownloadedDocuments(type, documents)
-                    }
-                    is ExtSystemResult.Failure -> {
-                        Timber.w("Failed to download ${type.display}: ${result.message}")
-                        failures++
-                        errorMessages.add(result.message)
+                        is ExtSystemResult.Failure -> {
+                            Timber.w("Failed to download ${type.display}: ${result.message}")
+                            failures++
+                            errorMessages.add(result.message)
+                        }
                     }
                 }
             }
@@ -274,10 +301,23 @@ class AppViewModel @Inject constructor(
         _extSystemConfig.value = config
     }
 
-    fun saveCredentials(username: String, password: String) {
-        val id = profileStore.currentId() ?: return
+    /**
+     * Caches server access for the operator who is signed in — and refuses anybody else's.
+     *
+     * The login sheet is reachable from inside a session, so someone handed a device that is
+     * already signed in can type their own ERP account into it. Stored as it was, that put one
+     * person's password under another person's profile: every row uploaded afterwards travelled on
+     * the wrong session while still carrying the signed-in operator's name. Whoever the account
+     * belongs to signs in at the launch screen; there is no second way in.
+     *
+     * Returns false when it refused, so the caller can say so instead of failing silently.
+     */
+    fun saveCredentials(username: String, password: String): Boolean {
+        val id = profileStore.currentId() ?: return false
+        if (UserProfileStore.normalise(username) != id) return false
         extSystemCredentialStore.save(id, username, password, extSystemConfig.value.credentialTtlHours)
         _credentials.value = extSystemCredentialStore.get(id)
+        return true
     }
 
     /** Server access for the signed-in operator, or null once its TTL has lapsed. */
@@ -392,7 +432,13 @@ class AppViewModel @Inject constructor(
             val creds  = ExtSystemCredentials(username.trim(), password)
             extSystemClient.configure(config, creds)
             val result = extSystemClient.testConnection(url)
-            if (result is ExtSystemResult.Success) saveCredentials(username.trim(), password)
+            // A server that accepts somebody else's account is still a failure here: the point of
+            // the test is to obtain access for this session, and access that cannot be stored is
+            // access this session does not have.
+            if (result is ExtSystemResult.Success && !saveCredentials(username.trim(), password)) {
+                onResult(ExtSystemResult.Failure(appContext.getString(R.string.signin_wrong_operator)))
+                return@launch
+            }
             onResult(result)
         }
     }
@@ -618,14 +664,7 @@ class AppViewModel @Inject constructor(
         onComplete: (failureCount: Int) -> Unit = {},
     ) {
         viewModelScope.launch {
-            _uploadInFlight.value = true
-            try {
-                onComplete(runUpload(docs))
-            } finally {
-                // finally, not after: a cancelled scope would otherwise leave the flag raised and
-                // lock the operator out of switching profiles for the life of the process.
-                _uploadInFlight.value = false
-            }
+            onComplete(duringErpWork { runUpload(docs) })
         }
     }
 
@@ -645,12 +684,7 @@ class AppViewModel @Inject constructor(
             // turn Retry into a no-op that closes the screen as if it had worked.
             val uploadable = docs.filter { doc -> doc.lines.any { it.scanned > 0.0 } || doc.needsReview }
             uploadable.forEach { repository.updateDocState(it.documentNo, it.type.key, DocState.PendingUpload) }
-            _uploadInFlight.value = true
-            try {
-                runUpload(uploadable)
-            } finally {
-                _uploadInFlight.value = false
-            }
+            duringErpWork { runUpload(uploadable) }
         }
     }
 
@@ -661,12 +695,20 @@ class AppViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Empties the signed-in operator's cache, and only theirs.
+     *
+     * It used to reach a good deal further than its name: one person pressing it inside their own
+     * session revoked every enrolled operator's server access and wiped the device's ERP endpoints
+     * with it, leaving an installation that had to be set up again from the bundled defaults. What
+     * goes now is what the person pressing it owns — their documents, their recordings, their
+     * credentials. The device's setup is administration, not cache, and has its own screen.
+     */
     fun clearCache() {
         viewModelScope.launch {
             repository.clearAll()
-            appSettingsStore.clear()
-            extSystemConfigStore.clear()
-            extSystemCredentialStore.clearAll()
+            profileStore.currentId()?.let { extSystemCredentialStore.clear(it) }
+            _credentials.value = null
         }
     }
 

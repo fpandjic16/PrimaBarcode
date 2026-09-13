@@ -24,7 +24,6 @@ class ExtSystemConfigStore @Inject constructor(@param:ApplicationContext private
         loginQrKey       = prefs.getString("loginQrKey", "") ?: "",
     )
 
-    fun clear() = prefs.edit().clear().apply()
 
     fun save(config: ExtSystemConfig) {
         val ed = prefs.edit()

@@ -73,6 +73,4 @@ class ExtSystemCredentialStore @Inject constructor(@param:ApplicationContext pri
             .apply()
     }
 
-    /** Every operator's server access, for "clear cache". */
-    fun clearAll() { prefs.edit().clear().apply() }
 }

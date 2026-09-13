@@ -9,9 +9,13 @@
 
     <application
         android:name=".PrimaBarcodeApplication"
-        android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
+        <!-- These devices hold, in the clear-to-the-restore sense, every operator’s unsent
+             scans and their encrypted NAV credentials. Auto-backup would copy both into
+             whatever Google account happens to be on a shared warehouse scanner, and the
+             restore could not work anyway: the Keystore key behind EncryptedSharedPreferences
+             is device-bound and never travels, so the restored preference files throw on
+             first open. Off, with no rule files to imply otherwise. -->
+        android:allowBackup="false"
         android:icon="@mipmap/logo"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/logo_round"

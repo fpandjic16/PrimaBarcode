@@ -112,7 +112,7 @@
     <string name="settings_export">Izvozi podatke</string>
     <string name="settings_export_desc">Izpiši vse tabele v datoteko JSON na napravi</string>
     <string name="settings_clear_cache">Počisti predpomnilnik</string>
-    <string name="settings_clear_cache_desc">Izbriši vse poverilnice, dokumente in snemanja</string>
+    <string name="settings_clear_cache_desc">Izbriši svoje poverilnice, dokumente in snemanja</string>
     <string name="settings_app_version">Različica aplikacije</string>
     <string name="settings_android">Android</string>
     <string name="settings_sdk">SDK</string>
@@ -121,7 +121,7 @@
     <string name="settings_sign_out">Odjava iz zunanjega sistema</string>
     <string name="settings_coming_soon">KMALU</string>
     <string name="dialog_clear_cache_title">Počistiti predpomnilnik?</string>
-    <string name="dialog_clear_cache_text">To bo trajno izbrisalo vse shranjene poverilnice, dokumente in snemanja. Tega dejanja ni mogoče razveljaviti.</string>
+    <string name="dialog_clear_cache_text">To bo trajno izbrisalo vaše shranjene poverilnice, dokumente in snemanja. Drugi operaterji in nastavitve naprave ostanejo nedotaknjeni. Tega dejanja ni mogoče razveljaviti.</string>
     <!-- Login -->
     <string name="login_title">Prijava v zunanji sistem</string>
     <string name="login_username">Uporabniško ime</string>
@@ -294,10 +294,11 @@
     <string name="signin_first_time_note">Prva prijava na tej napravi zahteva zunanji sistem. Po tem geslo deluje tudi, kadar ta ni dosegljiv.</string>
     <string name="signin_name_too_long">Uporabniško ime sme imeti največ %d znakov.</string>
     <string name="signin_bad_username">Vnesite veljavno uporabniško ime.</string>
+    <string name="signin_wrong_operator">Ta račun pripada drugemu operaterju. Odjavite se in se prijavite kot on.</string>
     <string name="signin_failed_title">Prijava ni uspela</string>
     <string name="signin_failed_offline">Zunanji sistem ni dosegljiv, to geslo pa na tej napravi še ni bilo uporabljeno. Povežite se in se enkrat prijavite.</string>
     <string name="signin_offline_title">Prijava brez zunanjega sistema</string>
     <string name="signin_offline_body">Vidite svoje delo in lahko naprej skenirate dokumente, ki so že na napravi. Prenesi in Pošlji bosta delovala, ko se zunanji sistem spet oglasi.</string>
     <string name="signin_switch_blocked_title">Pošiljanje poteka</string>
-    <string name="signin_switch_blocked_body">Vrstice se pošiljajo v zunanji sistem. Počakajte, da se konča, preden zamenjate operaterja.</string>
+    <string name="signin_switch_blocked_body">Prenos v zunanji sistem ali iz njega poteka. Počakajte, da se konča, preden zamenjate operaterja.</string>
 </resources>

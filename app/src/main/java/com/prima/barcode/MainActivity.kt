@@ -447,15 +447,17 @@ private fun PrimaBarcodeApp(
         )
     }
 
-    // Changing operator swaps the database underneath everything. A send that is still running
-    // would then be writing "this row reached the ERP" into the wrong person's file — so the
-    // switch waits, rather than the upload being cancelled. Covers the background path too, which
-    // outlives the screen that started it and is therefore the easy one to forget.
-    val uploadInFlight by appVm.uploadInFlight.collectAsState()
+    // Changing operator swaps the database underneath everything, and a transfer that is still
+    // running would then be writing into the wrong person's file — an upload recording "this row
+    // reached the ERP", a download replacing documents someone else is holding. So the switch
+    // waits rather than the transfer being cancelled. Covers the background upload, which outlives
+    // the screen that started it, and every download: those resolve the database only once they
+    // have an answer from the server, by which point sign-out may already have taken it away.
+    val erpWorkInFlight by appVm.erpWorkInFlight.collectAsState()
     var showSwitchBlocked by remember { mutableStateOf(false) }
 
     fun requestSignOut() {
-        if (uploadInFlight) showSwitchBlocked = true else appVm.signOut()
+        if (erpWorkInFlight) showSwitchBlocked = true else appVm.signOut()
     }
 
     if (showSwitchBlocked) {

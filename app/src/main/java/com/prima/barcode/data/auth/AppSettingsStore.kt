@@ -78,12 +78,6 @@ class AppSettingsStore @Inject constructor(
     fun savedLanguageOrNull(): Language? =
         personalPrefs().getString("language", null)?.let { saved -> Language.entries.firstOrNull { it.name == saved } }
 
-    /** Wipes the device's settings and the signed-in operator's. Other operators' survive. */
-    fun clear() {
-        personalPrefs().edit().clear().apply()
-        devicePrefs.edit().clear().apply()
-    }
-
     fun save(settings: AppSettings) {
         personalPrefs().edit()
             .putString ("textSize",          settings.textSize.name)

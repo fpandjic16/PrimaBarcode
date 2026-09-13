@@ -378,7 +378,7 @@ A single row, **"Server & endpoints"**, that opens the connection settings for t
 | **Debugger active** | Shows the exact web addresses the app is about to contact before every download/upload — useful only for diagnosing connectivity issues with IT support. Leave off for normal daily use. |
 | **Export data** | Saves a full dump of everything on your device to a file — useful if IT support asks for diagnostic data. |
 | **Insert system defaults** | Lets IT/consultants load, download, or import a starter configuration for the External System connection. A downloaded copy deliberately leaves out the QR sign-in key, so it is safe to pass around; importing such a file leaves the key already on the device untouched. Not something you'd normally use day-to-day. |
-| **Clear cache** *(red — destructive)* | Deletes **everything**: your sign-in, all settings, all documents and scans. Requires confirmation. Use only when told to by support (e.g. handing the device to a different user). |
+| **Clear cache** *(red — destructive)* | Deletes **your** sign-in, documents and scans. Other operators on this device, and the device’s own setup, are untouched. Requires confirmation. Use only when told to by support. |
 | **Delete all documents and recordings** *(red — destructive)* | Deletes all downloaded documents and scans, but **keeps** your settings and sign-in. Requires confirmation. Use this to fully reset your working data without having to sign in again. |
 
 ### System Info
@@ -418,8 +418,8 @@ Two different situations:
 - **You have signed in on this device before** — your password should work anyway. If it does not, your password was probably changed in the central system; that change can only be picked up while the system is reachable.
 - **This is your first time on this device** — you have to be online once, so the central system can confirm who you are. After that it works offline.
 
-### 18.2d "It says sending is in progress and won't let me sign out"
-An upload is still running. Wait for it to finish. Changing operator mid-send would file "this was sent" against the wrong person's records.
+### 18.2d "It says a transfer is in progress and won't let me sign out"
+Something is still going to or coming from the central system. Wait for it to finish. Changing operator mid-transfer would file "this was sent" against the wrong person's records, or drop a download into the wrong person's data.
 
 ### 18.3 "I keep getting 'Barcode not found' for an item that's clearly on the document"
 Nothing is ever recorded for a rejected scan, so there's nothing to undo — just figure out the mismatch and rescan. Most common causes: you're on the wrong document (double-check the document number in the top bar), the label's barcode doesn't byte-for-byte match what's on the document (a re-print, a different symbology, or stray characters), or — if it's a special `Barcode|UoM|Qty` label — see [§18.7](#187-the-barcode-scanned-as-garbagewrong-characters). If you're confident the item genuinely belongs on the document and it's still not matching, flag it to the office — the document's data may need correcting on the central-system side.

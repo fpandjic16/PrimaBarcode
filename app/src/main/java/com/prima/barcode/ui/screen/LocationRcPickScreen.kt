@@ -397,25 +397,6 @@ internal fun LocationPickerSheet(
 }
 
 @Composable
-private fun LrcSheetHeader(title: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-    ) {
-        Text(
-            title,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-                color = PrimaPalette.Ink,
-            ),
-        )
-    }
-    HorizontalDivider(color = Color(0x0F000000))
-}
-
-@Composable
 internal fun LrcSearchField(value: String, onValueChange: (String) -> Unit, placeholder: String) {
     Box(
         modifier = Modifier
