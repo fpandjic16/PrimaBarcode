@@ -287,4 +287,17 @@
     <string name="recording_sent_floor_hint">%s že poslano</string>
     <string name="recording_sent_floor_title">Količina ne more nižje</string>
     <string name="recording_sent_floor_body">%1$s: %2$s je že poslano v zunanji sistem in od tu ni mogoče preklicati. Količino lahko povečate, ne morete pa je spustiti pod to vrednost. Popravek poslanega naredite v zunanjem sistemu.</string>
+    <!-- Sign-in / operator profiles -->
+    <string name="signin_title">Prijava</string>
+    <string name="signin_action">PRIJAVI SE</string>
+    <string name="signin_known_operators">Operaterji na tej napravi</string>
+    <string name="signin_first_time_note">Prva prijava na tej napravi zahteva zunanji sistem. Po tem geslo deluje tudi, kadar ta ni dosegljiv.</string>
+    <string name="signin_name_too_long">Uporabniško ime sme imeti največ %d znakov.</string>
+    <string name="signin_bad_username">Vnesite veljavno uporabniško ime.</string>
+    <string name="signin_failed_title">Prijava ni uspela</string>
+    <string name="signin_failed_offline">Zunanji sistem ni dosegljiv, to geslo pa na tej napravi še ni bilo uporabljeno. Povežite se in se enkrat prijavite.</string>
+    <string name="signin_offline_title">Prijava brez zunanjega sistema</string>
+    <string name="signin_offline_body">Vidite svoje delo in lahko naprej skenirate dokumente, ki so že na napravi. Prenesi in Pošlji bosta delovala, ko se zunanji sistem spet oglasi.</string>
+    <string name="signin_switch_blocked_title">Pošiljanje poteka</string>
+    <string name="signin_switch_blocked_body">Vrstice se pošiljajo v zunanji sistem. Počakajte, da se konča, preden zamenjate operaterja.</string>
 </resources>

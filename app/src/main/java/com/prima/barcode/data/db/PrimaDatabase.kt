@@ -5,22 +5,31 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
+/**
+ * One operator's work: their documents, lines and recordings.
+ *
+ * There is one of these files per profile, opened by [com.prima.barcode.data.db.DatabaseProvider].
+ * That is what keeps operators apart — not a predicate on every query, but the fact that a query
+ * cannot reach outside the file it runs in. It also lets two operators hold the same NAV document
+ * independently, since `(documentNo, type)` only has to be unique within one person's file.
+ *
+ * Locations and responsibility centres deliberately live elsewhere ([SharedDatabase]): they
+ * describe the site, not the person, and duplicating them per profile would force every new
+ * operator to re-download them — which needs a server that may not be reachable.
+ */
 @Database(
     entities = [
         DocumentHeaderEntity::class,
         DocumentLineEntity::class,
         RecordingEntity::class,
-        LocationEntity::class,
-        ResponsibilityCenterEntity::class,
     ],
-    version = 18,
+    version = 19,
     exportSchema = true,
 )
 abstract class PrimaDatabase : RoomDatabase() {
     abstract fun documentHeaderDao(): DocumentHeaderDao
     abstract fun documentLineDao(): DocumentLineDao
     abstract fun recordingDao(): RecordingDao
-    abstract fun locationDao(): LocationDao
 
     companion object {
         /**
@@ -282,6 +291,22 @@ abstract class PrimaDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE recordings ADD COLUMN sentAt TEXT")
                 db.execSQL("ALTER TABLE recordings ADD COLUMN lastError TEXT")
+            }
+        }
+
+        /**
+         * Moves locations and responsibility centres out to [SharedDatabase].
+         *
+         * In practice nothing will ever run this: per-profile files are created fresh at 19, and
+         * the one pre-profile database is abandoned rather than adopted. It exists because
+         * schema 18 is already exported and committed, so changing 18's shape in place would make
+         * the checked-in schema a lie — and because the chain has to stay complete, for the reason
+         * spelled out in DatabaseModule.
+         */
+        val MIGRATION_18_19 = object : Migration(18, 19) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS locations")
+                db.execSQL("DROP TABLE IF EXISTS responsibility_centers")
             }
         }
     }

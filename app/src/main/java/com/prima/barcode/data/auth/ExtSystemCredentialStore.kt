@@ -16,6 +16,15 @@ import javax.inject.Singleton
  *  - TTL enforced on every read; stale data wiped automatically
  *  - Credentials are never logged
  *  - Domain is stored separately in ExtSystemConfigStore (not sensitive)
+ *
+ * **One slot per profile.** This used to be a single slot with fixed keys, so whoever signed in
+ * last overwrote everyone before them, and the TTL measured the last sign-in on the device rather
+ * than the last sign-in *by that person*. Keying by profile is what makes expiry mean what it
+ * reads like: an operator who signs in daily stays signed in, one who appears weekly is asked
+ * again, and neither affects the other.
+ *
+ * What lives here expires. What unlocks a profile's local data does not, and lives in
+ * [UserProfileStore] — the two must not be merged back together.
  */
 @Singleton
 class ExtSystemCredentialStore @Inject constructor(@param:ApplicationContext private val context: Context) {
@@ -36,23 +45,34 @@ class ExtSystemCredentialStore @Inject constructor(@param:ApplicationContext pri
         )
     }
 
-    fun save(username: String, password: String, ttlHours: Int) {
+    fun save(profileId: String, username: String, password: String, ttlHours: Int) {
         prefs.edit()
-            .putString("username", username)
-            .putString("password", password)
-            .putLong("expiry", System.currentTimeMillis() + ttlHours * 3_600_000L)
+            .putString("$profileId.username", username)
+            .putString("$profileId.password", password)
+            .putLong("$profileId.expiry", System.currentTimeMillis() + ttlHours * 3_600_000L)
             .apply()
     }
 
-    fun get(): ExtSystemCredentials? {
-        val expiry = prefs.getLong("expiry", 0L)
-        if (System.currentTimeMillis() > expiry) { clear(); return null }
-        val username = prefs.getString("username", null) ?: return null
-        val password = prefs.getString("password", null) ?: return null
+    fun get(profileId: String?): ExtSystemCredentials? {
+        if (profileId == null) return null
+        val expiry = prefs.getLong("$profileId.expiry", 0L)
+        if (System.currentTimeMillis() > expiry) { clear(profileId); return null }
+        val username = prefs.getString("$profileId.username", null) ?: return null
+        val password = prefs.getString("$profileId.password", null) ?: return null
         return ExtSystemCredentials(username = username, password = password)
     }
 
-    fun isValid(): Boolean = get() != null
+    fun isValid(profileId: String?): Boolean = get(profileId) != null
 
-    fun clear() { prefs.edit().clear().apply() }
+    /** Drops one operator's server access. Their local data and their profile are untouched. */
+    fun clear(profileId: String) {
+        prefs.edit()
+            .remove("$profileId.username")
+            .remove("$profileId.password")
+            .remove("$profileId.expiry")
+            .apply()
+    }
+
+    /** Every operator's server access, for "clear cache". */
+    fun clearAll() { prefs.edit().clear().apply() }
 }

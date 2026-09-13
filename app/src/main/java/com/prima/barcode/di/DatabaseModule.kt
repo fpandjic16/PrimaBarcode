@@ -3,7 +3,7 @@ package com.prima.barcode.di
 import android.content.Context
 import androidx.room.Room
 import com.prima.barcode.data.db.LocationDao
-import com.prima.barcode.data.db.PrimaDatabase
+import com.prima.barcode.data.db.SharedDatabase
 import com.prima.barcode.data.repository.DocumentRepository
 import com.prima.barcode.data.repository.DocumentRepositoryImpl
 import dagger.Binds
@@ -24,45 +24,41 @@ abstract class DatabaseModule {
 
     companion object {
         /**
-         * Note there is no `fallbackToDestructiveMigration` here, and adding one back would be a
-         * mistake.
+         * Reference data for the site, shared by every operator on this device.
          *
-         * This database holds recordings that exist nowhere else until they reach the ERP — a
-         * shift's scanning lives here and only here. A destructive fallback turns any future
+         * Note what is *not* provided here any more: the work database. There is one of those per
+         * profile and it changes at runtime, so it comes from `DatabaseProvider` rather than from
+         * Dagger — a `@Singleton PrimaDatabase` would have pinned the first operator's file for
+         * the life of the process.
+         *
+         * The migration discipline that applied to that database applies here too, and to every
+         * per-profile file `DatabaseProvider` opens: **no `fallbackToDestructiveMigration`, ever.**
+         *
+         * These databases hold recordings that exist nowhere else until they reach the ERP — a
+         * shift's scanning lives there and only there. A destructive fallback turns any future
          * version bump that forgets a migration into silent, total loss of that work at app
-         * launch, with nothing shown to the operator. It is also not hypothetical: the chain
-         * used to start at 10 while devices had shipped on schemas 7, 8 and 9, so every one of
-         * those upgraded straight into a wipe.
+         * launch, with nothing shown to the operator. It is also not hypothetical: the chain used
+         * to start at 10 while devices had shipped on schemas 7, 8 and 9, so every one of those
+         * upgraded straight into a wipe.
          *
          * Without the fallback, a gap in the chain fails loudly at startup instead. That is a
-         * worse-looking failure and a far better one: support can act on a device that won't
-         * open, and cannot act on scans that quietly disappeared.
+         * worse-looking failure and a far better one: support can act on a device that won't open,
+         * and cannot act on scans that quietly disappeared.
          *
-         * So: the chain must stay complete. Every schema bump needs its migration added here.
+         * So: the chain must stay complete. Every schema bump needs its migration added — here
+         * for this database, and in `DatabaseProvider.openFor` for the per-profile one.
          */
         @Provides
         @Singleton
-        fun provideDatabase(@ApplicationContext context: Context): PrimaDatabase =
+        fun provideSharedDatabase(@ApplicationContext context: Context): SharedDatabase =
             Room.databaseBuilder(
                 context,
-                PrimaDatabase::class.java,
-                "prima_barcode.db",
-            ).addMigrations(
-                PrimaDatabase.MIGRATION_7_8,
-                PrimaDatabase.MIGRATION_8_9,
-                PrimaDatabase.MIGRATION_9_10,
-                PrimaDatabase.MIGRATION_10_11,
-                PrimaDatabase.MIGRATION_11_12,
-                PrimaDatabase.MIGRATION_12_13,
-                PrimaDatabase.MIGRATION_13_14,
-                PrimaDatabase.MIGRATION_14_15,
-                PrimaDatabase.MIGRATION_15_16,
-                PrimaDatabase.MIGRATION_16_17,
-                PrimaDatabase.MIGRATION_17_18,
+                SharedDatabase::class.java,
+                "prima_shared.db",
             ).build()
 
         @Provides
         @Singleton
-        fun provideLocationDao(db: PrimaDatabase): LocationDao = db.locationDao()
+        fun provideLocationDao(db: SharedDatabase): LocationDao = db.locationDao()
     }
 }

@@ -6,8 +6,11 @@ import com.prima.barcode.data.model.DocState
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.Line
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
@@ -78,31 +81,63 @@ interface DocumentRepository {
 
 @Singleton
 class DocumentRepositoryImpl @Inject constructor(
-    private val db: PrimaDatabase,
+    private val provider: DatabaseProvider,
 ) : DocumentRepository {
 
+    /**
+     * Resolved at every use, never stored.
+     *
+     * There is one database per operator and it changes when they change. A field holding the
+     * database — or worse, a DAO off it — would keep writing into the file of whoever was signed
+     * in when this repository was constructed, silently, into a place nobody would think to look.
+     *
+     * Transactional methods below shadow this with a local `val db` so that one transaction
+     * cannot straddle two databases.
+     */
+    private val db: PrimaDatabase get() = provider.current()
+
+    /**
+     * Flows follow the signed-in operator.
+     *
+     * [flatMapLatest] over the provider is what makes a profile switch reach the screens: the old
+     * subscription is cancelled and a new one opens against the new file. Built once against a
+     * fixed database, these would have kept streaming the previous operator's work forever.
+     *
+     * No profile signed in emits an empty list rather than failing, because these are collected
+     * by app-wide state that outlives sign-out.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeAll(): Flow<List<Document>> =
-        combine(
-            db.documentHeaderDao().observeAllHeaders(),
-            db.documentLineDao().observeAll(),
-            db.recordingDao().observeAll(),
-        ) { headers, lines, recordings ->
-            assembleDocuments(headers, lines, recordings)
+        provider.database.flatMapLatest { database ->
+            if (database == null) flowOf(emptyList()) else combine(
+                database.documentHeaderDao().observeAllHeaders(),
+                database.documentLineDao().observeAll(),
+                database.recordingDao().observeAll(),
+            ) { headers, lines, recordings ->
+                assembleDocuments(headers, lines, recordings)
+            }
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeDocument(documentNo: String, type: String): Flow<Document?> =
-        combine(
-            db.documentHeaderDao().observeHeader(documentNo, type),
-            db.documentLineDao().observeByDoc(documentNo, type),
-            db.recordingDao().observeByDoc(documentNo, type),
-        ) { header, lines, recordings ->
-            header?.let { DocumentHeaderWithLines(it, lines, recordings).toDomain() }
+        provider.database.flatMapLatest { database ->
+            if (database == null) flowOf(null) else combine(
+                database.documentHeaderDao().observeHeader(documentNo, type),
+                database.documentLineDao().observeByDoc(documentNo, type),
+                database.recordingDao().observeByDoc(documentNo, type),
+            ) { header, lines, recordings ->
+                header?.let { DocumentHeaderWithLines(it, lines, recordings).toDomain() }
+            }
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeRecordings(documentNo: String, type: String): Flow<List<RecordingEntity>> =
-        db.recordingDao().observeByDoc(documentNo, type)
+        provider.database.flatMapLatest { database ->
+            database?.recordingDao()?.observeByDoc(documentNo, type) ?: flowOf(emptyList())
+        }
 
     override suspend fun replaceDownloadedDocuments(type: DocumentType, docs: List<Document>) {
+        val db = provider.current()
         db.withTransaction {
             val existingHeaders = db.documentHeaderDao().getAll().filter { it.type == type.key }
             val downloadedKeys = docs.map { it.documentNo }.toSet()
@@ -117,7 +152,7 @@ class DocumentRepositoryImpl @Inject constructor(
             }
 
             for (doc in docs) {
-                mergeDocument(doc, type.key)
+                mergeDocument(db, doc, type.key)
             }
         }
     }
@@ -127,7 +162,7 @@ class DocumentRepositoryImpl @Inject constructor(
      * recordings. Header/lines always refresh to the downloaded values; docState is
      * always recomputed from the merged recordings.
      */
-    private suspend fun mergeDocument(doc: Document, type: String) {
+    private suspend fun mergeDocument(db: PrimaDatabase, doc: Document, type: String) {
         // Header first: documentLine has a foreign key to it, so a new document needs its parent
         // row before any line can be inserted. docState is corrected at the end.
         db.documentHeaderDao().upsert(doc.toEntity())
@@ -135,7 +170,7 @@ class DocumentRepositoryImpl @Inject constructor(
         db.documentLineDao().upsertAll(doc.lines.map { it.toEntity(type) })
 
         // Only once the new lines are in place, so matching runs against what NAV just sent.
-        reattachOrphansByBarcode(doc.documentNo, type)
+        reattachOrphansByBarcode(db, doc.documentNo, type)
 
         // State last, from recordings as they stand after re-attachment — computing it earlier
         // would measure against line numbers that re-attachment is about to change.
@@ -161,7 +196,7 @@ class DocumentRepositoryImpl @Inject constructor(
      * Several lines sharing a barcode resolves to the lowest line number, matching what
      * `RecordingScreen.handleScan` already does when a scan could land on more than one line.
      */
-    private suspend fun reattachOrphansByBarcode(documentNo: String, type: String) {
+    private suspend fun reattachOrphansByBarcode(db: PrimaDatabase, documentNo: String, type: String) {
         val orphans = db.recordingDao().getOrphansByDoc(documentNo, type)
         if (orphans.isEmpty()) return
 
@@ -199,6 +234,7 @@ class DocumentRepositoryImpl @Inject constructor(
         userId: String,
         quantity: Double,
     ) {
+        val db = provider.current()
         db.withTransaction {
             val line = db.documentLineDao().getByKey(documentNo, type, lineNo) ?: return@withTransaction
             val header = db.documentHeaderDao().getByKey(documentNo, type) ?: return@withTransaction
@@ -221,8 +257,8 @@ class DocumentRepositoryImpl @Inject constructor(
                     recordingGuid = UUID.randomUUID().toString(),
                 )
             )
-            advanceToInProgressIfNeeded(documentNo, type)
-            regressFromCompletedIfNeeded(documentNo, type)
+            advanceToInProgressIfNeeded(db, documentNo, type)
+            regressFromCompletedIfNeeded(db, documentNo, type)
         }
     }
 
@@ -254,7 +290,7 @@ class DocumentRepositoryImpl @Inject constructor(
         lineNo: Int,
         scanned: Double,
         userId: String,
-    ): SetQuantityResult = db.withTransaction {
+    ): SetQuantityResult = provider.current().let { db -> db.withTransaction {
         val sent = db.recordingDao().getSentQuantityForLine(documentNo, type, lineNo)
         if (scanned < sent) return@withTransaction SetQuantityResult.BelowSent(sent)
 
@@ -314,11 +350,11 @@ class DocumentRepositoryImpl @Inject constructor(
                 }
             }
         }
-        advanceToInProgressIfNeeded(documentNo, type)
-        regressFromCompletedIfNeeded(documentNo, type)
-        regressToDownloadedIfNeeded(documentNo, type)
+        advanceToInProgressIfNeeded(db, documentNo, type)
+        regressFromCompletedIfNeeded(db, documentNo, type)
+        regressToDownloadedIfNeeded(db, documentNo, type)
         SetQuantityResult.Applied
-    }
+    } }
 
     override suspend fun updateDocState(documentNo: String, type: String, state: DocState) {
         db.documentHeaderDao().updateState(documentNo, type, state.toDbString())
@@ -383,17 +419,19 @@ class DocumentRepositoryImpl @Inject constructor(
      * longer stopping at the first failure it is the only thing left holding the document open.
      */
     override suspend fun discardFailedScans(documentNo: String, type: String) {
+        val db = provider.current()
         db.withTransaction {
             db.recordingDao().deleteFailedByDoc(documentNo, type)
-            refreshStateFromRecordings(documentNo, type)
+            refreshStateFromRecordings(db, documentNo, type)
         }
     }
 
     override suspend fun discardOrphanedScans(documentNo: String, type: String) {
+        val db = provider.current()
         db.withTransaction {
             db.recordingDao().deleteOrphansByDoc(documentNo, type)
             // The document may now be back to untouched, or merely no longer blocked.
-            refreshStateFromRecordings(documentNo, type)
+            refreshStateFromRecordings(db, documentNo, type)
         }
     }
 
@@ -408,9 +446,10 @@ class DocumentRepositoryImpl @Inject constructor(
         documentLine: Int,
         recordingLineNo: Int,
     ) {
+        val db = provider.current()
         db.withTransaction {
             db.recordingDao().deleteQueuedByPk(documentNo, type, documentLine, recordingLineNo)
-            refreshStateFromRecordings(documentNo, type)
+            refreshStateFromRecordings(db, documentNo, type)
         }
     }
 
@@ -424,13 +463,14 @@ class DocumentRepositoryImpl @Inject constructor(
      * recomputed from whatever remains rather than assumed.
      */
     override suspend fun deleteDocumentRecordings(documentNo: String, type: String) {
+        val db = provider.current()
         db.withTransaction {
             db.recordingDao().deleteQueuedForDoc(documentNo, type)
-            refreshStateFromRecordings(documentNo, type)
+            refreshStateFromRecordings(db, documentNo, type)
         }
     }
 
-    private suspend fun refreshStateFromRecordings(documentNo: String, type: String) {
+    private suspend fun refreshStateFromRecordings(db: PrimaDatabase, documentNo: String, type: String) {
         val lines = db.documentLineDao().getByDoc(documentNo, type).map { it.toDomain(0.0) }
         val recordings = db.recordingDao().getByDoc(documentNo, type)
         db.documentHeaderDao().updateState(
@@ -456,6 +496,7 @@ class DocumentRepositoryImpl @Inject constructor(
      * of destroying work on the strength of a flag we already know is unreliable.
      */
     override suspend fun recoverStalePendingUploads() {
+        val db = provider.current()
         db.withTransaction {
             db.documentHeaderDao().getAll()
                 .filter { it.docState.toDocState() == DocState.PendingUpload }
@@ -485,14 +526,14 @@ class DocumentRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun advanceToInProgressIfNeeded(documentNo: String, type: String) {
+    private suspend fun advanceToInProgressIfNeeded(db: PrimaDatabase, documentNo: String, type: String) {
         val doc = db.documentHeaderDao().getByKey(documentNo, type)
         if (doc?.docState == DocState.Downloaded.toDbString() || doc?.docState?.startsWith("UploadFailed:") == true) {
             db.documentHeaderDao().updateState(documentNo, type, DocState.InProgress.toDbString())
         }
     }
 
-    private suspend fun regressToDownloadedIfNeeded(documentNo: String, type: String) {
+    private suspend fun regressToDownloadedIfNeeded(db: PrimaDatabase, documentNo: String, type: String) {
         val header = db.documentHeaderDao().getByKey(documentNo, type) ?: return
         if (header.docState != DocState.InProgress.toDbString()) return
         val recordings = db.recordingDao().getByDoc(documentNo, type)
@@ -501,7 +542,7 @@ class DocumentRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun regressFromCompletedIfNeeded(documentNo: String, type: String) {
+    private suspend fun regressFromCompletedIfNeeded(db: PrimaDatabase, documentNo: String, type: String) {
         val header = db.documentHeaderDao().getByKey(documentNo, type) ?: return
         if (header.docState != DocState.Completed.toDbString()) return
         val lines = db.documentLineDao().getByDoc(documentNo, type)

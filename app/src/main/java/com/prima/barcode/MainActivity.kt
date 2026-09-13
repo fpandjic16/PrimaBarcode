@@ -73,6 +73,7 @@ import com.prima.barcode.ui.screen.MainMenuScreen
 import com.prima.barcode.ui.screen.RecordingScreen
 import com.prima.barcode.ui.screen.RecordingsTreeScreen
 import com.prima.barcode.ui.screen.SettingsScreen
+import com.prima.barcode.ui.screen.SignInScreen
 import com.prima.barcode.ui.screen.UserInfoScreen
 import com.prima.barcode.ui.theme.Language
 import com.prima.barcode.ui.theme.PrimaBarcodeTheme
@@ -159,6 +160,37 @@ class MainActivity : AppCompatActivity() {
                 appVm.saveSettings(s)
             }
 
+            // Most settings are personal, so they have to follow the operator.
+            //
+            // The initial read above happens before anyone has signed in and therefore returns
+            // device defaults. This replaces them with the profile's own as soon as there is a
+            // profile, and again on every change of operator — otherwise the second shift would
+            // inherit the first one's language, text size and working location.
+            //
+            // Deliberately does not save: this is reading what is already stored, and writing it
+            // back would let a half-applied state overwrite the real one.
+            val signedInProfile by appVm.currentProfile.collectAsState()
+            LaunchedEffect(signedInProfile?.id) {
+                if (signedInProfile == null) return@LaunchedEffect
+                val s = appVm.loadSettings()
+                if (language != s.language) {
+                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(s.language.tag))
+                }
+                textSize = s.textSize
+                uppercaseText = s.uppercaseText
+                language = s.language
+                debounceTime = s.debounceTime
+                hapticEnabled = s.hapticEnabled
+                soundEnabled = s.soundEnabled
+                warnOnOver = s.warnOnOver
+                backgroundSync = s.backgroundSync
+                debuggerActive = s.debuggerActive
+                disabledDocTypes = s.disabledDocTypes
+                docTypeFilters = s.docTypeFilters
+                locationCode = s.lastLocationCode
+                rcCode = s.lastRcCode
+            }
+
             PrimaBarcodeTheme(textSizeOffset = textSize.spOffset, uppercaseEnabled = uppercaseText) {
                 PrimaBarcodeApp(
                     locationCode              = locationCode,
@@ -226,13 +258,20 @@ private fun PrimaBarcodeApp(
     val context = LocalContext.current
 
     val credentials by appVm.credentials.collectAsState()
-    val user: User? = credentials?.let { creds ->
-        val plain = creds.username.substringAfterLast('\\').substringBefore('@')
+    val profile by appVm.currentProfile.collectAsState()
+
+    // Identity comes from the profile, not from the credentials.
+    //
+    // Deriving it from credentials tied who you are to a secret that self-destructs on a timer:
+    // when the TTL lapsed the user became null, and under per-operator storage that would have
+    // meant an operator losing sight of their own unsent scans. The profile outlives the
+    // credential, which is the whole point of keeping them apart.
+    val user: User? = profile?.let {
         User(
-            id          = creds.username,
-            username    = creds.username,
-            displayName = plain,
-            initials    = plain.take(2).uppercase(),
+            id          = it.id,
+            username    = credentials?.username ?: it.displayName,
+            displayName = it.displayName,
+            initials    = it.displayName.take(2).uppercase(),
         )
     }
 
@@ -332,7 +371,7 @@ private fun PrimaBarcodeApp(
     var showMainLoginSheet   by remember { mutableStateOf(false) }
 
     fun requireCredentials(action: () -> Unit) {
-        if (appVm.extSystemCredentialStore.isValid()) {
+        if (appVm.hasCredentials()) {
             action()
         } else {
             pendingUploadAction = action
@@ -363,6 +402,80 @@ private fun PrimaBarcodeApp(
         }
     }
 
+    // ── The gate ──────────────────────────────────────────────────────────────
+    //
+    // Nothing below composes until somebody is signed in, and that is not only about privacy:
+    // every recording stamps its author at the moment it is written, so the app has to know who
+    // is scanning before the first scan. There is no filling it in afterwards.
+    //
+    // An early return rather than a branch around the NavHost, so the signed-out state cannot
+    // reach a screen by any route — including a back stack left over from the previous operator.
+    var signingIn   by remember { mutableStateOf(false) }
+    var signInError by remember { mutableStateOf<String?>(null) }
+    var showOfflineNotice by remember { mutableStateOf(false) }
+
+    val activeProfile = profile
+    if (activeProfile == null) {
+        SignInScreen(
+            profiles = remember(signingIn) { appVm.profileStore.profiles() },
+            busy = signingIn,
+            error = signInError,
+            onErrorDismiss = { signInError = null },
+            onSignIn = { username, password ->
+                signingIn = true
+                appVm.signIn(username, password) { result ->
+                    signingIn = false
+                    when (result) {
+                        is AppViewModel.SignInResult.Online -> Unit
+                        is AppViewModel.SignInResult.OfflineUnlock -> showOfflineNotice = true
+                        is AppViewModel.SignInResult.Failed -> signInError = result.message
+                    }
+                }
+            },
+        )
+        return
+    }
+
+    if (showOfflineNotice) {
+        AlertDialog(
+            onDismissRequest = { showOfflineNotice = false },
+            title = { Text(stringResource(R.string.signin_offline_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.signin_offline_body)) },
+            confirmButton = {
+                Button(onClick = { showOfflineNotice = false }) { Text(stringResource(R.string.btn_ok)) }
+            },
+        )
+    }
+
+    // Changing operator swaps the database underneath everything. A send that is still running
+    // would then be writing "this row reached the ERP" into the wrong person's file — so the
+    // switch waits, rather than the upload being cancelled. Covers the background path too, which
+    // outlives the screen that started it and is therefore the easy one to forget.
+    val uploadInFlight by appVm.uploadInFlight.collectAsState()
+    var showSwitchBlocked by remember { mutableStateOf(false) }
+
+    fun requestSignOut() {
+        if (uploadInFlight) showSwitchBlocked = true else appVm.signOut()
+    }
+
+    if (showSwitchBlocked) {
+        AlertDialog(
+            onDismissRequest = { showSwitchBlocked = false },
+            title = { Text(stringResource(R.string.signin_switch_blocked_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.signin_switch_blocked_body)) },
+            confirmButton = {
+                Button(onClick = { showSwitchBlocked = false }) { Text(stringResource(R.string.btn_ok)) }
+            },
+        )
+    }
+
+    // The nav controller is remembered above the sign-in gate, so its back stack outlives a change
+    // of operator. Without this the next person lands wherever the last one left off — typically a
+    // document route they have no copy of, which renders as a blank screen.
+    LaunchedEffect(profile?.id) {
+        nav.popBackStack("main", inclusive = false)
+    }
+
     NavHost(navController = nav, startDestination = "main") {
         composable("main") {
             MainMenuScreen(
@@ -385,7 +498,7 @@ private fun PrimaBarcodeApp(
                 onDocumentOverview = { nav.navigate("dashboard?tab=1") },
                 onShowErrors = { nav.navigate("dashboard") },
                 onUserInfoTap = {
-                    if (appVm.extSystemCredentialStore.isValid()) nav.navigate("user_info")
+                    if (appVm.hasCredentials()) nav.navigate("user_info")
                     else showMainLoginSheet = true
                 },
                 onRecordedDocTap = { doc -> nav.navigate("recordings/${doc.documentNo}/${doc.type.key}") },
@@ -397,7 +510,7 @@ private fun PrimaBarcodeApp(
                 location = location,
                 rc = rc,
                 onBack = { nav.popBackStack() },
-                onSignOut = { appVm.signOut(); nav.popBackStack() },
+                onSignOut = { requestSignOut() },
             )
         }
         composable("location_rc_pick") {
@@ -410,7 +523,7 @@ private fun PrimaBarcodeApp(
                 availableLocations = locations,
                 isRefreshing = isRefreshing,
                 lastSyncedAt = lastSyncedAt,
-                hasCredentials = appVm.extSystemCredentialStore.isValid(),
+                hasCredentials = appVm.hasCredentials(),
                 credentialTtlHours = extSystemConfig.credentialTtlHours,
                 loginQrKey = extSystemConfig.loginQrKey,
                 hapticEnabled = hapticEnabled,
@@ -454,7 +567,7 @@ private fun PrimaBarcodeApp(
                 onDisabledDocTypesChange = onDisabledDocTypesChange,
                 docTypeFilters = docTypeFilters,
                 onDocTypeFiltersChange = onDocTypeFiltersChange,
-                savedCredentials = appVm.extSystemCredentialStore.get(),
+                savedCredentials = appVm.savedCredentials(),
                 onTestConnection = { serverUrl, username, password, cb ->
                     launchWithDebug(
                         listOf(serverUrl.trim()),
@@ -510,7 +623,7 @@ private fun PrimaBarcodeApp(
                 onDeleteAllDocuments = { appVm.deleteAllDocuments() },
                 onChangeLocation = { nav.navigate("location_rc_pick") },
                 onOpenExtSystemConfig = { nav.navigate("ext_system_config") },
-                onSignOut = { appVm.signOut() },
+                onSignOut = { requestSignOut() },
                 onSignInTap = { requireCredentials {} },
             )
         }
@@ -628,7 +741,7 @@ private fun PrimaBarcodeApp(
         composable("download_filter") {
             val dlFilterMode = docTypeFilters[selectedDocType.key] ?: selectedDocType.defaultFilterMode
             DownloadFilterScreen(
-                hasCredentials  = appVm.extSystemCredentialStore.isValid(),
+                hasCredentials  = appVm.hasCredentials(),
                 loginQrKey      = extSystemConfig.loginQrKey,
                 hapticEnabled   = hapticEnabled,
                 soundEnabled    = soundEnabled,
@@ -672,11 +785,11 @@ private fun PrimaBarcodeApp(
                     onBack = { nav.popBackStack() },
                     onScan = { barcode, multiplier ->
                         currentDoc.lines.find { it.barcodeNo == barcode }?.let { line ->
-                            vm.recordScan(line.lineNo, barcode, user?.id.orEmpty(), multiplier)
+                            vm.recordScan(line.lineNo, barcode, activeProfile.id, multiplier)
                         }
                     },
                     onLineUpdate = { lineNo, newScanned, onRefused ->
-                        vm.setLineScanned(lineNo, newScanned, user?.id.orEmpty(), onRefused)
+                        vm.setLineScanned(lineNo, newScanned, activeProfile.id, onRefused)
                     },
                     onUpload = {
                         requireCredentials {
@@ -827,8 +940,8 @@ private fun PrimaBarcodeApp(
         LoginSheet(
             credentialTtlHours = extSystemConfig.credentialTtlHours,
             ctaLabel           = stringResource(R.string.btn_sign_in),
-            initialUsername    = appVm.extSystemCredentialStore.get()?.username ?: "",
-            initialPassword    = appVm.extSystemCredentialStore.get()?.password ?: "",
+            initialUsername    = appVm.savedCredentials()?.username ?: "",
+            initialPassword    = appVm.savedCredentials()?.password ?: "",
             loginQrKey         = extSystemConfig.loginQrKey,
             hapticEnabled      = hapticEnabled,
             soundEnabled       = soundEnabled,

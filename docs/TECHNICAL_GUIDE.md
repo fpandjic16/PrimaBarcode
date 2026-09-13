@@ -151,19 +151,28 @@ These map 1:1 to the User Guide's Settings section but framed for support/consul
 | Upload fails with "Not signed in" / "not configured" | Session expired, or a URL/field is blank in External System Configuration | Re-authenticate; verify config fields |
 | "NTLM not enabled" / "credentials rejected" on Test Connection | Distinguishes ERP-side NTLM misconfiguration (phase 0 — no challenge issued at all) from genuinely wrong credentials (phase 2 + 401) | `NtlmAuthenticator.phaseReached`, surfaced in the Test Connection result dialog's message |
 | A document with real progress "disappeared" from Orders | Nothing but a successful upload removes it. Downloads never delete a document holding recordings | Check the RECORDINGS section on the main menu, and the Errors tab |
-| An operator finds someone else's unfinished work on the device | Expected. See "The device is shared, the sign-in is not" below | `RecordingEntity.userId` per row; nothing filters by it |
+| An operator cannot see work they left yesterday | They are signed in as a different profile, or typed a name that normalises differently | The RECORDINGS section is per operator; check the name on the sign-in screen |
+| "Could not sign in" and the server is down | Their first sign-in on this device has not happened yet, so there is no local digest to check the password against | Connect to the ERP once; after that the password works offline |
 | Barcode with `|` scans as garbage | Printed with Code 39 symbology, which cannot encode `|` | Reprint the label as Code 128 |
 | A scan is rejected as "Barcode not found" even though the item is on the document | The scanned value doesn't byte-for-byte match that line's `Barcode` field (wrong symbology, stray whitespace, wrong `\|UOM\|QTY` suffix) | Compare the raw scanned value against the line's `Barcode` field; reprint the label if needed |
 
-### The device is shared, the sign-in is not
+### The device is shared, the data is not (3.0.0)
 
-Documents and recordings belong to the **device**, not to the signed-in user. There is no user column on `documentHeader`, no user predicate in any query, and `AppViewModel.signOut()` clears only the credential store — the database is untouched. So an operator who forgets to upload at the end of a shift leaves everything on the device, and the next operator sees all of it: the documents, the scan totals, and the RECORDINGS tree down to individual scans.
+Each operator gets their own database file. Documents, lines and recordings are scoped by which file a query runs in — not by a predicate — so two operators on one device cannot see or send each other's work, and both may hold the same NAV document independently, each with their own scans. The ERP refuses nothing, so those two copies add up there, which is the point when they are splitting one job between them.
 
-Upload is scoped the same way. `getQueuedRecordings` filters on `sentAt IS NULL` and line attachment only, so pressing UPLOAD sends **every** queued row on the document regardless of who scanned it.
+Sign-in is required at every app launch and is a real sign-in, with a password. What that password is checked against depends on whether the ERP can be reached:
 
-Attribution survives that, per row. `RecordingEntity.userId` is stamped when the scan is recorded and travels to NAV as `Source_User_ID`, so each row arrives under whoever actually scanned it — not under whoever pressed UPLOAD. The one thing the app does not do is *tell* the second operator that some of what they are about to send is not theirs.
+- **first time on this device** — must be online; the ERP is the only authority on whether the password is valid. A success enrols the profile: a PBKDF2 digest of the password is stored, salted, with no expiry.
+- **afterwards, ERP reachable** — checked against the ERP again, and the digest is re-derived, so a password changed in the ERP heals itself here.
+- **afterwards, ERP unreachable** — checked against the digest. The operator gets in, sees their work and can keep scanning documents already on the device; Download and Upload stay shut until the server answers. Only a transport failure falls back this way (`ExtSystemResult.Failure.code == -1`); an HTTP status means the server answered and said no, and no local digest may overrule that.
 
-This is a deliberate consequence of the recording-first design, not an oversight: work is never withheld from whoever is holding the device, which is what makes an abandoned shift recoverable at all. If per-user scoping is ever wanted, `userId` is already on every row, and the cheap first step would be a warning on upload when the queued rows carry more than one user — not a filter, which would strand the first operator's work until they personally came back.
+This is the one place where isolation would otherwise have cost more than it bought: identity used to come from the credentials, and `ExtSystemCredentialStore.get()` wipes those the moment their TTL lapses. Scoping data to an identity that self-destructs on a timer would have hidden an operator's own unsent scans from them — scans that exist nowhere else until they reach the ERP — and sign-in needs a reachable server, so a bad morning could have meant a locked shift. Hence two secrets with two lifetimes: the NAV password expires, the unlock digest does not.
+
+Identity is `UserProfileStore.normalise()` — the bare username, upper case, domain stripped, at most 50 characters. `alice`, `PRIMA\alice` and `alice@prima.hr` are one operator. Before this, `User.id` was the raw typed string, so one person could have had three identities and, under per-profile storage, three separate databases. The database filename is a SHA-256 prefix of that key, never the name itself.
+
+`RecordingEntity.userId` is stamped at the moment a scan is written and travels to NAV as `Source_User_ID`. It can no longer be empty: nothing is reachable before sign-in, which is why the gate exists at all — a scan's author cannot be filled in afterwards.
+
+Locations and responsibility centres stay device-wide in `SharedDatabase`, along with `ExtSystemConfig`, the disabled document types, the per-type filter modes and the debugger flag. Everything else in `AppSettings` is per profile.
 
 ---
 
@@ -206,7 +215,13 @@ There is deliberately **no separate "SyncRepository"** — NAV networking (downl
 
 ## B.2 Database Schema (Room)
 
-`PrimaDatabase` — file `prima_barcode.db`, **schema version 16**. Built with `.addMigrations(MIGRATION_10_11 … MIGRATION_15_16).fallbackToDestructiveMigration(dropAllTables = true)` — any DB older than v10, or any version jump not covered by an explicit migration, is destructively recreated.
+Two databases, and which one a table lives in is the whole of the per-user isolation.
+
+**`PrimaDatabase`** — one file **per operator**, `prima_<sha256-prefix>.db`, **schema version 19**. Holds `documentHeader`, `documentLine` and `recordings`. Opened by `DatabaseProvider`, not by Dagger: a `@Singleton PrimaDatabase` would have pinned the first operator's file for the life of the process. Built with `.addMigrations(MIGRATION_7_8 … MIGRATION_18_19)` and **no `fallbackToDestructiveMigration`** — see `DatabaseModule` for why that must never come back.
+
+**`SharedDatabase`** — one file for the device, `prima_shared.db`, version 1. Holds `locations` and `responsibility_centers`. They describe the site, not the person; per-profile copies would have forced every new operator to re-download them before they could pick a location, which needs a server that may not be reachable.
+
+`DatabaseProvider` keeps opened databases open rather than closing on switch. A background upload outlives the screen that started it, so a switch can land while rows are still being written; closing underneath that throws and loses the write, and those rows are the only copy of a shift's work until the ERP has them. **Never hold a DAO or a database in a field** — `DocumentRepositoryImpl` resolves `provider.current()` at each use, binds it once per transaction with a local `val db`, and passes that into its private helpers so no transaction can straddle two files.
 
 ### `documentHeader` (`DocumentHeaderEntity`)
 PK: `(documentNo, type)`.
@@ -468,7 +483,9 @@ The typed value winning means a bad configured domain can be corrected at the lo
 
 `parseDomainUser` maps `.` to an empty domain rather than returning it verbatim, so the fallback decision in `buildClient` can't be driven off "is the parsed domain blank" — blank would then mean both "no domain given" and "no domain wanted". It keys off whether the typed username contains a separator at all (`\` or `@`) instead: a name written with one states its own domain and is taken at its word, even when what it states is none.
 
-**Credential TTL** (`ExtSystemCredentialStore`, `EncryptedSharedPreferences` file `ext_system_credentials`, AES-256-GCM/Keystore): `save(username, password, ttlHours)` stores `expiry = now + ttlHours*3_600_000L`; `get()` checks `now > expiry` on every read — if expired, clears and returns `null` (lazy expiry, not a background timer). `isValid() = get() != null`.
+**Credential TTL** (`ExtSystemCredentialStore`, `EncryptedSharedPreferences` file `ext_system_credentials`, AES-256-GCM/Keystore): one slot **per profile** — `save(profileId, username, password, ttlHours)` stores `<profileId>.expiry = now + ttlHours*3_600_000L`; `get(profileId)` checks `now > expiry` on every read and, if expired, clears that profile's slot and returns `null` (lazy expiry, not a background timer). `isValid(profileId) = get(profileId) != null`.
+
+Keying by profile is what makes the TTL mean what it reads like: an operator signing in daily stays signed in, one who appears weekly is asked again, and neither affects the other. It used to be a single slot with fixed keys, so whoever signed in last overwrote everyone before them and the TTL measured the last sign-in *on the device* rather than by that person.
 
 ### B.6.3 DTOs — `data/extsystem/ExtSystemPayload.kt`
 
@@ -551,8 +568,17 @@ return failures
 
 ## B.7 Auth & Config Storage
 
+### `UserProfileStore`
+`EncryptedSharedPreferences("user_profiles")`. Holds the operators this device knows — id, display name, and per profile a PBKDF2 salt, iteration count and digest. **No expiry on any of it**, deliberately: it is what reaches an operator's own data, and that data does not expire either.
+
+The current profile is held **in memory only**, not in the prefs. Persisting it would restore the session on the next launch, which is exactly what must not happen — a device left on a shelf would come back up inside the last operator's data with no password asked. A process restart means signing in again; the enrolment is what makes that work offline.
+
+`normalise(raw)` is the identity function: `parseDomainUser().second.trim().uppercase()`, rejected if blank or over 50 characters. Callers refuse rather than truncate — a silently shortened name is a different person as far as this key is concerned. `databaseName(id)` hashes it, so a filename can never depend on the characters an operator typed.
+
 ### `AppSettings` / `AppSettingsStore`
-Plain (unencrypted) `SharedPreferences("app_settings")`.
+Plain (unencrypted) `SharedPreferences`, split across two files while `AppSettings` stays one type, so nothing above the store knows the seam exists.
+
+**Personal** — `app_settings_<profile id>`: text size, uppercase, language, debounce, haptics, sound, over-scan warning, background sync, last location and RC. **The device's** — `app_settings`: disabled doc types, per-type filter modes, debugger flag. Those last three describe the installation, the same way `ExtSystemConfig` does, and an administrator should not have to redo them for each new operator.
 
 | Field | Type | Default |
 |---|---|---|
@@ -588,7 +614,9 @@ data class ExtSystemCredentials(val username: String, val password: String)
 ```
 
 ### `ExtSystemCredentialStore`
-`EncryptedSharedPreferences` (file `ext_system_credentials`), `MasterKey` with `AES256_GCM` (Android Keystore, hardware-backed on API 28+), pref key scheme `AES256_SIV`, value scheme `AES256_GCM`. `save`/`get` (TTL-checked)/`isValid`/`clear` as described in §B.6.2.
+`EncryptedSharedPreferences` (file `ext_system_credentials`), `MasterKey` with `AES256_GCM` (Android Keystore, hardware-backed on API 28+), pref key scheme `AES256_SIV`, value scheme `AES256_GCM`. `save`/`get` (TTL-checked)/`isValid`/`clear` all take a profile id, as described in §B.6.2; `clearAll()` wipes every operator's, for "clear cache".
+
+Holds the NAV password in the clear, because NTLM computes its response from the password itself and cannot work without it. That is also why the PBKDF2 digest in `UserProfileStore` adds no new exposure: a one-way digest is strictly less than what the device already carries.
 
 ### Login flow (end-to-end)
 1. `LoginSheet` (`ui/screen/LoginSheet.kt`) — reusable full-screen `Dialog` (`DialogProperties(usePlatformDefaultWidth = false)`, resized to `MATCH_PARENT` via `DialogWindowProvider`; changed from a `ModalBottomSheet` in 2026-08), reused by `ExtSystemConfigScreen` (Test connection), `LocationRcPickScreen` (refresh without credentials), `DownloadFilterScreen` (auto-opens if `!hasCredentials`), and the main-menu sign-in entry point.

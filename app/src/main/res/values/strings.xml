@@ -287,4 +287,17 @@
     <string name="recording_sent_floor_hint">%s already sent</string>
     <string name="recording_sent_floor_title">Quantity cannot go lower</string>
     <string name="recording_sent_floor_body">%1$s: %2$s has already been sent to the external system and cannot be taken back from here. You can raise the quantity, but not go below that. To correct what was sent, fix it in the external system.</string>
+    <!-- Sign-in / operator profiles -->
+    <string name="signin_title">Sign in</string>
+    <string name="signin_action">SIGN IN</string>
+    <string name="signin_known_operators">Operators on this device</string>
+    <string name="signin_first_time_note">The first sign-in on this device needs the external system. After that your password works even when it cannot be reached.</string>
+    <string name="signin_name_too_long">User name can be at most %d characters.</string>
+    <string name="signin_bad_username">Enter a valid user name.</string>
+    <string name="signin_failed_title">Could not sign in</string>
+    <string name="signin_failed_offline">The external system cannot be reached and this password has not been used on this device before. Connect and sign in once.</string>
+    <string name="signin_offline_title">Signed in without the external system</string>
+    <string name="signin_offline_body">You can see your work and keep scanning the documents already on this device. Download and Upload will work again once the external system answers.</string>
+    <string name="signin_switch_blocked_title">Sending in progress</string>
+    <string name="signin_switch_blocked_body">Rows are being sent to the external system. Wait for that to finish before changing operator.</string>
 </resources>

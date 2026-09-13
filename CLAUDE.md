@@ -68,7 +68,8 @@ data/
 - **LocationRcPickScreen** — Location/RC switcher with NAV refresh
 - **ExtSystemConfigScreen** — NAV endpoint URLs, doc type codes, credential TTL, JSON import/export of defaults
 - **SettingsScreen** — Text size, language, scan behavior toggles, cache/export/sign-out, embeds ext-system config
-- **LoginSheet** — Full-screen NAV credential capture (summoned on Download/Upload, not app launch); QR sign-in via hardware scanner or camera
+- **SignInScreen** — The gate. Required at every app launch: picks the operator and takes their password, so every recording can carry its author from the moment it is written
+- **LoginSheet** — Full-screen NAV credential capture (summoned on Download/Upload); QR sign-in via hardware scanner or camera
 - **UploadErrorScreen** — Failure detail + retry for a single document
 
 ### Design System
@@ -98,6 +99,7 @@ Domain models live in `data/model/Models.kt`; Room entities in `data/db/Entities
 - `OrphanedScan` — a recording whose line NAV has since removed from the document. Surfaced on `Document.orphanedScans`, computed in `Mappers.toDomain` by diffing recordings against the line rows. Blocks upload (`runUpload` refuses the document and writes `UploadFailed`) until the operator discards them from `UploadErrorScreen`. There is no "scan an item not on the document" feature — that was removed in `247d903`; these arise only after the fact, from an ERP-side edit
 - `DocumentType` — enum: `WAREHOUSE_SHIPMENT`, `WAREHOUSE_RECEIPT`, `RETAIL_SHIPMENT`, `RETAIL_RECEIPT`, `TRANSPORT_SHEET`, `COMPLAINT`, `INVENTORY`. Each carries `retailLocation` (the download/upload discriminator, null for types with their own `Document_Type` code) and `defaultFilterMode` (the scope a type falls back to until the user picks one — `COMPLAINT` defaults to responsibility centre, everything else to location)
 - Local persistence is recording-first: every scan writes a `RecordingEntity` row; documents/lines are freely replaced on re-download, but recordings (real user progress) are never deleted by a sync. `DocumentRepository.mergeDocument` re-attaches recordings by barcode when NAV renumbers a line; anything that still has no line becomes an `OrphanedScan`, and only an explicit operator action ever deletes it.
+- **Data is per operator, by file, not by predicate.** There is one `PrimaDatabase` (`prima_<hash>.db`) per signed-in profile, opened by `DatabaseProvider`; queries are still scoped only by `(documentNo, type)`, which is safe because a query cannot reach outside its own file. Two operators may hold the same NAV document independently. `SharedDatabase` (`prima_shared.db`) keeps locations and responsibility centres device-wide. **Never hold a `PrimaDatabase` or a DAO in a field** — resolve `provider.current()` at each use, bind it once per transaction, and pass that into helpers; a captured reference writes silently into the previous operator's file.
 
 ### NAV Integration
 
@@ -105,4 +107,4 @@ Domain models live in `data/model/Models.kt`; Room entities in `data/db/Entities
 - Login is username+password only; the domain travels inside the username as `user@domain` or `DOMAIN\user`, split by `ExtSystemODataClient.parseDomainUser`.
 - `network_security_config.xml` permits cleartext traffic globally — NAV is reached over the local LAN, not HTTPS.
 - Endpoint URLs, per-doc-type codes, and credential TTL are user-configurable (`ExtSystemConfigScreen`); `assets/ext_system_defaults_*.json` (one per company) seed sane defaults and can be re-imported from Settings.
-- Credentials are cached in `ExtSystemCredentialStore` (`EncryptedSharedPreferences`, AES-256-GCM) with a TTL; expired credentials are wiped on next read.
+- Credentials are cached per operator in `ExtSystemCredentialStore` (`EncryptedSharedPreferences`, AES-256-GCM) with a TTL; expired credentials are wiped on next read. A separate, non-expiring PBKDF2 digest in `UserProfileStore` unlocks a profile when the server is unreachable — see §"The device is shared, the data is not".

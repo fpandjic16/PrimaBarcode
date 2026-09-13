@@ -287,4 +287,17 @@
     <string name="recording_sent_floor_hint">%s веќе испратено</string>
     <string name="recording_sent_floor_title">Количината не може пониско</string>
     <string name="recording_sent_floor_body">%1$s: %2$s е веќе испратено во надворешниот систем и оттука не може да се повлече. Количината можете да ја зголемите, но не и да ја спуштите под таа вредност. Исправката на испратеното се прави во надворешниот систем.</string>
+    <!-- Sign-in / operator profiles -->
+    <string name="signin_title">Најава</string>
+    <string name="signin_action">НАЈАВИ СЕ</string>
+    <string name="signin_known_operators">Оператери на овој уред</string>
+    <string name="signin_first_time_note">Првата најава на овој уред бара надворешен систем. Потоа лозинката работи и кога тој не е достапен.</string>
+    <string name="signin_name_too_long">Корисничкото име смее да има највеќе %d знаци.</string>
+    <string name="signin_bad_username">Внесете исправно корисничко име.</string>
+    <string name="signin_failed_title">Најавата не успеа</string>
+    <string name="signin_failed_offline">Надворешниот систем не е достапен, а оваа лозинка сè уште не е користена на овој уред. Поврзете се и најавете се еднаш.</string>
+    <string name="signin_offline_title">Најава без надворешен систем</string>
+    <string name="signin_offline_body">Го гледате својот труд и можете да продолжите да ги скенирате документите што се веќе на уредот. Преземи и Испрати ќе работат штом надворешниот систем се јави.</string>
+    <string name="signin_switch_blocked_title">Испраќањето е во тек</string>
+    <string name="signin_switch_blocked_body">Редовите се испраќаат во надворешниот систем. Почекајте да заврши пред да го смените операторот.</string>
 </resources>

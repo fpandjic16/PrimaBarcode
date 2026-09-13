@@ -81,9 +81,17 @@ If you scan a barcode that isn't listed as an expected item on the current docum
 
 ## 3. First-Time Setup
 
+**You sign in every time the app opens.** Your name and password; nothing else in the app is reachable until you do. That is not only about privacy — every scan records who made it at the moment you make it, so the app has to know who is holding the device before the first scan.
+
+**Your work is yours.** Documents you download and scans you make are visible only to you. Another operator signing in on the same device sees their own, not yours — and cannot send yours. If you forget to upload at the end of a shift, nothing is lost; it is waiting for you the next time you sign in on that device.
+
+Two of you can work the same document at the same time. Each of you has your own copy with your own scans, and both go to the central system, where the quantities add up — which is what you want when you are splitting one job.
+
+**The first sign-in on a given device needs the central system** to be reachable, because only it can confirm your password. After that your password works on that device even when the system is down: you will see your work and can keep scanning documents you already have, while Download and Upload wait for the system to come back.
+
 When you first open the app:
 
-1. You are **not** required to sign in immediately — signing in only happens the first time you try to **Download** or **Upload** data (or refresh Locations/RCs), via a full-screen sign-in form (back arrow top-left to cancel).
+1. Sign in with your user name and password. Names already used on that device are listed, so you can tap yours instead of typing it. Type your name however you like — `alice`, `PRIMA\alice` and `alice@prima.hr` are all the same person to the app.
 2. Enter your **Username** and **Password**, then tap the button shown (its label changes depending on what triggered it — "Sign in", "Test connection", or "Sign in & Sync"). If your company has a Windows domain configured (Settings → External System Configuration), you just type your plain username — otherwise type it as `user@domain` or `DOMAIN\user`. Submitting actually verifies your credentials against the central system before signing you in — if they're rejected, you'll see why on the same screen and can correct and retry.
 3. Your session stays signed in for a configured period (commonly 24 hours, sometimes longer — named in the footer text below the button, e.g. *"Credentials stored encrypted with AES-256-GCM for 24 hours."*). After that period, you'll simply be asked to sign in again next time it's needed — your credentials are encrypted on the device the whole time.
 4. Pick your **Responsibility Center** and **Location** (see [§5](#5-choosing-your-location--responsibility-center)) — this tells the app which warehouse/store you're working from and filters everything you see to that scope.
@@ -339,6 +347,8 @@ Tap **RESET** to clear everything, or **APPLY** to confirm. The funnel icon turn
 
 Open Settings via the gear icon on the Main Menu. **Settings are buffered** — nothing is saved until you leave the screen; if you've made changes, you'll be asked **"Save your settings before leaving?"** with **Yes** (save) / **No** (discard everything you just changed).
 
+**Most settings are yours alone.** Text size, uppercase, language, scan behaviour and your current location/responsibility centre follow you, so the next shift does not inherit them. Three belong to the device and are shared by everyone on it: which document types are switched off, how each type is scoped, and the debugger flag — those are set up once for the site. The External System Configuration is device-wide too.
+
 ### Appearance
 | Setting | What it does |
 |---|---|
@@ -395,10 +405,21 @@ You likely don't have a location selected, or your company hasn't configured tha
 ### 18.2 "I scanned the wrong quantity"
 Tap into the line and either use −1/+1, or tap the number to type the correct total directly — this replaces the line's recorded quantity, it doesn't add to it. You cannot go below whatever has already been sent to the central system; see [§9.3](#93-editing-a-line-manually).
 
-### 18.2a "The previous shift left their work on the device"
-That is normal — documents and scans stay on the device, they are not tied to whoever is signed in. You will see their documents, and the **RECORDINGS** section on the Main Menu shows exactly what was scanned, when, and by whom.
+### 18.2a "I can't find the work I did yesterday"
+Check the name you signed in with. Your documents and scans belong to you, so signing in as somebody else shows their work, not yours. Sign out and back in as yourself and everything is where you left it.
 
-Pressing **UPLOAD** sends **everything** waiting on that document, including their scans. That is usually what you want — the work would otherwise sit there until they came back — and the central system still records each scan under the person who actually made it, not under you. If you would rather not send someone else's work, check the RECORDINGS tree first and talk to them.
+Nothing is deleted by signing out, by a colleague using the device, or by your password expiring.
+
+### 18.2b "The previous shift left work on the device"
+You will not see it, and that is on purpose — it is theirs to finish and send. Hand the device back, or ask them to sign in and upload.
+
+### 18.2c "It won't let me sign in and says the system can't be reached"
+Two different situations:
+- **You have signed in on this device before** — your password should work anyway. If it does not, your password was probably changed in the central system; that change can only be picked up while the system is reachable.
+- **This is your first time on this device** — you have to be online once, so the central system can confirm who you are. After that it works offline.
+
+### 18.2d "It says sending is in progress and won't let me sign out"
+An upload is still running. Wait for it to finish. Changing operator mid-send would file "this was sent" against the wrong person's records.
 
 ### 18.3 "I keep getting 'Barcode not found' for an item that's clearly on the document"
 Nothing is ever recorded for a rejected scan, so there's nothing to undo — just figure out the mismatch and rescan. Most common causes: you're on the wrong document (double-check the document number in the top bar), the label's barcode doesn't byte-for-byte match what's on the document (a re-print, a different symbology, or stray characters), or — if it's a special `Barcode|UoM|Qty` label — see [§18.7](#187-the-barcode-scanned-as-garbagewrong-characters). If you're confident the item genuinely belongs on the document and it's still not matching, flag it to the office — the document's data may need correcting on the central-system side.

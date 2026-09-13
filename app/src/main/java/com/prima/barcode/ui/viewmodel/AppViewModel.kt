@@ -12,6 +12,9 @@ import com.prima.barcode.data.auth.ExtSystemConfigStore
 import com.prima.barcode.data.auth.ExtSystemCredentialStore
 import com.prima.barcode.data.auth.ExtSystemCredentials
 import com.prima.barcode.data.auth.ExtSystemDefaultsCompany
+import com.prima.barcode.data.auth.UserProfile
+import com.prima.barcode.data.auth.UserProfileStore
+import com.prima.barcode.data.db.DatabaseProvider
 import com.prima.barcode.data.db.LocationDao
 import com.prima.barcode.data.db.LocationEntity
 import com.prima.barcode.data.db.ResponsibilityCenterEntity
@@ -31,6 +34,7 @@ import com.prima.barcode.data.model.ResponsibilityCenter
 import com.prima.barcode.data.repository.DocumentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -54,9 +58,11 @@ class AppViewModel @Inject constructor(
     private val locationDao: LocationDao,
     private val exporter: DatabaseExporter,
     val extSystemConfigStore: ExtSystemConfigStore,
-    val extSystemCredentialStore: ExtSystemCredentialStore,
+    private val extSystemCredentialStore: ExtSystemCredentialStore,
     private val extSystemClient: ExtSystemODataClient,
     private val appSettingsStore: AppSettingsStore,
+    val profileStore: UserProfileStore,
+    private val databaseProvider: DatabaseProvider,
 ) : ViewModel() {
 
     private val gson = Gson()
@@ -68,11 +74,32 @@ class AppViewModel @Inject constructor(
         // Any PendingUpload still on disk was left by an upload whose scope no longer exists —
         // this ViewModel is only recreated once the previous one is gone, so nothing it started
         // can still be running. Clearing it here is what gives a stranded document a way back.
-        viewModelScope.launch { repository.recoverStalePendingUploads() }
+        //
+        // Runs on every profile whose database opens, not once at construction: each operator has
+        // their own file, so each has their own strandings to recover, and the one signing in an
+        // hour from now would otherwise never be looked at.
+        viewModelScope.launch {
+            databaseProvider.database.filterNotNull().collect { repository.recoverStalePendingUploads() }
+        }
     }
 
-    private val _credentials = MutableStateFlow(extSystemCredentialStore.get())
+    private val _currentProfile = MutableStateFlow(profileStore.current())
+    /** Who is signed in. Null only before sign-in — every screen but the sign-in one is behind it. */
+    val currentProfile: StateFlow<UserProfile?> = _currentProfile
+
+    private val _credentials = MutableStateFlow(extSystemCredentialStore.get(profileStore.currentId()))
     val credentials: StateFlow<ExtSystemCredentials?> = _credentials
+
+    /**
+     * True while rows are going to the ERP, by either path.
+     *
+     * Guards the profile switch. `DocState.PendingUpload` cannot do that job on its own: it
+     * survives process death, which is the whole reason `recoverStalePendingUploads` exists, so a
+     * stale flag would block switching forever. This one is in memory and therefore honest about
+     * *this* process.
+     */
+    private val _uploadInFlight = MutableStateFlow(false)
+    val uploadInFlight: StateFlow<Boolean> = _uploadInFlight
 
     val locations: StateFlow<List<Location>> = locationDao.observeLocations()
         .map { it.map { e -> e.toDomain() } }
@@ -102,7 +129,7 @@ class AppViewModel @Inject constructor(
     /** Returns null on success, or an error message on failure. */
     private suspend fun realDownloadLocations(): String? {
         val config = extSystemConfig.value
-        val creds  = extSystemCredentialStore.get() ?: return "Not signed in"
+        val creds  = savedCredentials() ?: return "Not signed in"
         if (!config.isConfigured) return "External system not configured"
         if (config.locationsUrl.isBlank()) return "Locations URL not configured"
         extSystemClient.configure(config, creds)
@@ -164,7 +191,7 @@ class AppViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             val config = extSystemConfig.value
-            val creds  = extSystemCredentialStore.get()
+            val creds  = savedCredentials()
             if (!config.isConfigured || creds == null) {
                 val msg = if (creds == null) "Not signed in" else "External system not configured"
                 onComplete(1, listOf(msg))
@@ -248,13 +275,97 @@ class AppViewModel @Inject constructor(
     }
 
     fun saveCredentials(username: String, password: String) {
-        extSystemCredentialStore.save(username, password, extSystemConfig.value.credentialTtlHours)
-        _credentials.value = extSystemCredentialStore.get()
+        val id = profileStore.currentId() ?: return
+        extSystemCredentialStore.save(id, username, password, extSystemConfig.value.credentialTtlHours)
+        _credentials.value = extSystemCredentialStore.get(id)
     }
 
+    /** Server access for the signed-in operator, or null once its TTL has lapsed. */
+    fun savedCredentials(): ExtSystemCredentials? = extSystemCredentialStore.get(profileStore.currentId())
+
+    fun hasCredentials(): Boolean = extSystemCredentialStore.isValid(profileStore.currentId())
+
+    /**
+     * Leaves the app, not the data.
+     *
+     * Drops this operator's server access and closes their session, returning to the sign-in
+     * screen. Their documents and recordings stay exactly where they are — signing out has never
+     * deleted work and must not start now, since those rows are the only copy until the ERP has
+     * them. Their profile stays enrolled, so signing back in works offline.
+     */
     fun signOut() {
-        extSystemCredentialStore.clear()
+        profileStore.currentId()?.let { extSystemCredentialStore.clear(it) }
         _credentials.value = null
+        _currentProfile.value = null
+        databaseProvider.release()
+    }
+
+    /**
+     * Result of an attempt to sign in at the launch screen.
+     *
+     * [OfflineUnlock] is a success with a caveat the operator has to be told about: they are in
+     * and can scan what is already on the device, but nothing can go to or come from the ERP
+     * until it answers again.
+     */
+    sealed interface SignInResult {
+        data object Online : SignInResult
+        data object OfflineUnlock : SignInResult
+        data class Failed(val message: String) : SignInResult
+    }
+
+    /**
+     * Signs an operator in and opens their data.
+     *
+     * The server is asked first whenever it can be reached, because it is the only authority on
+     * whether a password is still valid — and a success is what (re)derives the local digest, so a
+     * password changed in the ERP heals itself here on the next online sign-in.
+     *
+     * The local digest is the fallback, not the shortcut. It only answers when the server did not,
+     * and only for someone who has already signed in successfully on this device at least once.
+     * Without it, a server outage would hide an operator's own unsent scans from them — and those
+     * scans exist nowhere else.
+     */
+    fun signIn(typedUsername: String, password: String, onResult: (SignInResult) -> Unit) {
+        val id = UserProfileStore.normalise(typedUsername)
+        if (id == null) {
+            onResult(SignInResult.Failed(appContext.getString(R.string.signin_bad_username)))
+            return
+        }
+        viewModelScope.launch {
+            val config = extSystemConfig.value
+            val profile = UserProfile(id = id, displayName = id)
+            val serverResult = if (config.serverBaseUrl.isBlank()) null else {
+                extSystemClient.configure(config, ExtSystemCredentials(typedUsername.trim(), password))
+                extSystemClient.testConnection(config.serverBaseUrl.trim())
+            }
+
+            when {
+                serverResult is ExtSystemResult.Success -> {
+                    profileStore.enroll(profile, password)
+                    databaseProvider.switchTo(id)
+                    _currentProfile.value = profile
+                    extSystemCredentialStore.save(id, typedUsername, password, config.credentialTtlHours)
+                    _credentials.value = extSystemCredentialStore.get(id)
+                    onResult(SignInResult.Online)
+                }
+                // Only a transport failure falls back. `code = -1` is the client's marker for
+                // "never got an answer"; any real HTTP status means the server replied and said
+                // no, and no local digest may overrule that.
+                (serverResult == null || (serverResult as? ExtSystemResult.Failure)?.code == -1) &&
+                    profileStore.unlocks(id, password) -> {
+                    databaseProvider.switchTo(id)
+                    _currentProfile.value = profile
+                    _credentials.value = extSystemCredentialStore.get(id)
+                    onResult(SignInResult.OfflineUnlock)
+                }
+                else -> onResult(
+                    SignInResult.Failed(
+                        (serverResult as? ExtSystemResult.Failure)?.message
+                            ?: appContext.getString(R.string.signin_failed_offline)
+                    )
+                )
+            }
+        }
     }
 
     /**
@@ -389,7 +500,7 @@ class AppViewModel @Inject constructor(
     /** Uploads each doc; on success deletes it, on failure marks UploadFailed. Returns failure count. */
     private suspend fun runUpload(docs: List<Document>): Int {
         val config = extSystemConfig.value
-        val creds  = extSystemCredentialStore.get()
+        val creds  = savedCredentials()
         if (!config.isConfigured || creds == null) {
             docs.forEach {
                 repository.updateDocState(it.documentNo, it.type.key,
@@ -506,7 +617,16 @@ class AppViewModel @Inject constructor(
         docs: List<Document>,
         onComplete: (failureCount: Int) -> Unit = {},
     ) {
-        viewModelScope.launch { onComplete(runUpload(docs)) }
+        viewModelScope.launch {
+            _uploadInFlight.value = true
+            try {
+                onComplete(runUpload(docs))
+            } finally {
+                // finally, not after: a cancelled scope would otherwise leave the flag raised and
+                // lock the operator out of switching profiles for the life of the process.
+                _uploadInFlight.value = false
+            }
+        }
     }
 
     /**
@@ -525,7 +645,12 @@ class AppViewModel @Inject constructor(
             // turn Retry into a no-op that closes the screen as if it had worked.
             val uploadable = docs.filter { doc -> doc.lines.any { it.scanned > 0.0 } || doc.needsReview }
             uploadable.forEach { repository.updateDocState(it.documentNo, it.type.key, DocState.PendingUpload) }
-            runUpload(uploadable)
+            _uploadInFlight.value = true
+            try {
+                runUpload(uploadable)
+            } finally {
+                _uploadInFlight.value = false
+            }
         }
     }
 
@@ -541,7 +666,7 @@ class AppViewModel @Inject constructor(
             repository.clearAll()
             appSettingsStore.clear()
             extSystemConfigStore.clear()
-            extSystemCredentialStore.clear()
+            extSystemCredentialStore.clearAll()
         }
     }
 
