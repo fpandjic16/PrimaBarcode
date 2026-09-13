@@ -10,7 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AssignmentReturn
+import androidx.compose.material.icons.automirrored.outlined.AssignmentReturn
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Inventory
 import androidx.compose.material.icons.outlined.LocalShipping
@@ -286,7 +286,7 @@ private fun DocumentTypeList(summary: DocTypeSummary, onClick: () -> Unit) {
         DocumentType.WAREHOUSE_RECEIPT                                -> Icons.Outlined.MoveToInbox
         DocumentType.RETAIL_RECEIPT                                   -> Icons.Outlined.Store
         DocumentType.TRANSPORT_SHEET                                  -> Icons.Outlined.Description
-        DocumentType.COMPLAINT                                        -> Icons.Outlined.AssignmentReturn
+        DocumentType.COMPLAINT                                        -> Icons.AutoMirrored.Outlined.AssignmentReturn
         DocumentType.INVENTORY                                        -> Icons.Outlined.Inventory
     }
 

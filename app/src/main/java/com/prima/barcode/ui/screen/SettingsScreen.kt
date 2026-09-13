@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -329,7 +330,7 @@ fun SettingsScreen(
                     )
                     SettingsDivider()
                     ToggleRow(
-                        icon = Icons.Outlined.VolumeUp,
+                        icon = Icons.AutoMirrored.Outlined.VolumeUp,
                         label = stringResource(R.string.settings_sound),
                         description = stringResource(R.string.settings_sound_desc),
                         checked = soundEnabled,
