@@ -69,7 +69,8 @@ fun MainMenuScreen(
     docTypes: List<DocTypeSummary>,
     /**
      * Documents that already carry scans. Only their number and their scan totals are used here —
-     * the list itself lives on its own screen, behind [onOpenRecordings]. Empty hides the row.
+     * the list itself lives on its own screen, behind [onOpenRecordings]. Empty is a valid state:
+     * the row stays and shows zero.
      */
     recordedDocs: List<Document> = emptyList(),
     shiftScans: Int = 0,
@@ -194,17 +195,27 @@ fun MainMenuScreen(
             }
             // Work in progress across every type, as one row rather than the list itself: a good
             // shift is dozens of documents, and rendering them here pushed the document types —
-            // what this screen is for — off the top of the screen. Hidden entirely when nothing
-            // is scanned, so an idle device still opens on nothing but the document types.
-            if (recordedDocs.isNotEmpty()) {
-                item {
-                    Spacer(Modifier.height(4.dp))
-                    RecordingsEntryRow(
-                        documentCount = recordedDocs.size,
-                        scanCount = recordedDocs.sumOf { it.totalScans },
-                        onClick = onOpenRecordings,
-                    )
-                }
+            // what this screen is for — off the top of the screen.
+            //
+            // Its own header, the same as DOCUMENTS above it. Without one the row read as an
+            // eighth document type, which is the one thing it is not.
+            //
+            // Shown at zero rather than hidden, so the screen keeps one shape and the row keeps
+            // one place on it. "0 scans" is also an answer worth having at the end of a shift —
+            // a hidden section says the same thing, but only to someone who knows it can hide.
+            item {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.main_recordings_section_header),
+                    style = monoLabel.copy(color = PrimaPalette.Ink3),
+                )
+            }
+            item {
+                RecordingsEntryRow(
+                    documentCount = recordedDocs.size,
+                    scanCount = recordedDocs.sumOf { it.totalScans },
+                    onClick = onOpenRecordings,
+                )
             }
         }
     }
@@ -263,7 +274,9 @@ private fun RecordingsEntryRow(documentCount: Int, scanCount: Int, onClick: () -
             documentCount.toString(),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontFamily = com.prima.barcode.ui.theme.GeistMono,
-                color = PrimaPalette.Ink,
+                // Greyed at zero, same as a document-type row, so "nothing here" reads as nothing
+                // rather than as a number worth looking at.
+                color = if (documentCount > 0) PrimaPalette.Ink else PrimaPalette.Ink4,
                 fontWeight = FontWeight.Medium,
             ),
         )

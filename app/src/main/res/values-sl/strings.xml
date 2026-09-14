@@ -20,6 +20,7 @@
     <!-- Main menu -->
     <string name="main_documents_header">DOKUMENTI</string>
     <string name="main_recordings_header">ZAPISI</string>
+    <string name="main_recordings_section_header">ZAPISI SKENIRANJ</string>
     <string name="main_recordings_scans">%d zapisov</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Skladiščna odprema</string>

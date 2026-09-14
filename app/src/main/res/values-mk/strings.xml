@@ -20,6 +20,7 @@
     <!-- Main menu -->
     <string name="main_documents_header">ДОКУМЕНТИ</string>
     <string name="main_recordings_header">ЗАПИСИ</string>
+    <string name="main_recordings_section_header">ЗАПИСИ ОД СКЕНИРАЊЕ</string>
     <string name="main_recordings_scans">%d записи</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Магацинска испорака</string>

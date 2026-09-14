@@ -20,6 +20,7 @@
     <!-- Main menu -->
     <string name="main_documents_header">DOCUMENTS</string>
     <string name="main_recordings_header">RECORDINGS</string>
+    <string name="main_recordings_section_header">SCAN RECORDINGS</string>
     <string name="main_recordings_scans">%d scans</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Warehouse Shipment</string>

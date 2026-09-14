@@ -52,9 +52,8 @@ fun RecordingsListScreen(
         PrimaTopBar(title = stringResource(R.string.main_recordings_header), onBack = onBack)
 
         if (docs.isEmpty()) {
-            // Not normally reachable — the row that opens this screen is hidden while there is
-            // nothing to show — but a document uploaded from another screen can empty the list
-            // while it is open, and an empty screen with no explanation reads as a fault.
+            // Reachable two ways: the row that opens this screen stays on the main menu at zero,
+            // and an upload started elsewhere can empty the list while it is already open.
             Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center,
