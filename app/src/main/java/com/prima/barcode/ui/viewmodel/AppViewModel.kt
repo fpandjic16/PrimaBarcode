@@ -310,15 +310,26 @@ class AppViewModel @Inject constructor(
      * the wrong session while still carrying the signed-in operator's name. Whoever the account
      * belongs to signs in at the launch screen; there is no second way in.
      *
-     * Returns false when it refused, so the caller can say so instead of failing silently.
+     * Says which of the three things happened, so a caller can tell a refusal from having had
+     * nowhere to store the answer.
      */
-    fun saveCredentials(username: String, password: String): Boolean {
-        val id = profileStore.currentId() ?: return false
-        if (UserProfileStore.normalise(username) != id) return false
+    fun saveCredentials(username: String, password: String): CredentialSave {
+        val id = profileStore.currentId() ?: return CredentialSave.NoProfile
+        if (UserProfileStore.normalise(username) != id) return CredentialSave.WrongOperator
         extSystemCredentialStore.save(id, username, password, extSystemConfig.value.credentialTtlHours)
         _credentials.value = extSystemCredentialStore.get(id)
-        return true
+        return CredentialSave.Stored
     }
+
+    /**
+     * What [saveCredentials] did.
+     *
+     * [NoProfile] is not a refusal. The external-system configuration is reachable from the
+     * sign-in screen on purpose — a device out of the box has no server URL, so without that
+     * door nobody could ever sign in to set one — and "test connection" there is a reachability
+     * check with nobody yet to file the answer under.
+     */
+    enum class CredentialSave { Stored, NoProfile, WrongOperator }
 
     /** Server access for the signed-in operator, or null once its TTL has lapsed. */
     fun savedCredentials(): ExtSystemCredentials? = extSystemCredentialStore.get(profileStore.currentId())
@@ -434,8 +445,11 @@ class AppViewModel @Inject constructor(
             val result = extSystemClient.testConnection(url)
             // A server that accepts somebody else's account is still a failure here: the point of
             // the test is to obtain access for this session, and access that cannot be stored is
-            // access this session does not have.
-            if (result is ExtSystemResult.Success && !saveCredentials(username.trim(), password)) {
+            // access this session does not have. Nobody signed in is a different matter — see
+            // [CredentialSave.NoProfile].
+            if (result is ExtSystemResult.Success &&
+                saveCredentials(username.trim(), password) == CredentialSave.WrongOperator
+            ) {
                 onResult(ExtSystemResult.Failure(appContext.getString(R.string.signin_wrong_operator)))
                 return@launch
             }

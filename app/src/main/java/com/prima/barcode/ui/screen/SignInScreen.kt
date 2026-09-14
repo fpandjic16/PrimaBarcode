@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
@@ -40,6 +41,9 @@ import com.prima.barcode.ui.theme.monoLabel
  *
  * Known operators are listed so the common case is a tap and a password rather than typing a
  * username on a device with no comfortable keyboard.
+ *
+ * The one thing reachable from here without signing in is the external-system configuration — see
+ * [onOpenConfig].
  */
 @Composable
 fun SignInScreen(
@@ -49,6 +53,11 @@ fun SignInScreen(
     error: String? = null,
     onErrorDismiss: () -> Unit = {},
     onBack: (() -> Unit)? = null,
+    // Opens the external-system configuration without signing in first; null hides the button.
+    // The chicken and egg it breaks: signing in asks the server whether the password is good,
+    // and a device out of the box has no server URL to ask, so without a way through from here
+    // a fresh install could never be configured and so could never be signed into either.
+    onOpenConfig: (() -> Unit)? = null,
 ) {
     var username by remember { mutableStateOf(profiles.firstOrNull()?.displayName.orEmpty()) }
     var password by remember { mutableStateOf("") }
@@ -124,6 +133,26 @@ fun SignInScreen(
                 stringResource(R.string.signin_first_time_note),
                 style = monoLabel.copy(color = PrimaPalette.Ink3),
             )
+
+            onOpenConfig?.let { open ->
+                OutlinedButton(
+                    onClick = open,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                ) {
+                    Icon(
+                        Icons.Outlined.Settings,
+                        contentDescription = null,
+                        tint = PrimaPalette.Ink3,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        stringResource(R.string.signin_open_config),
+                        style = monoLabel.copy(color = PrimaPalette.Ink),
+                    )
+                }
+            }
         }
 
         Box(

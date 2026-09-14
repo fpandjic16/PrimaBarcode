@@ -215,6 +215,7 @@
     <string name="ext_config_company_load_error">Datoteka %s nije učitana</string>
     <string name="ext_config_exit_dialog_text">Spremiti konfiguraciju vanjskog sustava prije izlaska?</string>
     <string name="ext_config_testing_connection">Testiranje veze…</string>
+    <string name="ext_config_test_ok">NTLM prijava je uspjela i poslužitelj je odgovorio.</string>
     <string name="ext_config_connection_ok">Veza uspostavljena</string>
     <string name="ext_config_connection_failed">Veza neuspješna</string>
     <string name="ext_config_domain_hint">npr. PRIMA (ostavite prazno ako nema)</string>
@@ -292,6 +293,7 @@
     <string name="signin_action">PRIJAVI SE</string>
     <string name="signin_known_operators">Operateri na ovom uređaju</string>
     <string name="signin_first_time_note">Prva prijava na ovom uređaju traži vanjski sustav. Nakon toga lozinka radi i kad se on ne može dohvatiti.</string>
+    <string name="signin_open_config">Postava vanjskog sustava</string>
     <string name="signin_name_too_long">Korisničko ime smije imati najviše %d znakova.</string>
     <string name="signin_bad_username">Upišite ispravno korisničko ime.</string>
     <string name="signin_wrong_operator">Taj račun pripada drugom operateru. Odjavite se i prijavite se kao on.</string>

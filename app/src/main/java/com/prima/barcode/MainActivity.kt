@@ -392,6 +392,18 @@ private fun PrimaBarcodeApp(
         }
     }
 
+    // Shared by the configuration screen's "Test connection" on both sides of the gate, so the
+    // two do not drift apart.
+    fun reportTestResult(result: ExtSystemResult<Unit>, cb: (Boolean, String?) -> Unit) {
+        when (result) {
+            is ExtSystemResult.Success -> cb(true, context.getString(R.string.ext_config_test_ok))
+            is ExtSystemResult.Failure -> cb(
+                false,
+                if (result.code > 0) "HTTP ${result.code}: ${result.message}" else result.message,
+            )
+        }
+    }
+
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -413,10 +425,45 @@ private fun PrimaBarcodeApp(
     var signingIn   by remember { mutableStateOf(false) }
     var signInError by remember { mutableStateOf<String?>(null) }
     var showOfflineNotice by remember { mutableStateOf(false) }
+    var configuringAtSignIn by remember { mutableStateOf(false) }
 
     val activeProfile = profile
     if (activeProfile == null) {
+        // The one door out of the gate, and it has to exist: signing in asks the server whether
+        // the password is good, and a device out of the box has no server URL to ask. Without a
+        // way to set one from here, a fresh install could never be configured and so could never
+        // be signed into either.
+        //
+        // Not wrapped in launchWithDebug the way the signed-in route is — that dialog composes
+        // below this return and so would never appear.
+        if (configuringAtSignIn) {
+            ExtSystemConfigScreen(
+                hapticEnabled = hapticEnabled,
+                soundEnabled = soundEnabled,
+                initial = extSystemConfig,
+                onSave = { config ->
+                    appVm.saveExtSystemConfig(config)
+                    configuringAtSignIn = false
+                },
+                onDiscard = { configuringAtSignIn = false },
+                loadDefaults = { fileName -> appVm.loadExtSystemDefaults(fileName) },
+                listCompanies = { appVm.listExtSystemDefaultsCompanies() },
+                getDefaultsJsonForExport = { fileName -> appVm.getExtSystemDefaultsJsonForExport(fileName) },
+                disabledDocTypes = disabledDocTypes,
+                onDisabledDocTypesChange = onDisabledDocTypesChange,
+                docTypeFilters = docTypeFilters,
+                onDocTypeFiltersChange = onDocTypeFiltersChange,
+                // savedCredentials left null on purpose: nobody is signed in, so there is nothing
+                // to prefill and nowhere a test's credentials would be stored.
+                onTestConnection = { serverUrl, username, password, cb ->
+                    appVm.testExtSystemConnection(serverUrl, username, password) { reportTestResult(it, cb) }
+                },
+                onImportJson = { json -> appVm.parseExtSystemConfigJson(json) },
+            )
+            return
+        }
         SignInScreen(
+            onOpenConfig = { configuringAtSignIn = true },
             profiles = remember(signingIn) { appVm.profileStore.profiles() },
             busy = signingIn,
             error = signInError,
@@ -575,15 +622,7 @@ private fun PrimaBarcodeApp(
                         listOf(serverUrl.trim()),
                         onCancel = { cb(false, null) },
                     ) {
-                        appVm.testExtSystemConnection(serverUrl, username, password) { result ->
-                            when (result) {
-                                is ExtSystemResult.Success -> cb(true, "NTLM authentication succeeded and the server responded.")
-                                is ExtSystemResult.Failure -> cb(
-                                    false,
-                                    if (result.code > 0) "HTTP ${result.code}: ${result.message}" else result.message,
-                                )
-                            }
-                        }
+                        appVm.testExtSystemConnection(serverUrl, username, password) { reportTestResult(it, cb) }
                     }
                 },
                 onImportJson = { json -> appVm.parseExtSystemConfigJson(json) },

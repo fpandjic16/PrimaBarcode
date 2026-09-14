@@ -87,6 +87,8 @@ If you scan a barcode that isn't listed as an expected item on the current docum
 
 Two of you can work the same document at the same time. Each of you has your own copy with your own scans, and both go to the central system, where the quantities add up — which is what you want when you are splitting one job.
 
+**Setting up a brand-new device comes before all of this.** A device fresh out of the box does not know where the central system is, and the sign-in screen cannot confirm a password without it. So the sign-in screen has an **External system setup** button that opens the connection settings without signing in — normally IT or a consultant picks the company there once, which fills in every address, and from then on everyone just signs in.
+
 **The first sign-in on a given device needs the central system** to be reachable, because only it can confirm your password. After that your password works on that device even when the system is down: you will see your work and can keep scanning documents you already have, while Download and Upload wait for the system to come back.
 
 When you first open the app:

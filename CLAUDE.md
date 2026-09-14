@@ -68,7 +68,7 @@ data/
 - **LocationRcPickScreen** — Location/RC switcher with NAV refresh
 - **ExtSystemConfigScreen** — NAV endpoint URLs, doc type codes, credential TTL, JSON import/export of defaults
 - **SettingsScreen** — Text size, language, scan behavior toggles, cache/export/sign-out, embeds ext-system config
-- **SignInScreen** — The gate. Required at every app launch: picks the operator and takes their password, so every recording can carry its author from the moment it is written
+- **SignInScreen** — The gate. Required at every app launch: picks the operator and takes their password, so every recording can carry its author from the moment it is written. Its one door out is an "External system setup" button that opens `ExtSystemConfigScreen` without signing in — a device out of the box has no server URL, and sign-in needs one, so without that door a fresh install could never be configured
 - **LoginSheet** — Full-screen NAV credential capture (summoned on Download/Upload); QR sign-in via hardware scanner or camera
 - **UploadErrorScreen** — Failure detail + retry for a single document
 

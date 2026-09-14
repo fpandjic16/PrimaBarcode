@@ -215,6 +215,7 @@
     <string name="ext_config_company_load_error">%s не можеше да се вчита</string>
     <string name="ext_config_exit_dialog_text">Да се зачува конфигурацијата на надворешниот систем пред напуштање?</string>
     <string name="ext_config_testing_connection">Тестирање на врската…</string>
+    <string name="ext_config_test_ok">NTLM најавата успеа и серверот одговори.</string>
     <string name="ext_config_connection_ok">Врската е успешна</string>
     <string name="ext_config_connection_failed">Врската не успеа</string>
     <string name="ext_config_domain_hint">нпр. PRIMA (оставете празно ако нема)</string>
@@ -292,6 +293,7 @@
     <string name="signin_action">НАЈАВИ СЕ</string>
     <string name="signin_known_operators">Оператери на овој уред</string>
     <string name="signin_first_time_note">Првата најава на овој уред бара надворешен систем. Потоа лозинката работи и кога тој не е достапен.</string>
+    <string name="signin_open_config">Поставување на надворешен систем</string>
     <string name="signin_name_too_long">Корисничкото име смее да има највеќе %d знаци.</string>
     <string name="signin_bad_username">Внесете исправно корисничко име.</string>
     <string name="signin_wrong_operator">Таа сметка припаѓа на друг оператор. Одјавете се и најавете се како него.</string>
