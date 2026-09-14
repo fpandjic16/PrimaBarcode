@@ -231,6 +231,8 @@ You'll see:
 - The full list of expected lines — item number, item name, and a large scanned/expected counter in that line's status color.
 - At the bottom: a **scan bar** to type/scan a barcode.
 
+**Changing location hides the other location's documents**, including ones you have already scanned into — a document for CS165 is not listed while you are working at CS175. Nothing is lost: the **RECORDINGS** section lists everything you have scanned anywhere, whatever location you are on now, and that is where to go looking for work you left at another location.
+
 To review what you have scanned, line by line and scan by scan, use the **RECORDINGS** section on the Main Menu ([§7a](#7a-the-recordings-section)). It replaced the old "last scans" tape, which forgot everything the moment you left this screen.
 
 ### 9.2 Scanning

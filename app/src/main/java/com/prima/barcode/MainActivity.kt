@@ -300,12 +300,21 @@ private fun PrimaBarcodeApp(
     val documents by appVm.documents.collectAsState()
     val extSystemConfig by appVm.extSystemConfig.collectAsState()
 
+    // No exemption for work already started. A document scanned into at one location used to
+    // bypass this filter for good, so moving from CS165 to CS175 still showed CS165's documents —
+    // the filter stopped meaning anything as soon as a shift got going.
+    //
+    // That escape existed because in-progress work was otherwise unreachable from another
+    // location. The RECORDINGS section removed the reason: it lists every document carrying a
+    // scan, deliberately unfiltered by location, and is where unsent work is found now.
+    //
+    // `DocumentOverviewScreen`'s own `atLocation` has always been strict, so this brings the rest
+    // of the app in line with the dashboard rather than inventing a rule.
     val filteredDocs = documents.filter { doc ->
-        doc.hasProgress ||
-            when (docTypeFilters[doc.type.key] ?: doc.type.defaultFilterMode) {
-                DocTypeFilterMode.LOCATION -> location != null && doc.sourceCode == location.code
-                DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
-            }
+        when (docTypeFilters[doc.type.key] ?: doc.type.defaultFilterMode) {
+            DocTypeFilterMode.LOCATION -> location != null && doc.sourceCode == location.code
+            DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
+        }
     }
 
     val locationsManaged = extSystemConfig.locationsUrl.isNotBlank()
@@ -332,6 +341,11 @@ private fun PrimaBarcodeApp(
     // The ZAPISI section: work in progress across every type, newest document first. Deliberately
     // not filtered by disabledDocTypes — a type switched off mid-job would otherwise take the
     // operator's only view of those scans with it.
+    //
+    // **It must stay built from `documents`.** Now that the location filter above admits no
+    // exceptions, this is the only place in the app that shows an operator work they started
+    // somewhere else. Narrowing it by location, by type, or by anything else would leave unsent
+    // scans with nowhere to be seen — and unsent scans exist on this device and nowhere else.
     // Built from documents rather than filteredDocs, and on totalScans rather than hasProgress:
     // both of those narrowings key off a line's scanned quantity, and a scan whose line the ERP
     // has since removed adds to no line at all. A document whose scans were all orphaned would
@@ -694,15 +708,15 @@ private fun PrimaBarcodeApp(
             )
         }
         composable("docs") {
+            // Same rule as `filteredDocs`, for the same reason: nothing is exempt because it has
+            // been scanned into. This is also the only mode-aware filter on this path, so
+            // `DocumentListScreen` does not narrow by location again.
             val typeDocs = documents.filter { doc ->
                 doc.type == selectedDocType &&
-                    (
-                        doc.hasProgress ||
-                        when (docTypeFilters[selectedDocType.key] ?: selectedDocType.defaultFilterMode) {
-                            DocTypeFilterMode.LOCATION -> location != null && doc.sourceCode == location.code
-                            DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
-                        }
-                    )
+                    when (docTypeFilters[selectedDocType.key] ?: selectedDocType.defaultFilterMode) {
+                        DocTypeFilterMode.LOCATION -> location != null && doc.sourceCode == location.code
+                        DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
+                    }
             }
             DocumentListScreen(
                 hapticEnabled = hapticEnabled,

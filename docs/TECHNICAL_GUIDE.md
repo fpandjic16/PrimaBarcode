@@ -233,7 +233,7 @@ DocTypeFilterMode.LOCATION              -> location != null && doc.sourceCode ==
 DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
 ```
 
-With nothing selected, `rc == null` passes **everything** while `location == null` passes **nothing** — so the same missing data reads as "the filter stopped working" on one document type and "my documents vanished" on another. `doc.hasProgress ||` short-circuits ahead of both, so anything already scanned stays visible either way.
+With nothing selected, `rc == null` passes **everything** while `location == null` passes **nothing** — so the same missing data reads as "the filter stopped working" on one document type and "my documents vanished" on another.
 
 The *selected* location is a separate thing from the *list*: `lastLocationCode` / `lastRcCode` are personal settings and moved to `app_settings_<profile id>` with the split, so they start blank for every operator. Nothing repairs a blank pair on its own — `LaunchedEffect(rcs, rcCode)` only acts when `rcCode` is non-blank, and the location effect only when `rc != null`. Each operator picks once, on `LocationRcPickScreen`.
 
@@ -720,10 +720,10 @@ A blocked type is *not* dimmed: it stays tappable and the tap raises the "choose
 
 The RECORDINGS entry is **one row under its own header**, not a list: title, the total number of scans behind it, and the number of documents as the trailing figure (greyed at zero), shaped like a document-type row because from the operator's side that is what it is. It opens `RecordingsListScreen`. It used to render the documents inline, which on a good shift is dozens of rows pushing the document types — what the menu exists for — off the top of the screen. The header (`main_recordings_section_header`) is what keeps it from reading as an eighth document type, and **both header and row stay visible at zero**, so the screen keeps one shape.
 
-Its source either way is `MainActivity`'s `recordedDocs`, built from **all** `documents` on `totalScans > 0` rather than from `filteredDocs` on `hasProgress` — both of those narrowings key off a line's scanned quantity, and an orphaned scan belongs to no line, so a document whose scans were all orphaned would vanish from the one list meant to hold everything scanned. It is also not filtered by `disabledDocTypes` or by the working location, and a document that uploads cleanly is deleted locally and so leaves the list.
+Its source either way is `MainActivity`'s `recordedDocs`, built from **all** `documents` on `totalScans > 0` rather than from `filteredDocs` on a scanned-line count — both of those narrowings key off a line's scanned quantity, and an orphaned scan belongs to no line, so a document whose scans were all orphaned would vanish from the one list meant to hold everything scanned. It is also not filtered by `disabledDocTypes` or by the working location, and a document that uploads cleanly is deleted locally and so leaves the list. **That breadth is now load-bearing**: since the location filter admits no exceptions, this is the only place in the app that shows an operator work they started somewhere else, and narrowing it would leave unsent scans with nowhere to be seen.
 
 ### `DocumentListScreen.kt`
-Two tabs — **Orders** (`Downloaded`/`InProgress`/`PendingUpload`/`UploadFailed`) and **Errors** (`UploadFailed`). Client-side filters: location match OR `doc.hasProgress` override, plus `DocumentFilter`. Dark `ScanField` (`handleDocScan`) reports a document it cannot find; there is no doc creation. Bottom bar varies per tab (Download+Upload / Clear-errors+Upload), and UPLOAD is dimmed and inert unless something is actually queued.
+Two tabs — **Orders** (`Downloaded`/`InProgress`/`PendingUpload`/`UploadFailed`) and **Errors** (`UploadFailed`). Client-side filters: `DocumentFilter` only. It does **not** re-check location — the caller hands it `typeDocs`, already filtered by the type's `DocTypeFilterMode`, and the check that used to live here compared `sourceCode` unconditionally, so on a responsibility-centre-scoped type it cut by location as well. `locationCode` is still a parameter, for the subtitle. Dark `ScanField` (`handleDocScan`) reports a document it cannot find; there is no doc creation. Bottom bar varies per tab (Download+Upload / Clear-errors+Upload), and UPLOAD is dimmed and inert unless something is actually queued.
 
 The third tab, **Recordings**, was removed along with the 5-second long-press that lived on it: the tab listed documents Orders already held, and the thing it was really for — seeing what has been scanned — is now the main menu's RECORDINGS section, which shows individual scans rather than the documents carrying them. The long-press moved to `RecordingsTreeScreen`'s summary card.
 
@@ -916,7 +916,9 @@ when (docTypeFilters[doc.type.key] ?: DocTypeFilterMode.LOCATION) {
     RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
 }
 ```
-Always OR'd with `doc.hasProgress` so in-progress documents are never hidden regardless of filter mode. Note the asymmetry: LOCATION mode requires an explicit match (no location selected ⇒ nothing shows); RESPONSIBILITY_CENTER mode is permissive when nothing is selected (no RC selected ⇒ everything shows). Also drives which of Source/RC is fixed vs shown as a picker in `DownloadFilterScreen`, and gates `canCreateDoc` in the `docs` route.
+**No exemption for work already started.** This used to be OR'd with `doc.hasProgress`, so a document scanned into at one location bypassed the filter for good: move from CS165 to CS175 and CS165's documents were still listed, which made the filter meaningless as soon as a shift got going. The escape existed because in-progress work was otherwise unreachable from another location — the RECORDINGS section removed that reason, and `DocumentOverviewScreen`'s `atLocation` had never had the escape anyway, so dropping it made the rest of the app agree with the dashboard.
+
+Note the asymmetry that remains: LOCATION mode requires an explicit match (no location selected ⇒ nothing shows); RESPONSIBILITY_CENTER mode is permissive when nothing is selected (no RC selected ⇒ everything shows). Also drives which of Source/RC is fixed vs shown as a picker in `DownloadFilterScreen`, and gates `canCreateDoc` in the `docs` route.
 
 ### B.11.5 Debug mode (`debuggerActive`)
 Central gate, `MainActivity.launchWithDebug(urls, onCancel = {}, action)`:

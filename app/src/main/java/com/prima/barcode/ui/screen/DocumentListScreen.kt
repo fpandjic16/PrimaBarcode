@@ -80,9 +80,12 @@ fun DocumentListScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     var docNotFoundError by remember { mutableStateOf<String?>(null) }
     var showClearErrorsDialog by remember { mutableStateOf(false) }
-    val filtered = remember(documents, locationCode, filter) {
+    // Location is not re-checked here. The caller already filtered by the type's
+    // DocTypeFilterMode, and this line only ever compared sourceCode — so on a type scoped by
+    // responsibility centre it cut by location as well, which is the opposite of what that
+    // setting says. `locationCode` is still taken, for the subtitle.
+    val filtered = remember(documents, filter) {
         documents.filter { doc ->
-            if (doc.sourceCode != locationCode && !doc.hasProgress) return@filter false
             val docDate = (doc.documentDate ?: doc.creationDateTime).toLocalDate()
             val dateOk  = (filter.dateFrom == null || !docDate.isBefore(filter.dateFrom)) &&
                           (filter.dateTo   == null || !docDate.isAfter(filter.dateTo))
