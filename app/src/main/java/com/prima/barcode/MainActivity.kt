@@ -464,6 +464,9 @@ private fun PrimaBarcodeApp(
         }
         SignInScreen(
             onOpenConfig = { configuringAtSignIn = true },
+            loginQrKey = extSystemConfig.loginQrKey,
+            hapticEnabled = hapticEnabled,
+            soundEnabled = soundEnabled,
             profiles = remember(signingIn) { appVm.profileStore.profiles() },
             busy = signingIn,
             error = signInError,
