@@ -20,6 +20,7 @@
     <!-- Main menu -->
     <string name="main_documents_header">DOCUMENTS</string>
     <string name="main_recordings_header">RECORDINGS</string>
+    <string name="main_recordings_scans">%d scans</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Warehouse Shipment</string>
     <string name="doctype_warehouse_receipt">Warehouse Receipt</string>
@@ -275,6 +276,7 @@
     <!-- Recordings tree -->
     <string name="recordings_sent_chip">%d sent</string>
     <string name="recordings_tree_empty">This document has no lines.</string>
+    <string name="recordings_list_empty">Nothing is scanned on this device.</string>
     <string name="recordings_tree_sent">Sent</string>
     <string name="recordings_tree_queued">Waiting</string>
     <string name="recordings_tree_no_scans">No recordings on this line</string>

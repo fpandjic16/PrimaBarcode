@@ -20,6 +20,7 @@
     <!-- Main menu -->
     <string name="main_documents_header">ДОКУМЕНТИ</string>
     <string name="main_recordings_header">ЗАПИСИ</string>
+    <string name="main_recordings_scans">%d записи</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Магацинска испорака</string>
     <string name="doctype_warehouse_receipt">Магацински прием</string>
@@ -275,6 +276,7 @@
     <!-- Recordings tree -->
     <string name="recordings_sent_chip">%d испратени</string>
     <string name="recordings_tree_empty">Овој документ нема ставки.</string>
+    <string name="recordings_list_empty">На овој уред нема ништо скенирано.</string>
     <string name="recordings_tree_sent">Испратено</string>
     <string name="recordings_tree_queued">Чека</string>
     <string name="recordings_tree_no_scans">Нема записи на оваа ставка</string>

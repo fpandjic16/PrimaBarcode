@@ -71,6 +71,7 @@ import com.prima.barcode.ui.screen.LocationRcPickScreen
 import com.prima.barcode.ui.screen.LoginSheet
 import com.prima.barcode.ui.screen.MainMenuScreen
 import com.prima.barcode.ui.screen.RecordingScreen
+import com.prima.barcode.ui.screen.RecordingsListScreen
 import com.prima.barcode.ui.screen.RecordingsTreeScreen
 import com.prima.barcode.ui.screen.SettingsScreen
 import com.prima.barcode.ui.screen.SignInScreen
@@ -553,7 +554,14 @@ private fun PrimaBarcodeApp(
                     if (appVm.hasCredentials()) nav.navigate("user_info")
                     else showMainLoginSheet = true
                 },
-                onRecordedDocTap = { doc -> nav.navigate("recordings/${doc.documentNo}/${doc.type.key}") },
+                onOpenRecordings = { nav.navigate("recordings_list") },
+            )
+        }
+        composable("recordings_list") {
+            RecordingsListScreen(
+                docs = recordedDocs,
+                onBack = { nav.popBackStack() },
+                onDocumentTap = { doc -> nav.navigate("recordings/${doc.documentNo}/${doc.type.key}") },
             )
         }
         composable("user_info") {

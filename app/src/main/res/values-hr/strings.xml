@@ -20,6 +20,7 @@
     <!-- Main menu -->
     <string name="main_documents_header">DOKUMENTI</string>
     <string name="main_recordings_header">ZAPISI</string>
+    <string name="main_recordings_scans">%d zapisa</string>
     <!-- Document types -->
     <string name="doctype_warehouse_shipment">Skladišna otpremnica</string>
     <string name="doctype_warehouse_receipt">Skladišna primka</string>
@@ -275,6 +276,7 @@
     <!-- Recordings tree -->
     <string name="recordings_sent_chip">%d poslano</string>
     <string name="recordings_tree_empty">Ovaj dokument nema stavki.</string>
+    <string name="recordings_list_empty">Na ovom uređaju ništa nije skenirano.</string>
     <string name="recordings_tree_sent">Poslano</string>
     <string name="recordings_tree_queued">Čeka</string>
     <string name="recordings_tree_no_scans">Nema zapisa na ovoj stavci</string>

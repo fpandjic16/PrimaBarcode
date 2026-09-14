@@ -702,7 +702,9 @@ val matchedLine = doc.lines.find { it.barcodeNo == barcode }
 
 A blocked type is *not* dimmed: it stays tappable and the tap raises the "choose a location first" dialog. Greying it out only told the operator "no" without telling them why.
 
-The RECORDINGS section lists the documents that carry scans, across every type, newest document date first, and hides itself entirely when there are none. Its source is `MainActivity`'s `recordedDocs`, built from **all** `documents` on `totalScans > 0` rather than from `filteredDocs` on `hasProgress` — both of those narrowings key off a line's scanned quantity, and an orphaned scan belongs to no line, so a document whose scans were all orphaned would vanish from the one list meant to hold everything scanned. Tapping a row opens `RecordingsTreeScreen`.
+The RECORDINGS entry is **one row**, not a list: title, the total number of scans behind it, and the number of documents as the trailing figure, shaped like a document-type row because from the operator's side that is what it is. It hides itself entirely when there are none, and it opens `RecordingsListScreen`. It used to render the documents inline, which on a good shift is dozens of rows pushing the document types — what the menu exists for — off the top of the screen.
+
+Its source either way is `MainActivity`'s `recordedDocs`, built from **all** `documents` on `totalScans > 0` rather than from `filteredDocs` on `hasProgress` — both of those narrowings key off a line's scanned quantity, and an orphaned scan belongs to no line, so a document whose scans were all orphaned would vanish from the one list meant to hold everything scanned. It is also not filtered by `disabledDocTypes` or by the working location, and a document that uploads cleanly is deleted locally and so leaves the list.
 
 ### `DocumentListScreen.kt`
 Two tabs — **Orders** (`Downloaded`/`InProgress`/`PendingUpload`/`UploadFailed`) and **Errors** (`UploadFailed`). Client-side filters: location match OR `doc.hasProgress` override, plus `DocumentFilter`. Dark `ScanField` (`handleDocScan`) reports a document it cannot find; there is no doc creation. Bottom bar varies per tab (Download+Upload / Clear-errors+Upload), and UPLOAD is dimmed and inert unless something is actually queued.
@@ -765,6 +767,9 @@ Internal state machine, `RecordingView` enum: `OVERVIEW, ACTIVE_LINE, KEYPAD` �
 ### `SettingsScreen.kt`
 Buffered-edit-then-confirm-on-exit pattern (identical to `ExtSystemConfigScreen`'s): every field is local `remember` state; `attemptExit()` compares the rebuilt `AppSettings` (plus `pendingExtSystemConfig != null`) against `initial`; only diverges → "Save changes?" dialog. Sections: Appearance, Scanning, Sync, External System Configuration (single row → `ExtSystemConfigScreen`), Debug (Debugger active, Export data, **Insert system defaults** [3-option picker, stages into `pendingExtSystemConfig`, only persisted via Settings' own save], **Clear cache** [red, wipes the signed-in operator's credentials + documents + recordings; leaves settings, the device’s ERP config, and every other operator alone], **Delete all documents and recordings** [red, wipes only documents/recordings, not settings/sign-in]), System Info (read-only version/schema info), Account (avatar/name, immediate Sign out — no confirmation).
 
+### `RecordingsListScreen.kt`
+Route `recordings_list`. The documents behind the main menu's RECORDINGS row, one tappable row each — document number, type, total scans, and how many have reached the ERP. Holds no state and makes no decisions: membership and ordering are the caller's (`recordedDocs`), so the screen cannot disagree with the count on the row that opened it. Its empty state is not normally reachable, since that row is hidden when there is nothing; it exists because an upload from elsewhere can empty the list while it is open.
+
 ### `RecordingsTreeScreen.kt` + `RecordingsTreeViewModel`
 Route `recordings/{documentNo}/{type}`, same argument shape as `recording/...`. Shows every line of the document and, indented under each, the individual scans making up its quantity — including lines with none (`Item C 0/3`), because what is *missing* is as much of the picture as what was scanned.
 
@@ -811,6 +816,8 @@ val overDocs    = filteredDocs.filter { it.state !is DocState.UploadFailed && it
 | `overview_filter` | `DocumentFilterScreen` | edits `overviewFilter`, locked source/RC from dashboard drill-down |
 | `download_filter` | `DownloadFilterScreen` | fixed source/RC per filter mode; URLs via `buildDownloadUrls`; downloads via `realDownloadDocuments` |
 | `recording/{documentNo}/{type}` (String args) | `RecordingScreen` | route-scoped `RecordingViewModel` via `hiltViewModel()` |
+| `recordings_list` | `RecordingsListScreen` | the main menu's RECORDINGS row; hands `recordedDocs` straight through |
+| `recordings/{documentNo}/{type}` (String args) | `RecordingsTreeScreen` | route-scoped `RecordingsTreeViewModel`; reached from `recordings_list` |
 | `upload_error/{documentNo}` (String arg) | `UploadErrorScreen` | retry delegates to `AppViewModel` |
 
 **App-level overlay dialogs** (outside/after the NavHost): blocking "processing" `Dialog` (spinner + message), download-error `AlertDialog`, debug-URL confirmation `AlertDialog` ("Proceed"/"Cancel"), sync-error `AlertDialog` ("See errors" → `dashboard` / "Dismiss").

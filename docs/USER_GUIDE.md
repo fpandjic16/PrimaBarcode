@@ -112,7 +112,7 @@ This is the home screen you land on every time you open the app.
   - A thin colored mini-bar (if there's any activity) previewing the mix of statuses across that type's documents.
   - A count of how many documents of that type you currently have.
   - Tapping a row opens that type's **Document List**. If the type can't be opened yet — no location or responsibility centre selected — the tap tells you so instead of doing nothing.
-- **RECORDINGS section**: every document you have scanned anything into, across all types. Hidden until you scan something. See [§7a](#7a-the-recordings-section).
+- **RECORDINGS row**: opens the list of every document you have scanned anything into, across all types. Hidden until you scan something. See [§7a](#7a-the-recordings-section).
 
 ---
 
@@ -171,9 +171,11 @@ The funnel/filter icon (top-right) turns **coral/orange** when a filter is curre
 
 ## 7a. The RECORDINGS Section
 
-Below the document types on the Main Menu, a **RECORDINGS** section lists every document you have scanned anything into, whatever its type, newest first. It is hidden when you haven't scanned anything yet. Each row shows the document number, its type, how many scans it holds, and how many of those have already gone to the central system.
+Below the document types on the Main Menu there is a single **RECORDINGS** row, showing how many scans you are carrying and, on the right, across how many documents. It is hidden when you haven't scanned anything yet.
 
-Tapping a row opens that document's scans as a **tree**:
+Tapping it opens the list: every document you have scanned anything into, whatever its type, newest first. Each row shows the document number, its type, how many scans it holds, and how many of those have already gone to the central system. Documents stay on the list until they are uploaded — one that goes through cleanly is finished with and leaves.
+
+Tapping a document there opens its scans as a **tree**:
 
 ```
 ITEM-A            2/5
