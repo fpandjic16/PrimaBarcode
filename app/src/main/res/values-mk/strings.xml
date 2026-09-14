@@ -184,7 +184,7 @@
     <string name="ext_config_pick_company_title">Изберете компанија</string>
     <string name="ext_config_no_companies_found">Не се пронајдени вградени конфигурации</string>
     <string name="ext_config_load_builtin">Вчитај вградени стандардни вредности</string>
-    <string name="ext_config_download_builtin">Преземи вградени стандардни вредности</string>
+    <string name="ext_config_export_current">Извези ја конфигурацијата на овој уред</string>
     <string name="ext_config_load_from_file">Увези од датотека</string>
     <string name="ext_config_import_success">Конфигурацијата е увезена</string>
     <string name="ext_config_doc_type_code">Шифра за тип на документ</string>
@@ -212,7 +212,7 @@
     <string name="dialog_save_changes_title">Да се зачуваат промените?</string>
     <!-- Ext system config (audit additions) -->
     <string name="ext_config_test_connection_desc">Се најавува со вашите Windows акредитиви и испраќа автентицирано барање до URL-то на серверот.</string>
-    <string name="ext_config_defaults_saved">Стандардните поставки се зачувани</string>
+    <string name="ext_config_defaults_saved">Конфигурацијата е зачувана</string>
     <string name="ext_config_defaults_save_error">Датотеката ext_system_defaults.json не можеше да се зачува</string>
     <string name="ext_config_company_load_error">%s не можеше да се вчита</string>
     <string name="ext_config_exit_dialog_text">Да се зачува конфигурацијата на надворешниот систем пред напуштање?</string>

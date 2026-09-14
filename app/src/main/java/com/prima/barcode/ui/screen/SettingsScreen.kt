@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.prima.barcode.data.auth.AppSettings
+import com.prima.barcode.data.auth.DeviceConfiguration
 import com.prima.barcode.data.auth.ExtSystemConfig
 import com.prima.barcode.data.auth.ExtSystemDefaultsCompany
 import com.prima.barcode.data.model.Location
@@ -64,9 +65,10 @@ fun SettingsScreen(
     onSave: (AppSettings) -> Unit,
     onDiscard: () -> Unit = {},
     onSaveExtSystemConfig: (ExtSystemConfig) -> Unit = {},
-    loadExtSystemConfigDefaults: (fileName: String) -> ExtSystemConfig? = { null },
-    parseExtSystemConfigJson: (String) -> ExtSystemConfig? = { null },
-    getExtSystemDefaultsJsonForExport: (fileName: String) -> String? = { null },
+    loadExtSystemConfigDefaults: (fileName: String) -> DeviceConfiguration? = { null },
+    parseExtSystemConfigJson: (String) -> DeviceConfiguration? = { null },
+    // Exports what is on the device now, not the asset it came from.
+    exportConfiguration: () -> String? = { null },
     listExtSystemDefaultsCompanies: () -> List<ExtSystemDefaultsCompany> = { emptyList() },
     onExport: () -> Unit = {},
     onClearCache: () -> Unit = {},
@@ -86,6 +88,12 @@ fun SettingsScreen(
     var warnOnOver by remember { mutableStateOf(initial.warnOnOver) }
     var backgroundSync by remember { mutableStateOf(initial.backgroundSync) }
     var debuggerActive by remember { mutableStateOf(initial.debuggerActive) }
+    // No controls on this screen — these two are edited on ExtSystemConfigScreen. They are held
+    // here only so a loaded configuration can bring them and the exit-save carries them out with
+    // everything else. Declared above buildSettings, which reads them: a local function can only
+    // capture locals that already exist above it.
+    var disabledDocTypes by remember { mutableStateOf(initial.disabledDocTypes) }
+    var docTypeFilters by remember { mutableStateOf(initial.docTypeFilters) }
 
     fun buildSettings() = initial.copy(
         textSize = textSize,
@@ -97,15 +105,29 @@ fun SettingsScreen(
         warnOnOver = warnOnOver,
         backgroundSync = backgroundSync,
         debuggerActive = debuggerActive,
+        disabledDocTypes = disabledDocTypes,
+        docTypeFilters = docTypeFilters,
     )
 
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var showDeleteAllDocumentsDialog by remember { mutableStateOf(false) }
     var showInsertSystemDefaultsDialog by remember { mutableStateOf(false) }
     var showCompanyPickDialog by remember { mutableStateOf(false) }
-    var companyPickForDownload by remember { mutableStateOf(false) }
-    var downloadFileName by remember { mutableStateOf("") }
     var pendingExtSystemConfig by remember { mutableStateOf<ExtSystemConfig?>(null) }
+
+    /**
+     * Takes a loaded configuration apart into the two things this screen can hold.
+     *
+     * The ERP half is staged and only written by the exit-save, which is what the "(pending)"
+     * label on the row is about. The device half goes into the local state that `buildSettings`
+     * reads, so it travels out on that same save rather than by a separate path.
+     */
+    fun applyConfiguration(cfg: DeviceConfiguration) {
+        pendingExtSystemConfig = cfg.extSystem
+        disabledDocTypes = cfg.disabledDocTypes
+        docTypeFilters = cfg.docTypeFilters
+        debuggerActive = cfg.debuggerActive
+    }
     var showExitDialog by remember { mutableStateOf(false) }
 
     fun attemptExit() {
@@ -123,7 +145,7 @@ fun SettingsScreen(
             }.getOrNull()
             val parsed = json?.let { parseExtSystemConfigJson(it) }
             if (parsed != null) {
-                pendingExtSystemConfig = parsed
+                applyConfiguration(parsed)
                 Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(context, context.getString(R.string.ext_config_import_parse_error), Toast.LENGTH_LONG).show()
@@ -133,7 +155,7 @@ fun SettingsScreen(
 
     val downloadExtSystemDefaultsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
-            val text = getExtSystemDefaultsJsonForExport(downloadFileName)
+            val text = exportConfiguration()
             val written = text != null && runCatching {
                 context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
             }.isSuccess
@@ -752,7 +774,6 @@ fun SettingsScreen(
                     Button(
                         onClick = {
                             showInsertSystemDefaultsDialog = false
-                            companyPickForDownload = false
                             showCompanyPickDialog = true
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -762,12 +783,11 @@ fun SettingsScreen(
                     OutlinedButton(
                         onClick = {
                             showInsertSystemDefaultsDialog = false
-                            companyPickForDownload = true
-                            showCompanyPickDialog = true
+                            downloadExtSystemDefaultsLauncher.launch(EXPORT_FILE_NAME)
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(R.string.ext_config_download_builtin), fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.ext_config_export_current), fontWeight = FontWeight.SemiBold)
                     }
                     OutlinedButton(
                         onClick = {
@@ -809,17 +829,12 @@ fun SettingsScreen(
                         OutlinedButton(
                             onClick = {
                                 showCompanyPickDialog = false
-                                if (companyPickForDownload) {
-                                    downloadFileName = company.assetFileName
-                                    downloadExtSystemDefaultsLauncher.launch(company.assetFileName)
+                                val defaults = loadExtSystemConfigDefaults(company.assetFileName)
+                                if (defaults != null) {
+                                    applyConfiguration(defaults)
+                                    Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
                                 } else {
-                                    val defaults = loadExtSystemConfigDefaults(company.assetFileName)
-                                    if (defaults != null) {
-                                        pendingExtSystemConfig = defaults
-                                        Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        Toast.makeText(context, context.getString(R.string.ext_config_company_load_error, company.assetFileName), Toast.LENGTH_LONG).show()
-                                    }
+                                    Toast.makeText(context, context.getString(R.string.ext_config_company_load_error, company.assetFileName), Toast.LENGTH_LONG).show()
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),

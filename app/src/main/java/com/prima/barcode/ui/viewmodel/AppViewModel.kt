@@ -11,6 +11,7 @@ import com.prima.barcode.data.auth.ExtSystemConfig
 import com.prima.barcode.data.auth.ExtSystemConfigStore
 import com.prima.barcode.data.auth.ExtSystemCredentialStore
 import com.prima.barcode.data.auth.ExtSystemCredentials
+import com.prima.barcode.data.auth.DeviceConfiguration
 import com.prima.barcode.data.auth.ExtSystemDefaultsCompany
 import com.prima.barcode.data.auth.UserProfile
 import com.prima.barcode.data.auth.UserProfileStore
@@ -24,6 +25,7 @@ import com.prima.barcode.data.extsystem.ExtSystemODataClient
 import com.prima.barcode.data.extsystem.ExtSystemResult
 import com.prima.barcode.data.extsystem.toNavRecording
 import com.prima.barcode.data.model.DocState
+import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.DownloadFilter
@@ -42,7 +44,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 import com.prima.barcode.data.extsystem.NavBarcodeAppEntry
 import com.prima.barcode.data.extsystem.NavLocation
@@ -495,29 +496,54 @@ class AppViewModel @Inject constructor(
      * Returns null if the JSON is missing required fields or malformed.
      * Does not persist — the caller fills the editable form fields.
      */
-    fun parseExtSystemConfigJson(json: String): ExtSystemConfig? = runCatching {
+    fun parseExtSystemConfigJson(json: String): DeviceConfiguration? = runCatching {
         val dto = gson.fromJson(json, ExtSystemDefaultsDto::class.java)
-        ExtSystemConfig(
-            serverBaseUrl            = dto.serverBaseUrl.orEmpty(),
-            credentialTtlHours       = dto.credentialTtlHours ?: 24,
-            documentLinesUrl         = dto.documentLinesUrl.orEmpty(),
-            documentTypeCodes        = DocumentType.entries.associateWith { type ->
-                dto.documentTypeCodes?.get(type.name).orEmpty()
-            },
-            locationsUrl     = dto.locationsUrl.orEmpty(),
-            recordingSyncUrl = dto.recordingSyncUrl.orEmpty(),
-            domain           = dto.domain.orEmpty(),
-            // Absent or blank means "leave the key alone", never "clear it". Exported files
-            // carry no key (see getExtSystemDefaultsJsonForExport), so importing one must not
-            // silently kill QR sign-in on a device that already has a working key. Rotation
-            // still works: a file that does carry a key overwrites whatever is there.
-            loginQrKey       = dto.loginQrKey?.takeIf { it.isNotBlank() }
-                ?: extSystemConfig.value.loginQrKey,
+        val current = appSettingsStore.get()
+        DeviceConfiguration(
+            extSystem = ExtSystemConfig(
+                serverBaseUrl            = dto.serverBaseUrl.orEmpty(),
+                credentialTtlHours       = dto.credentialTtlHours ?: 24,
+                documentLinesUrl         = dto.documentLinesUrl.orEmpty(),
+                documentTypeCodes        = DocumentType.entries.associateWith { type ->
+                    dto.documentTypeCodes?.get(type.name).orEmpty()
+                },
+                locationsUrl     = dto.locationsUrl.orEmpty(),
+                recordingSyncUrl = dto.recordingSyncUrl.orEmpty(),
+                domain           = dto.domain.orEmpty(),
+                // Absent or blank means "leave the key alone", never "clear it". Exported files
+                // carry no key (see exportConfigurationJson), so importing one must not silently
+                // kill QR sign-in on a device that already has a working key. Rotation still
+                // works: a file that does carry a key overwrites whatever is there.
+                loginQrKey       = dto.loginQrKey?.takeIf { it.isNotBlank() }
+                    ?: extSystemConfig.value.loginQrKey,
+            ),
+            // Same rule as the QR key, and for the same reason: an absent section means "leave
+            // this alone". A configuration file written before these fields existed must not
+            // silently switch every document type back on and reset how each one is scoped.
+            //
+            // Keyed by `DocumentType.name` in the file to match `documentTypeCodes` beside it,
+            // and stored by `DocumentType.key`; a name nothing matches is dropped rather than
+            // carried, so a typo cannot invent a document type.
+            disabledDocTypes = dto.disabledDocTypes
+                ?.mapNotNull { name -> docTypeByName(name)?.key }?.toSet()
+                ?: current.disabledDocTypes,
+            docTypeFilters = dto.docTypeFilters
+                ?.mapNotNull { (name, mode) ->
+                    val type = docTypeByName(name) ?: return@mapNotNull null
+                    val parsed = DocTypeFilterMode.entries.firstOrNull { it.name == mode }
+                        ?: return@mapNotNull null
+                    type.key to parsed
+                }?.toMap()
+                ?: current.docTypeFilters,
+            debuggerActive = dto.debuggerActive ?: current.debuggerActive,
         )
     }.onFailure { Timber.w(it, "parseExtSystemConfigJson failed") }.getOrNull()
 
+    private fun docTypeByName(name: String): DocumentType? =
+        DocumentType.entries.firstOrNull { it.name == name }
+
     /** Loads predefined parameters from a bundled `ext_system_defaults_*.json` asset. */
-    fun loadExtSystemDefaults(fileName: String): ExtSystemConfig? = runCatching {
+    fun loadExtSystemDefaults(fileName: String): DeviceConfiguration? = runCatching {
         appContext.assets.open(fileName)
             .bufferedReader(Charsets.UTF_8).use { it.readText() }
     }.onFailure { Timber.w(it, "Failed to load $fileName") }
@@ -525,37 +551,55 @@ class AppViewModel @Inject constructor(
      ?.let { parseExtSystemConfigJson(it) }
 
     /**
-     * Text of a bundled `ext_system_defaults_*.json` asset for "download as file", with
-     * [ExtSystemConfig.loginQrKey] removed.
+     * This device's configuration as a file, with [ExtSystemConfig.loginQrKey] left out.
+     *
+     * Exports **what is on the device now**, not the bundled asset it may once have come from.
+     * That is what makes the round trip real: set one device up by hand, export it, import it on
+     * the rest. Exporting the shipped asset instead meant a hand-tuned device could never become
+     * the template for its fleet.
+     *
+     * Every document type is written out explicitly, present or not, so the file shows the whole
+     * shape of what it controls rather than only the parts that differ from a default.
      *
      * The key must never leave the app this way. An exported file lands in shared storage and
-     * then travels by mail and chat, which is exactly how the one secret protecting printed
-     * login QR codes ends up somewhere it cannot be recalled. Devices are meant to pick the key
-     * up from the bundled assets ("Load built-in defaults") or from a configuration file
-     * prepared deliberately for a rotation, never from a copy someone exported here.
-     *
-     * A file exported here still round-trips: importing one leaves the device's existing key
-     * untouched rather than blanking it (see [parseExtSystemConfigJson]).
+     * then travels by mail and chat, which is exactly how the one secret protecting printed login
+     * QR codes ends up somewhere it cannot be recalled. Devices pick the key up from the bundled
+     * assets ("Load built-in defaults") or from a file prepared deliberately for a rotation.
+     * Importing a file exported here leaves the device's existing key alone rather than blanking
+     * it (see [parseExtSystemConfigJson]).
      */
-    fun getExtSystemDefaultsJsonForExport(fileName: String): String? = runCatching {
-        val text = appContext.assets.open(fileName)
-            .bufferedReader(Charsets.UTF_8).use { it.readText() }
-        val json = JsonParser.parseString(text).asJsonObject
-        json.remove(LOGIN_QR_KEY_FIELD)
-        val stripped = exportGson.toJson(json)
+    fun exportConfigurationJson(): String? = runCatching {
+        val config = extSystemConfig.value
+        val settings = appSettingsStore.get()
+        val dto = ExtSystemDefaultsDto(
+            serverBaseUrl      = config.serverBaseUrl,
+            credentialTtlHours = config.credentialTtlHours,
+            documentLinesUrl   = config.documentLinesUrl,
+            documentTypeCodes  = DocumentType.entries.associate { it.name to config.docTypeCodeFor(it) },
+            locationsUrl       = config.locationsUrl,
+            recordingSyncUrl   = config.recordingSyncUrl,
+            domain             = config.domain,
+            // Never exported. Gson omits nulls, so the field is absent rather than empty, which
+            // is what parseExtSystemConfigJson reads as "leave the key alone".
+            loginQrKey         = null,
+            disabledDocTypes   = DocumentType.entries.filter { it.key in settings.disabledDocTypes }.map { it.name },
+            docTypeFilters     = DocumentType.entries.associate {
+                it.name to (settings.docTypeFilters[it.key] ?: it.defaultFilterMode).name
+            },
+            debuggerActive     = settings.debuggerActive,
+        )
+        val text = exportGson.toJson(dto)
 
-        // Belt and braces. If the key is still in the text - a renamed field, a second copy
-        // somewhere in the file - refuse to write anything rather than hand it out; the caller
+        // Belt and braces. If the key is in the output anyway - a field renamed, a value that
+        // happens to carry it - refuse to write anything rather than hand it out; the caller
         // already shows a save-failed toast. Leaking it silently is the worse failure.
-        val key = runCatching {
-            gson.fromJson(text, ExtSystemDefaultsDto::class.java).loginQrKey
-        }.getOrNull()
-        if (!key.isNullOrBlank() && stripped.contains(key)) {
-            Timber.e("Refusing to export %s: the login QR key survived stripping.", fileName)
+        val key = config.loginQrKey
+        if (key.isNotBlank() && text.contains(key)) {
+            Timber.e("Refusing to export the configuration: the login QR key is in the output.")
             return@runCatching null
         }
-        stripped
-    }.onFailure { Timber.w(it, "Failed to read $fileName") }.getOrNull()
+        text
+    }.onFailure { Timber.w(it, "Failed to build the configuration for export") }.getOrNull()
 
     /**
      * Scans bundled assets for `ext_system_defaults_*.json` files and reads each one's
@@ -579,6 +623,11 @@ class AppViewModel @Inject constructor(
 
     private data class CompanyNameDto(val companyName: String? = null)
 
+    /**
+     * The wire shape of a configuration file. Every field nullable on purpose: absent means
+     * "leave this as it is", which is what lets an older file be imported without wiping settings
+     * that did not exist when it was written.
+     */
     private data class ExtSystemDefaultsDto(
         val serverBaseUrl: String? = null,
         val credentialTtlHours: Int? = null,
@@ -588,6 +637,10 @@ class AppViewModel @Inject constructor(
         val recordingSyncUrl: String? = null,
         val domain: String? = null,
         val loginQrKey: String? = null,
+        // The device half of AppSettings. Keyed by DocumentType.name, like documentTypeCodes.
+        val disabledDocTypes: List<String>? = null,
+        val docTypeFilters: Map<String, String>? = null,
+        val debuggerActive: Boolean? = null,
     )
 
     /** Uploads each doc; on success deletes it, on failure marks UploadFailed. Returns failure count. */
@@ -798,10 +851,3 @@ class AppViewModel @Inject constructor(
 
 }
 
-/**
- * Name of the login QR key field in `ext_system_defaults_*.json`, mirroring
- * `AppViewModel.ExtSystemDefaultsDto.loginQrKey`. Rename one and this must be renamed too,
- * or the export quietly stops stripping the key - which is what the contains() guard in
- * `getExtSystemDefaultsJsonForExport` exists to catch.
- */
-private const val LOGIN_QR_KEY_FIELD = "loginQrKey"

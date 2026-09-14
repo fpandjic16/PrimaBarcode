@@ -184,7 +184,7 @@
     <string name="ext_config_pick_company_title">Izberi podjetje</string>
     <string name="ext_config_no_companies_found">Ni najdenih vgrajenih konfiguracij</string>
     <string name="ext_config_load_builtin">Naloži vgrajene privzete vrednosti</string>
-    <string name="ext_config_download_builtin">Prenesi vgrajene privzete vrednosti</string>
+    <string name="ext_config_export_current">Izvozi konfiguracijo te naprave</string>
     <string name="ext_config_load_from_file">Uvozi iz datoteke</string>
     <string name="ext_config_import_success">Konfiguracija uvožena</string>
     <string name="ext_config_doc_type_code">Šifra vrste dokumenta</string>
@@ -212,7 +212,7 @@
     <string name="dialog_save_changes_title">Shraniti spremembe?</string>
     <!-- Ext system config (audit additions) -->
     <string name="ext_config_test_connection_desc">Prijavi se z vašimi Windows poverilnicami in izvede overjeno zahtevo na URL strežnika.</string>
-    <string name="ext_config_defaults_saved">Privzete nastavitve shranjene</string>
+    <string name="ext_config_defaults_saved">Konfiguracija shranjena</string>
     <string name="ext_config_defaults_save_error">Datoteke ext_system_defaults.json ni bilo mogoče shraniti</string>
     <string name="ext_config_company_load_error">Datoteke %s ni bilo mogoče naložiti</string>
     <string name="ext_config_exit_dialog_text">Shraniti konfiguracijo zunanjega sistema pred izhodom?</string>

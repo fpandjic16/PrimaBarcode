@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.prima.barcode.data.auth.DeviceConfiguration
 import com.prima.barcode.data.auth.ExtSystemConfig
 import com.prima.barcode.data.auth.ExtSystemCredentials
 import com.prima.barcode.data.auth.ExtSystemDefaultsCompany
@@ -41,13 +42,23 @@ private fun Int.ttlLabel() = when (this) {
     else -> "$this h"
 }
 
+/**
+ * Suggested name for an exported configuration; the file picker lets the user change it.
+ *
+ * Internal rather than file-private: SettingsScreen offers the same export from its own
+ * "Insert system defaults" dialog, and two spellings of one filename is how they drift apart.
+ */
+internal const val EXPORT_FILE_NAME = "prima_configuration.json"
+
 @Composable
 fun ExtSystemConfigScreen(
     initial: ExtSystemConfig,
     onSave: (ExtSystemConfig) -> Unit,
     onDiscard: () -> Unit = {},
-    loadDefaults: (fileName: String) -> ExtSystemConfig? = { null },
-    getDefaultsJsonForExport: (fileName: String) -> String? = { null },
+    loadDefaults: (fileName: String) -> DeviceConfiguration? = { null },
+    // Exports what is on the device now, not the asset it came from — so one device set up by
+    // hand can become the template for the rest.
+    exportConfiguration: () -> String? = { null },
     listCompanies: () -> List<ExtSystemDefaultsCompany> = { emptyList() },
     disabledDocTypes: Set<String> = emptySet(),
     onDisabledDocTypesChange: (Set<String>) -> Unit = {},
@@ -61,7 +72,10 @@ fun ExtSystemConfigScreen(
         // onResult with message == null means "cancelled" — reset the testing state without showing a result dialog.
         onResult: (success: Boolean, message: String?) -> Unit,
     ) -> Unit = { _, _, _, cb -> cb(false, "Test connection is not wired up") },
-    onImportJson: ((json: String) -> ExtSystemConfig?)? = null,
+    onImportJson: ((json: String) -> DeviceConfiguration?)? = null,
+    // No matching read parameter: this screen has no debugger control of its own, it only has
+    // to be able to carry the value a loaded configuration brings.
+    onDebuggerActiveChange: (Boolean) -> Unit = {},
     hapticEnabled: Boolean = true,
     soundEnabled: Boolean = true,
 ) {
@@ -84,8 +98,6 @@ fun ExtSystemConfigScreen(
     var showExitDialog by remember { mutableStateOf(false) }
     var showLoadDialog by remember { mutableStateOf(false) }
     var showCompanyPickDialog by remember { mutableStateOf(false) }
-    var companyPickForDownload by remember { mutableStateOf(false) }
-    var downloadFileName by remember { mutableStateOf("") }
 
     val context = LocalContext.current
 
@@ -102,7 +114,18 @@ fun ExtSystemConfigScreen(
         loginQrKey       = loginQrKey,
     )
 
-    fun applyConfig(c: ExtSystemConfig) {
+    /**
+     * Fills the form from a loaded configuration, and applies the device settings that come with
+     * it.
+     *
+     * The ERP half lands in this screen's own fields and is saved with the rest of the form. The
+     * device half has no form fields — the enable switches and Filter-by controls write straight
+     * through their callbacks — so it is applied here and now. Before this, loading a
+     * configuration filled the URLs and codes and silently left the two controls beside them
+     * untouched: same screen, half of it loading.
+     */
+    fun applyConfiguration(cfg: DeviceConfiguration) {
+        val c = cfg.extSystem
         serverBaseUrl = c.serverBaseUrl
         ttlHours = c.credentialTtlHours
         documentLinesUrl = c.documentLinesUrl
@@ -111,6 +134,10 @@ fun ExtSystemConfigScreen(
         locationsUrl = c.locationsUrl
         domain = c.domain
         loginQrKey = c.loginQrKey
+
+        onDisabledDocTypesChange(cfg.disabledDocTypes)
+        onDocTypeFiltersChange(cfg.docTypeFilters)
+        onDebuggerActiveChange(cfg.debuggerActive)
     }
 
     fun attemptExit() {
@@ -127,7 +154,7 @@ fun ExtSystemConfigScreen(
                 else -> {
                     val config = onImportJson(json)
                     if (config != null) {
-                        applyConfig(config)
+                        applyConfiguration(config)
                         Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(context, context.getString(R.string.ext_config_import_parse_error), Toast.LENGTH_LONG).show()
@@ -139,7 +166,7 @@ fun ExtSystemConfigScreen(
 
     val downloadLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
-            val text = getDefaultsJsonForExport(downloadFileName)
+            val text = exportConfiguration()
             val written = text != null && runCatching {
                 context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
             }.isSuccess
@@ -392,7 +419,6 @@ fun ExtSystemConfigScreen(
                     Button(
                         onClick = {
                             showLoadDialog = false
-                            companyPickForDownload = false
                             showCompanyPickDialog = true
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -402,12 +428,11 @@ fun ExtSystemConfigScreen(
                     OutlinedButton(
                         onClick = {
                             showLoadDialog = false
-                            companyPickForDownload = true
-                            showCompanyPickDialog = true
+                            downloadLauncher.launch(EXPORT_FILE_NAME)
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(R.string.ext_config_download_builtin), fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.ext_config_export_current), fontWeight = FontWeight.SemiBold)
                     }
                     OutlinedButton(
                         onClick = {
@@ -449,17 +474,12 @@ fun ExtSystemConfigScreen(
                         OutlinedButton(
                             onClick = {
                                 showCompanyPickDialog = false
-                                if (companyPickForDownload) {
-                                    downloadFileName = company.assetFileName
-                                    downloadLauncher.launch(company.assetFileName)
+                                val defaults = loadDefaults(company.assetFileName)
+                                if (defaults != null) {
+                                    applyConfiguration(defaults)
+                                    Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
                                 } else {
-                                    val defaults = loadDefaults(company.assetFileName)
-                                    if (defaults != null) {
-                                        applyConfig(defaults)
-                                        Toast.makeText(context, context.getString(R.string.ext_config_import_success), Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        Toast.makeText(context, context.getString(R.string.ext_config_company_load_error, company.assetFileName), Toast.LENGTH_LONG).show()
-                                    }
+                                    Toast.makeText(context, context.getString(R.string.ext_config_company_load_error, company.assetFileName), Toast.LENGTH_LONG).show()
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),

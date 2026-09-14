@@ -67,7 +67,7 @@ data/
 - **DocumentOverviewScreen** — Cross-type dashboard (errors/ready/partial/over tabs)
 - **DocumentFilterScreen** / **DownloadFilterScreen** — Filter builders for the list/overview and for NAV downloads
 - **LocationRcPickScreen** — Location/RC switcher with NAV refresh
-- **ExtSystemConfigScreen** — NAV endpoint URLs, doc type codes, credential TTL, JSON import/export of defaults
+- **ExtSystemConfigScreen** — NAV endpoint URLs, doc type codes, credential TTL, per-type enable switch and scope, JSON import/export. A configuration file carries a `DeviceConfiguration`: the whole of `ExtSystemConfig` **plus** the device half of `AppSettings` (`disabledDocTypes`, `docTypeFilters`, `debuggerActive`). The personal half is deliberately excluded — it belongs to a person, not to a deployment. Export writes what is on the device now, so a hand-tuned device can be the template for its fleet
 - **SettingsScreen** — Text size, language, scan behavior toggles, cache/export/sign-out, embeds ext-system config
 - **SignInScreen** — The gate. Required at every app launch: picks the operator and takes their password, so every recording can carry its author from the moment it is written. Signs in by typed name/password or by QR, from the hardware trigger or the camera — both feed `parseLoginQr`, the same as `LoginSheet`, because before this screen existed that sheet *was* the way in. Its one door out is an "External system setup" button that opens `ExtSystemConfigScreen` without signing in — a device out of the box has no server URL, and sign-in needs one, so without that door a fresh install could never be configured
 - **LoginSheet** — Full-screen NAV credential capture (summoned on Download/Upload); QR sign-in via hardware scanner or camera

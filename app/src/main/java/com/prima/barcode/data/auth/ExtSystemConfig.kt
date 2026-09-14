@@ -1,5 +1,6 @@
 package com.prima.barcode.data.auth
 
+import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.data.model.DocumentType
 
 data class ExtSystemConfig(
@@ -35,3 +36,21 @@ data class ExtSystemCredentials(
  * a fixed list, so adding a new company is just adding a new asset file.
  */
 data class ExtSystemDefaultsCompany(val label: String, val assetFileName: String)
+
+/**
+ * Everything a configuration file sets up on a device.
+ *
+ * Two halves, one owner. [extSystem] is where the ERP lives; the rest is what this
+ * installation offers and how it is scoped — the device half of `AppSettings`, set once by
+ * an administrator and inherited by every operator.
+ *
+ * The personal half is deliberately absent. Text size, language, haptics and the working
+ * location belong to a person, and a deployment file that reset them on every load would
+ * undo the reason those settings are per-operator at all.
+ */
+data class DeviceConfiguration(
+    val extSystem: ExtSystemConfig,
+    val disabledDocTypes: Set<String>,
+    val docTypeFilters: Map<String, DocTypeFilterMode>,
+    val debuggerActive: Boolean,
+)

@@ -184,7 +184,7 @@
     <string name="ext_config_pick_company_title">Odaberi tvrtku</string>
     <string name="ext_config_no_companies_found">Nisu pronađene ugrađene konfiguracije</string>
     <string name="ext_config_load_builtin">Učitaj ugrađene zadane vrijednosti</string>
-    <string name="ext_config_download_builtin">Preuzmi ugrađene zadane vrijednosti</string>
+    <string name="ext_config_export_current">Izvezi konfiguraciju ovog uređaja</string>
     <string name="ext_config_load_from_file">Uvezi iz datoteke</string>
     <string name="ext_config_import_success">Konfiguracija uvezena</string>
     <string name="ext_config_doc_type_code">Šifra vrste dokumenta</string>
@@ -212,7 +212,7 @@
     <string name="dialog_save_changes_title">Spremiti promjene?</string>
     <!-- Ext system config (audit additions) -->
     <string name="ext_config_test_connection_desc">Prijavljuje se s vašim Windows vjerodajnicama i šalje autenticirani zahtjev na URL poslužitelja.</string>
-    <string name="ext_config_defaults_saved">Zadane postavke spremljene</string>
+    <string name="ext_config_defaults_saved">Konfiguracija spremljena</string>
     <string name="ext_config_defaults_save_error">Datoteka ext_system_defaults.json nije spremljena</string>
     <string name="ext_config_company_load_error">Datoteka %s nije učitana</string>
     <string name="ext_config_exit_dialog_text">Spremiti konfiguraciju vanjskog sustava prije izlaska?</string>

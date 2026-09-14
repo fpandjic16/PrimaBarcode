@@ -184,7 +184,7 @@
     <string name="ext_config_pick_company_title">Select company</string>
     <string name="ext_config_no_companies_found">No built-in configurations found</string>
     <string name="ext_config_load_builtin">Load built-in defaults</string>
-    <string name="ext_config_download_builtin">Download built-in defaults</string>
+    <string name="ext_config_export_current">Export this device's configuration</string>
     <string name="ext_config_load_from_file">Import from file</string>
     <string name="ext_config_import_success">Configuration imported</string>
     <string name="ext_config_doc_type_code">Document Type Code</string>
@@ -212,7 +212,7 @@
     <string name="dialog_save_changes_title">Save changes?</string>
     <!-- Ext system config (audit additions) -->
     <string name="ext_config_test_connection_desc">Signs in with your Windows credentials and runs an authenticated request against the server URL.</string>
-    <string name="ext_config_defaults_saved">Defaults saved</string>
+    <string name="ext_config_defaults_saved">Configuration saved</string>
     <string name="ext_config_defaults_save_error">Could not save ext_system_defaults.json</string>
     <string name="ext_config_company_load_error">Could not load %s</string>
     <string name="ext_config_exit_dialog_text">Save the external system configuration before leaving?</string>

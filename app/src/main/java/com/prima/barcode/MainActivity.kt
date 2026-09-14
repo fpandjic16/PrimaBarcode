@@ -212,6 +212,7 @@ class MainActivity : AppCompatActivity() {
                     docTypeFilters            = docTypeFilters,
                     onDocTypeFiltersChange    = { docTypeFilters = it; appVm.saveSettings(buildSettings().copy(docTypeFilters = it)) },
                     debuggerActive            = debuggerActive,
+                    onDebuggerActiveChange    = { debuggerActive = it; appVm.saveSettings(buildSettings().copy(debuggerActive = it)) },
                     onSettingsSaved           = { s -> applySettings(s) },
                 )
             }
@@ -253,6 +254,7 @@ private fun PrimaBarcodeApp(
     docTypeFilters: Map<String, DocTypeFilterMode>,
     onDocTypeFiltersChange: (Map<String, DocTypeFilterMode>) -> Unit,
     debuggerActive: Boolean,
+    onDebuggerActiveChange: (Boolean) -> Unit,
     onSettingsSaved: (AppSettings) -> Unit,
 ) {
     val nav = rememberNavController()
@@ -463,11 +465,12 @@ private fun PrimaBarcodeApp(
                 onDiscard = { configuringAtSignIn = false },
                 loadDefaults = { fileName -> appVm.loadExtSystemDefaults(fileName) },
                 listCompanies = { appVm.listExtSystemDefaultsCompanies() },
-                getDefaultsJsonForExport = { fileName -> appVm.getExtSystemDefaultsJsonForExport(fileName) },
+                exportConfiguration = { appVm.exportConfigurationJson() },
                 disabledDocTypes = disabledDocTypes,
                 onDisabledDocTypesChange = onDisabledDocTypesChange,
                 docTypeFilters = docTypeFilters,
                 onDocTypeFiltersChange = onDocTypeFiltersChange,
+                onDebuggerActiveChange = onDebuggerActiveChange,
                 // savedCredentials left null on purpose: nobody is signed in, so there is nothing
                 // to prefill and nowhere a test's credentials would be stored.
                 onTestConnection = { serverUrl, username, password, cb ->
@@ -636,11 +639,12 @@ private fun PrimaBarcodeApp(
                 onDiscard = { nav.popBackStack() },
                 loadDefaults = { fileName -> appVm.loadExtSystemDefaults(fileName) },
                 listCompanies = { appVm.listExtSystemDefaultsCompanies() },
-                getDefaultsJsonForExport = { fileName -> appVm.getExtSystemDefaultsJsonForExport(fileName) },
+                exportConfiguration = { appVm.exportConfigurationJson() },
                 disabledDocTypes = disabledDocTypes,
                 onDisabledDocTypesChange = onDisabledDocTypesChange,
                 docTypeFilters = docTypeFilters,
                 onDocTypeFiltersChange = onDocTypeFiltersChange,
+                onDebuggerActiveChange = onDebuggerActiveChange,
                 savedCredentials = appVm.savedCredentials(),
                 onTestConnection = { serverUrl, username, password, cb ->
                     launchWithDebug(
@@ -680,7 +684,7 @@ private fun PrimaBarcodeApp(
                 loadExtSystemConfigDefaults = { fileName -> appVm.loadExtSystemDefaults(fileName) },
                 listExtSystemDefaultsCompanies = { appVm.listExtSystemDefaultsCompanies() },
                 parseExtSystemConfigJson = { json -> appVm.parseExtSystemConfigJson(json) },
-                getExtSystemDefaultsJsonForExport = { fileName -> appVm.getExtSystemDefaultsJsonForExport(fileName) },
+                exportConfiguration = { appVm.exportConfigurationJson() },
                 onExport = {
                     val ts = exportTimestampFmt.format(Instant.now())
                     exportLauncher.launch("prima_export_${ts}.json")
