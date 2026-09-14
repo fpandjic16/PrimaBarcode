@@ -398,30 +398,24 @@ class AppViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Result of an attempt to sign in at the launch screen.
-     *
-     * [OfflineUnlock] is a success with a caveat the operator has to be told about: they are in
-     * and can scan what is already on the device, but nothing can go to or come from the ERP
-     * until it answers again.
-     */
+    /** Result of an attempt to sign in at the launch screen. */
     sealed interface SignInResult {
         data object Online : SignInResult
-        data object OfflineUnlock : SignInResult
         data class Failed(val message: String) : SignInResult
     }
 
     /**
      * Signs an operator in and opens their data.
      *
-     * The server is asked first whenever it can be reached, because it is the only authority on
-     * whether a password is still valid — and a success is what (re)derives the local digest, so a
-     * password changed in the ERP heals itself here on the next online sign-in.
+     * **The external system is the only authority, every time.** There is no local fallback: if it
+     * cannot be reached, or refuses the password, nobody gets in. A profile is created by the same
+     * step, so an operator who has never been accepted by the ERP does not exist on this device.
      *
-     * The local digest is the fallback, not the shortcut. It only answers when the server did not,
-     * and only for someone who has already signed in successfully on this device at least once.
-     * Without it, a server outage would hide an operator's own unsent scans from them — and those
-     * scans exist nowhere else.
+     * That is a deliberate trade against availability, taken knowingly. A device that cannot reach
+     * the server is a device nobody can open, including an operator whose unsent scans are sitting
+     * on it — those rows stay safe on disk but are out of reach until the server answers. An
+     * earlier version unlocked offline against a stored PBKDF2 digest for exactly that reason; it
+     * was removed because signing in without the ERP is not a sign-in at all.
      */
     fun signIn(typedUsername: String, password: String, onResult: (SignInResult) -> Unit) {
         val id = UserProfileStore.normalise(typedUsername)
@@ -437,29 +431,21 @@ class AppViewModel @Inject constructor(
                 extSystemClient.testConnection(config.serverBaseUrl.trim())
             }
 
-            when {
-                serverResult is ExtSystemResult.Success -> {
-                    profileStore.enroll(profile, password)
-                    databaseProvider.switchTo(id)
-                    _currentProfile.value = profile
-                    extSystemCredentialStore.save(id, typedUsername, password, config.credentialTtlHours)
-                    _credentials.value = extSystemCredentialStore.get(id)
-                    onResult(SignInResult.Online)
-                }
-                // Only a transport failure falls back. `code = -1` is the client's marker for
-                // "never got an answer"; any real HTTP status means the server replied and said
-                // no, and no local digest may overrule that.
-                (serverResult == null || (serverResult as? ExtSystemResult.Failure)?.code == -1) &&
-                    profileStore.unlocks(id, password) -> {
-                    databaseProvider.switchTo(id)
-                    _currentProfile.value = profile
-                    _credentials.value = extSystemCredentialStore.get(id)
-                    onResult(SignInResult.OfflineUnlock)
-                }
-                else -> onResult(
+            if (serverResult is ExtSystemResult.Success) {
+                profileStore.enroll(profile)
+                databaseProvider.switchTo(id)
+                _currentProfile.value = profile
+                extSystemCredentialStore.save(id, typedUsername, password, config.credentialTtlHours)
+                _credentials.value = extSystemCredentialStore.get(id)
+                onResult(SignInResult.Online)
+            } else {
+                // `serverResult == null` means there is no server URL to ask at all, which is a
+                // configuration problem rather than a rejection — the sign-in screen's own door to
+                // the external-system setup is the way out of it.
+                onResult(
                     SignInResult.Failed(
                         (serverResult as? ExtSystemResult.Failure)?.message
-                            ?: appContext.getString(R.string.signin_failed_offline)
+                            ?: appContext.getString(R.string.signin_needs_server)
                     )
                 )
             }

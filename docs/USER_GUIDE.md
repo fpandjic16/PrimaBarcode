@@ -90,7 +90,7 @@ Two of you can work the same document at the same time. Each of you has your own
 
 **Setting up a brand-new device comes before all of this.** A device fresh out of the box does not know where the central system is, and the sign-in screen cannot confirm a password without it. So the sign-in screen has an **External system setup** button that opens the connection settings without signing in — normally IT or a consultant picks the company there once, which fills in every address, and from then on everyone just signs in.
 
-**The first sign-in on a given device needs the central system** to be reachable, because only it can confirm your password. After that your password works on that device even when the system is down: you will see your work and can keep scanning documents you already have, while Download and Upload wait for the system to come back.
+**Every sign-in needs the central system** to be reachable, because only it can confirm your password. If it is down, nobody can open the app — including you, and including work you have already scanned. That work is not lost: it stays on the device and is waiting when the system answers again.
 
 When you first open the app:
 
@@ -426,7 +426,7 @@ You will not see it, and that is on purpose — it is theirs to finish and send.
 ### 18.2c "It won't let me sign in and says the system can't be reached"
 Two different situations:
 - **You have signed in on this device before** — your password should work anyway. If it does not, your password was probably changed in the central system; that change can only be picked up while the system is reachable.
-- **This is your first time on this device** — you have to be online once, so the central system can confirm who you are. After that it works offline.
+- **The central system is what checks your password, every single time.** There is no way into the app while it cannot be reached — not for anyone, including people who have used this device for months. Nothing you have scanned is lost in the meantime; it stays on the device and is there when the system comes back. Report the outage rather than trying another password.
 
 ### 18.2d "It says a transfer is in progress and won't let me sign out"
 Something is still going to or coming from the central system. Wait for it to finish. Changing operator mid-transfer would file "this was sent" against the wrong person's records, or drop a download into the wrong person's data.

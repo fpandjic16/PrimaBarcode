@@ -75,9 +75,22 @@ class ExtSystemODataClient @Inject constructor() {
         ntlmAuth?.resetPhase()
         return runCatching {
             val response = client.get(baseUrl) { accept(ContentType.Application.Json) }
-            if (response.status.isSuccess()) ExtSystemResult.Success(Unit)
-            else {
-                val phase = ntlmAuth?.phaseReached ?: 0
+            val phase = ntlmAuth?.phaseReached ?: 0
+            if (response.status.isSuccess()) {
+                // A 2xx on its own proves nothing about the password. NtlmAuthenticator is an
+                // okhttp3.Authenticator, so OkHttp only invokes it in answer to a 401 — an endpoint
+                // that serves the request without challenging never authenticates anybody, and
+                // every password "works". Treating that as a success would enrol an operator on
+                // this device under a password the ERP has never seen.
+                if (phase == 0) {
+                    Timber.w("testConnection: HTTP ${response.status.value} with no NTLM challenge")
+                    return@runCatching ExtSystemResult.Failure(
+                        "Server answered without asking for a Windows sign-in, so the password was " +
+                            "not checked. Enable Windows Authentication on this NAV OData endpoint."
+                    )
+                }
+                ExtSystemResult.Success(Unit)
+            } else {
                 Timber.w("testConnection: HTTP ${response.status.value}, NTLM phase=$phase")
                 val msg = when {
                     response.status.value == 401 && phase == 0 ->

@@ -23,8 +23,9 @@ import javax.inject.Singleton
  * reads like: an operator who signs in daily stays signed in, one who appears weekly is asked
  * again, and neither affects the other.
  *
- * What lives here expires. What unlocks a profile's local data does not, and lives in
- * [UserProfileStore] — the two must not be merged back together.
+ * What lives here expires, and is the *only* thing that lets anybody in: the ERP checks the
+ * password on every sign-in. [UserProfileStore] records who has been accepted here and keeps
+ * no secret of its own — the two must not be merged back together.
  */
 @Singleton
 class ExtSystemCredentialStore @Inject constructor(@param:ApplicationContext private val context: Context) {

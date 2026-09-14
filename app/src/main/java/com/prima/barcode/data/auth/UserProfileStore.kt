@@ -6,9 +6,6 @@ import androidx.security.crypto.MasterKey
 import com.prima.barcode.data.extsystem.ExtSystemODataClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.MessageDigest
-import java.security.SecureRandom
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.PBEKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,21 +16,18 @@ data class UserProfile(
 )
 
 /**
- * The operators this device knows, and the secret that unlocks each one's data.
+ * The operators this device knows: who they are, not how to let them in.
  *
- * Deliberately separate from [ExtSystemCredentialStore], because the two answer different
- * questions with different lifetimes:
+ * Holds no secret at all. It used to keep a one-way PBKDF2 digest of the password so a profile
+ * could be unlocked while the ERP was unreachable, but signing in without the external system is
+ * not a sign-in — the ERP is now the only authority, every time — so the digest had nothing left
+ * to answer and is gone. What remains is a list of names and the enrolment that says the ERP has
+ * accepted each of them here at least once.
  *
- *  - the credential store holds the NAV password, which NTLM needs in the clear, and **expires**;
- *  - this holds a one-way PBKDF2 digest of that password, which **never expires**.
- *
- * Tying them together is what made per-user data unsafe to begin with: identity was derived from
- * credentials, credentials self-destruct after their TTL, and a scoped app whose identity vanishes
- * is an app that hides an operator's own unsent work from them. The data does not expire, so
- * neither may the secret that reaches it.
- *
- * The digest adds no exposure the device did not already carry — the plaintext password is stored
- * anyway, because NTLM cannot work without it. A digest is strictly less than that.
+ * Deliberately separate from [ExtSystemCredentialStore], which holds the NAV password in the clear
+ * because NTLM cannot work without it, and **expires**. Enrolment here does not expire: the data a
+ * profile owns does not expire either, and an operator must still be able to find their own unsent
+ * work after their credential has lapsed.
  */
 @Singleton
 class UserProfileStore @Inject constructor(@param:ApplicationContext private val context: Context) {
@@ -84,26 +78,22 @@ class UserProfileStore @Inject constructor(@param:ApplicationContext private val
     // ── Enrolment and unlock ──────────────────────────────────────────────────
 
     /**
-     * Records (or re-records) the password that unlocks this profile offline.
+     * Records that the ERP has accepted this operator on this device.
      *
-     * Called only after the ERP has accepted that password, so the digest can never come to
-     * describe a password the server would refuse. Re-deriving on every successful sign-in is what
-     * makes a password changed in the ERP heal itself here.
+     * Called only from the success branch of a sign-in, which is what makes the profile list mean
+     * "people the external system has vouched for here" rather than "names somebody typed".
+     * Re-running it for an operator already enrolled is harmless and keeps their display name
+     * current.
      */
-    fun enroll(profile: UserProfile, password: String) {
-        val salt = ByteArray(SALT_BYTES).also { SecureRandom().nextBytes(it) }
-        val digest = derive(password, salt, ITERATIONS)
+    fun enroll(profile: UserProfile) {
         prefs.edit()
             .putStringSet(KEY_IDS, profiles().mapTo(HashSet()) { it.id }.apply { add(profile.id) })
             .putString("${profile.id}.$KEY_NAME", profile.displayName)
-            .putString("${profile.id}.$KEY_SALT", salt.toHex())
-            .putInt("${profile.id}.$KEY_ITERATIONS", ITERATIONS)
-            .putString("${profile.id}.$KEY_DIGEST", digest.toHex())
             .apply()
     }
 
     /**
-     * Forgets an operator entirely: the name, and the secret that unlocks their data offline.
+     * Forgets an operator entirely: their name, and any secret an older version left behind.
      *
      * Only the enrolment. Their database, credentials and settings live elsewhere and have to be
      * removed by their own owners — see `AppViewModel.deleteProfile`, which calls this **last**,
@@ -125,42 +115,20 @@ class UserProfileStore @Inject constructor(@param:ApplicationContext private val
             .apply()
     }
 
-    /**
-     * Whether [password] unlocks [id] without asking the server.
-     *
-     * Reads the stored iteration count rather than the constant, so [ITERATIONS] can be raised
-     * later without locking out everyone enrolled under the old value.
-     */
-    fun unlocks(id: String, password: String): Boolean {
-        val salt = prefs.getString("$id.$KEY_SALT", null)?.fromHex() ?: return false
-        val expected = prefs.getString("$id.$KEY_DIGEST", null)?.fromHex() ?: return false
-        val iterations = prefs.getInt("$id.$KEY_ITERATIONS", ITERATIONS)
-        return MessageDigest.isEqual(derive(password, salt, iterations), expected)
-    }
-
-    private fun derive(password: String, salt: ByteArray, iterations: Int): ByteArray =
-        SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-            .generateSecret(PBEKeySpec(password.toCharArray(), salt, iterations, KEY_BITS))
-            .encoded
-
     companion object {
         /** Longest user name the ERP will take. Enforced before a profile or a scan can exist. */
         const val MAX_NAME_LENGTH = 50
 
         private const val KEY_IDS = "ids"
         private const val KEY_NAME = "name"
+
+        // Nothing writes these any more. They are kept so [delete] still sweeps up the digest an
+        // older version left behind, which is a password-derived secret and should not outlive the
+        // profile it belonged to. Removable once no device in the fleet has been upgraded from
+        // before the offline unlock was dropped.
         private const val KEY_SALT = "salt"
         private const val KEY_ITERATIONS = "iterations"
         private const val KEY_DIGEST = "digest"
-
-        private const val SALT_BYTES = 16
-        private const val KEY_BITS = 256
-
-        /**
-         * Cost of one unlock. Paid once per shift, so a few hundred milliseconds is fine; measure
-         * on the slowest device in the fleet (MC3300) and lower this if it is not.
-         */
-        private const val ITERATIONS = 120_000
 
         /**
          * The identity a profile is keyed by, and the value written into every recording's
@@ -192,11 +160,5 @@ class UserProfileStore @Inject constructor(@param:ApplicationContext private val
         }
 
         private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
-
-        private fun String.fromHex(): ByteArray? =
-            if (length % 2 != 0) null
-            else runCatching {
-                ByteArray(length / 2) { substring(it * 2, it * 2 + 2).toInt(16).toByte() }
-            }.getOrNull()
     }
 }

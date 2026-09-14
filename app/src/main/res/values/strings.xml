@@ -295,15 +295,13 @@
     <string name="signin_title">Sign in</string>
     <string name="signin_action">SIGN IN</string>
     <string name="signin_known_operators">Operators on this device</string>
-    <string name="signin_first_time_note">The first sign-in on this device needs the external system. After that your password works even when it cannot be reached.</string>
+    <string name="signin_first_time_note">Signing in always needs the external system — it is what checks your password.</string>
+    <string name="signin_needs_server">The external system cannot be reached, so your password cannot be checked. Sign-in needs it every time.</string>
     <string name="signin_open_config">External system setup</string>
     <string name="signin_name_too_long">User name can be at most %d characters.</string>
     <string name="signin_bad_username">Enter a valid user name.</string>
     <string name="signin_wrong_operator">That account belongs to a different operator. Sign out and sign in as them.</string>
     <string name="signin_failed_title">Could not sign in</string>
-    <string name="signin_failed_offline">The external system cannot be reached and this password has not been used on this device before. Connect and sign in once.</string>
-    <string name="signin_offline_title">Signed in without the external system</string>
-    <string name="signin_offline_body">You can see your work and keep scanning the documents already on this device. Download and Upload will work again once the external system answers.</string>
     <string name="signin_switch_blocked_title">Sending in progress</string>
     <string name="signin_switch_blocked_body">A transfer to or from the external system is running. Wait for it to finish before changing operator.</string>
     <string name="settings_profiles">Operators on this device</string>

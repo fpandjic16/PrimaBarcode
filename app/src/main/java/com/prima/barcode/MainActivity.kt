@@ -440,7 +440,6 @@ private fun PrimaBarcodeApp(
     // reach a screen by any route — including a back stack left over from the previous operator.
     var signingIn   by remember { mutableStateOf(false) }
     var signInError by remember { mutableStateOf<String?>(null) }
-    var showOfflineNotice by remember { mutableStateOf(false) }
     var configuringAtSignIn by remember { mutableStateOf(false) }
 
     val activeProfile = profile
@@ -493,24 +492,12 @@ private fun PrimaBarcodeApp(
                     signingIn = false
                     when (result) {
                         is AppViewModel.SignInResult.Online -> Unit
-                        is AppViewModel.SignInResult.OfflineUnlock -> showOfflineNotice = true
                         is AppViewModel.SignInResult.Failed -> signInError = result.message
                     }
                 }
             },
         )
         return
-    }
-
-    if (showOfflineNotice) {
-        AlertDialog(
-            onDismissRequest = { showOfflineNotice = false },
-            title = { Text(stringResource(R.string.signin_offline_title), fontWeight = FontWeight.Bold) },
-            text = { Text(stringResource(R.string.signin_offline_body)) },
-            confirmButton = {
-                Button(onClick = { showOfflineNotice = false }) { Text(stringResource(R.string.btn_ok)) }
-            },
-        )
     }
 
     // Changing operator swaps the database underneath everything, and a transfer that is still

@@ -295,15 +295,13 @@
     <string name="signin_title">Prijava</string>
     <string name="signin_action">PRIJAVI SE</string>
     <string name="signin_known_operators">Operateri na ovom uređaju</string>
-    <string name="signin_first_time_note">Prva prijava na ovom uređaju traži vanjski sustav. Nakon toga lozinka radi i kad se on ne može dohvatiti.</string>
+    <string name="signin_first_time_note">Prijava uvijek traži vanjski sustav — on provjerava vašu lozinku.</string>
+    <string name="signin_needs_server">Vanjski sustav nije dostupan pa se lozinka ne može provjeriti. Prijava ga traži svaki put.</string>
     <string name="signin_open_config">Postava vanjskog sustava</string>
     <string name="signin_name_too_long">Korisničko ime smije imati najviše %d znakova.</string>
     <string name="signin_bad_username">Upišite ispravno korisničko ime.</string>
     <string name="signin_wrong_operator">Taj račun pripada drugom operateru. Odjavite se i prijavite se kao on.</string>
     <string name="signin_failed_title">Prijava nije uspjela</string>
-    <string name="signin_failed_offline">Vanjski sustav nije dostupan, a ova lozinka još nije korištena na ovom uređaju. Spojite se i prijavite jednom.</string>
-    <string name="signin_offline_title">Prijava bez vanjskog sustava</string>
-    <string name="signin_offline_body">Vidite svoj rad i možete nastaviti skenirati dokumente koji su već na uređaju. Preuzmi i Pošalji rade čim se vanjski sustav javi.</string>
     <string name="signin_switch_blocked_title">Slanje je u tijeku</string>
     <string name="signin_switch_blocked_body">Prijenos u vanjski sustav ili iz njega je u tijeku. Pričekajte da završi prije promjene operatera.</string>
     <string name="settings_profiles">Operateri na ovom uređaju</string>

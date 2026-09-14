@@ -153,7 +153,8 @@ These map 1:1 to the User Guide's Settings section but framed for support/consul
 | A document with real progress "disappeared" from Orders | Nothing but a successful upload removes it. Downloads never delete a document holding recordings | Check the RECORDINGS section on the main menu, and the Errors tab |
 | An operator cannot see work they left yesterday | They are signed in as a different profile, or typed a name that normalises differently | The RECORDINGS section is per operator; check the name on the sign-in screen |
 | Documents stopped being filtered by location/RC after an update, or vanished entirely | The device has no locations yet (`SharedDatabase` starts empty) or the operator has no location selected (`lastLocationCode` is personal and starts blank). `rc == null` passes everything; `location == null` passes nothing | Refresh on `LocationRcPickScreen`, then pick a location. The context strip on the main menu shows `—` while nothing is selected |
-| "Could not sign in" and the server is down | Their first sign-in on this device has not happened yet, so there is no local digest to check the password against | Connect to the ERP once; after that the password works offline |
+| "Could not sign in" and the server is down | Expected. The ERP checks the password on every sign-in and there is no local fallback | Restore the connection. Nothing on the device is lost meanwhile, but nobody can open the app |
+| Sign-in succeeds against a URL that is not really NAV | It cannot any more: a 2xx with `NtlmAuthenticator.phaseReached == 0` is refused, because OkHttp only invokes the authenticator on a 401 and an endpoint that never challenges never checks the password | Enable Windows Authentication on the OData endpoint |
 | Barcode with `|` scans as garbage | Printed with Code 39 symbology, which cannot encode `|` | Reprint the label as Code 128 |
 | A scan is rejected as "Barcode not found" even though the item is on the document | The scanned value doesn't byte-for-byte match that line's `Barcode` field (wrong symbology, stray whitespace, wrong `\|UOM\|QTY` suffix) | Compare the raw scanned value against the line's `Barcode` field; reprint the label if needed |
 
@@ -163,11 +164,11 @@ Each operator gets their own database file. Documents, lines and recordings are 
 
 Sign-in is required at every app launch and is a real sign-in, with a password. What that password is checked against depends on whether the ERP can be reached:
 
-- **first time on this device** — must be online; the ERP is the only authority on whether the password is valid. A success enrols the profile: a PBKDF2 digest of the password is stored, salted, with no expiry.
-- **afterwards, ERP reachable** — checked against the ERP again, and the digest is re-derived, so a password changed in the ERP heals itself here.
-- **afterwards, ERP unreachable** — checked against the digest. The operator gets in, sees their work and can keep scanning documents already on the device; Download and Upload stay shut until the server answers. Only a transport failure falls back this way (`ExtSystemResult.Failure.code == -1`); an HTTP status means the server answered and said no, and no local digest may overrule that.
+**Every sign-in goes to the ERP. There is no local fallback.** `testConnection` must both return 2xx *and* show `NtlmAuthenticator.phaseReached > 0`; a success enrols the profile (name only — no secret is stored) and opens its database. Anything else fails, including an unreachable server and a blank `serverBaseUrl`, which reports `R.string.signin_needs_server` and is answered by the sign-in screen's own door to the external-system setup.
 
-This is the one place where isolation would otherwise have cost more than it bought: identity used to come from the credentials, and `ExtSystemCredentialStore.get()` wipes those the moment their TTL lapses. Scoping data to an identity that self-destructs on a timer would have hidden an operator's own unsent scans from them — scans that exist nowhere else until they reach the ERP — and sign-in needs a reachable server, so a bad morning could have meant a locked shift. Hence two secrets with two lifetimes: the NAV password expires, the unlock digest does not.
+An earlier version unlocked offline against a stored PBKDF2 digest, so an enrolled operator could get in while the server was down and keep scanning documents already on the device. It was removed on the rule that signing in without the external system is not a sign-in. The cost is real and was accepted knowingly: a device that cannot reach the server is a device nobody can open, including an operator whose unsent scans are sitting on it. Those rows stay safe on disk — nothing deletes them — but they are out of reach until the server answers.
+
+Identity still must not come from the credentials: `ExtSystemCredentialStore.get()` wipes those the moment their TTL lapses, and scoping data to an identity that self-destructs on a timer would hide an operator's own unsent scans from them. So enrolment in `UserProfileStore` has no expiry even though it is no longer a secret — what it reaches does not expire either, and an operator must be able to find their own work after their credential has lapsed.
 
 Identity is `UserProfileStore.normalise()` — the bare username, upper case, domain stripped, at most 50 characters. `alice`, `PRIMA\alice` and `alice@prima.hr` are one operator. Before this, `User.id` was the raw typed string, so one person could have had three identities and, under per-profile storage, three separate databases. The database filename is a SHA-256 prefix of that key, never the name itself.
 
@@ -585,9 +586,9 @@ return failures
 ## B.7 Auth & Config Storage
 
 ### `UserProfileStore`
-`EncryptedSharedPreferences("user_profiles")`. Holds the operators this device knows — id, display name, and per profile a PBKDF2 salt, iteration count and digest. **No expiry on any of it**, deliberately: it is what reaches an operator's own data, and that data does not expire either.
+`EncryptedSharedPreferences("user_profiles")`. Holds the operators this device knows — id and display name, and nothing else. **No expiry**, deliberately: it is what reaches an operator's own data, and that data does not expire either. The PBKDF2 salt, iteration count and digest it used to store are gone with the offline unlock; their key names survive only so `delete` still sweeps up what an upgraded device left behind, since a password-derived secret should not outlive the profile it belonged to.
 
-The current profile is held **in memory only**, not in the prefs. Persisting it would restore the session on the next launch, which is exactly what must not happen — a device left on a shelf would come back up inside the last operator's data with no password asked. A process restart means signing in again; the enrolment is what makes that work offline.
+The current profile is held **in memory only**, not in the prefs. Persisting it would restore the session on the next launch, which is exactly what must not happen — a device left on a shelf would come back up inside the last operator's data with no password asked. A process restart means signing in again, against the ERP.
 
 `normalise(raw)` is the identity function: `parseDomainUser().second.trim().uppercase()`, rejected if blank or over 50 characters. Callers refuse rather than truncate — a silently shortened name is a different person as far as this key is concerned. `databaseName(id)` hashes it, so a filename can never depend on the characters an operator typed.
 
@@ -632,7 +633,7 @@ data class ExtSystemCredentials(val username: String, val password: String)
 ### `ExtSystemCredentialStore`
 `EncryptedSharedPreferences` (file `ext_system_credentials`), `MasterKey` with `AES256_GCM` (Android Keystore, hardware-backed on API 28+), pref key scheme `AES256_SIV`, value scheme `AES256_GCM`. `save`/`get` (TTL-checked)/`isValid`/`clear` all take a profile id, as described in §B.6.2. There is deliberately no device-wide wipe: "Clear cache" used to call one, which meant one operator pressing a button in their own session revoked everybody else's server access. The per-profile `clear(id)` is also what `AppViewModel.deleteProfile` calls when an operator is removed from the device.
 
-Holds the NAV password in the clear, because NTLM computes its response from the password itself and cannot work without it. That is also why the PBKDF2 digest in `UserProfileStore` adds no new exposure: a one-way digest is strictly less than what the device already carries.
+Holds the NAV password in the clear, because NTLM computes its response from the password itself and cannot work without it. It is also the only credential on the device now that `UserProfileStore` keeps no digest.
 
 **Android auto-backup is off** (`android:allowBackup="false"`, no `dataExtractionRules`/`fullBackupContent` — those were the project template's empty samples and were removed). Left on, it copied this file and every operator's `prima_<hash>.db` — unsent scans included — into whatever Google account happens to be signed in on a shared warehouse scanner. The restore side could not work regardless: the Keystore master key is device-bound and is not backed up, so the restored `EncryptedSharedPreferences` throws on first open.
 
@@ -640,7 +641,7 @@ Holds the NAV password in the clear, because NTLM computes its response from the
 
 `MainActivity.PrimaBarcodeApp` early-returns into `SignInScreen` whenever `currentProfile` is null — an early return rather than a branch around the `NavHost`, so no route is reachable signed-out, not even via a back stack left by the previous operator.
 
-That gate had a chicken and egg in it. Signing in asks the server whether the password is good (`testConnection`), and a device out of the box has no `serverBaseUrl` to ask; with no server the code falls through to `profileStore.unlocks(id, password)`, which has nothing to check because no profile is enrolled yet. A fresh install could not be configured, and so could not be signed into either.
+That gate had a chicken and egg in it. Signing in asks the server whether the password is good (`testConnection`), and a device out of the box has no `serverBaseUrl` to ask; with no server there is nothing to ask and the sign-in simply fails. A fresh install could not be configured, and so could not be signed into either.
 
 So `SignInScreen` takes an `onOpenConfig` callback and shows a button for it, and the gate renders `ExtSystemConfigScreen` in place of the sign-in screen while `configuringAtSignIn` is true. That screen needs no database — it reads `ExtSystemConfigStore` and the device half of `AppSettingsStore`, both device-wide — so it composes perfectly well with nobody signed in, which is why this is a few lines rather than an audit. `savedCredentials` is left null (nothing to prefill, nowhere to store), and the test-connection call is **not** wrapped in `launchWithDebug`: that dialog composes below the early return and would never appear.
 
