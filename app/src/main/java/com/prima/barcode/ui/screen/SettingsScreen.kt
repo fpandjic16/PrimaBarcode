@@ -73,6 +73,7 @@ fun SettingsScreen(
     onDeleteAllDocuments: () -> Unit = {},
     onChangeLocation: () -> Unit,
     onOpenExtSystemConfig: () -> Unit = {},
+    onOpenProfiles: () -> Unit = {},
     onSignOut: () -> Unit,
     onSignInTap: () -> Unit = {},
 ) {
@@ -679,6 +680,37 @@ fun SettingsScreen(
                                 )
                             }
                         }
+                    }
+                    SettingsDivider()
+                    // Sits in Account because that section is already about who uses this device.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onOpenProfiles)
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        SettingsIcon(Icons.Outlined.Group)
+                        Spacer(Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                stringResource(R.string.settings_profiles),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = PrimaPalette.Ink,
+                                    fontWeight = FontWeight.Normal,
+                                ),
+                            )
+                            Text(
+                                stringResource(R.string.settings_profiles_desc),
+                                style = monoLabel.copy(color = PrimaPalette.Ink3),
+                            )
+                        }
+                        Icon(
+                            Icons.Outlined.ChevronRight,
+                            contentDescription = null,
+                            tint = PrimaPalette.Ink4,
+                            modifier = Modifier.size(18.dp),
+                        )
                     }
                     SettingsDivider()
                     Row(

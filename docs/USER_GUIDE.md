@@ -27,6 +27,7 @@ This guide explains what every screen does, what every button and toggle means, 
 16. [Settings — Every Option Explained](#16-settings--every-option-explained)
 17. [Signing In and Out](#17-signing-in-and-out)
 18. [Common Situations & What To Do](#18-common-situations--what-to-do)
+18a. [Removing an Operator From a Device](#18a-removing-an-operator-from-a-device)
 19. [Glossary](#19-glossary)
 
 ---
@@ -383,6 +384,7 @@ A single row, **"Server & endpoints"**, that opens the connection settings for t
 | **Export data** | Saves a full dump of everything on your device to a file — useful if IT support asks for diagnostic data. |
 | **Insert system defaults** | Lets IT/consultants load, download, or import a starter configuration for the External System connection. A downloaded copy deliberately leaves out the QR sign-in key, so it is safe to pass around; importing such a file leaves the key already on the device untouched. Not something you'd normally use day-to-day. |
 | **Clear cache** *(red — destructive)* | Deletes **your** sign-in, documents and scans. Other operators on this device, and the device’s own setup, are untouched. Requires confirmation. Use only when told to by support. |
+| **Operators on this device** | Under Account. Shows everyone who has ever signed in here, and lets you remove one — see [§18a](#18a-removing-an-operator-from-a-device). |
 | **Delete all documents and recordings** *(red — destructive)* | Deletes all downloaded documents and scans, but **keeps** your settings and sign-in. Requires confirmation. Use this to fully reset your working data without having to sign in again. |
 
 ### System Info
@@ -441,6 +443,22 @@ Open it from **RECORDINGS** on the Main Menu, then press and hold the summary ca
 If it's a special `Barcode|UoM|Qty` label, verify with the office that it was printed as **Code 128** — the older Code 39 symbology cannot represent the `|` character correctly and will scan as gibberish.
 
 ---
+
+## 18a. Removing an operator from a device
+
+When someone leaves, or a device is handed on for good, their name can be taken off it: **Settings → Account → Operators on this device**, then the red bin next to their name.
+
+This is not just tidying the list. Removing an operator also deletes, from that device:
+
+- every document they had downloaded,
+- **every scan they had made**,
+- their saved sign-in, and their personal settings (text size, language, working location).
+
+Before it asks you to confirm, the app counts what would go and tells you — including how many of those scans have **never reached the central system**. Those exist on that device and nowhere else; once they are gone there is nothing to recover them from. If you see that number and it is not zero, the safe order is: have that person sign in and upload first, then remove them.
+
+You cannot remove yourself while you are signed in — there is no bin on your own row. Removing someone does not touch anybody else's work, and does not touch the device's own setup (server addresses, locations).
+
+Someone removed this way is not banned: they can sign in again on that device whenever they like, and they will start from an empty slate. That first sign-in back needs the central system to be reachable, the same as any first sign-in on a device.
 
 ## 19. Glossary
 

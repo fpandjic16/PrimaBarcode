@@ -103,6 +103,29 @@ class UserProfileStore @Inject constructor(@param:ApplicationContext private val
     }
 
     /**
+     * Forgets an operator entirely: the name, and the secret that unlocks their data offline.
+     *
+     * Only the enrolment. Their database, credentials and settings live elsewhere and have to be
+     * removed by their own owners — see `AppViewModel.deleteProfile`, which calls this **last**,
+     * so a failure part-way through leaves the profile still listed and the removal repeatable
+     * rather than leaving a database file nothing can reach.
+     *
+     * Refuses the signed-in profile. Removing the enrolment of the operator currently working
+     * would leave a session with nothing behind it.
+     */
+    fun delete(id: String) {
+        if (id == currentProfileId) return
+        val remaining = profiles().mapTo(HashSet()) { it.id }.apply { remove(id) }
+        prefs.edit()
+            .putStringSet(KEY_IDS, remaining)
+            .remove("$id.$KEY_NAME")
+            .remove("$id.$KEY_SALT")
+            .remove("$id.$KEY_ITERATIONS")
+            .remove("$id.$KEY_DIGEST")
+            .apply()
+    }
+
+    /**
      * Whether [password] unlocks [id] without asking the server.
      *
      * Reads the stored iteration count rather than the constant, so [ITERATIONS] can be raised

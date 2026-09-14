@@ -306,4 +306,15 @@
     <string name="signin_offline_body">You can see your work and keep scanning the documents already on this device. Download and Upload will work again once the external system answers.</string>
     <string name="signin_switch_blocked_title">Sending in progress</string>
     <string name="signin_switch_blocked_body">A transfer to or from the external system is running. Wait for it to finish before changing operator.</string>
+    <string name="settings_profiles">Operators on this device</string>
+    <string name="settings_profiles_desc">See who can sign in here, and remove someone</string>
+    <string name="profiles_title">Operators</string>
+    <string name="profiles_explainer">Everyone who has signed in on this device. Removing someone deletes their documents and scans from this device as well.</string>
+    <string name="profiles_signed_in">signed in</string>
+    <string name="profiles_delete_title">Remove operator?</string>
+    <string name="profiles_delete_counting">Checking what this would delete…</string>
+    <string name="profiles_delete_text">%1$s will be removed from this device, along with their documents, their scans, their saved sign-in and their settings. This cannot be undone.</string>
+    <string name="profiles_delete_scans">%1$d scans across %2$d documents will be deleted.</string>
+    <string name="profiles_delete_unsent">%1$d of them have never reached the external system and exist nowhere else.</string>
+    <string name="profiles_delete_confirm">Remove</string>
 </resources>

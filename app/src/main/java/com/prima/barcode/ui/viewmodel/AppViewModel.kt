@@ -352,6 +352,53 @@ class AppViewModel @Inject constructor(
     }
 
     /**
+     * What a profile is carrying, for the confirmation that precedes deleting it.
+     *
+     * [unsentScans] is the number that matters. Everything else is a copy of something the ERP
+     * already has; those rows exist on this device and nowhere else, and deleting the profile is
+     * the end of them.
+     */
+    fun profileFootprint(
+        profileId: String,
+        onResult: (documents: Int, scans: Int, unsentScans: Int) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val db = databaseProvider.forProfile(profileId)
+            val recordings = db.recordingDao().getAll()
+            onResult(
+                db.documentHeaderDao().getAll().size,
+                recordings.size,
+                recordings.count { it.sentAt == null },
+            )
+        }
+    }
+
+    /**
+     * Removes an operator from this device: their documents, their recordings, their server
+     * access, their settings, and the enrolment that let them sign in offline.
+     *
+     * Order is deliberate — data first, enrolment last. A failure part-way leaves the profile
+     * still listed and the removal repeatable; the other way round would leave a database file
+     * nothing can reach and nothing can name.
+     *
+     * Refuses the signed-in profile, and so do [DatabaseProvider.deleteProfileData] and
+     * [UserProfileStore.delete] underneath. The screen does not offer it either. Three refusals
+     * for one mistake is not excessive here: it would be deleting the file being written to.
+     * That refusal is also what keeps this clear of [duringErpWork] — every ERP transfer writes
+     * through `provider.current()`, so it can only ever touch the one profile this cannot delete.
+     */
+    fun deleteProfile(profileId: String, onDone: () -> Unit = {}) {
+        if (profileId == profileStore.currentId()) return
+        viewModelScope.launch {
+            databaseProvider.deleteProfileData(profileId)
+            extSystemCredentialStore.clear(profileId)
+            appSettingsStore.deletePersonal(profileId)
+            profileStore.delete(profileId)
+            onDone()
+        }
+    }
+
+    /**
      * Result of an attempt to sign in at the launch screen.
      *
      * [OfflineUnlock] is a success with a caveat the operator has to be told about: they are in

@@ -78,6 +78,17 @@ class AppSettingsStore @Inject constructor(
     fun savedLanguageOrNull(): Language? =
         personalPrefs().getString("language", null)?.let { saved -> Language.entries.firstOrNull { it.name == saved } }
 
+    /**
+     * Drops one operator's personal settings. The device's are untouched, as are everyone else's.
+     *
+     * Guards against the signed-in id only by not being called for it: `personalPrefs()` falls
+     * back to the device file when nobody is signed in, so deleting "the current profile's" file
+     * blind could take the device's settings with it.
+     */
+    fun deletePersonal(profileId: String) {
+        context.deleteSharedPreferences("app_settings_$profileId")
+    }
+
     fun save(settings: AppSettings) {
         personalPrefs().edit()
             .putString ("textSize",          settings.textSize.name)

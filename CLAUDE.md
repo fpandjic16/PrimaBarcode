@@ -71,6 +71,7 @@ data/
 - **SettingsScreen** — Text size, language, scan behavior toggles, cache/export/sign-out, embeds ext-system config
 - **SignInScreen** — The gate. Required at every app launch: picks the operator and takes their password, so every recording can carry its author from the moment it is written. Signs in by typed name/password or by QR, from the hardware trigger or the camera — both feed `parseLoginQr`, the same as `LoginSheet`, because before this screen existed that sheet *was* the way in. Its one door out is an "External system setup" button that opens `ExtSystemConfigScreen` without signing in — a device out of the box has no server URL, and sign-in needs one, so without that door a fresh install could never be configured
 - **LoginSheet** — Full-screen NAV credential capture (summoned on Download/Upload); QR sign-in via hardware scanner or camera
+- **ProfilesScreen** — The operators this device knows, and the only way to remove one; deleting a profile takes their database, credentials and personal settings with it
 - **UploadErrorScreen** — Failure detail + retry for a single document
 
 Helpers shared between screens live in their own file as `internal`, not as a private copy per screen. `DocumentTypeLabel.kt` holds the one `@Composable internal fun DocumentType.localizedDisplay()`; seven screens each carried an identical private version of it, which meant an eighth screen could not call any of them and adding a document type meant finding all seven. (`LineStatus.localizedLabel()` is still duplicated across three screens.)

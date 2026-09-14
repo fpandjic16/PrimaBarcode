@@ -71,6 +71,7 @@ import com.prima.barcode.ui.screen.LocationRcPickScreen
 import com.prima.barcode.ui.screen.LoginSheet
 import com.prima.barcode.ui.screen.MainMenuScreen
 import com.prima.barcode.ui.screen.RecordingScreen
+import com.prima.barcode.ui.screen.ProfilesScreen
 import com.prima.barcode.ui.screen.RecordingsListScreen
 import com.prima.barcode.ui.screen.RecordingsTreeScreen
 import com.prima.barcode.ui.screen.SettingsScreen
@@ -557,6 +558,18 @@ private fun PrimaBarcodeApp(
                 onOpenRecordings = { nav.navigate("recordings_list") },
             )
         }
+        composable("profiles") {
+            // Re-read after a deletion rather than observed: profiles change only here, and a
+            // Flow over EncryptedSharedPreferences would be machinery for one screen.
+            var profilesRefresh by remember { mutableStateOf(0) }
+            ProfilesScreen(
+                profiles = remember(profilesRefresh) { appVm.profileStore.profiles() },
+                signedInId = activeProfile.id,
+                onBack = { nav.popBackStack() },
+                loadFootprint = { id, onResult -> appVm.profileFootprint(id, onResult) },
+                onDelete = { id -> appVm.deleteProfile(id) { profilesRefresh++ } },
+            )
+        }
         composable("recordings_list") {
             RecordingsListScreen(
                 docs = recordedDocs,
@@ -675,6 +688,7 @@ private fun PrimaBarcodeApp(
                 onDeleteAllDocuments = { appVm.deleteAllDocuments() },
                 onChangeLocation = { nav.navigate("location_rc_pick") },
                 onOpenExtSystemConfig = { nav.navigate("ext_system_config") },
+                onOpenProfiles = { nav.navigate("profiles") },
                 onSignOut = { requestSignOut() },
                 onSignInTap = { requireCredentials {} },
             )

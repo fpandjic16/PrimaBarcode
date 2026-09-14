@@ -306,4 +306,15 @@
     <string name="signin_offline_body">Vidite svoje delo in lahko naprej skenirate dokumente, ki so že na napravi. Prenesi in Pošlji bosta delovala, ko se zunanji sistem spet oglasi.</string>
     <string name="signin_switch_blocked_title">Pošiljanje poteka</string>
     <string name="signin_switch_blocked_body">Prenos v zunanji sistem ali iz njega poteka. Počakajte, da se konča, preden zamenjate operaterja.</string>
+    <string name="settings_profiles">Operaterji na tej napravi</string>
+    <string name="settings_profiles_desc">Kdo se lahko tu prijavi, in odstranjevanje operaterja</string>
+    <string name="profiles_title">Operaterji</string>
+    <string name="profiles_explainer">Vsi, ki so se prijavili na tej napravi. Odstranitev operaterja izbriše tudi njegove dokumente in skeniranja s te naprave.</string>
+    <string name="profiles_signed_in">prijavljen</string>
+    <string name="profiles_delete_title">Odstranim operaterja?</string>
+    <string name="profiles_delete_counting">Preverjanje, kaj bi se izbrisalo…</string>
+    <string name="profiles_delete_text">%1$s bo odstranjen s te naprave, skupaj s svojimi dokumenti, skeniranji, shranjeno prijavo in nastavitvami. Tega dejanja ni mogoče razveljaviti.</string>
+    <string name="profiles_delete_scans">Izbrisanih bo %1$d skeniranj na %2$d dokumentih.</string>
+    <string name="profiles_delete_unsent">%1$d jih ni nikoli prispelo v zunanji sistem in ne obstajajo nikjer drugje.</string>
+    <string name="profiles_delete_confirm">Odstrani</string>
 </resources>

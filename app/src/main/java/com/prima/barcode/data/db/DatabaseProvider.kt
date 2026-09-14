@@ -69,6 +69,30 @@ class DatabaseProvider @Inject constructor(
         _database.value = null
     }
 
+    /**
+     * Opens a profile's database without signing in as them.
+     *
+     * Exists for the two things that have to read or remove another operator's data from inside
+     * someone else's session: counting what a deletion would destroy, and the deletion itself.
+     * Nothing else should call it, and nothing may hold what it returns — the rule in this class's
+     * header applies here with the usual force.
+     */
+    fun forProfile(profileId: String): PrimaDatabase = openFor(profileId)
+
+    /**
+     * Deletes a profile's database file and everything in it. Not undoable.
+     *
+     * Refuses the signed-in profile: queries, Flows and any background upload all resolve through
+     * [current], and pulling the file out from under them would fail in places nothing checks.
+     * `deleteDatabase` takes the `-wal` and `-shm` files with it, which a plain file delete would
+     * leave behind to be found by the next database of the same name.
+     */
+    fun deleteProfileData(profileId: String) {
+        if (profileId == profileStore.currentId()) return
+        open.remove(profileId)?.close()
+        context.deleteDatabase(UserProfileStore.databaseName(profileId))
+    }
+
     private fun openFor(profileId: String): PrimaDatabase = open.getOrPut(profileId) {
         Room.databaseBuilder(
             context,

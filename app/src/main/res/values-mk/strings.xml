@@ -306,4 +306,15 @@
     <string name="signin_offline_body">Го гледате својот труд и можете да продолжите да ги скенирате документите што се веќе на уредот. Преземи и Испрати ќе работат штом надворешниот систем се јави.</string>
     <string name="signin_switch_blocked_title">Испраќањето е во тек</string>
     <string name="signin_switch_blocked_body">Тековен е пренос кон надворешниот систем или од него. Почекајте да заврши пред да го смените операторот.</string>
+    <string name="settings_profiles">Оператори на овој уред</string>
+    <string name="settings_profiles_desc">Кој може да се најави тука, и отстранување оператор</string>
+    <string name="profiles_title">Оператори</string>
+    <string name="profiles_explainer">Сите што се најавиле на овој уред. Отстранувањето ги брише и неговите документи и скенирања од овој уред.</string>
+    <string name="profiles_signed_in">најавен</string>
+    <string name="profiles_delete_title">Да се отстрани операторот?</string>
+    <string name="profiles_delete_counting">Проверка што би се избришало…</string>
+    <string name="profiles_delete_text">%1$s ќе биде отстранет од овој уред, заедно со своите документи, скенирања, зачуваната најава и поставките. Ова дејство не може да се врати.</string>
+    <string name="profiles_delete_scans">Ќе бидат избришани %1$d скенирања на %2$d документи.</string>
+    <string name="profiles_delete_unsent">%1$d од нив никогаш не стигнале до надворешниот систем и не постојат никаде другаде.</string>
+    <string name="profiles_delete_confirm">Отстрани</string>
 </resources>

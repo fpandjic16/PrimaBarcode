@@ -614,7 +614,7 @@ data class ExtSystemCredentials(val username: String, val password: String)
 ```
 
 ### `ExtSystemCredentialStore`
-`EncryptedSharedPreferences` (file `ext_system_credentials`), `MasterKey` with `AES256_GCM` (Android Keystore, hardware-backed on API 28+), pref key scheme `AES256_SIV`, value scheme `AES256_GCM`. `save`/`get` (TTL-checked)/`isValid`/`clear` all take a profile id, as described in §B.6.2. There is deliberately no device-wide wipe: "Clear cache" used to call one, which meant one operator pressing a button in their own session revoked everybody else's server access.
+`EncryptedSharedPreferences` (file `ext_system_credentials`), `MasterKey` with `AES256_GCM` (Android Keystore, hardware-backed on API 28+), pref key scheme `AES256_SIV`, value scheme `AES256_GCM`. `save`/`get` (TTL-checked)/`isValid`/`clear` all take a profile id, as described in §B.6.2. There is deliberately no device-wide wipe: "Clear cache" used to call one, which meant one operator pressing a button in their own session revoked everybody else's server access. The per-profile `clear(id)` is also what `AppViewModel.deleteProfile` calls when an operator is removed from the device.
 
 Holds the NAV password in the clear, because NTLM computes its response from the password itself and cannot work without it. That is also why the PBKDF2 digest in `UserProfileStore` adds no new exposure: a one-way digest is strictly less than what the device already carries.
 
@@ -767,6 +767,15 @@ Internal state machine, `RecordingView` enum: `OVERVIEW, ACTIVE_LINE, KEYPAD` �
 ### `SettingsScreen.kt`
 Buffered-edit-then-confirm-on-exit pattern (identical to `ExtSystemConfigScreen`'s): every field is local `remember` state; `attemptExit()` compares the rebuilt `AppSettings` (plus `pendingExtSystemConfig != null`) against `initial`; only diverges → "Save changes?" dialog. Sections: Appearance, Scanning, Sync, External System Configuration (single row → `ExtSystemConfigScreen`), Debug (Debugger active, Export data, **Insert system defaults** [3-option picker, stages into `pendingExtSystemConfig`, only persisted via Settings' own save], **Clear cache** [red, wipes the signed-in operator's credentials + documents + recordings; leaves settings, the device’s ERP config, and every other operator alone], **Delete all documents and recordings** [red, wipes only documents/recordings, not settings/sign-in]), System Info (read-only version/schema info), Account (avatar/name, immediate Sign out — no confirmation).
 
+### `ProfilesScreen.kt`
+Route `profiles`, reached from Settings → Account → "Operators on this device". Lists every enrolled profile; the signed-in one is marked and carries **no** delete affordance.
+
+Deleting an operator removes four separate things, and `AppViewModel.deleteProfile` does them **data first, enrolment last**: `DatabaseProvider.deleteProfileData` (closes the handle, drops it from the `open` map, then `context.deleteDatabase`, which also takes the `-wal`/`-shm` files), `ExtSystemCredentialStore.clear(id)`, `AppSettingsStore.deletePersonal(id)`, and finally `UserProfileStore.delete(id)`. That order matters: a failure part-way leaves the profile still listed and the removal repeatable, where the reverse would leave a database file nothing can name or reach.
+
+**The signed-in profile cannot be deleted**, and that is enforced three times — the row draws no button, `deleteProfile` returns early, and both `deleteProfileData` and `UserProfileStore.delete` refuse independently. It is also what keeps this clear of `duringErpWork` with no extra guard: every ERP transfer writes through `provider.current()`, so a background upload can only ever be touching the one profile this cannot remove.
+
+Before the confirmation appears, `AppViewModel.profileFootprint` opens that operator's database (`DatabaseProvider.forProfile`, which exists for this and for the deletion and nothing else) and counts documents, scans, and scans with `sentAt IS NULL`. When there are scans at all the dialog says so in its own outlined block rather than a clause, and names the unsent count separately — documents come back on the next download, those rows do not come back at all. Confirm is disabled until the count arrives, so nobody agrees to an unknown.
+
 ### `RecordingsListScreen.kt`
 Route `recordings_list`. The documents behind the main menu's RECORDINGS row, one tappable row each — document number, type, total scans, and how many have reached the ERP. Holds no state and makes no decisions: membership and ordering are the caller's (`recordedDocs`), so the screen cannot disagree with the count on the row that opened it. Its empty state is reachable two ways: the row that opens it stays on the menu at zero, and an upload started elsewhere can empty the list while it is already open.
 
@@ -817,6 +826,7 @@ val overDocs    = filteredDocs.filter { it.state !is DocState.UploadFailed && it
 | `download_filter` | `DownloadFilterScreen` | fixed source/RC per filter mode; URLs via `buildDownloadUrls`; downloads via `realDownloadDocuments` |
 | `recording/{documentNo}/{type}` (String args) | `RecordingScreen` | route-scoped `RecordingViewModel` via `hiltViewModel()` |
 | `recordings_list` | `RecordingsListScreen` | the main menu's RECORDINGS row; hands `recordedDocs` straight through |
+| `profiles` | `ProfilesScreen` | Settings → Account → Operators; re-reads `profileStore.profiles()` on a refresh counter after each deletion |
 | `recordings/{documentNo}/{type}` (String args) | `RecordingsTreeScreen` | route-scoped `RecordingsTreeViewModel`; reached from `recordings_list` |
 | `upload_error/{documentNo}` (String arg) | `UploadErrorScreen` | retry delegates to `AppViewModel` |
 
