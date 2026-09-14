@@ -1,13 +1,16 @@
 ﻿package com.prima.barcode.ui.screen
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -61,6 +64,12 @@ import androidx.compose.ui.res.stringResource
 import com.prima.barcode.R
 
 private enum class RecordingView { OVERVIEW, ACTIVE_LINE, KEYPAD }
+
+/** How long a just-scanned line stays marked before it starts fading back. */
+private const val HIGHLIGHT_HOLD_MS = 5_000L
+
+/** Long enough to read as a fade rather than a flicker, short enough not to trail a fast scanner. */
+private const val HIGHLIGHT_FADE_MS = 700
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,6 +138,40 @@ fun RecordingScreen(
         if (scanErrorFlash) { delay(600); scanErrorFlash = false }
     }
 
+    // Which line the last scan landed on, so the list can go to it and mark it.
+    //
+    // On a thirty-line document the only acknowledgement a scan used to get was a tone, and a tone
+    // does not say *which* line moved — the line itself could be far off screen, leaving the
+    // operator to hunt for it.
+    //
+    // Hoisted here rather than left inside OverviewContent because the scroll is driven from the
+    // scan, not from the list.
+    val overviewListState = rememberLazyListState()
+    val highlight = remember { Animatable(0f) }
+    var highlightedLineNo by remember { mutableStateOf<Int?>(null) }
+    // A counter, not the line number. Scanning the same line twice does not change
+    // highlightedLineNo, so keying the effect on that alone would leave the second scan
+    // unacknowledged — the worst case, since repeat scans of one item are the common case.
+    var highlightTick by remember { mutableStateOf(0) }
+
+    LaunchedEffect(highlightTick) {
+        val lineNo = highlightedLineNo ?: return@LaunchedEffect
+        // Only in the overview: the other two views do not compose the list at all, so there is
+        // nothing to scroll. The mark is still set, so coming back within the hold still shows it.
+        if (view == RecordingView.OVERVIEW) {
+            val target = doc.lines.indexOfFirst { it.lineNo == lineNo }
+            // Already on screen is already found. Jumping the list under a line the operator is
+            // looking at is a jolt that buys nothing.
+            if (target >= 0 && overviewListState.layoutInfo.visibleItemsInfo.none { it.index == target }) {
+                overviewListState.animateScrollToItem(target)
+            }
+        }
+        highlight.snapTo(1f)
+        delay(HIGHLIGHT_HOLD_MS)
+        highlight.animateTo(0f, tween(HIGHLIGHT_FADE_MS))
+        highlightedLineNo = null
+    }
+
     fun handleScan(rawInput: String) {
         val now = System.currentTimeMillis()
         if (rawInput == lastHandledBarcode && now - lastHandledAtMs < debounceTime) return
@@ -159,6 +202,8 @@ fun RecordingScreen(
             // counted — the haptic below marks something else, that the line is now exact.
             if (soundEnabled) soundEngine.confirm()
             onScan(barcode, qty)
+            highlightedLineNo = matchedLine.lineNo
+            highlightTick++
             val base = maxOf(matchedLine.scanned, scannedRunningTotal[matchedLine.lineNo] ?: 0.0)
             val newScanned = base + qty
             scannedRunningTotal[matchedLine.lineNo] = newScanned
@@ -305,6 +350,9 @@ fun RecordingScreen(
             when (view) {
                 RecordingView.OVERVIEW -> OverviewContent(
                     doc = doc,
+                    listState = overviewListState,
+                    highlightedLineNo = highlightedLineNo,
+                    highlightAlpha = { highlight.value },
                     onLineTap = { line -> activeLineNo = line.lineNo; localScanned = null; typedQty = ""; view = RecordingView.ACTIVE_LINE },
                 )
                 RecordingView.ACTIVE_LINE -> activeLine?.let { line ->
@@ -518,25 +566,42 @@ private data class UomMismatchInfo(
 @Composable
 private fun OverviewContent(
     doc: Document,
+    listState: LazyListState,
+    highlightedLineNo: Int?,
+    // A lambda, not the Float itself: read inside the item, the animation invalidates that one
+    // row per frame instead of the whole list.
+    highlightAlpha: () -> Float,
     onLineTap: (Line) -> Unit,
 ) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
         items(doc.lines, key = { it.lineNo }) { line ->
-            BigNumberLineRow(line = line, onClick = { onLineTap(line) })
+            BigNumberLineRow(
+                line = line,
+                highlight = if (line.lineNo == highlightedLineNo) highlightAlpha() else 0f,
+                onClick = { onLineTap(line) },
+            )
             HorizontalDivider(color = Color(0x0F000000), thickness = 1.dp)
         }
     }
 }
 
+/**
+ * @param highlight 0 for a normal row, 1 for one that was just scanned into.
+ *
+ * Deepens the status tint rather than introducing a colour of its own: the four-state status
+ * language is the whole vocabulary of this screen, and a fifth colour on top of it would say
+ * something the operator has no meaning for. It also means the fade lands on whatever the status
+ * is *now* — a scan that completes a line fades into green, not back into orange.
+ */
 @Composable
-private fun BigNumberLineRow(line: Line, onClick: () -> Unit) {
+private fun BigNumberLineRow(line: Line, highlight: Float = 0f, onClick: () -> Unit) {
     val sizeOffset = LocalTextSizeOffset.current
     val statusColor = line.status.color
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
-            .background(statusColor.copy(alpha = 0.10f))
+            .background(statusColor.copy(alpha = 0.10f + 0.32f * highlight))
             .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {

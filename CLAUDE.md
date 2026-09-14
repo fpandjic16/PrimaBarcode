@@ -62,7 +62,7 @@ data/
 
 - **MainMenuScreen** — Document type list with counts/status bars; context strip for location/RC switching; a single RECORDINGS row opening `RecordingsListScreen`
 - **RecordingsListScreen** — Every document carrying a scan, newest first; a row opens its recordings tree
-- **RecordingScreen** — Core scanning interface: per-line progress, docked ScanBar, hardware wedge + camera fallback, keypad entry, over-scan/UoM-mismatch warnings
+- **RecordingScreen** — Core scanning interface: per-line progress, docked ScanBar, hardware wedge + camera fallback, keypad entry, over-scan/UoM-mismatch warnings. An accepted scan scrolls the list to the line it landed on (only when that line is off screen) and deepens its status tint for five seconds before fading back
 - **DocumentListScreen** — Per-doc-type list with tabs, create/delete, filter, upload
 - **DocumentOverviewScreen** — Cross-type dashboard (errors/ready/partial/over tabs)
 - **DocumentFilterScreen** / **DownloadFilterScreen** — Filter builders for the list/overview and for NAV downloads

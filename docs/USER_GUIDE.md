@@ -239,7 +239,7 @@ You can scan in three ways:
 3. **Camera** — tap the camera icon in the scan bar; point your camera at the barcode. It beeps and vibrates on a successful read, then closes itself. The camera is the fallback input, so it always does one scan at a time; use the hardware trigger for a run of items.
 
 **What happens when you scan:**
-- **Matches a line** → that line's scanned quantity goes up (usually by 1, or by whatever the document specifies per scan), and the line/document status updates live.
+- **Matches a line** → that line's scanned quantity goes up (usually by 1, or by whatever the document specifies per scan), and the line/document status updates live. **The list also jumps to that line and marks it** — its colour deepens for about five seconds and then fades back, so on a long document you can see at a glance what you just scanned instead of hunting for it. If the line was already on screen the list stays put; only the colour marks it.
 - **Doesn't match any line** → nothing is recorded. You'll see a "Barcode not found" message and the scan bar briefly flashes red so you know it didn't match a real line (see [§2.3](#23-unmatched-scans)).
 
 **Using both the camera and the hardware trigger on the same screen**: don't point the camera at a barcode and pull the physical trigger for the same item — each is a separate scan path, so doing both for what you intend as one scan can record it twice. Use one or the other for a given scan.

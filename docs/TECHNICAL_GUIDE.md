@@ -764,6 +764,17 @@ Because it lives in the config, `LoginSheet` takes it as a parameter and all fiv
 ### `RecordingScreen.kt` — the core scanning workflow (most complex screen)
 Internal state machine, `RecordingView` enum: `OVERVIEW, ACTIVE_LINE, KEYPAD` — `OVERVIEW` is the line list, `ACTIVE_LINE` shows one line's detail with +1/-1 steppers, `KEYPAD` is manual quantity entry for the active line. `handleScan` — see §B.9.3. Registers the DataWedge broadcast receiver via `DisposableEffect`. `handleBack()` — per-view back navigation (KEYPAD/ACTIVE_LINE back to OVERVIEW, OVERVIEW back to the caller). Sub-composables: `OverviewContent`, `ItemQtyDetails` (ACTIVE_LINE), `ItemQtyExtraDetails` (KEYPAD — the name is a holdover from an earlier iteration where it was shared with a since-removed flow; it's an ordinary quantity-entry composable, nothing to do with extra lines), private `StatusChip` (status pill shown in the top bar).
 
+**Finding the line a scan landed on.** A tone and, on completion, a haptic were the whole acknowledgement of a scan; neither says *which* of thirty lines moved, and that line is routinely off screen. `handleScan` now records `highlightedLineNo` plus a `highlightTick` counter, and a `LaunchedEffect(highlightTick)` scrolls `overviewListState` to it and runs an `Animatable` from 1 to 0 over `HIGHLIGHT_HOLD_MS` (5 s) plus `HIGHLIGHT_FADE_MS` (700 ms). `BigNumberLineRow` reads that as `alpha = 0.10f + 0.32f * highlight`.
+
+Four decisions worth keeping:
+
+- **A tick, not the line number.** Re-scanning the same line does not change `highlightedLineNo`, so keying the effect on that alone would leave repeat scans of one item — the common case — unacknowledged.
+- **Scrolls only when the line is not already visible** (`layoutInfo.visibleItemsInfo`). Jumping the list under a line the operator is already looking at is a jolt that buys nothing.
+- **Scrolls only in `OVERVIEW`.** The other two views do not compose the list, so there is nothing to scroll. The mark is still set, so returning within the hold still shows it.
+- **Deepens the status tint rather than adding a colour.** The four-state language is the screen's whole vocabulary. It also means the fade lands on the status the line has *now*: a scan that completes a line fades into green, not back into orange.
+
+`highlightAlpha` is passed to `OverviewContent` as a lambda, not a `Float`, so reading it inside the `items` block invalidates one row per frame instead of the whole list.
+
 ### `SettingsScreen.kt`
 Buffered-edit-then-confirm-on-exit pattern (identical to `ExtSystemConfigScreen`'s): every field is local `remember` state; `attemptExit()` compares the rebuilt `AppSettings` (plus `pendingExtSystemConfig != null`) against `initial`; only diverges → "Save changes?" dialog. Sections: Appearance, Scanning, Sync, External System Configuration (single row → `ExtSystemConfigScreen`), Debug (Debugger active, Export data, **Insert system defaults** [3-option picker, stages into `pendingExtSystemConfig`, only persisted via Settings' own save], **Clear cache** [red, wipes the signed-in operator's credentials + documents + recordings; leaves settings, the device’s ERP config, and every other operator alone], **Delete all documents and recordings** [red, wipes only documents/recordings, not settings/sign-in]), System Info (read-only version/schema info), Account (avatar/name, immediate Sign out — no confirmation).
 
