@@ -7,14 +7,14 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
+    <!-- allowBackup is off: these devices hold every operator’s unsent scans and their
+         encrypted NAV credentials, and auto-backup would copy both into whatever Google
+         account happens to be on a shared warehouse scanner. The restore could not work
+         anyway — the Keystore key behind EncryptedSharedPreferences is device-bound and
+         never travels, so the restored preference files throw on first open. No rule files
+         either, so nothing implies otherwise. -->
     <application
         android:name=".PrimaBarcodeApplication"
-        <!-- These devices hold, in the clear-to-the-restore sense, every operator’s unsent
-             scans and their encrypted NAV credentials. Auto-backup would copy both into
-             whatever Google account happens to be on a shared warehouse scanner, and the
-             restore could not work anyway: the Keystore key behind EncryptedSharedPreferences
-             is device-bound and never travels, so the restored preference files throw on
-             first open. Off, with no rule files to imply otherwise. -->
         android:allowBackup="false"
         android:icon="@mipmap/logo"
         android:label="@string/app_name"
