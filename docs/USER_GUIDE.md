@@ -119,6 +119,8 @@ This is the home screen you land on every time you open the app.
 
 ## 5. Choosing Your Location & Responsibility Center
 
+> **After an app update, do this first.** The list of locations is re-fetched rather than carried over, and your working location is now remembered per person rather than per device — so both start empty. Open this screen, tap **Refresh** to fetch the locations, then pick yours. Until you do, the strip at the top of the Main Menu shows `—`, and document lists will look wrong: some types will show everything unfiltered, others will look empty. Anything you have already scanned stays visible throughout.
+
 Open this screen by tapping either pill on the Main Menu.
 
 - **Responsibility Center** row — tap to open a searchable list of RCs. Type to filter by name or code. If you leave the search blank, an extra **"Any responsibility center"** option appears at the top to clear your selection.

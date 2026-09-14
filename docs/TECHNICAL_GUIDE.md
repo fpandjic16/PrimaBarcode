@@ -152,6 +152,7 @@ These map 1:1 to the User Guide's Settings section but framed for support/consul
 | "NTLM not enabled" / "credentials rejected" on Test Connection | Distinguishes ERP-side NTLM misconfiguration (phase 0 — no challenge issued at all) from genuinely wrong credentials (phase 2 + 401) | `NtlmAuthenticator.phaseReached`, surfaced in the Test Connection result dialog's message |
 | A document with real progress "disappeared" from Orders | Nothing but a successful upload removes it. Downloads never delete a document holding recordings | Check the RECORDINGS section on the main menu, and the Errors tab |
 | An operator cannot see work they left yesterday | They are signed in as a different profile, or typed a name that normalises differently | The RECORDINGS section is per operator; check the name on the sign-in screen |
+| Documents stopped being filtered by location/RC after an update, or vanished entirely | The device has no locations yet (`SharedDatabase` starts empty) or the operator has no location selected (`lastLocationCode` is personal and starts blank). `rc == null` passes everything; `location == null` passes nothing | Refresh on `LocationRcPickScreen`, then pick a location. The context strip on the main menu shows `—` while nothing is selected |
 | "Could not sign in" and the server is down | Their first sign-in on this device has not happened yet, so there is no local digest to check the password against | Connect to the ERP once; after that the password works offline |
 | Barcode with `|` scans as garbage | Printed with Code 39 symbology, which cannot encode `|` | Reprint the label as Code 128 |
 | A scan is rejected as "Barcode not found" even though the item is on the document | The scanned value doesn't byte-for-byte match that line's `Barcode` field (wrong symbology, stray whitespace, wrong `\|UOM\|QTY` suffix) | Compare the raw scanned value against the line's `Barcode` field; reprint the label if needed |
@@ -220,6 +221,21 @@ Two databases, and which one a table lives in is the whole of the per-user isola
 **`PrimaDatabase`** — one file **per operator**, `prima_<sha256-prefix>.db`, **schema version 19**. Holds `documentHeader`, `documentLine` and `recordings`. Opened by `DatabaseProvider`, not by Dagger: a `@Singleton PrimaDatabase` would have pinned the first operator's file for the life of the process. Built with `.addMigrations(MIGRATION_7_8 … MIGRATION_18_19)` and **no `fallbackToDestructiveMigration`** — see `DatabaseModule` for why that must never come back.
 
 **`SharedDatabase`** — one file for the device, `prima_shared.db`, version 1. Holds `locations` and `responsibility_centers`. They describe the site, not the person; per-profile copies would have forced every new operator to re-download them before they could pick a location, which needs a server that may not be reachable.
+
+**The pre-split file is deleted, not migrated.** Everything used to live in one `prima_barcode.db`. Per-operator files are named from a hash of the operator id, so nothing opens that name any more — the migration chain never runs on it and every row in it became unreachable the moment the split shipped. `PrimaBarcodeApplication.discardPreSplitDatabase()` removes it on a background thread at startup. That is a decision and not an oversight: nothing shipped under the old shape, so a new version starts clean. If that file ever holds work worth keeping, it has to become a carry-over instead.
+
+**Upgrading a device therefore starts with no locations and no responsibility centres.** `MIGRATION_18_19` drops those two tables from `PrimaDatabase` and `SharedDatabase` is created empty; `upsertLocations` has exactly one caller, `realDownloadLocations`, and nothing calls it automatically. The operator gets them back through **Refresh** on `LocationRcPickScreen`, which is deliberate — nothing downloads behind their back.
+
+That empty state is what makes the document filter look broken, and the two modes fail in opposite directions (see `filteredDocs` in `MainActivity`):
+
+```kotlin
+DocTypeFilterMode.LOCATION              -> location != null && doc.sourceCode == location.code
+DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
+```
+
+With nothing selected, `rc == null` passes **everything** while `location == null` passes **nothing** — so the same missing data reads as "the filter stopped working" on one document type and "my documents vanished" on another. `doc.hasProgress ||` short-circuits ahead of both, so anything already scanned stays visible either way.
+
+The *selected* location is a separate thing from the *list*: `lastLocationCode` / `lastRcCode` are personal settings and moved to `app_settings_<profile id>` with the split, so they start blank for every operator. Nothing repairs a blank pair on its own — `LaunchedEffect(rcs, rcCode)` only acts when `rcCode` is non-blank, and the location effect only when `rc != null`. Each operator picks once, on `LocationRcPickScreen`.
 
 `DatabaseProvider` keeps opened databases open rather than closing on switch. A background upload outlives the screen that started it, so a switch can land while rows are still being written; closing underneath that throws and loses the write, and those rows are the only copy of a shift's work until the ERP has them. **Never hold a DAO or a database in a field** — `DocumentRepositoryImpl` resolves `provider.current()` at each use, binds it once per transaction with a local `val db`, and passes that into its private helpers so no transaction can straddle two files.
 
