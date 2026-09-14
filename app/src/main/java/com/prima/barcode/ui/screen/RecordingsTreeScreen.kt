@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.prima.barcode.R
 import com.prima.barcode.data.model.Document
-import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.LineScans
 import com.prima.barcode.data.model.OrphanedScan
 import com.prima.barcode.data.model.ScanRecord
@@ -58,17 +57,6 @@ import java.time.format.DateTimeFormatter
 
 private val scanTimeFmt: DateTimeFormatter =
     DateTimeFormatter.ofPattern("dd.MM. HH:mm").withZone(ZoneId.systemDefault())
-
-@Composable
-private fun DocumentType.localizedDisplay(): String = when (this) {
-    DocumentType.WAREHOUSE_SHIPMENT -> stringResource(R.string.doctype_warehouse_shipment)
-    DocumentType.WAREHOUSE_RECEIPT  -> stringResource(R.string.doctype_warehouse_receipt)
-    DocumentType.RETAIL_SHIPMENT    -> stringResource(R.string.doctype_retail_shipment)
-    DocumentType.RETAIL_RECEIPT     -> stringResource(R.string.doctype_retail_receipt)
-    DocumentType.TRANSPORT_SHEET    -> stringResource(R.string.doctype_transport_sheet)
-    DocumentType.COMPLAINT          -> stringResource(R.string.doctype_complaint)
-    DocumentType.INVENTORY          -> stringResource(R.string.doctype_inventory)
-}
 
 /**
  * Every scan recorded against one document, as a tree: the document's lines, and under each line

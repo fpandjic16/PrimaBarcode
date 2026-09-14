@@ -62,6 +62,8 @@ data/
 
 - **MainMenuScreen** — Document type list with counts/status bars; context strip for location/RC switching; a single RECORDINGS row opening `RecordingsListScreen`
 - **RecordingsListScreen** — Every document carrying a scan, newest first; a row opens its recordings tree
+
+Shared across screens:  holds the one . Seven screens each had a private copy of it, so an eighth could not call any of them — when a helper in  is wanted by more than one screen, put it in its own file as  rather than growing another private twin. ( is still duplicated three ways and has not been done.)
 - **RecordingScreen** — Core scanning interface: per-line progress, docked ScanBar, hardware wedge + camera fallback, keypad entry, over-scan/UoM-mismatch warnings
 - **DocumentListScreen** — Per-doc-type list with tabs, create/delete, filter, upload
 - **DocumentOverviewScreen** — Cross-type dashboard (errors/ready/partial/over tabs)

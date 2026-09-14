@@ -53,17 +53,6 @@ private fun LineStatus.localizedLabel(): String = when (this) {
     LineStatus.OVER    -> stringResource(R.string.doc_status_over_qty)
 }
 
-@androidx.compose.runtime.Composable
-private fun DocumentType.localizedDisplay(): String = when (this) {
-    DocumentType.WAREHOUSE_SHIPMENT -> stringResource(R.string.doctype_warehouse_shipment)
-    DocumentType.WAREHOUSE_RECEIPT  -> stringResource(R.string.doctype_warehouse_receipt)
-    DocumentType.RETAIL_SHIPMENT    -> stringResource(R.string.doctype_retail_shipment)
-    DocumentType.RETAIL_RECEIPT     -> stringResource(R.string.doctype_retail_receipt)
-    DocumentType.TRANSPORT_SHEET    -> stringResource(R.string.doctype_transport_sheet)
-    DocumentType.COMPLAINT          -> stringResource(R.string.doctype_complaint)
-    DocumentType.INVENTORY          -> stringResource(R.string.doctype_inventory)
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DocumentFilterScreen(

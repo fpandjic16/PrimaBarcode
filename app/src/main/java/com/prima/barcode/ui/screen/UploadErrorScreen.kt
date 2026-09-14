@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.prima.barcode.data.model.DocState
 import com.prima.barcode.data.model.Document
-import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.formatQty
 import com.prima.barcode.ui.component.PrimaTopBar
 import com.prima.barcode.ui.theme.LocalTextSizeOffset
@@ -42,17 +41,6 @@ import com.prima.barcode.R
 
 private val errDateFmt: DateTimeFormatter =
     DateTimeFormatter.ofPattern("dd.MM.yyyy").withZone(ZoneId.systemDefault())
-
-@Composable
-private fun DocumentType.localizedDisplay(): String = when (this) {
-    DocumentType.WAREHOUSE_SHIPMENT -> stringResource(R.string.doctype_warehouse_shipment)
-    DocumentType.WAREHOUSE_RECEIPT  -> stringResource(R.string.doctype_warehouse_receipt)
-    DocumentType.RETAIL_SHIPMENT    -> stringResource(R.string.doctype_retail_shipment)
-    DocumentType.RETAIL_RECEIPT     -> stringResource(R.string.doctype_retail_receipt)
-    DocumentType.TRANSPORT_SHEET    -> stringResource(R.string.doctype_transport_sheet)
-    DocumentType.COMPLAINT          -> stringResource(R.string.doctype_complaint)
-    DocumentType.INVENTORY          -> stringResource(R.string.doctype_inventory)
-}
 
 @Composable
 fun UploadErrorScreen(
