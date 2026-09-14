@@ -62,8 +62,6 @@ data/
 
 - **MainMenuScreen** — Document type list with counts/status bars; context strip for location/RC switching; a single RECORDINGS row opening `RecordingsListScreen`
 - **RecordingsListScreen** — Every document carrying a scan, newest first; a row opens its recordings tree
-
-Shared across screens:  holds the one . Seven screens each had a private copy of it, so an eighth could not call any of them — when a helper in  is wanted by more than one screen, put it in its own file as  rather than growing another private twin. ( is still duplicated three ways and has not been done.)
 - **RecordingScreen** — Core scanning interface: per-line progress, docked ScanBar, hardware wedge + camera fallback, keypad entry, over-scan/UoM-mismatch warnings
 - **DocumentListScreen** — Per-doc-type list with tabs, create/delete, filter, upload
 - **DocumentOverviewScreen** — Cross-type dashboard (errors/ready/partial/over tabs)
@@ -74,6 +72,8 @@ Shared across screens:  holds the one . Seven screens each had a private copy of
 - **SignInScreen** — The gate. Required at every app launch: picks the operator and takes their password, so every recording can carry its author from the moment it is written. Signs in by typed name/password or by QR, from the hardware trigger or the camera — both feed `parseLoginQr`, the same as `LoginSheet`, because before this screen existed that sheet *was* the way in. Its one door out is an "External system setup" button that opens `ExtSystemConfigScreen` without signing in — a device out of the box has no server URL, and sign-in needs one, so without that door a fresh install could never be configured
 - **LoginSheet** — Full-screen NAV credential capture (summoned on Download/Upload); QR sign-in via hardware scanner or camera
 - **UploadErrorScreen** — Failure detail + retry for a single document
+
+Helpers shared between screens live in their own file as `internal`, not as a private copy per screen. `DocumentTypeLabel.kt` holds the one `@Composable internal fun DocumentType.localizedDisplay()`; seven screens each carried an identical private version of it, which meant an eighth screen could not call any of them and adding a document type meant finding all seven. (`LineStatus.localizedLabel()` is still duplicated across three screens.)
 
 ### Design System
 
