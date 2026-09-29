@@ -13,6 +13,7 @@ import com.prima.barcode.data.auth.ExtSystemCredentialStore
 import com.prima.barcode.data.auth.ExtSystemCredentials
 import com.prima.barcode.data.auth.DeviceConfiguration
 import com.prima.barcode.data.auth.ExtSystemDefaultsCompany
+import com.prima.barcode.data.auth.ExtSystemEnvironment
 import com.prima.barcode.data.auth.UserProfile
 import com.prima.barcode.data.auth.UserProfileStore
 import com.prima.barcode.data.db.DatabaseProvider
@@ -516,6 +517,12 @@ class AppViewModel @Inject constructor(
                 // works: a file that does carry a key overwrites whatever is there.
                 loginQrKey       = dto.loginQrKey?.takeIf { it.isNotBlank() }
                     ?: extSystemConfig.value.loginQrKey,
+                // Same rule again: a file that says nothing leaves the device's answer alone, and
+                // a name this build does not recognise is treated as saying nothing rather than
+                // as a guess.
+                environment      = dto.environment
+                    ?.let { name -> ExtSystemEnvironment.entries.firstOrNull { it.name == name } }
+                    ?: extSystemConfig.value.environment,
             ),
             // Same rule as the QR key, and for the same reason: an absent section means "leave
             // this alone". A configuration file written before these fields existed must not
@@ -579,6 +586,7 @@ class AppViewModel @Inject constructor(
             locationsUrl       = config.locationsUrl,
             recordingSyncUrl   = config.recordingSyncUrl,
             domain             = config.domain,
+            environment        = config.environment?.name,
             // Never exported. Gson omits nulls, so the field is absent rather than empty, which
             // is what parseExtSystemConfigJson reads as "leave the key alone".
             loginQrKey         = null,
@@ -615,13 +623,22 @@ class AppViewModel @Inject constructor(
                 val text = runCatching {
                     appContext.assets.open(fileName).bufferedReader(Charsets.UTF_8).use { it.readText() }
                 }.getOrNull() ?: return@mapNotNull null
-                val name = runCatching { gson.fromJson(text, CompanyNameDto::class.java).companyName }.getOrNull()
-                if (name.isNullOrBlank()) null else ExtSystemDefaultsCompany(label = name, assetFileName = fileName)
+                val dto = runCatching { gson.fromJson(text, ExtSystemDefaultsDto::class.java) }.getOrNull()
+                val name = dto?.companyName
+                // A file with no environment cannot be offered under either heading, so it is
+                // skipped rather than guessed at. Every bundled file declares one.
+                val environment = dto?.environment
+                    ?.let { n -> ExtSystemEnvironment.entries.firstOrNull { it.name == n } }
+                if (name.isNullOrBlank() || environment == null) null
+                else ExtSystemDefaultsCompany(
+                    label = name,
+                    assetFileName = fileName,
+                    environment = environment,
+                    isConfigured = !dto.serverBaseUrl.isNullOrBlank(),
+                )
             }
             ?: emptyList()
     }.onFailure { Timber.w(it, "Failed to list ext_system_defaults companies") }.getOrDefault(emptyList())
-
-    private data class CompanyNameDto(val companyName: String? = null)
 
     /**
      * The wire shape of a configuration file. Every field nullable on purpose: absent means
@@ -629,6 +646,9 @@ class AppViewModel @Inject constructor(
      * that did not exist when it was written.
      */
     private data class ExtSystemDefaultsDto(
+        // Read only when listing the bundled files, to label and group the picker.
+        val companyName: String? = null,
+        val environment: String? = null,
         val serverBaseUrl: String? = null,
         val credentialTtlHours: Int? = null,
         val documentLinesUrl: String? = null,

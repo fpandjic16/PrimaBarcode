@@ -1,5 +1,6 @@
 {
-  "companyName": "Prima Mebel",
+  "companyName": "Prima Mobilis d.o.o.",
+  "environment": "TEST",
   "serverBaseUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/",
   "credentialTtlHours": 168,
   "loginQrKey": "AuQp75VFBpA/ybuRGeFDEM5z4DTcjUTXTaTIQSj7Bl4=",

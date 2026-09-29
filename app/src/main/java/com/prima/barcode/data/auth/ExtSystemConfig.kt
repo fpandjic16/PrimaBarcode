@@ -3,6 +3,16 @@ package com.prima.barcode.data.auth
 import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.data.model.DocumentType
 
+/**
+ * Which ERP a device is talking to.
+ *
+ * The distinction is worth a field of its own because the two mistakes it prevents are both
+ * expensive and both silent: scanning a real shipment into the test company, and scanning test
+ * work into production. Nothing in a URL can be trusted to reveal which is which — a hostname
+ * says whatever somebody typed — so the configuration states it outright.
+ */
+enum class ExtSystemEnvironment { TEST, PRODUCTION }
+
 data class ExtSystemConfig(
     val serverBaseUrl: String = "",
     val credentialTtlHours: Int = 24,
@@ -19,6 +29,11 @@ data class ExtSystemConfig(
     // LoginQrPayload.kt. Carried in the config rather than the build so it can be rotated by
     // importing a new configuration instead of shipping a new APK. Blank disables QR sign-in.
     val loginQrKey: String = "",
+    // Null means "nobody has said". Deliberately not defaulted to either value: a device that
+    // claims TEST while pointing at production, or the reverse, is worse than one that admits it
+    // does not know. It becomes known as soon as a configuration declaring an environment is
+    // loaded, which every bundled file now does.
+    val environment: ExtSystemEnvironment? = null,
 ) {
     fun docTypeCodeFor(type: DocumentType): String = documentTypeCodes[type] ?: ""
     val isConfigured: Boolean get() = serverBaseUrl.isNotBlank()
@@ -35,7 +50,18 @@ data class ExtSystemCredentials(
  * [com.prima.barcode.ui.viewmodel.AppViewModel.listExtSystemDefaultsCompanies] — rather than
  * a fixed list, so adding a new company is just adding a new asset file.
  */
-data class ExtSystemDefaultsCompany(val label: String, val assetFileName: String)
+data class ExtSystemDefaultsCompany(
+    val label: String,
+    val assetFileName: String,
+    val environment: ExtSystemEnvironment,
+    /**
+     * False for a file that has been added but not filled in — the production skeletons ship this
+     * way, with their addresses blank, because a file labelled PRODUCTION carrying test addresses
+     * is a trap waiting for somebody to load "production" and land on the test company. The
+     * picker shows these and refuses to load them.
+     */
+    val isConfigured: Boolean,
+)
 
 /**
  * Everything a configuration file sets up on a device.

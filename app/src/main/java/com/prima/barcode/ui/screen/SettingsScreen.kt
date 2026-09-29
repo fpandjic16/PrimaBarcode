@@ -30,6 +30,7 @@ import com.prima.barcode.data.auth.AppSettings
 import com.prima.barcode.data.auth.DeviceConfiguration
 import com.prima.barcode.data.auth.ExtSystemConfig
 import com.prima.barcode.data.auth.ExtSystemDefaultsCompany
+import com.prima.barcode.data.auth.ExtSystemEnvironment
 import com.prima.barcode.data.model.Location
 import com.prima.barcode.data.model.ResponsibilityCenter
 import com.prima.barcode.data.model.User
@@ -113,6 +114,9 @@ fun SettingsScreen(
     var showDeleteAllDocumentsDialog by remember { mutableStateOf(false) }
     var showInsertSystemDefaultsDialog by remember { mutableStateOf(false) }
     var showCompanyPickDialog by remember { mutableStateOf(false) }
+    // Asked before the company: "which system" is the question that carries the risk.
+    var showEnvironmentPickDialog by remember { mutableStateOf(false) }
+    var pickedEnvironment by remember { mutableStateOf<ExtSystemEnvironment?>(null) }
     var pendingExtSystemConfig by remember { mutableStateOf<ExtSystemConfig?>(null) }
 
     /**
@@ -774,7 +778,7 @@ fun SettingsScreen(
                     Button(
                         onClick = {
                             showInsertSystemDefaultsDialog = false
-                            showCompanyPickDialog = true
+                            showEnvironmentPickDialog = true
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -809,6 +813,38 @@ fun SettingsScreen(
         }
     }
 
+    if (showEnvironmentPickDialog) {
+        Dialog(onDismissRequest = { showEnvironmentPickDialog = false }) {
+            Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(stringResource(R.string.ext_config_pick_environment_title), fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(4.dp))
+                    ExtSystemEnvironment.entries.forEach { env ->
+                        OutlinedButton(
+                            onClick = {
+                                showEnvironmentPickDialog = false
+                                pickedEnvironment = env
+                                showCompanyPickDialog = true
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(env.labelRes), fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                    TextButton(
+                        onClick = { showEnvironmentPickDialog = false },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                }
+            }
+        }
+    }
+
     if (showCompanyPickDialog) {
         Dialog(onDismissRequest = { showCompanyPickDialog = false }) {
             Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
@@ -818,7 +854,9 @@ fun SettingsScreen(
                 ) {
                     Text(stringResource(R.string.ext_config_pick_company_title), fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
-                    val companies = remember { listExtSystemDefaultsCompanies() }
+                    val companies = remember(pickedEnvironment) {
+                        listExtSystemDefaultsCompanies().filter { it.environment == pickedEnvironment }
+                    }
                     if (companies.isEmpty()) {
                         Text(
                             stringResource(R.string.ext_config_no_companies_found),
@@ -827,6 +865,9 @@ fun SettingsScreen(
                     }
                     companies.forEach { company ->
                         OutlinedButton(
+                            // Shown but not loadable when the file has been added and not filled
+                            // in: its blank addresses would wipe a working configuration.
+                            enabled = company.isConfigured,
                             onClick = {
                                 showCompanyPickDialog = false
                                 val defaults = loadExtSystemConfigDefaults(company.assetFileName)
@@ -839,7 +880,11 @@ fun SettingsScreen(
                             },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text(company.label, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                if (company.isConfigured) company.label
+                                else stringResource(R.string.ext_config_company_not_configured, company.label),
+                                fontWeight = FontWeight.SemiBold,
+                            )
                         }
                     }
                     TextButton(

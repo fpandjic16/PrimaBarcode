@@ -1,0 +1,31 @@
+{
+  "companyName": "Prima Mebel",
+  "environment": "TEST",
+  "serverBaseUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/",
+  "credentialTtlHours": 168,
+  "loginQrKey": "AuQp75VFBpA/ybuRGeFDEM5z4DTcjUTXTaTIQSj7Bl4=",
+  "domain": "",
+  "documentLinesUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
+  "documentTypeCodes": {
+    "WAREHOUSE_SHIPMENT": "SHIPMENT",
+    "WAREHOUSE_RECEIPT": "RECEIPT",
+    "RETAIL_SHIPMENT": "SHIPMENT",
+    "RETAIL_RECEIPT": "RECEIPT",
+    "TRANSPORT_SHEET": "TRANSPORT",
+    "COMPLAINT": "COMPLAINT",
+    "INVENTORY": "INVENTORY"
+  },
+  "locationsUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/LocationList",
+  "recordingSyncUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppRecordings",
+  "disabledDocTypes": [],
+  "docTypeFilters": {
+    "WAREHOUSE_SHIPMENT": "LOCATION",
+    "WAREHOUSE_RECEIPT": "LOCATION",
+    "RETAIL_SHIPMENT": "LOCATION",
+    "RETAIL_RECEIPT": "LOCATION",
+    "TRANSPORT_SHEET": "LOCATION",
+    "COMPLAINT": "RESPONSIBILITY_CENTER",
+    "INVENTORY": "LOCATION"
+  },
+  "debuggerActive": false
+}

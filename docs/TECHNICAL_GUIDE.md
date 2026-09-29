@@ -75,7 +75,7 @@ All of this lives under **Settings → External System Configuration** (`ExtSyst
 
 Three interchangeable ways to populate the above (available both in `ExtSystemConfigScreen`'s "Load configuration" button and Settings' "Insert system defaults" row — functionally identical, differing only in when they're persisted, see §B.11.6):
 
-1. **Load built-in defaults** — presents a company picker (built from every bundled `assets/ext_system_defaults_*.json`'s `companyName`, see §B.6.6), reads the selected one, and fills the form immediately.
+1. **Load built-in defaults** — asks **which system** (Test / Production) and *then* presents a company picker scoped to that environment, built from the bundled `assets/ext_system_defaults_*.json` files (see §B.6.6). Environment first because that is the question that carries the risk; company second. A file that has been added but not filled in — `serverBaseUrl` blank, which is how the production skeletons ship — is listed but not selectable, since loading it would wipe a working configuration with blanks.
 2. **Export this device's configuration** — writes what is on the device *now* to a file the user picks, **with `loginQrKey` stripped out** — see §B.6.6. No company picker: it is this device, not a bundled asset. That is what makes the round trip real — set one device up by hand, export, import on the rest. Exporting the shipped asset instead meant a hand-tuned device could never become the template for its fleet.
 3. **Import from file** — reads an arbitrary JSON file the user picks (same shape) and fills the form from it.
 
@@ -556,7 +556,7 @@ return failures
 
 ### B.6.6 Config file reference
 
-**`app/src/main/assets/ext_system_defaults_*.json`** (bundled, one file per company; as of 2026-08: `_commerce`, `_mebel`, `_pohistvo`, `_mobilis`) — discovered dynamically at runtime rather than referenced by a fixed name, so adding a new company is just adding a new asset file:
+**`app/src/main/assets/ext_system_defaults_*.json`** (bundled, **two files per company** — `_test` and `_prod`; as of 2026-09: `_commerce`, `_mebel`, `_pohistvo`, `_mobilis` in both flavours) — discovered dynamically at runtime rather than referenced by a fixed name, so adding a company or an environment is just adding a file. The grouping comes from each file's `environment` field, **not** from its name: a filename is a label, and a label that disagrees with the contents is exactly the failure this is meant to prevent. The production files ship with their four URLs blank and no `loginQrKey`, awaiting real addresses — a file labelled PRODUCTION carrying test addresses is a trap waiting for somebody to load "production" and land on the test company:
 ```json
 {
   "companyName": "Prima Commerce d.o.o.",
@@ -573,7 +573,7 @@ return failures
   "recordingSyncUrl": "http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppRecordings"
 }
 ```
-`companyName` is only read by `AppViewModel.listExtSystemDefaultsCompanies()` (via a tiny private `CompanyNameDto`) to build the "Load built-in defaults" picker list shown in `ExtSystemConfigScreen`/`SettingsScreen` — it's not part of `ExtSystemConfig` itself. `domain` (added 2026-08) feeds `ExtSystemConfig.domain` — see §B.6.1/§B.6.2's domain-parsing note. `loginQrKey` (added 2026-09) is the AES-256 key for encrypted sign-in QR codes — see §B.10; distributing it here is what lets it be rotated without a new APK. It is the one field never written to an exported copy. `documentTypeCodes` keys use the enum's `.name` (matched via `dto.documentTypeCodes?.get(type.name)`).
+`companyName` and `environment` are read by `AppViewModel.listExtSystemDefaultsCompanies()` to label and group the "Load built-in defaults" picker shown in `ExtSystemConfigScreen`/`SettingsScreen`; `companyName` is not part of `ExtSystemConfig`, `environment` is. A file missing either is skipped rather than guessed at, and so is an `environment` value this build does not recognise. `domain` (added 2026-08) feeds `ExtSystemConfig.domain` — see §B.6.1/§B.6.2's domain-parsing note. `loginQrKey` (added 2026-09) is the AES-256 key for encrypted sign-in QR codes — see §B.10; distributing it here is what lets it be rotated without a new APK. It is the one field never written to an exported copy. `documentTypeCodes` keys use the enum's `.name` (matched via `dto.documentTypeCodes?.get(type.name)`).
 
 **`prima_config.json`** (repo root) — an all-blank template of the identical shape (predates the per-company split); not read by any app code, purely a distributable seed for generating a deployment-specific defaults file.
 
@@ -587,7 +587,7 @@ Every field of the DTO is nullable and **absent means "leave this as it is"** �
 
 Two screens apply a loaded configuration, and they differ only in *when* it persists. `ExtSystemConfigScreen.applyConfiguration` fills its own form with the ERP half and pushes the device half straight through `onDisabledDocTypesChange` / `onDocTypeFiltersChange` / `onDebuggerActiveChange`, because those have no form fields there. `SettingsScreen.applyConfiguration` stages the ERP half in `pendingExtSystemConfig` and puts the device half into the local state `buildSettings()` reads, so both leave on the same exit-save.
 
-`listExtSystemDefaultsCompanies()` lists `assets.list("")`, filters `ext_system_defaults_*.json`, and reads each file's `companyName`.
+`listExtSystemDefaultsCompanies()` lists `assets.list("")`, filters `ext_system_defaults_*.json`, and reads each file's `companyName`, `environment` and whether `serverBaseUrl` is filled in — the last becomes `ExtSystemDefaultsCompany.isConfigured`, which the picker uses to show a skeleton file without letting it be loaded.
 
 ## B.7 Auth & Config Storage
 

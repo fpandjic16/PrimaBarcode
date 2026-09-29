@@ -1,0 +1,30 @@
+{
+  "companyName": "Prima Commerce d.o.o.",
+  "environment": "PRODUCTION",
+  "serverBaseUrl": "",
+  "credentialTtlHours": 168,
+  "domain": "PRIMA-COMMERCE",
+  "documentLinesUrl": "",
+  "documentTypeCodes": {
+    "WAREHOUSE_SHIPMENT": "SHIPMENT",
+    "WAREHOUSE_RECEIPT": "RECEIPT",
+    "RETAIL_SHIPMENT": "SHIPMENT",
+    "RETAIL_RECEIPT": "RECEIPT",
+    "TRANSPORT_SHEET": "TRANSPORT",
+    "COMPLAINT": "COMPLAINT",
+    "INVENTORY": "INVENTORY"
+  },
+  "locationsUrl": "",
+  "recordingSyncUrl": "",
+  "disabledDocTypes": [],
+  "docTypeFilters": {
+    "WAREHOUSE_SHIPMENT": "LOCATION",
+    "WAREHOUSE_RECEIPT": "LOCATION",
+    "RETAIL_SHIPMENT": "LOCATION",
+    "RETAIL_RECEIPT": "LOCATION",
+    "TRANSPORT_SHEET": "LOCATION",
+    "COMPLAINT": "RESPONSIBILITY_CENTER",
+    "INVENTORY": "LOCATION"
+  },
+  "debuggerActive": false
+}

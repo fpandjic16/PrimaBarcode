@@ -22,6 +22,10 @@ class ExtSystemConfigStore @Inject constructor(@param:ApplicationContext private
         locationsUrl     = prefs.getString("locationsUrl", "") ?: "",
         domain           = prefs.getString("domain", "") ?: "",
         loginQrKey       = prefs.getString("loginQrKey", "") ?: "",
+        // Absent, or a name from a newer build this one does not know, both read as "nobody
+        // has said" rather than as a guess.
+        environment      = prefs.getString("environment", null)
+            ?.let { name -> ExtSystemEnvironment.entries.firstOrNull { it.name == name } },
     )
 
 
@@ -34,6 +38,7 @@ class ExtSystemConfigStore @Inject constructor(@param:ApplicationContext private
             .putString("locationsUrl",     config.locationsUrl)
             .putString("domain",           config.domain)
             .putString("loginQrKey",       config.loginQrKey)
+            .putString("environment",      config.environment?.name)
         config.documentTypeCodes.forEach { (type, code) ->
             ed.putString("doc_type_code_${type.key}", code)
         }

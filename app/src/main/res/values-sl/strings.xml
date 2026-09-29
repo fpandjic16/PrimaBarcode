@@ -181,6 +181,10 @@
     <string name="ext_config_recording_url">URL sinhronizacije snemanj</string>
     <string name="ext_config_load_title">Naloži konfiguracijo</string>
     <string name="ext_config_load_desc">Naložite vgrajene privzete vrednosti ali uvozite datoteko JSON po meri z naprave.</string>
+    <string name="ext_config_pick_environment_title">Kateri sistem?</string>
+    <string name="ext_config_environment_test">Test</string>
+    <string name="ext_config_environment_production">Produkcija</string>
+    <string name="ext_config_company_not_configured">%1$s — še ni izpolnjeno</string>
     <string name="ext_config_pick_company_title">Izberi podjetje</string>
     <string name="ext_config_no_companies_found">Ni najdenih vgrajenih konfiguracij</string>
     <string name="ext_config_load_builtin">Naloži vgrajene privzete vrednosti</string>

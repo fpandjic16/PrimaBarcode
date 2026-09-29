@@ -540,6 +540,7 @@ private fun PrimaBarcodeApp(
                 user = user,
                 location = location,
                 rc = rc,
+                environment = extSystemConfig.environment,
                 docTypes = docTypes,
                 recordedDocs = recordedDocs,
                 shiftScans = shiftScans,

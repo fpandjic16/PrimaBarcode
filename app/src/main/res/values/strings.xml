@@ -181,6 +181,10 @@
     <string name="ext_config_recording_url">Recording sync URL</string>
     <string name="ext_config_load_title">Load configuration</string>
     <string name="ext_config_load_desc">Load built-in production defaults or import a custom JSON file from the device.</string>
+    <string name="ext_config_pick_environment_title">Which system?</string>
+    <string name="ext_config_environment_test">Test</string>
+    <string name="ext_config_environment_production">Production</string>
+    <string name="ext_config_company_not_configured">%1$s — not filled in yet</string>
     <string name="ext_config_pick_company_title">Select company</string>
     <string name="ext_config_no_companies_found">No built-in configurations found</string>
     <string name="ext_config_load_builtin">Load built-in defaults</string>

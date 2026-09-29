@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.prima.barcode.data.auth.ExtSystemEnvironment
 import com.prima.barcode.data.model.Document
 import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.LineStatus
@@ -66,6 +67,8 @@ fun MainMenuScreen(
     user: User?,
     location: Location?,
     rc: ResponsibilityCenter?,
+    /** Null until a configuration has said. Hidden rather than guessed at when unknown. */
+    environment: ExtSystemEnvironment? = null,
     docTypes: List<DocTypeSummary>,
     /**
      * Documents that already carry scans. Only their number and their scan totals are used here —
@@ -179,6 +182,42 @@ fun MainMenuScreen(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                    }
+                    // Which ERP this device is talking to, where the operator cannot help seeing
+                    // it. The two mistakes it guards against are both silent and both expensive:
+                    // real work scanned into the test company, and test work scanned into
+                    // production. Not tappable — it is not something you switch from here.
+                    //
+                    // TEST is drawn in the warning amber deliberately, breaking the rule that
+                    // those colours mean line status. Nothing else on this screen is coloured to
+                    // mean "look at this", and that is exactly what is wanted here.
+                    environment?.let { env ->
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .fillMaxHeight()
+                                .background(Color(0x33FFFFFF)),
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                stringResource(env.labelRes),
+                                style = monoLabel.copy(
+                                    color = when (env) {
+                                        ExtSystemEnvironment.TEST -> Color(0xFFC7943A)
+                                        ExtSystemEnvironment.PRODUCTION -> Color.White
+                                    },
+                                    fontWeight = FontWeight.Medium,
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
             }
