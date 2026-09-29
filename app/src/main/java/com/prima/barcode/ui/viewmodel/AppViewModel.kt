@@ -634,7 +634,11 @@ class AppViewModel @Inject constructor(
                     label = name,
                     assetFileName = fileName,
                     environment = environment,
-                    isConfigured = !dto.serverBaseUrl.isNullOrBlank(),
+                    // Everything the app cannot work without. locationsUrl is left out on
+                    // purpose: blank is a legitimate setting (locations not managed), not a
+                    // sign that the file was never filled in.
+                    isConfigured = listOf(dto.serverBaseUrl, dto.documentLinesUrl, dto.recordingSyncUrl)
+                        .all { !it.isNullOrBlank() },
                 )
             }
             ?: emptyList()

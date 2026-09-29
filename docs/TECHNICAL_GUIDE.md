@@ -75,7 +75,7 @@ All of this lives under **Settings → External System Configuration** (`ExtSyst
 
 Three interchangeable ways to populate the above (available both in `ExtSystemConfigScreen`'s "Load configuration" button and Settings' "Insert system defaults" row — functionally identical, differing only in when they're persisted, see §B.11.6):
 
-1. **Load built-in defaults** — asks **which system** (Test / Production) and *then* presents a company picker scoped to that environment, built from the bundled `assets/ext_system_defaults_*.json` files (see §B.6.6). Environment first because that is the question that carries the risk; company second. A file that has been added but not filled in — `serverBaseUrl` blank, which is how the production skeletons ship — is listed but not selectable, since loading it would wipe a working configuration with blanks.
+1. **Load built-in defaults** — asks **which system** (Test / Production) and *then* presents a company picker scoped to that environment, built from the bundled `assets/ext_system_defaults_*.json` files (see §B.6.6). Environment first because that is the question that carries the risk; company second. A file missing any address the app cannot work without — `serverBaseUrl`, `documentLinesUrl` or `recordingSyncUrl` — is listed but not selectable, since loading it would replace a working configuration with blanks. (`locationsUrl` is not required: blank is a legitimate setting meaning locations are not managed.)
 2. **Export this device's configuration** — writes what is on the device *now* to a file the user picks, **with `loginQrKey` stripped out** — see §B.6.6. No company picker: it is this device, not a bundled asset. That is what makes the round trip real — set one device up by hand, export, import on the rest. Exporting the shipped asset instead meant a hand-tuned device could never become the template for its fleet.
 3. **Import from file** — reads an arbitrary JSON file the user picks (same shape) and fills the form from it.
 
@@ -556,7 +556,14 @@ return failures
 
 ### B.6.6 Config file reference
 
-**`app/src/main/assets/ext_system_defaults_*.json`** (bundled, **two files per company** — `_test` and `_prod`; as of 2026-09: `_commerce`, `_mebel`, `_pohistvo`, `_mobilis` in both flavours) — discovered dynamically at runtime rather than referenced by a fixed name, so adding a company or an environment is just adding a file. The grouping comes from each file's `environment` field, **not** from its name: a filename is a label, and a label that disagrees with the contents is exactly the failure this is meant to prevent. The production files ship with their four URLs blank and no `loginQrKey`, awaiting real addresses — a file labelled PRODUCTION carrying test addresses is a trap waiting for somebody to load "production" and land on the test company:
+**`app/src/main/assets/ext_system_defaults_*.json`** (bundled, **two files per company** — `_test` and `_prod`; as of 2026-09: `_commerce`, `_mebel`, `_pohistvo`, `_mobilis` in both flavours) — discovered dynamically at runtime rather than referenced by a fixed name, so adding a company or an environment is just adding a file. The grouping comes from each file's `environment` field, **not** from its name: a filename is a label, and a label that disagrees with the contents is exactly the failure this is meant to prevent. **Test** runs on `http://192.168.100.87:8048/NAV_TEST_HR/ODataV4/`, **production** on `http://192.168.100.113:7048/BARCODE/ODataV4/`. Each endpoint URL is `{serverBaseUrl}Company('{company}')/{service}`, with the services `BarcodeAppEntries`, `LocationList` and `BarcodeAppRecordings`.
+
+Two things about these files that are assumptions rather than facts, and are worth checking against NAV before a device goes live:
+
+- **All four `_test` files point at the same company**, `Prima Commerce d.o.o.`, including Mebel, Mobilis and Pohštvo. Loading "Prima Mebel" on test works on Commerce's data. It may be that only Commerce exists on the test instance; it is recorded here because it looks like a mistake.
+- **The production company segment is each file's `companyName`, URL-encoded.** That is certain for Commerce, where the test file's `Company(...)` is exactly its `companyName`, and assumed for the other three. A wrong one passes sign-in — `testConnection` only hits `serverBaseUrl` — and fails at the first download.
+
+`domain` is set only for Commerce (`PRIMA-COMMERCE`). The production files carry no `loginQrKey`: printed production QR codes carry real passwords, and a key committed here would protect them no better than the test key does. Deliver it with "Import from file" from a file kept out of git — a file with a key sets it, one without leaves it alone:
 ```json
 {
   "companyName": "Prima Commerce d.o.o.",
@@ -587,7 +594,7 @@ Every field of the DTO is nullable and **absent means "leave this as it is"** �
 
 Two screens apply a loaded configuration, and they differ only in *when* it persists. `ExtSystemConfigScreen.applyConfiguration` fills its own form with the ERP half and pushes the device half straight through `onDisabledDocTypesChange` / `onDocTypeFiltersChange` / `onDebuggerActiveChange`, because those have no form fields there. `SettingsScreen.applyConfiguration` stages the ERP half in `pendingExtSystemConfig` and puts the device half into the local state `buildSettings()` reads, so both leave on the same exit-save.
 
-`listExtSystemDefaultsCompanies()` lists `assets.list("")`, filters `ext_system_defaults_*.json`, and reads each file's `companyName`, `environment` and whether `serverBaseUrl` is filled in — the last becomes `ExtSystemDefaultsCompany.isConfigured`, which the picker uses to show a skeleton file without letting it be loaded.
+`listExtSystemDefaultsCompanies()` lists `assets.list("")`, filters `ext_system_defaults_*.json`, and reads each file's `companyName`, `environment` and whether the required addresses are filled in — the last becomes `ExtSystemDefaultsCompany.isConfigured`, which the picker uses to show an incomplete file without letting it be loaded.
 
 ## B.7 Auth & Config Storage
 

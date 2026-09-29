@@ -55,9 +55,9 @@ data class ExtSystemDefaultsCompany(
     val assetFileName: String,
     val environment: ExtSystemEnvironment,
     /**
-     * False for a file that has been added but not filled in — the production skeletons ship this
-     * way, with their addresses blank, because a file labelled PRODUCTION carrying test addresses
-     * is a trap waiting for somebody to load "production" and land on the test company. The
+     * False for a file that is missing any address the app cannot work without — the server, the
+     * document lines or the recording sync. Checking the server alone was not enough: a file half
+     * filled in would pass, load, and replace a working configuration with blank endpoints. The
      * picker shows these and refuses to load them.
      */
     val isConfigured: Boolean,

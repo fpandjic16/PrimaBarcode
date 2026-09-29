@@ -1,10 +1,10 @@
 {
   "companyName": "Prima Commerce d.o.o.",
   "environment": "PRODUCTION",
-  "serverBaseUrl": "",
+  "serverBaseUrl": "http://192.168.100.113:7048/BARCODE/ODataV4/",
   "credentialTtlHours": 168,
   "domain": "PRIMA-COMMERCE",
-  "documentLinesUrl": "",
+  "documentLinesUrl": "http://192.168.100.113:7048/BARCODE/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppEntries",
   "documentTypeCodes": {
     "WAREHOUSE_SHIPMENT": "SHIPMENT",
     "WAREHOUSE_RECEIPT": "RECEIPT",
@@ -14,8 +14,8 @@
     "COMPLAINT": "COMPLAINT",
     "INVENTORY": "INVENTORY"
   },
-  "locationsUrl": "",
-  "recordingSyncUrl": "",
+  "locationsUrl": "http://192.168.100.113:7048/BARCODE/ODataV4/Company('Prima%20Commerce%20d.o.o.')/LocationList",
+  "recordingSyncUrl": "http://192.168.100.113:7048/BARCODE/ODataV4/Company('Prima%20Commerce%20d.o.o.')/BarcodeAppRecordings",
   "disabledDocTypes": [],
   "docTypeFilters": {
     "WAREHOUSE_SHIPMENT": "LOCATION",
