@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Nothing on this page may reach the network. It handles a real NAV password and the key that
+  unlocks every login code, so no external script, style, image or connection is allowed — the
+  browser enforces that through this policy, not just good intentions in the code below.
+-->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; base-uri 'none'; form-action 'none'">
+<title>PrimaBarcode — QR kod za prijavu</title>
+<style>
+  :root {
+    --coral: #C95B4D; --slate: #2E3539; --cream: #F2EBDE;
+    --ink: #1F2427; --ink3: #6B7275; --red: #CE3A3A;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--cream); color: var(--ink); }
+  header { background: var(--slate); color: #fff; padding: 16px 24px; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header p { margin: 4px 0 0; font-size: 13px; opacity: .75; }
+  main { max-width: 920px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+  @media (max-width: 760px) { main { grid-template-columns: 1fr; } }
+  .card { background: #fff; border-radius: 14px; padding: 20px; border: 1px solid rgba(0, 0, 0, .08); }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 16px 0 6px; }
+  label:first-child { margin-top: 0; }
+  .field { display: flex; gap: 6px; }
+  input { flex: 1; min-width: 0; width: 100%; font: 15px/1.3 ui-monospace, "Cascadia Mono", Consolas, monospace; padding: 10px 12px;
+          border: 1px solid rgba(0, 0, 0, .2); border-radius: 8px; background: #fff; color: var(--ink); }
+  input:focus { outline: 2px solid var(--coral); outline-offset: -1px; border-color: transparent; }
+  button { font: inherit; font-size: 14px; border-radius: 8px; padding: 10px 14px; border: 1px solid rgba(0, 0, 0, .2);
+           background: #fff; color: var(--ink); cursor: pointer; white-space: nowrap; }
+  button:hover { background: #f6f3ee; }
+  button.primary { background: var(--coral); border-color: var(--coral); color: #fff; font-weight: 600; width: 100%; margin-top: 22px; padding: 12px; }
+  button.primary:hover { filter: brightness(1.05); background: var(--coral); }
+  .hint { font-size: 12px; color: var(--ink3); margin-top: 6px; }
+  .msg { font-size: 13px; margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: #fbeaea; color: var(--red); }
+  #out { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 320px; }
+  #qr { max-width: 100%; height: auto; image-rendering: pixelated; }
+  #outUser { font: 600 16px ui-monospace, Consolas, monospace; margin-top: 8px; word-break: break-all; }
+  #outMeta { font-size: 12px; color: var(--ink3); margin-top: 4px; }
+  .actions { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  .empty { color: var(--ink3); font-size: 14px; }
+  @media print {
+    header, #form, .actions, #outMeta { display: none !important; }
+    body { background: #fff; }
+    main { display: block; padding: 0; }
+    .card { border: none; padding: 0; }
+    #qr { width: 7cm; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>QR kod za prijavu</h1>
+  <p>Radi samo u ovom pregledniku, bez interneta. Ključ i lozinka ne napuštaju računalo.</p>
+</header>
+<main>
+  <section class="card" id="form">
+    <label for="key">Ključ — <code>loginQrKey</code> iz konfiguracije</label>
+    <div class="field">
+      <input id="key" type="password" autocomplete="off" spellcheck="false">
+      <button type="button" data-toggle="key">Prikaži</button>
+    </div>
+
+    <label for="user">Korisničko ime</label>
+    <input id="user" type="text" autocomplete="off" spellcheck="false" placeholder="PRIMA-COMMERCE\ime">
+    <div class="hint">Kao pri prijavi: <code>DOMENA\ime</code> ili <code>ime@domena</code>, s jednom kosom crtom.</div>
+
+    <label for="pass">Lozinka</label>
+    <div class="field">
+      <input id="pass" type="password" autocomplete="new-password" spellcheck="false">
+      <button type="button" data-toggle="pass">Prikaži</button>
+    </div>
+    <div class="hint">Razmaci na početku i na kraju dio su lozinke. Gumb Očisti briše ime i lozinku.</div>
+
+    <button class="primary" id="make" type="button">Napravi QR kod</button>
+    <div class="msg" id="msg" hidden></div>
+  </section>
+
+  <section class="card" id="out">
+    <div class="empty" id="empty">Ovdje će se pojaviti QR kod.</div>
+    <canvas id="qr" hidden></canvas>
+    <div id="outUser"></div>
+    <div id="outMeta"></div>
+    <div class="actions" id="actions" hidden>
+      <button type="button" id="print">Ispiši</button>
+      <button type="button" id="save">Spremi PNG</button>
+      <button type="button" id="clear">Očisti</button>
+    </div>
+  </section>
+</main>
+
+<script>
+'use strict';
+
+// ═══ Login payload ═══════════════════════════════════════════════════════════════════════════
+//
+// Identical to tools/make_login_qr.py, and to what LoginQrPayload.kt decrypts on the device:
+//
+//     base64( [12-byte IV][AES-256-GCM ciphertext + 16-byte tag] )
+//
+// with {"username":"…","password":"…"} as the plaintext. WebCrypto returns ciphertext and tag
+// already joined in that order, which is also what Java's AES/GCM/NoPadding expects.
+
+const IV_BYTES = 12;
+const KEY_BYTES = 32;
+
+function b64ToBytes(b64) {
+  const bin = atob(b64.trim());
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function bytesToB64(bytes) {
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+
+async function encryptLogin(keyB64, username, password) {
+  let keyBytes;
+  try { keyBytes = b64ToBytes(keyB64); } catch (e) { throw new Error('Ključ nije ispravan base64.'); }
+  if (keyBytes.length !== KEY_BYTES) {
+    throw new Error('Ključ mora imati točno ' + KEY_BYTES + ' bajta, a ovaj ima ' + keyBytes.length + '.');
+  }
+  const key = await crypto.subtle.importKey('raw', keyBytes, 'AES-GCM', false, ['encrypt', 'decrypt']);
+  const plaintext = new TextEncoder().encode(JSON.stringify({ username: username, password: password }));
+  const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES));
+  const sealed = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv, tagLength: 128 }, key, plaintext));
+  const blob = new Uint8Array(IV_BYTES + sealed.length);
+  blob.set(iv, 0);
+  blob.set(sealed, IV_BYTES);
+
+  // Read it back the way the device will, before anything is printed: split the IV off the front,
+  // decrypt the rest, parse the JSON. A code that fails here would fail on the scanner too.
+  const opened = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: blob.slice(0, IV_BYTES), tagLength: 128 }, key, blob.slice(IV_BYTES));
+  const parsed = JSON.parse(new TextDecoder().decode(opened));
+  if (parsed.username !== username || parsed.password !== password) {
+    throw new Error('Provjera šifriranja nije uspjela.');
+  }
+  return bytesToB64(blob);
+}
+
+// ═══ QR code: byte mode, error correction H, versions 1–20 ════════════════════════════════════
+//
+// Written out here rather than loaded, because this page may not touch the network. Error
+// correction H survives roughly 30% damage — these get printed, taped up and scanned in warehouse
+// light, and the Python tool uses H for the same reason. Structure per ISO/IEC 18004; the mask
+// penalty follows Project Nayuki's QR Code generator (MIT), which most encoders agree with.
+// Version 20 holds 382 bytes, far beyond any login code, so the tables stop there.
+
+const QR_ECC_PER_BLOCK = [-1, 17, 28, 22, 16, 22, 28, 26, 26, 24, 28, 24, 28, 22, 24, 24, 30, 28, 28, 26, 28];
+const QR_BLOCKS        = [-1,  1,  1,  2,  4,  4,  4,  5,  6,  8,  8, 11, 11, 16, 16, 18, 16, 19, 21, 25, 25];
+const QR_MAX_VERSION = 20;
+const QR_FORMAT_ECL_H = 2; // the two format bits for level H are binary 10
+
+function qrRawDataModules(ver) {
+  let result = (16 * ver + 128) * ver + 64;
+  if (ver >= 2) {
+    const numAlign = Math.floor(ver / 7) + 2;
+    result -= (25 * numAlign - 10) * numAlign - 55;
+    if (ver >= 7) result -= 36;
+  }
+  return result;
+}
+
+function qrDataCodewords(ver) {
+  return Math.floor(qrRawDataModules(ver) / 8) - QR_ECC_PER_BLOCK[ver] * QR_BLOCKS[ver];
+}
+
+function qrAlignmentPositions(ver) {
+  if (ver === 1) return [];
+  const size = ver * 4 + 17;
+  const numAlign = Math.floor(ver / 7) + 2;
+  const step = Math.floor((ver * 8 + numAlign * 3 + 5) / (numAlign * 4 - 4)) * 2;
+  const result = [6];
+  for (let pos = size - 7; result.length < numAlign; pos -= step) result.splice(1, 0, pos);
+  return result;
+}
+
+// GF(256) with the QR polynomial x^8 + x^4 + x^3 + x^2 + 1.
+function rsMultiply(x, y) {
+  let z = 0;
+  for (let i = 7; i >= 0; i--) {
+    z = (z << 1) ^ ((z >>> 7) * 0x11D);
+    z ^= ((y >>> i) & 1) * x;
+  }
+  return z;
+}
+
+function rsDivisor(degree) {
+  const result = new Array(degree).fill(0);
+  result[degree - 1] = 1;
+  let root = 1;
+  for (let i = 0; i < degree; i++) {
+    for (let j = 0; j < result.length; j++) {
+      result[j] = rsMultiply(result[j], root);
+      if (j + 1 < result.length) result[j] ^= result[j + 1];
+    }
+    root = rsMultiply(root, 0x02);
+  }
+  return result;
+}
+
+function rsRemainder(data, divisor) {
+  const result = divisor.map(function () { return 0; });
+  for (const b of data) {
+    const factor = b ^ result.shift();
+    result.push(0);
+    divisor.forEach(function (coef, i) { result[i] ^= rsMultiply(coef, factor); });
+  }
+  return result;
+}
+
+function qrAddEccAndInterleave(data, ver) {
+  const numBlocks = QR_BLOCKS[ver];
+  const blockEccLen = QR_ECC_PER_BLOCK[ver];
+  const rawCodewords = Math.floor(qrRawDataModules(ver) / 8);
+  const numShortBlocks = numBlocks - rawCodewords % numBlocks;
+  const shortBlockLen = Math.floor(rawCodewords / numBlocks);
+  const divisor = rsDivisor(blockEccLen);
+  const blocks = [];
+  for (let i = 0, k = 0; i < numBlocks; i++) {
+    const dat = data.slice(k, k + shortBlockLen - blockEccLen + (i < numShortBlocks ? 0 : 1));
+    k += dat.length;
+    const ecc = rsRemainder(dat, divisor);
+    if (i < numShortBlocks) dat.push(0);
+    blocks.push(dat.concat(ecc));
+  }
+  const result = [];
+  for (let i = 0; i < blocks[0].length; i++) {
+    blocks.forEach(function (block, j) {
+      if (i !== shortBlockLen - blockEccLen || j >= numShortBlocks) result.push(block[i]);
+    });
+  }
+  return result;
+}
+
+function getBit(x, i) { return ((x >>> i) & 1) !== 0; }
+
+// Returns { version, mask, modules } with modules[y][x] === true for a dark module.
+// `forcedMask` is for testing against another encoder; normal use leaves it out.
+function encodeQr(text, forcedMask) {
+  const data = Array.from(new TextEncoder().encode(text));
+
+  let ver = 1;
+  for (; ver <= QR_MAX_VERSION; ver++) {
+    const ccBits = ver <= 9 ? 8 : 16;
+    if (4 + ccBits + data.length * 8 <= qrDataCodewords(ver) * 8) break;
+  }
+  if (ver > QR_MAX_VERSION) throw new Error('Podaci su predugi za QR kod.');
+
+  // Byte mode, character count, data, terminator, byte padding, pad codewords.
+  const bits = [];
+  const appendBits = function (val, len) { for (let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+  appendBits(0x4, 4);
+  appendBits(data.length, ver <= 9 ? 8 : 16);
+  for (const b of data) appendBits(b, 8);
+  const capacityBits = qrDataCodewords(ver) * 8;
+  appendBits(0, Math.min(4, capacityBits - bits.length));
+  appendBits(0, (8 - bits.length % 8) % 8);
+  for (let pad = 0xEC; bits.length < capacityBits; pad ^= 0xEC ^ 0x11) appendBits(pad, 8);
+  const codewords = [];
+  for (let i = 0; i < bits.length; i += 8) {
+    let b = 0;
+    for (let j = 0; j < 8; j++) b = (b << 1) | bits[i + j];
+    codewords.push(b);
+  }
+  const allCodewords = qrAddEccAndInterleave(codewords, ver);
+
+  const size = ver * 4 + 17;
+  const modules = [];
+  const isFunction = [];
+  for (let y = 0; y < size; y++) {
+    modules.push(new Array(size).fill(false));
+    isFunction.push(new Array(size).fill(false));
+  }
+  const setFunction = function (x, y, dark) { modules[y][x] = dark; isFunction[y][x] = true; };
+
+  // Timing patterns.
+  for (let i = 0; i < size; i++) {
+    setFunction(6, i, i % 2 === 0);
+    setFunction(i, 6, i % 2 === 0);
+  }
+  // Finder patterns with their separators.
+  const drawFinder = function (cx, cy) {
+    for (let dy = -4; dy <= 4; dy++) {
+      for (let dx = -4; dx <= 4; dx++) {
+        const dist = Math.max(Math.abs(dx), Math.abs(dy));
+        const xx = cx + dx, yy = cy + dy;
+        if (xx >= 0 && xx < size && yy >= 0 && yy < size) setFunction(xx, yy, dist !== 2 && dist !== 4);
+      }
+    }
+  };
+  drawFinder(3, 3);
+  drawFinder(size - 4, 3);
+  drawFinder(3, size - 4);
+  // Alignment patterns, except the three corners the finders already occupy.
+  const align = qrAlignmentPositions(ver);
+  const numAlign = align.length;
+  for (let i = 0; i < numAlign; i++) {
+    for (let j = 0; j < numAlign; j++) {
+      if ((i === 0 && j === 0) || (i === 0 && j === numAlign - 1) || (i === numAlign - 1 && j === 0)) continue;
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          setFunction(align[i] + dx, align[j] + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+        }
+      }
+    }
+  }
+
+  const drawFormatBits = function (mask) {
+    const fmt = (QR_FORMAT_ECL_H << 3) | mask;
+    let rem = fmt;
+    for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+    const fbits = ((fmt << 10) | rem) ^ 0x5412;
+    for (let i = 0; i <= 5; i++) setFunction(8, i, getBit(fbits, i));
+    setFunction(8, 7, getBit(fbits, 6));
+    setFunction(8, 8, getBit(fbits, 7));
+    setFunction(7, 8, getBit(fbits, 8));
+    for (let i = 9; i < 15; i++) setFunction(14 - i, 8, getBit(fbits, i));
+    for (let i = 0; i < 8; i++) setFunction(size - 1 - i, 8, getBit(fbits, i));
+    for (let i = 8; i < 15; i++) setFunction(8, size - 15 + i, getBit(fbits, i));
+    setFunction(8, size - 8, true); // the dark module
+  };
+  drawFormatBits(0); // reserves the area; the real bits are drawn once the mask is chosen
+
+  if (ver >= 7) {
+    let rem = ver;
+    for (let i = 0; i < 12; i++) rem = (rem << 1) ^ ((rem >>> 11) * 0x1F25);
+    const vbits = (ver << 12) | rem;
+    for (let i = 0; i < 18; i++) {
+      const dark = getBit(vbits, i);
+      const a = size - 11 + i % 3;
+      const b = Math.floor(i / 3);
+      setFunction(a, b, dark);
+      setFunction(b, a, dark);
+    }
+  }
+
+  // Data, in the zigzag order: column pairs from the right, skipping the vertical timing column.
+  let bitIndex = 0;
+  for (let right = size - 1; right >= 1; right -= 2) {
+    if (right === 6) right = 5;
+    for (let vert = 0; vert < size; vert++) {
+      for (let j = 0; j < 2; j++) {
+        const x = right - j;
+        const upward = ((right + 1) & 2) === 0;
+        const y = upward ? size - 1 - vert : vert;
+        if (!isFunction[y][x] && bitIndex < allCodewords.length * 8) {
+          modules[y][x] = getBit(allCodewords[bitIndex >>> 3], 7 - (bitIndex & 7));
+          bitIndex++;
+        }
+      }
+    }
+  }
+
+  const applyMask = function (mask) {
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        let invert;
+        switch (mask) {
+          case 0: invert = (x + y) % 2 === 0; break;
+          case 1: invert = y % 2 === 0; break;
+          case 2: invert = x % 3 === 0; break;
+          case 3: invert = (x + y) % 3 === 0; break;
+          case 4: invert = (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0; break;
+          case 5: invert = x * y % 2 + x * y % 3 === 0; break;
+          case 6: invert = (x * y % 2 + x * y % 3) % 2 === 0; break;
+          case 7: invert = ((x + y) % 2 + x * y % 3) % 2 === 0; break;
+        }
+        if (invert && !isFunction[y][x]) modules[y][x] = !modules[y][x];
+      }
+    }
+  };
+
+  let mask = forcedMask;
+  if (mask === undefined) {
+    let best = Infinity;
+    for (let m = 0; m < 8; m++) {
+      applyMask(m);
+      drawFormatBits(m);
+      const penalty = qrPenalty(modules);
+      if (penalty < best) { best = penalty; mask = m; }
+      applyMask(m); // XOR, so applying again undoes it
+    }
+  }
+  applyMask(mask);
+  drawFormatBits(mask);
+  return { version: ver, mask: mask, modules: modules };
+}
+
+function qrPenalty(modules) {
+  const size = modules.length;
+  let result = 0;
+  const addHistory = function (len, hist) {
+    if (hist[0] === 0) len += size; // light border before the first run
+    hist.pop();
+    hist.unshift(len);
+  };
+  const countPatterns = function (h) {
+    const n = h[1];
+    const core = n > 0 && h[2] === n && h[3] === n * 3 && h[4] === n && h[5] === n;
+    return (core && h[0] >= n * 4 && h[6] >= n ? 1 : 0) + (core && h[6] >= n * 4 && h[0] >= n ? 1 : 0);
+  };
+  const terminate = function (color, len, hist) {
+    if (color) { addHistory(len, hist); len = 0; }
+    len += size; // light border after the last run
+    addHistory(len, hist);
+    return countPatterns(hist);
+  };
+  const scanLine = function (get) {
+    let runColor = false, run = 0;
+    const hist = [0, 0, 0, 0, 0, 0, 0];
+    for (let i = 0; i < size; i++) {
+      if (get(i) === runColor) {
+        run++;
+        if (run === 5) result += 3;
+        else if (run > 5) result++;
+      } else {
+        addHistory(run, hist);
+        if (!runColor) result += countPatterns(hist) * 40;
+        runColor = get(i);
+        run = 1;
+      }
+    }
+    result += terminate(runColor, run, hist) * 40;
+  };
+  for (let y = 0; y < size; y++) scanLine(function (x) { return modules[y][x]; });
+  for (let x = 0; x < size; x++) scanLine(function (y) { return modules[y][x]; });
+  for (let y = 0; y < size - 1; y++) {
+    for (let x = 0; x < size - 1; x++) {
+      const c = modules[y][x];
+      if (c === modules[y][x + 1] && c === modules[y + 1][x] && c === modules[y + 1][x + 1]) result += 3;
+    }
+  }
+  let dark = 0;
+  for (const row of modules) for (const m of row) if (m) dark++;
+  const total = size * size;
+  result += (Math.ceil(Math.abs(dark * 20 - total * 10) / total) - 1) * 10;
+  return result;
+}
+
+// ═══ Page ═══════════════════════════════════════════════════════════════════════════════════════
+
+const $ = function (id) { return document.getElementById(id); };
+const SCALE = 8, BORDER = 4; // same as the Python tool
+
+function drawQr(canvas, modules) {
+  const n = modules.length;
+  const px = (n + BORDER * 2) * SCALE;
+  canvas.width = px;
+  canvas.height = px;
+  const g = canvas.getContext('2d');
+  g.fillStyle = '#fff';
+  g.fillRect(0, 0, px, px);
+  g.fillStyle = '#000';
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      if (modules[y][x]) g.fillRect((x + BORDER) * SCALE, (y + BORDER) * SCALE, SCALE, SCALE);
+    }
+  }
+}
+
+function showError(text) {
+  $('msg').textContent = text;
+  $('msg').hidden = !text;
+}
+
+function fileNameFor(username) {
+  const bare = username.split('\\').pop().split('@')[0];
+  return (bare.replace(/[^A-Za-z0-9._-]/g, '_') || 'prijava') + '.png';
+}
+
+let currentUser = '';
+
+async function make() {
+  showError('');
+  if (!window.crypto || !crypto.subtle) {
+    showError('Ovaj preglednik ne dopušta šifriranje na ovoj stranici. Otvori datoteku dvoklikom u Chromeu ili Edgeu.');
+    return;
+  }
+  const keyB64 = $('key').value;
+  const username = $('user').value.trim();  // the device trims it too
+  const password = $('pass').value;         // never trimmed: edge spaces can be real
+  if (!keyB64.trim()) { showError('Upiši ključ.'); return; }
+  if (!username) { showError('Upiši korisničko ime.'); return; }
+  if (!password) { showError('Upiši lozinku.'); return; }
+  if (username.indexOf('\\\\') !== -1) {
+    showError('Korisničko ime ima dvije kose crte zaredom. Pravo ime ima jednu, npr. PRIMA-COMMERCE\\ime.');
+    return;
+  }
+  try {
+    const payload = await encryptLogin(keyB64, username, password);
+    const qr = encodeQr(payload);
+    drawQr($('qr'), qr.modules);
+    currentUser = username;
+    $('qr').hidden = false;
+    $('empty').hidden = true;
+    $('actions').hidden = false;
+    $('outUser').textContent = username;
+    $('outMeta').textContent = payload.length + ' znakova · QR verzija ' + qr.version + ' · ispravak pogrešaka H';
+  } catch (e) {
+    showError(e.message || String(e));
+  }
+}
+
+function clearAll() {
+  $('user').value = '';
+  $('pass').value = '';
+  $('qr').hidden = true;
+  $('actions').hidden = true;
+  $('empty').hidden = false;
+  $('outUser').textContent = '';
+  $('outMeta').textContent = '';
+  currentUser = '';
+  showError('');
+  $('user').focus();
+}
+
+document.querySelectorAll('[data-toggle]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    const input = $(btn.getAttribute('data-toggle'));
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.textContent = show ? 'Sakrij' : 'Prikaži';
+  });
+});
+$('make').addEventListener('click', make);
+$('pass').addEventListener('keydown', function (e) { if (e.key === 'Enter') make(); });
+$('print').addEventListener('click', function () { window.print(); });
+$('clear').addEventListener('click', clearAll);
+$('save').addEventListener('click', function () {
+  $('qr').toBlob(function (blob) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fileNameFor(currentUser);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+});
+</script>
+</body>
+</html>
