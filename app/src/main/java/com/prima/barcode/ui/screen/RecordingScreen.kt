@@ -193,7 +193,9 @@ fun RecordingScreen(
         if (matchedLine == null) {
             scanErrorFlash = true
             if (hapticEnabled) hapticEngine.error()
-            if (soundEnabled) soundEngine.error()
+            // The same double beep as an over-scan: every scan that brings up a warning sounds
+            // alike, so the operator learns one signal for "look at the screen".
+            if (soundEnabled) soundEngine.warning()
             barcodeNotFoundError = barcode
         } else {
             val qty = parsedQty ?: matchedLine.scanningQty

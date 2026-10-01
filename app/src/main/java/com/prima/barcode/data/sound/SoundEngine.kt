@@ -44,16 +44,17 @@ class SoundEngine {
     /** Short single beep — a scan that landed. */
     fun confirm() = play(ToneGenerator.TONE_PROP_BEEP, 80)
 
-    /** Rejection tone — barcode not on the document, or a code that isn't a sign-in code. */
+    /** Rejection tone — now only for a scanned code that isn't a sign-in code. */
     fun error() = play(ToneGenerator.TONE_PROP_NACK, 200)
 
     /**
-     * Two short beeps — the scan counted, but it took the line past what the document expects.
+     * Two short beeps — the scan brought up a warning: an over-scan, a barcode that is not on the
+     * document, or a document number that was not found.
      *
-     * Deliberately neither of the other two. [confirm] says "fine", the opposite of what an
-     * over-scan means; [error] says "nothing was recorded", which is also wrong, because it was.
-     * An operator working through a run of items hears a rhythm of single beeps, and a double one
-     * breaks it.
+     * One signal for all three on purpose. Whether the scan counted or not, the operator's next
+     * move is the same — look at the screen — and a single sound for that is easier to learn than
+     * a distinction they would have to stop and decode. An operator working through a run of items
+     * hears a rhythm of single beeps, and a double one breaks it.
      */
     fun warning() = play(ToneGenerator.TONE_PROP_BEEP2, 300)
 

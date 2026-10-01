@@ -370,7 +370,7 @@ Open Settings via the gear icon on the Main Menu. **Settings are buffered** — 
 |---|---|
 | **Debounce time** | How long the same barcode is ignored after it is read (200ms–2s). The hardware trigger and the camera can both be live at once, so without this one physical scan could be counted twice. |
 | **Haptic feedback** | Vibrate on scan confirmation and errors — on document scanning and QR sign-in alike. |
-| **Scan sounds** | Three sounds, so you can tell what happened without looking: a **single beep** when a scan lands, a **double beep** when it lands but takes the line over what the document expects (the over-quantity warning appears at the same time — only while that warning is switched on), and a **low buzz** when the barcode is not on the document and nothing was recorded. They follow the device's *media* volume, not its notification volume, so they still play when the scanner is on vibrate; use the volume keys for loudness and this switch to turn them off. Same two input paths as the vibration. |
+| **Scan sounds** | Two sounds, so you know without looking whether to check the screen: a **single beep** when a scan lands normally, and a **double beep** whenever a scan brings up a warning — the barcode is not on the document, the scanned document number was not found, or the scan took a line over what the document expects (that last one only while the over-quantity warning is switched on). They follow the device's *media* volume, not its notification volume, so they still play when the scanner is on vibrate; use the volume keys for loudness and this switch to turn them off. Same two input paths as the vibration. |
 | **Warn on over-scan** | Show a warning when you scan more than the expected quantity for a line. |
 
 ### Sync
