@@ -197,10 +197,6 @@ fun RecordingScreen(
             barcodeNotFoundError = barcode
         } else {
             val qty = parsedQty ?: matchedLine.scanningQty
-            // Every accepted scan, not only the one that completes a line. This is the signal the
-            // camera used to give on its own, and the operator's confirmation that the pull
-            // counted — the haptic below marks something else, that the line is now exact.
-            if (soundEnabled) soundEngine.confirm()
             onScan(barcode, qty)
             highlightedLineNo = matchedLine.lineNo
             highlightTick++
@@ -208,11 +204,24 @@ fun RecordingScreen(
             val newScanned = base + qty
             scannedRunningTotal[matchedLine.lineNo] = newScanned
             val newStatus = LineStatus.of(newScanned, matchedLine.expected)
+            val overScan = warnOnOver && newStatus == LineStatus.OVER
+            // Every accepted scan makes a sound, not only the one that completes a line — this is
+            // the operator's confirmation that the pull counted; the haptic below marks something
+            // else, that the line is now exact.
+            //
+            // An over-scan gets the warning tone instead of the confirm. The scan did count, but a
+            // "fine" beep followed by a warning dialog says two opposite things, and the beep is
+            // the one the operator hears while looking at the shelf rather than the screen. Tied
+            // to warnOnOver exactly as the dialog is: no warning shown, no warning sound. Decided
+            // after the status is known, which is why this sits below the arithmetic.
+            if (soundEnabled) {
+                if (overScan) soundEngine.warning() else soundEngine.confirm()
+            }
             // Judged from the same running base, so the "line just became exact" pulse fires on
             // the scan that actually completes the line rather than on a stale reading.
             val wasExactNow = LineStatus.of(base, matchedLine.expected) == LineStatus.EXACT
             if (!wasExactNow && newStatus == LineStatus.EXACT && hapticEnabled) hapticEngine.confirm()
-            if (warnOnOver && newStatus == LineStatus.OVER) {
+            if (overScan) {
                 overScanWarning = OverScanInfo(matchedLine.item.no, matchedLine.item.name, barcode, matchedLine.expected, newScanned)
             }
             if (parsedUom != null && parsedUom != matchedLine.unitOfMeasureCode) {

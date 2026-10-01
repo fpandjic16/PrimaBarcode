@@ -7,8 +7,19 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import timber.log.Timber
 
-/** Percentage of the notification stream's volume. Matches what CameraPreview used. */
+/** Percentage of the media stream's volume. */
 private const val VOLUME = 80
+
+/**
+ * The media stream, not notifications.
+ *
+ * These used to play on STREAM_NOTIFICATION, which Android silences whenever the device is on
+ * vibrate or silent and which follows the notification volume. A scanner left on vibrate therefore
+ * went quiet while the app's own Sound setting still said "on" — and the tone it lost first was
+ * the rejection, the one that matters most. Media is not muted by the ringer mode, so the app's
+ * own setting is what decides; the operator still controls loudness with the volume keys.
+ */
+private const val STREAM = AudioManager.STREAM_MUSIC
 
 /**
  * Audible scan feedback, the counterpart to `HapticEngine`.
@@ -26,7 +37,7 @@ class SoundEngine {
     // Constructing this allocates an AudioTrack and is documented to fail when audio resources are
     // busy. A device that can't give us one should simply be quiet, not crash mid-scan.
     private var toneGen: ToneGenerator? = runCatching {
-        ToneGenerator(AudioManager.STREAM_NOTIFICATION, VOLUME)
+        ToneGenerator(STREAM, VOLUME)
     }.onFailure { Timber.w(it, "No ToneGenerator — scan sounds are off on this device") }
         .getOrNull()
 
@@ -35,6 +46,16 @@ class SoundEngine {
 
     /** Rejection tone — barcode not on the document, or a code that isn't a sign-in code. */
     fun error() = play(ToneGenerator.TONE_PROP_NACK, 200)
+
+    /**
+     * Two short beeps — the scan counted, but it took the line past what the document expects.
+     *
+     * Deliberately neither of the other two. [confirm] says "fine", the opposite of what an
+     * over-scan means; [error] says "nothing was recorded", which is also wrong, because it was.
+     * An operator working through a run of items hears a rhythm of single beeps, and a double one
+     * breaks it.
+     */
+    fun warning() = play(ToneGenerator.TONE_PROP_BEEP2, 300)
 
     private fun play(tone: Int, durationMs: Int) {
         runCatching { toneGen?.startTone(tone, durationMs) }
