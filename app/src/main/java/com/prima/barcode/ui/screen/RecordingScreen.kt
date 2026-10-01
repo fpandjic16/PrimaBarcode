@@ -51,9 +51,7 @@ import com.prima.barcode.ui.theme.monoCounter
 import com.prima.barcode.ui.theme.monoLabel
 import kotlinx.coroutines.delay
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
@@ -88,7 +86,7 @@ fun RecordingScreen(
     onUpload: () -> Unit = {},
     hapticEnabled: Boolean = true,
     soundEnabled: Boolean = true,
-    debounceTime: Int = 500,
+    debounceTime: Int = 200,
     warnOnOver: Boolean = true,
 ) {
     var view by remember { mutableStateOf(RecordingView.OVERVIEW) }
@@ -242,12 +240,7 @@ fun RecordingScreen(
         // keep calling the very first composition's handleScan forever, evaluating every scan
         // after the first against a stale `doc` snapshot (wrong over-scan/UoM warnings).
         val receiver = DataWedgeManager.createReceiver { barcode -> latestHandleScan.value(barcode) }
-        if (Build.VERSION.SDK_INT >= 33) {
-            context.registerReceiver(receiver, DataWedgeManager.intentFilter(), Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("UnspecifiedRegisterReceiverFlag")
-            context.registerReceiver(receiver, DataWedgeManager.intentFilter())
-        }
+        DataWedgeManager.register(context, receiver)
         onDispose { context.unregisterReceiver(receiver) }
     }
 

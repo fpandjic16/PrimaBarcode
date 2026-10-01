@@ -142,6 +142,8 @@
     <string name="download_error_title">Download failed</string>
     <string name="download_title">Download</string>
     <string name="download_subtitle">Choose what to download from External System</string>
+    <string name="processing_downloading">Downloading…</string>
+    <string name="processing_uploading">Uploading…</string>
     <string name="filter_document_date">DOCUMENT DATE</string>
     <string name="filter_date_from">From</string>
     <string name="filter_date_to">To</string>

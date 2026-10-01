@@ -52,13 +52,13 @@ class PrimaBarcodeApplication : Application() {
      * than flashing English and recreating.
      *
      * This only fills a gap — it never overrides a locale already in effect, so a per-app
-     * language set from Android's own system settings (API 33+) keeps winning. A user who has
-     * never touched the setting is left alone too, so the device locale still decides on a
-     * fresh install.
+     * language set from Android's own system settings (API 33+) keeps winning. Where nothing is
+     * stored it applies the default, Croatian, rather than leaving the device locale to decide:
+     * these handhelds usually ship in English, and the app is meant to start in Croatian.
      */
     private fun applySavedLanguage() {
         if (!AppCompatDelegate.getApplicationLocales().isEmpty) return
-        val language = appSettingsStore.savedLanguageOrNull() ?: return
+        val language = appSettingsStore.get().language
         AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language.tag))
     }
 

@@ -142,6 +142,8 @@
     <string name="download_error_title">Prenos ni uspel</string>
     <string name="download_title">Prenos</string>
     <string name="download_subtitle">Izberite, kaj želite prenesti iz zunanjega sistema</string>
+    <string name="processing_downloading">Prenašanje…</string>
+    <string name="processing_uploading">Nalaganje…</string>
     <string name="filter_document_date">DATUM DOKUMENTA</string>
     <string name="filter_date_from">Od</string>
     <string name="filter_date_to">Do</string>

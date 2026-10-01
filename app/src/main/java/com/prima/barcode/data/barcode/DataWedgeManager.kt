@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import timber.log.Timber
 
@@ -106,6 +107,31 @@ object DataWedgeManager {
         context.sendBroadcast(Intent(DW_ACTION).apply {
             putExtra("com.symbol.datawedge.api.SOFT_SCAN_TRIGGER", "START_SCANNING")
         })
+    }
+
+    /**
+     * Starts delivering scans to [receiver]. Every screen that listens for the trigger registers
+     * through here, so how it is registered is decided once.
+     *
+     * **Exported, on purpose.** DataWedge is another app, and from Android 13 a receiver registered
+     * as not exported hears only its own app: the system drops DataWedge's broadcast and says
+     * nothing. Each scanning screen used to register its own copy that way. It went unnoticed while
+     * keystroke output was on, because every scan also arrived typed into the focused field; once
+     * that was switched off, the trigger on an Android 14 TC21 beeped and nothing happened, on every
+     * screen. Below Android 13 the flag does not exist and the call is unchanged — the MC3300 is on
+     * Android 8.1.
+     *
+     * The cost: another app on the device could broadcast [SCAN_ACTION] and be taken for a scan. It
+     * can do no more than the trigger can, on a managed handheld where installing apps is not open
+     * to anyone.
+     */
+    fun register(context: Context, receiver: BroadcastReceiver) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(receiver, intentFilter(), Context.RECEIVER_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            context.registerReceiver(receiver, intentFilter())
+        }
     }
 
     fun createReceiver(onScan: (String) -> Unit) = object : BroadcastReceiver() {

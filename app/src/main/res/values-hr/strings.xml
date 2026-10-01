@@ -142,6 +142,8 @@
     <string name="download_error_title">Preuzimanje nije uspjelo</string>
     <string name="download_title">Preuzimanje</string>
     <string name="download_subtitle">Odaberite što preuzeti iz vanjskog sustava</string>
+    <string name="processing_downloading">Preuzimanje…</string>
+    <string name="processing_uploading">Slanje…</string>
     <string name="filter_document_date">DATUM DOKUMENTA</string>
     <string name="filter_date_from">Od</string>
     <string name="filter_date_to">Do</string>

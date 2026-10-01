@@ -45,11 +45,13 @@ class AppSettingsStore @Inject constructor(
 
     fun get(): AppSettings {
         val personal = personalPrefs()
+        // Missing keys fall back to AppSettings' own defaults, so they are written down once.
+        val defaults = AppSettings()
         return AppSettings(
-            textSize         = TextSize.entries.firstOrNull { it.name == personal.getString("textSize", null) } ?: TextSize.NORMAL,
+            textSize         = TextSize.entries.firstOrNull { it.name == personal.getString("textSize", null) } ?: defaults.textSize,
             uppercaseText    = personal.getBoolean("uppercaseText", false),
-            language         = Language.entries.firstOrNull { it.name == personal.getString("language", null) } ?: Language.ENGLISH,
-            debounceTime     = personal.getInt("debounceTime", 500),
+            language         = Language.entries.firstOrNull { it.name == personal.getString("language", null) } ?: defaults.language,
+            debounceTime     = personal.getInt("debounceTime", defaults.debounceTime),
             hapticEnabled    = personal.getBoolean("hapticEnabled", true),
             soundEnabled     = personal.getBoolean("soundEnabled", true),
             warnOnOver          = personal.getBoolean("warnOnOver", true),
@@ -68,15 +70,6 @@ class AppSettingsStore @Inject constructor(
             debuggerActive = devicePrefs.getBoolean("debuggerActive", false),
         )
     }
-
-    /**
-     * The language the user explicitly picked, or null if they never touched the setting.
-     * [get] can't answer this — it folds a missing key into [Language.ENGLISH] — and the
-     * difference matters at startup: an explicit choice must be re-applied, while "never
-     * chosen" has to be left alone so the device's own locale still decides.
-     */
-    fun savedLanguageOrNull(): Language? =
-        personalPrefs().getString("language", null)?.let { saved -> Language.entries.firstOrNull { it.name == saved } }
 
     /**
      * Drops one operator's personal settings. The device's are untouched, as are everyone else's.

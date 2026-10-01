@@ -1,9 +1,7 @@
 package com.prima.barcode.ui.screen
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -139,12 +137,7 @@ fun SignInScreen(
     val latestScan = rememberUpdatedState(::applyScannedQr)
     DisposableEffect(Unit) {
         val receiver = DataWedgeManager.createReceiver { raw -> latestScan.value(raw) }
-        if (Build.VERSION.SDK_INT >= 33) {
-            context.registerReceiver(receiver, DataWedgeManager.intentFilter(), Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("UnspecifiedRegisterReceiverFlag")
-            context.registerReceiver(receiver, DataWedgeManager.intentFilter())
-        }
+        DataWedgeManager.register(context, receiver)
         onDispose { context.unregisterReceiver(receiver) }
     }
 

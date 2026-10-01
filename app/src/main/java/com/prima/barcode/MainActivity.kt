@@ -175,7 +175,11 @@ class MainActivity : AppCompatActivity() {
             LaunchedEffect(signedInProfile?.id) {
                 if (signedInProfile == null) return@LaunchedEffect
                 val s = appVm.loadSettings()
-                if (language != s.language) {
+                // Against the locale actually on screen, not against `language`. That starts from
+                // the signed-out defaults, so an operator whose language happens to equal the
+                // default — anyone who never chose one — would otherwise inherit whatever locale
+                // the previous operator left in effect, while their Settings named another.
+                if (AppCompatDelegate.getApplicationLocales().toLanguageTags() != s.language.tag) {
                     AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(s.language.tag))
                 }
                 textSize = s.textSize
@@ -369,7 +373,10 @@ private fun PrimaBarcodeApp(
     var showSyncErrorDialog     by remember { mutableStateOf(false) }
     var showDownloadErrorDialog by remember { mutableStateOf(false) }
     var downloadErrorMessage    by remember { mutableStateOf("") }
-    var processingMessage by remember { mutableStateOf<String?>(null) }
+    // A string resource, resolved where it is shown: the places that set it are callbacks, not
+    // composable scopes, and a literal there is how "Downloading..." stayed English in every
+    // language.
+    var processingMessage by remember { mutableStateOf<Int?>(null) }
 
     var debugUrls     by remember { mutableStateOf<List<String>>(emptyList()) }
     var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -734,7 +741,7 @@ private fun PrimaBarcodeApp(
                                 if (failures > 0) showSyncErrorDialog = true
                             }
                             launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
-                                processingMessage = "Uploading..."
+                                processingMessage = R.string.processing_uploading
                                 appVm.uploadToExtSystem(docs, cb)
                             }
                         }
@@ -770,7 +777,7 @@ private fun PrimaBarcodeApp(
                                 if (failures > 0) showSyncErrorDialog = true
                             }
                             launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
-                                processingMessage = "Uploading..."
+                                processingMessage = R.string.processing_uploading
                                 appVm.uploadToExtSystem(docs, cb)
                             }
                         }
@@ -827,7 +834,7 @@ private fun PrimaBarcodeApp(
                     if (username != null && password != null) appVm.saveCredentials(username, password)
                     val urls = appVm.buildDownloadUrls(filter, selectedDocType).map { (type, url) -> "$type: $url" }
                     launchWithDebug(urls) {
-                        processingMessage = "Downloading..."
+                        processingMessage = R.string.processing_downloading
                         appVm.realDownloadDocuments(filter, docType = selectedDocType) { failures, errors ->
                             processingMessage = null
                             nav.popBackStack()
@@ -877,7 +884,7 @@ private fun PrimaBarcodeApp(
                                     if (failures > 0) showSyncErrorDialog = true
                                 }
                                 launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
-                                    processingMessage = "Uploading..."
+                                    processingMessage = R.string.processing_uploading
                                     appVm.uploadToExtSystem(listOf(currentDoc), cb)
                                 }
                             }
@@ -942,7 +949,7 @@ private fun PrimaBarcodeApp(
                                     if (failures > 0) { showSyncErrorDialog = true } else { nav.popBackStack() }
                                 }
                                 launchWithDebug(listOf(appVm.getRecordingSyncUrl())) {
-                                    processingMessage = "Uploading..."
+                                    processingMessage = R.string.processing_uploading
                                     appVm.uploadToExtSystem(listOf(currentDoc), cb)
                                 }
                             }
@@ -965,7 +972,7 @@ private fun PrimaBarcodeApp(
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
                     CircularProgressIndicator()
-                    Text(message, fontWeight = FontWeight.Medium)
+                    Text(stringResource(message), fontWeight = FontWeight.Medium)
                 }
             }
         }

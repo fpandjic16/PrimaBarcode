@@ -142,6 +142,8 @@
     <string name="download_error_title">Преземањето не успеа</string>
     <string name="download_title">Преземање</string>
     <string name="download_subtitle">Изберете што да преземете од надворешниот систем</string>
+    <string name="processing_downloading">Преземање…</string>
+    <string name="processing_uploading">Прикачување…</string>
     <string name="filter_document_date">ДАТУМ НА ДОКУМЕНТ</string>
     <string name="filter_date_from">Од</string>
     <string name="filter_date_to">До</string>

@@ -701,7 +701,7 @@ Two independent input paths feed the same domain logic (`RecordingScreen.handleS
 - **`DataWedgeManager.kt`** — plain Kotlin `object`, talks to the DataWedge service via broadcast intents.
   - `configure(context)` — creates/updates a DataWedge profile `"PrimaBarcode"` scoped to this app's package, configures the `INTENT` output plugin (`intent_action = "com.prima.barcode.SCAN"`, `intent_delivery = "2"`), **switches the `KEYSTROKE` plugin off**, and a `BARCODE` plugin that pins `aim_type = "0"` (single shot) and enables `decoder_qrcode`. `RESET_CONFIG = "false"` on the barcode plugin, so this merges rather than replacing a site's other decoder settings. Called once from `MainActivity.onCreate()`.
   - Continuous read was offered as a setting until 2026-09 and is gone. It changed the hardware `aim_type` app-wide while its label only mentioned the camera, and the two scan paths already need a debounce against each other, which continuous read pushed on. Single shot is now pinned rather than inherited, so a unit left in continuous read by another profile doesn't deliver a burst the app has no reason to expect.
-  - `createReceiver(onScan)` — `BroadcastReceiver` extracting the scanned string from extra `com.symbol.datawedge.data_string`. Registered with `RECEIVER_NOT_EXPORTED` on API 33+.
+  - `createReceiver(onScan)` — `BroadcastReceiver` extracting the scanned string from extra `com.symbol.datawedge.data_string`. Every screen registers it through `register(context, receiver)`, which uses **`RECEIVER_EXPORTED`** on API 33+ (no flag below). It used to be `RECEIVER_NOT_EXPORTED`, copied into each screen: on Android 13+ that drops DataWedge's broadcast without an error, because DataWedge is another app. Keystroke output hid it until 3.6.0 turned keystrokes off, after which an Android 14 TC21 beeped on every scan and nothing happened anywhere. The cost of exporting is that another app on the device could broadcast `com.prima.barcode.SCAN` and pass for a scan.
   - `intentFilter()` — `IntentFilter("com.prima.barcode.SCAN")`, registered via `DisposableEffect` for the composed lifetime of every screen that scans: `RecordingScreen`, `DocumentListScreen`, `SignInScreen` and `LoginSheet`.
   - `isAvailable(context)` — whether the DataWedge package is installed, i.e. whether the device has a scanner. Needs the `<queries>` entry for `com.symbol.datawedge` in the manifest, or from Android 11 the package is invisible and every device looks scanner-less.
   - `startScan(context)` — the soft trigger (`SOFT_SCAN_TRIGGER` = `START_SCANNING`): a read exactly like a trigger pull, its result arriving through the same intent. Behind the "Scan QR code" button on the sign-in screen and `LoginSheet`.
@@ -920,7 +920,11 @@ if (language != s.language) {
     AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(s.language.tag))
 }
 ```
-Only called from the Settings-save path, only when the language actually changed. On API 33+ this delegates to the platform `LocaleManager` (persisted by the OS); on older APIs AppCompat applies it to activities as they're created and recreates the current one to re-resolve string resources.
+That is the Settings-save path, only when the language actually changed. On API 33+ this delegates to the platform `LocaleManager` (persisted by the OS); on older APIs AppCompat applies it to activities as they're created and recreates the current one to re-resolve string resources.
+
+**On sign-in**, the `LaunchedEffect(signedInProfile?.id)` applies the operator's language by comparing it with the locale actually in effect (`AppCompatDelegate.getApplicationLocales().toLanguageTags()`), not with the `language` state. That state starts from the signed-out defaults, so comparing with it let an operator whose language equals the default — anyone who never chose one — inherit the previous operator's locale while their own Settings named another.
+
+**Defaults** live once, in `AppSettings`: Croatian, `TextSize.LARGER`, 200 ms debounce. `AppSettingsStore.get()` falls back to `AppSettings()` for any key not stored, so an operator who has saved settings keeps them and a new one starts from these.
 
 **Re-applied on cold start** (fixed 2026-09) by `PrimaBarcodeApplication.applySavedLanguage()`. This is required, not belt-and-braces: below API 33 `AppCompatDelegate` persists *nothing* unless the app declares `AppLocalesMetadataHolderService` with `autoStoreLocales` (this app does not), so the chosen locale used to survive only for the life of the process. The symptom was a language selection silently reverting after any restart, most visibly after an APK upgrade — `AppSettings.language` (plain SharedPreferences, survives upgrades) still said Croatian, so the Settings screen showed Croatian while every string rendered English. On the Zebra MC3300 (API 27) this hit on every launch.
 
@@ -929,10 +933,9 @@ The startup pass is deliberately narrow — it only fills a gap, never overrides
 | Startup state | Action |
 |---|---|
 | `AppCompatDelegate.getApplicationLocales()` non-empty | leave alone — a locale is already in effect, including one set from Android's own per-app language settings on API 33+ |
-| No stored language in `AppSettings` | leave alone — user never chose, so the device locale decides |
-| Stored language, no locale in effect | apply it |
+| No locale in effect | apply `AppSettingsStore.get().language` — the stored one, or the default, Croatian |
 
-Distinguishing "never chose" from "chose English" needs `AppSettingsStore.savedLanguageOrNull()` rather than `get()`, since `get()` folds a missing key into `Language.ENGLISH` — using `get()` here would force English onto a Croatian-locale device on first launch. Adopting `autoStoreLocales` instead would also fix the original bug, but would put a second persistence mechanism alongside `AppSettings.language`; keeping the app's own store authoritative avoids the two disagreeing.
+Nothing stored used to mean "leave it to the device locale", which needed a separate `savedLanguageOrNull()` to tell "never chose" from "chose English". With Croatian as the default that distinction is gone on purpose: these handhelds usually ship in English, and the app is meant to start in Croatian regardless. Adopting `autoStoreLocales` instead would also fix the original bug, but would put a second persistence mechanism alongside `AppSettings.language`; keeping the app's own store authoritative avoids the two disagreeing.
 
 ### B.11.4 `DocTypeFilterMode` — full effect trace
 Configured per document type in `ExtSystemConfigScreen` (persists **immediately**, not buffered like the rest of that screen — writes straight through `onDocTypeFiltersChange` → `appVm.saveSettings`). Consumed identically in three places in `MainActivity.kt` (main-menu filtering, doc-type "blocked" computation, and the `docs` route's `typeDocs`):
