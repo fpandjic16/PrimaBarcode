@@ -159,7 +159,7 @@ fun DocumentListScreen(
             onDocTap(found)
         } else {
             if (hapticEnabled) hapticEngine.error()
-            // Same double beep as a scan that warns on the recording screen.
+            // Same warning sound as a scan that warns on the recording screen.
             if (soundEnabled) soundEngine.warning()
             docNotFoundError = barcode
         }
