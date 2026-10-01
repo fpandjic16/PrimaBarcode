@@ -77,6 +77,7 @@ import com.prima.barcode.ui.screen.RecordingsTreeScreen
 import com.prima.barcode.ui.screen.SettingsScreen
 import com.prima.barcode.ui.screen.SignInScreen
 import com.prima.barcode.ui.screen.UserInfoScreen
+import com.prima.barcode.ui.screen.localizedDisplay
 import com.prima.barcode.ui.theme.Language
 import com.prima.barcode.ui.theme.PrimaBarcodeTheme
 import com.prima.barcode.ui.theme.TextSize
@@ -819,6 +820,8 @@ private fun PrimaBarcodeApp(
         }
         composable("download_filter") {
             val dlFilterMode = docTypeFilters[selectedDocType.key] ?: selectedDocType.defaultFilterMode
+            // For the debugger's list of addresses; DocumentType.display is the English constant.
+            val docTypeLabel = selectedDocType.localizedDisplay()
             DownloadFilterScreen(
                 hasCredentials  = appVm.hasCredentials(),
                 loginQrKey      = extSystemConfig.loginQrKey,
@@ -832,7 +835,7 @@ private fun PrimaBarcodeApp(
                 onTestConnection = ::testSignIn,
                 onConfirm = { filter, username, password ->
                     if (username != null && password != null) appVm.saveCredentials(username, password)
-                    val urls = appVm.buildDownloadUrls(filter, selectedDocType).map { (type, url) -> "$type: $url" }
+                    val urls = appVm.buildDownloadUrls(filter, selectedDocType).map { (_, url) -> "$docTypeLabel: $url" }
                     launchWithDebug(urls) {
                         processingMessage = R.string.processing_downloading
                         appVm.realDownloadDocuments(filter, docType = selectedDocType) { failures, errors ->

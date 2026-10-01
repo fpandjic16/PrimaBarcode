@@ -152,8 +152,10 @@ fun LoginSheet(
         }
     }
 
+    // Hours are a plural, not a format string: Croatian says 1 sat, 24 sata, 48 sati, and the
+    // single "%d sati" this replaced printed "24 sati" under the default setting.
     val ttlLabel = if (credentialTtlHours == 168) stringResource(R.string.login_ttl_days, 7)
-        else stringResource(R.string.login_ttl_hours, credentialTtlHours)
+        else context.resources.getQuantityString(R.plurals.login_ttl_hours, credentialTtlHours, credentialTtlHours)
 
     Dialog(
         onDismissRequest = onDismiss,

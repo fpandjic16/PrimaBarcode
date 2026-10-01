@@ -76,6 +76,8 @@ data/
 
 Helpers shared between screens live in their own file as `internal`, not as a private copy per screen. `DocumentTypeLabel.kt` holds the one `@Composable internal fun DocumentType.localizedDisplay()`; seven screens each carried an identical private version of it, which meant an eighth screen could not call any of them and adding a document type meant finding all seven. (`LineStatus.localizedLabel()` is still duplicated across three screens.)
 
+**Operator-facing text built outside a composable** — anything a ViewModel or `ExtSystemODataClient` hands to the UI, including every `ExtSystemResult.Failure.message` — resolves through `Context.inAppLanguage()` (`i18n/AppLanguage.kt`), never the bare application context: below API 33 that context keeps the device's language, not the app's, and the MC3300 is on API 27. Text that depends on a count is a `<plurals>` resource; Croatian has three forms and Slovenian four.
+
 ### Design System
 
 **4-state status language** drives the entire UX — every line and document resolves to one of:

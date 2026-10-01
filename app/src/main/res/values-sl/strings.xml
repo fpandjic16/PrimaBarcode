@@ -132,7 +132,12 @@
     <string name="login_hide_password">Skrij geslo</string>
     <string name="login_footer">Poverilnice shranjene šifrirano z AES-256-GCM za %s.</string>
     <string name="login_username_hint">npr. uporabnik@prima</string>
-    <string name="login_ttl_hours">%d ur</string>
+    <plurals name="login_ttl_hours">
+        <item quantity="one">%d uro</item>
+        <item quantity="two">%d uri</item>
+        <item quantity="few">%d ure</item>
+        <item quantity="other">%d ur</item>
+    </plurals>
     <string name="login_ttl_days">%d dni</string>
     <!-- User info -->
     <string name="user_info_title">Podatki o uporabniku</string>
@@ -321,4 +326,26 @@
     <string name="profiles_delete_scans">Izbrisanih bo %1$d skeniranj na %2$d dokumentih.</string>
     <string name="profiles_delete_unsent">%1$d jih ni nikoli prispelo v zunanji sistem in ne obstajajo nikjer drugje.</string>
     <string name="profiles_delete_confirm">Odstrani</string>
+    <!-- External system messages and config hints, formerly English literals in code -->
+    <string name="ext_error_not_signed_in">Niste prijavljeni v zunanji sistem.</string>
+    <string name="ext_error_not_configured">Zunanji sistem ni konfiguriran.</string>
+    <string name="ext_error_locations_url_missing">URL lokacij ni konfiguriran.</string>
+    <string name="ext_error_document_lines_url_missing">URL postavk dokumenta ni konfiguriran.</string>
+    <string name="ext_error_client_not_ready">Povezava z zunanjim sistemom še ni nastavljena.</string>
+    <string name="ext_error_no_challenge_ok">Strežnik je odgovoril, ne da bi zahteval prijavo Windows, zato geslo ni bilo preverjeno. Na tej končni točki NAV OData vklopite Windows Authentication.</string>
+    <string name="ext_error_no_challenge">Strežnik ni zahteval prijave Windows (ni izziva NTLM). Preverite, ali je na tej končni točki NAV OData vklopljena Windows Authentication.</string>
+    <string name="ext_error_credentials_rejected">Zunanji sistem je zavrnil uporabniško ime ali geslo. Preverite uporabniško ime (z domeno, npr. DOMENA\\ime) in geslo.</string>
+    <string name="ext_error_http_401">Zunanji sistem je zavrnil prijavo (HTTP 401). Geslo je morda spremenjeno — odjavite se in se znova prijavite.</string>
+    <string name="ext_error_unreachable">Zunanji sistem ni dosegljiv. Preverite omrežno povezavo in naslov strežnika.</string>
+    <string name="ext_error_unknown_host">Naslova strežnika ni mogoče najti. Preverite ga v konfiguraciji zunanjega sistema.</string>
+    <string name="ext_error_timeout">Zunanji sistem ni odgovoril pravočasno. Poskusite znova; če se ponavlja, preverite omrežje in strežnik.</string>
+    <string name="ext_error_unknown">Neznana napaka</string>
+    <string name="ext_config_hint_document_lines">npr. …/ODataV4/Company(\'Podjetje\')/BarcodeAppEntries</string>
+    <string name="ext_config_hint_locations">npr. …/ODataV4/Company(\'Podjetje\')/LocationList</string>
+    <string name="ext_config_hint_recording_sync">npr. …/ODataV4/Company(\'Podjetje\')/BarcodeAppRecordings</string>
+    <string name="ext_config_hint_doc_type_code">npr. WHSE_SHIP (največ 20 znakov)</string>
+    <string name="ext_config_ttl_hours_short">%d h</string>
+    <string name="ext_config_ttl_days_short">%d d</string>
+    <string name="settings_app_version_value">%1$s (izdaja %2$d)</string>
+    <string name="settings_sdk_value">Najnižji API %1$d (Android %2$s) · Ciljni API %3$d (Android %4$s)</string>
 </resources>

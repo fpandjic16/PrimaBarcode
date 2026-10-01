@@ -113,7 +113,7 @@ fun MainMenuScreen(
             },
             actions = {
                 IconButton(onClick = onOpenSettings, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Outlined.Settings, "Settings", tint = Color.White, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Outlined.Settings, stringResource(R.string.settings_title), tint = Color.White, modifier = Modifier.size(28.dp))
                 }
             }
         )

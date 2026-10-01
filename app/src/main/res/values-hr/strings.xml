@@ -55,8 +55,8 @@
     <string name="overview_clear_errors_text_single">%d neuspjeli dokument bit će uklonjen iz lokalne pohrane.</string>
     <string name="overview_clear_errors_text_plural">%d neuspjelih dokumenata bit će uklonjeno iz lokalne pohrane.</string>
     <!-- Upload error -->
-    <string name="upload_error_subtitle">Greška pri učitavanju</string>
-    <string name="upload_error_header">Učitavanje neuspješno</string>
+    <string name="upload_error_subtitle">Greška pri slanju</string>
+    <string name="upload_error_header">Slanje neuspješno</string>
     <string name="upload_error_doc_section">Dokument</string>
     <string name="upload_error_row_type">Vrsta</string>
     <string name="upload_error_row_source">Izvor</string>
@@ -132,7 +132,11 @@
     <string name="login_hide_password">Sakrij lozinku</string>
     <string name="login_footer">Vjerodajnice pohranjene šifrirano s AES-256-GCM za %s.</string>
     <string name="login_username_hint">npr. korisnik@prima</string>
-    <string name="login_ttl_hours">%d sati</string>
+    <plurals name="login_ttl_hours">
+        <item quantity="one">%d sat</item>
+        <item quantity="few">%d sata</item>
+        <item quantity="other">%d sati</item>
+    </plurals>
     <string name="login_ttl_days">%d dana</string>
     <!-- User info -->
     <string name="user_info_title">Podaci o korisniku</string>
@@ -147,7 +151,7 @@
     <string name="filter_document_date">DATUM DOKUMENTA</string>
     <string name="filter_date_from">Od</string>
     <string name="filter_date_to">Do</string>
-    <string name="filter_source_code">ŠIFRA ODREDIŠTA</string>
+    <string name="filter_source_code">ŠIFRA IZVORA</string>
     <string name="filter_responsibility_center">CENTAR ODGOVORNOSTI</string>
     <!-- Document filter -->
     <string name="doc_filter_title">Filteri</string>
@@ -321,4 +325,26 @@
     <string name="profiles_delete_scans">Bit će obrisano %1$d skeniranja na %2$d dokumenata.</string>
     <string name="profiles_delete_unsent">Njih %1$d nikad nije stiglo u vanjski sustav i ne postoji nigdje drugdje.</string>
     <string name="profiles_delete_confirm">Ukloni</string>
+    <!-- External system messages and config hints, formerly English literals in code -->
+    <string name="ext_error_not_signed_in">Niste prijavljeni u vanjski sustav.</string>
+    <string name="ext_error_not_configured">Vanjski sustav nije konfiguriran.</string>
+    <string name="ext_error_locations_url_missing">URL lokacija nije konfiguriran.</string>
+    <string name="ext_error_document_lines_url_missing">URL stavki dokumenta nije konfiguriran.</string>
+    <string name="ext_error_client_not_ready">Veza s vanjskim sustavom još nije postavljena.</string>
+    <string name="ext_error_no_challenge_ok">Poslužitelj je odgovorio bez traženja Windows prijave, pa lozinka nije provjerena. Na ovoj NAV OData krajnjoj točki uključite Windows Authentication.</string>
+    <string name="ext_error_no_challenge">Poslužitelj nije zatražio Windows prijavu (nema NTLM izazova). Provjerite je li na ovoj NAV OData krajnjoj točki uključena Windows Authentication.</string>
+    <string name="ext_error_credentials_rejected">Vanjski sustav je odbio korisničko ime ili lozinku. Provjerite korisničko ime (s domenom, npr. DOMENA\\ime) i lozinku.</string>
+    <string name="ext_error_http_401">Vanjski sustav je odbio prijavu (HTTP 401). Lozinka je možda promijenjena — odjavite se i ponovno prijavite.</string>
+    <string name="ext_error_unreachable">Vanjski sustav nije dostupan. Provjerite mrežnu vezu i adresu poslužitelja.</string>
+    <string name="ext_error_unknown_host">Adresa poslužitelja nije pronađena. Provjerite je u konfiguraciji vanjskog sustava.</string>
+    <string name="ext_error_timeout">Vanjski sustav nije odgovorio na vrijeme. Pokušajte ponovno; ako se ponavlja, provjerite mrežu i poslužitelj.</string>
+    <string name="ext_error_unknown">Nepoznata pogreška</string>
+    <string name="ext_config_hint_document_lines">npr. …/ODataV4/Company(\'Tvrtka\')/BarcodeAppEntries</string>
+    <string name="ext_config_hint_locations">npr. …/ODataV4/Company(\'Tvrtka\')/LocationList</string>
+    <string name="ext_config_hint_recording_sync">npr. …/ODataV4/Company(\'Tvrtka\')/BarcodeAppRecordings</string>
+    <string name="ext_config_hint_doc_type_code">npr. WHSE_SHIP (najviše 20 znakova)</string>
+    <string name="ext_config_ttl_hours_short">%d h</string>
+    <string name="ext_config_ttl_days_short">%d d</string>
+    <string name="settings_app_version_value">%1$s (izdanje %2$d)</string>
+    <string name="settings_sdk_value">Najmanji API %1$d (Android %2$s) · Ciljni API %3$d (Android %4$s)</string>
 </resources>

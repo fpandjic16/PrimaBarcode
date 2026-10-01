@@ -469,10 +469,12 @@ sealed class ExtSystemResult<out T> {
 | Function | Behavior |
 |---|---|
 | `testConnection(baseUrl)` (suspend) | `GET baseUrl`; resets `ntlmAuth.resetPhase()` first; on failure inspects `phaseReached` to distinguish "NTLM not enabled" (phase 0) vs "handshake completed, credentials rejected" (phase 2 + 401) vs a generic HTTP error (body, truncated 300 chars) |
-| `uploadRecording(url, row: NavBarcodeAppRecording)` (suspend) | `POST url`, `Content-Type: application/json`, body = `gson.toJson(row)`. On non-2xx: `Failure("HTTP ${status}: $body".take(300), status)`. On thrown exception: `Failure(message ?: "Network error", code=-1)` |
+| `uploadRecording(url, row: NavBarcodeAppRecording)` (suspend) | `POST url`, `Content-Type: application/json`, body = `gson.toJson(row)`. On 401: the localized `ext_error_http_401`. On any other non-2xx: `Failure("HTTP ${status}: $body".take(300), status)` — NAV's own text is the most precise thing there is. On thrown exception: `Failure(describe(e), code=-1)` |
 | `downloadRaw(url)` (suspend) | `GET url`; follows OData `@odata.nextLink` pagination, merging every page's `value` array into one combined JSON array before returning |
 | `close()` | Closes/clears the underlying client |
 | `companion.parseDomainUser(raw)` | Splits `DOMAIN\user` or `user@domain`; falls back to `("", raw)` |
+
+**Every `Failure.message` is operator-facing.** The sign-in error dialog, the download error dialog and the upload error screen show it verbatim, so the client builds its messages from string resources (`ext_error_*`) through `inAppLanguage()` — it takes the application context for that. They used to be English literals: a wrong password read "NTLM handshake completed (phase 3) but server rejected the credentials" on an otherwise Croatian screen. The NTLM phase still goes to the log. A thrown exception goes through `describe()`, which walks the cause chain and names the cases an operator can act on — unknown host, timeout, connection refused or no route — and otherwise keeps the exception's own message, which is still the most useful thing to hand to IT. Timeouts are tested before refused connections, since a connect timeout can arrive as a `ConnectException` subclass depending on how Ktor wraps it.
 
 ### B.6.2 `NtlmAuthenticator` — NTLMv2 from scratch
 `data/extsystem/NtlmAuthenticator.kt` — a custom `okhttp3.Authenticator`, invoked reactively by OkHttp on any 401 with `WWW-Authenticate`. No external NTLM library; uses `javax.crypto` `HmacMD5` plus a hand-rolled inline MD4 (RFC 1320, since Android's `MessageDigest` doesn't expose MD4, needed for the NT hash).
@@ -921,6 +923,10 @@ if (language != s.language) {
 }
 ```
 That is the Settings-save path, only when the language actually changed. On API 33+ this delegates to the platform `LocaleManager` (persisted by the OS); on older APIs AppCompat applies it to activities as they're created and recreates the current one to re-resolve string resources.
+
+**Text built outside a screen goes through `inAppLanguage()`** (`i18n/AppLanguage.kt`). Below API 33 the per-app language reaches activities only; the application context keeps the device's language. `AppViewModel` and `ExtSystemODataClient` have nothing but the application context, so every message they built came out in the device's language: on an MC3300 (API 27) left in English, Croatian screens with English errors. `inAppLanguage()` returns a configuration context carrying `AppCompatDelegate.getApplicationLocales()`; `AppViewModel.inAppText()` and the client's `text()` resolve through it. From API 33 it changes nothing. A composable keeps using `stringResource`, whose activity context is already right.
+
+**Plurals** are `<plurals>` resources, not `%d` strings: Croatian has three forms (1 sat, 24 sata, 48 sati) and Slovenian four. `login_ttl_hours` was the first; it printed "24 sati" under the default setting. The older `_single`/`_plural` string pairs (`upload_error_line_single` and friends) predate this and only cover two forms.
 
 **On sign-in**, the `LaunchedEffect(signedInProfile?.id)` applies the operator's language by comparing it with the locale actually in effect (`AppCompatDelegate.getApplicationLocales().toLanguageTags()`), not with the `language` state. That state starts from the signed-out defaults, so comparing with it let an operator whose language equals the default — anyone who never chose one — inherit the previous operator's locale while their own Settings named another.
 

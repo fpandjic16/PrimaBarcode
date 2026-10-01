@@ -35,13 +35,12 @@ import androidx.compose.ui.res.stringResource
 import com.prima.barcode.R
 
 private val TTL_OPTIONS = listOf(8, 24, 48, 168)
-private fun Int.ttlLabel() = when (this) {
-    8    -> "8 h"
-    24   -> "24 h"
-    48   -> "48 h"
-    168  -> "7 d"
-    else -> "$this h"
-}
+
+// Short unit symbols, from resources so Macedonian can write ч and д.
+@Composable
+private fun Int.ttlLabel(): String =
+    if (this == 168) stringResource(R.string.ext_config_ttl_days_short, 7)
+    else stringResource(R.string.ext_config_ttl_hours_short, this)
 
 /**
  * Suggested name for an exported configuration; the file picker lets the user change it.
@@ -290,7 +289,7 @@ fun ExtSystemConfigScreen(
                 ConfigCard {
                     ConfigField(
                         label = stringResource(R.string.ext_config_document_lines_url),
-                        hint  = "e.g. /OData/Company('Name')/Barcode_App_Entry",
+                        hint  = stringResource(R.string.ext_config_hint_document_lines),
                         value = documentLinesUrl,
                         onValueChange = { documentLinesUrl = it },
                     )
@@ -330,7 +329,7 @@ fun ExtSystemConfigScreen(
                         if (enabled) {
                             ConfigField(
                                 label = stringResource(R.string.ext_config_doc_type_code),
-                                hint  = "e.g. WHSE_SHIP (max 20 chars)",
+                                hint  = stringResource(R.string.ext_config_hint_doc_type_code),
                                 value = documentTypeCodes[type] ?: "",
                                 onValueChange = {},
                                 readOnly = true,
@@ -374,7 +373,7 @@ fun ExtSystemConfigScreen(
                 ConfigCard {
                     ConfigField(
                         label = stringResource(R.string.ext_config_locations_url),
-                        hint  = "e.g. /OData/Company('Name')/WMS_Locations",
+                        hint  = stringResource(R.string.ext_config_hint_locations),
                         value = locationsUrl,
                         onValueChange = { locationsUrl = it },
                     )
@@ -387,7 +386,7 @@ fun ExtSystemConfigScreen(
                 ConfigCard {
                     ConfigField(
                         label = stringResource(R.string.ext_config_recording_url),
-                        hint  = "e.g. /OData/Company('Name')/WMS_RecordingSync",
+                        hint  = stringResource(R.string.ext_config_hint_recording_sync),
                         value = recordingSyncUrl,
                         onValueChange = { recordingSyncUrl = it },
                         imeAction = ImeAction.Done,

@@ -35,6 +35,7 @@ import com.prima.barcode.data.model.Line
 import com.prima.barcode.data.model.Location
 import com.prima.barcode.data.model.ResponsibilityCenter
 import com.prima.barcode.data.repository.DocumentRepository
+import com.prima.barcode.i18n.inAppLanguage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -72,6 +73,14 @@ class AppViewModel @Inject constructor(
 
     /** Separate instance so the exported configuration file stays readable. */
     private val exportGson = GsonBuilder().setPrettyPrinting().create()
+
+    /**
+     * A message for the operator, in the app's language rather than the device's — see
+     * [inAppLanguage]. Everything this ViewModel puts in front of a person goes through here: it
+     * has only the application context, which below Android 13 does not follow the app's language.
+     */
+    private fun inAppText(id: Int, vararg args: Any): String =
+        appContext.inAppLanguage().getString(id, *args)
 
     init {
         // Any PendingUpload still on disk was left by an upload whose scope no longer exists —
@@ -156,9 +165,9 @@ class AppViewModel @Inject constructor(
     /** Returns null on success, or an error message on failure. */
     private suspend fun realDownloadLocations(): String? {
         val config = extSystemConfig.value
-        val creds  = savedCredentials() ?: return "Not signed in"
-        if (!config.isConfigured) return "External system not configured"
-        if (config.locationsUrl.isBlank()) return "Locations URL not configured"
+        val creds  = savedCredentials() ?: return inAppText(R.string.ext_error_not_signed_in)
+        if (!config.isConfigured) return inAppText(R.string.ext_error_not_configured)
+        if (config.locationsUrl.isBlank()) return inAppText(R.string.ext_error_locations_url_missing)
         extSystemClient.configure(config, creds)
         return when (val result = extSystemClient.downloadRaw(config.locationsUrl)) {
             is ExtSystemResult.Success -> {
@@ -220,12 +229,13 @@ class AppViewModel @Inject constructor(
             val config = extSystemConfig.value
             val creds  = savedCredentials()
             if (!config.isConfigured || creds == null) {
-                val msg = if (creds == null) "Not signed in" else "External system not configured"
+                val msg = if (creds == null) inAppText(R.string.ext_error_not_signed_in)
+                    else inAppText(R.string.ext_error_not_configured)
                 onComplete(1, listOf(msg))
                 return@launch
             }
             if (config.documentLinesUrl.isBlank()) {
-                onComplete(1, listOf("Document lines URL not configured"))
+                onComplete(1, listOf(inAppText(R.string.ext_error_document_lines_url_missing)))
                 return@launch
             }
             extSystemClient.configure(config, creds)
@@ -422,7 +432,7 @@ class AppViewModel @Inject constructor(
     fun signIn(typedUsername: String, password: String, onResult: (SignInResult) -> Unit) {
         val id = UserProfileStore.normalise(typedUsername)
         if (id == null) {
-            onResult(SignInResult.Failed(appContext.getString(R.string.signin_bad_username)))
+            onResult(SignInResult.Failed(inAppText(R.string.signin_bad_username)))
             return
         }
         viewModelScope.launch {
@@ -447,7 +457,7 @@ class AppViewModel @Inject constructor(
                 onResult(
                     SignInResult.Failed(
                         (serverResult as? ExtSystemResult.Failure)?.message
-                            ?: appContext.getString(R.string.signin_needs_server)
+                            ?: inAppText(R.string.signin_needs_server)
                     )
                 )
             }
@@ -472,7 +482,7 @@ class AppViewModel @Inject constructor(
         viewModelScope.launch {
             val url = serverBaseUrl.trim()
             if (url.isBlank()) {
-                onResult(ExtSystemResult.Failure(appContext.getString(R.string.ext_config_server_url_empty))); return@launch
+                onResult(ExtSystemResult.Failure(inAppText(R.string.ext_config_server_url_empty))); return@launch
             }
             val config = extSystemConfig.value.copy(serverBaseUrl = url)
             val creds  = ExtSystemCredentials(username.trim(), password)
@@ -485,7 +495,7 @@ class AppViewModel @Inject constructor(
             if (result is ExtSystemResult.Success &&
                 saveCredentials(username.trim(), password) == CredentialSave.WrongOperator
             ) {
-                onResult(ExtSystemResult.Failure(appContext.getString(R.string.signin_wrong_operator)))
+                onResult(ExtSystemResult.Failure(inAppText(R.string.signin_wrong_operator)))
                 return@launch
             }
             onResult(result)
@@ -674,14 +684,14 @@ class AppViewModel @Inject constructor(
         if (!config.isConfigured || creds == null) {
             docs.forEach {
                 repository.updateDocState(it.documentNo, it.type.key,
-                    DocState.UploadFailed(appContext.getString(R.string.upload_error_not_configured)))
+                    DocState.UploadFailed(inAppText(R.string.upload_error_not_configured)))
             }
             return docs.size
         }
         if (config.recordingSyncUrl.isBlank()) {
             docs.forEach {
                 repository.updateDocState(it.documentNo, it.type.key,
-                    DocState.UploadFailed(appContext.getString(R.string.upload_error_sync_url_missing)))
+                    DocState.UploadFailed(inAppText(R.string.upload_error_sync_url_missing)))
             }
             return docs.size
         }
@@ -703,7 +713,7 @@ class AppViewModel @Inject constructor(
                     doc.documentNo,
                     doc.type.key,
                     DocState.UploadFailed(
-                        appContext.getString(R.string.upload_error_needs_review, orphans.size)
+                        inAppText(R.string.upload_error_needs_review, orphans.size)
                     ),
                 )
                 failures++
@@ -774,7 +784,7 @@ class AppViewModel @Inject constructor(
                 // refused rows are better described by how many, with the detail per row on the
                 // error screen.
                 val reason = if (connectionLost) lastFailure
-                else appContext.getString(R.string.upload_error_rows_failed, failedRows, rows.size)
+                else inAppText(R.string.upload_error_rows_failed, failedRows, rows.size)
                 repository.updateDocState(doc.documentNo, doc.type.key, DocState.UploadFailed(reason))
                 failures++
             }

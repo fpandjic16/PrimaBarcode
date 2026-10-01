@@ -96,9 +96,9 @@ Dvoje vas može istovremeno raditi na istom dokumentu. Svatko ima svoju kopiju s
 
 Kad prvi put otvorite aplikaciju:
 
-1. Prijavite se korisničkim imenom i lozinkom. Imena koja su se već koristila na tom uređaju su navedena, pa možete dodirnuti svoje umjesto da ga upisujete. Ime upišite kako god želite — `alice`, `PRIMA\alice` i `alice@prima.hr` za aplikaciju su ista osoba. **Ako imate QR kod za prijavu, pritisnite okidač ili dodirnite *Skeniraj QR kod*** (na uređaju sa skenerom gumb pokreće skener; kamera se koristi samo na uređajima bez skenera) — ekran za prijavu čeka taj kod, a na uređajima s kamerom gumb *Skeniraj QR kod* otvara kameru. Kod popuni oba polja; za ulazak i dalje dodirnete gumb.
+1. Prijavite se korisničkim imenom i lozinkom. Imena koja su se već koristila na tom uređaju su navedena, pa možete dodirnuti svoje umjesto da ga upisujete. Ime upišite kako god želite — `alice`, `PRIMA\alice` i `alice@prima.hr` za aplikaciju su ista osoba. **Ako imate QR kod za prijavu, pritisnite okidač ili dodirnite *Skeniraj QR kod*.** Na uređaju sa skenerom gumb pokreće skener; kameru otvara samo uređaj bez skenera. Kod popuni oba polja; za ulazak i dalje dodirnete gumb.
 2. Upišite **Korisničko ime** i **Lozinku**, zatim dodirnite prikazani gumb. Natpis mu ovisi o tome odakle je prijava pozvana — „Prijavi se”, „Testiraj vezu” ili „Prijavi se i sinkroniziraj”. Ako je za vašu tvrtku postavljena Windows domena (Postavke → Konfiguracija vanjskog sustava), upisujete samo korisničko ime; inače ga upišite kao `korisnik@domena` ili `DOMENA\korisnik`. Prije nego što vas prijavi, aplikacija vaše podatke stvarno provjerava u vanjskom sustavu. Ako budu odbijeni, na istom ekranu vidjet ćete zašto, pa možete ispraviti i pokušati ponovno.
-3. Prijava ostaje aktivna zadano razdoblje (obično 24 sata, ponekad dulje — navedeno je u tekstu ispod gumba, npr. *„Vjerodajnice pohranjene šifrirano s AES-256-GCM za 24 sati.”*). Nakon tog razdoblja jednostavno ćete se morati ponovno prijaviti sljedeći put kad bude potrebno — vaše vjerodajnice cijelo su vrijeme šifrirane na uređaju.
+3. Prijava ostaje aktivna zadano razdoblje (obično 24 sata, ponekad dulje — navedeno je u tekstu ispod gumba, npr. *„Vjerodajnice pohranjene šifrirano s AES-256-GCM za 24 sata.”*). Nakon tog razdoblja jednostavno ćete se morati ponovno prijaviti sljedeći put kad bude potrebno — vaše vjerodajnice cijelo su vrijeme šifrirane na uređaju.
 4. Odaberite **centar odgovornosti** i **lokaciju** (vidi [§5](#5-odabir-lokacije-i-centra-odgovornosti)). Time aplikacija zna iz kojeg skladišta ili trgovine radite i sve što vidite filtrira na to područje.
 
 ---
@@ -107,7 +107,7 @@ Kad prvi put otvorite aplikaciju:
 
 Ovo je početni ekran na koji dolazite svaki put kad otvorite aplikaciju.
 
-- **Gornja traka**: nakon prijave prikazuje vaše ime (ili poziv na prijavu). Okrugli gumb gore lijevo (nakon prijave s vašim inicijalima) otvara **Podatke o korisniku** — ID korisnika, ime, centar odgovornosti, lokaciju i gumb za odjavu; ako niste prijavljeni, dodir umjesto toga otvara ekran za prijavu. Ikona zupčanika ⚙️ gore desno otvara **Postavke**.
+- **Gornja traka**: prikazuje vaše ime. Okrugli gumb s vašim inicijalima gore lijevo otvara **Podatke o korisniku** — ID korisnika, ime, centar odgovornosti, lokaciju i gumb za odjavu. Ikona zupčanika ⚙️ gore desno otvara **Postavke**.
 - **Kartica DANAS** (dodirnite bilo gdje na njoj): sažetak današnje aktivnosti — ukupan broj skeniranih stavki te broj dokumenata u stanju Gotovo / Djelomično / Prekoračenje / Greška. Dodir na karticu otvara **Pregled**.
 - **Traka lokacije i CC-a**: dvije oznake jedna uz drugu, sa šifrom trenutnog centra odgovornosti i šifrom lokacije. Dodirnite **bilo koju** da otvorite odabir lokacije i CC-a i promijenite ih.
 - **Popis vrsta dokumenata**: jedan redak po vrsti dokumenta (Skladišna otpremnica, Skladišna primka, MP skladišna otpremnica, MP skladišna primka, Transportni list, Reklamacija, Inventura). Svaki redak prikazuje:
@@ -247,9 +247,6 @@ Skenirati možete na tri načina:
 **Što se događa kad skenirate:**
 - **Poklapa se sa stavkom** → skenirana količina te stavke raste (obično za 1 ili za onoliko koliko dokument određuje po skeniranju), a status stavke i dokumenta odmah se ažurira. **Popis također skoči na tu stavku i označi je** — boja joj se pojača oko pet sekundi, a zatim izblijedi natrag. Tako na dugom dokumentu na prvi pogled vidite što ste upravo skenirali, umjesto da to tražite. Ako je stavka već bila na ekranu, popis ostaje gdje jest i označava je samo boja.
 - **Ne poklapa se ni s jednom stavkom** → ništa se ne bilježi. Vidjet ćete poruku „Barkod nije pronađen”, a traka za skeniranje kratko zatreperi crveno, da znate da se nije poklopio ni s jednom stvarnom stavkom (vidi [§2.3](#23-neusklađena-skeniranja)).
-
-**Kamera i hardverski okidač na istom ekranu**: za isti artikl nemojte i usmjeriti kameru na barkod i povući fizički okidač. To su dva odvojena puta skeniranja, pa ako za ono što smatrate jednim skeniranjem napravite oboje, može se zabilježiti dvaput. Za jedno skeniranje koristite jedno ili drugo.
-
 ### 9.3 Ručna izmjena stavke
 
 Dodirnite bilo koju stavku da otvorite njezin detaljni prikaz, gdje možete:
@@ -320,7 +317,7 @@ Dodirnite **POŠALJI** na bilo kojem popisu dokumenata (ili gumb za slanje na ek
 
 Otvorite karticu **Greške** (s popisa dokumenata ili iz Pregleda) i dodirnite neuspjeli dokument. Vidjet ćete:
 
-- jasan naslov „Učitavanje neuspješno”,
+- jasan naslov „Slanje neuspješno”,
 - podatke o dokumentu (vrsta, izvor, odredište, CC, broj stavki, datum),
 - **cijelu poruku o grešci** koju je vratio vanjski sustav — nju je najkorisnije proslijediti IT-u ili podršci ako problem nije očit (npr. „niste prijavljeni”, „poslužitelj je odbio zahtjev” ili određena poruka provjere iz poslovnog sustava),
 - gumb **Pokušaj ponovo** na dnu — koristan kad je uzrok (mreža, poslužitelj, prijava) riješen.
@@ -370,7 +367,7 @@ Postavke otvarate ikonom zupčanika na glavnom izborniku. **Promjene se spremaju
 ### Skeniranje
 | Postavka | Što radi |
 |---|---|
-| **Vrijeme čekanja** | Koliko se dugo isti barkod zanemaruje nakon što je pročitan (200 ms – 2 s; 200 ms dok ga ne promijenite). Hardverski okidač i kamera mogu biti aktivni istovremeno, pa bi se bez ovoga jedno fizičko skeniranje moglo brojati dvaput. |
+| **Vrijeme čekanja** | Koliko se dugo isti barkod zanemaruje nakon što je pročitan (200 ms – 2 s; 200 ms dok ga ne promijenite). Sprječava da se jedno skeniranje broji dvaput kad isti kod odmah stigne ponovno — dvostruki pritisak okidača ili ista etiketa pročitana dvaput zaredom. Ako isti artikl namjerno skenirate ponovno, pričekajte barem toliko. |
 | **Haptička povratna informacija** | Vibracija pri potvrdi skeniranja i pri greškama — jednako pri skeniranju dokumenata i pri prijavi QR kodom. |
 | **Zvuk skeniranja** | Dva zvuka, da bez gledanja znate trebate li pogledati ekran: **jedan pisak** kad skeniranje normalno prođe i **glasan dvotonski zvuk koji pada, odsviran četiri puta** („di-du, di-du, di-du, di-du”) kad god skeniranje izazove upozorenje — barkod nije na dokumentu, skenirani broj dokumenta nije pronađen ili je skeniranje stavku dovelo iznad onoga što dokument očekuje (ovo zadnje samo dok je uključeno upozorenje pri prekoračenju). Zvukovi prate glasnoću *medija* na uređaju, a ne glasnoću obavijesti, pa se čuju i kad je skener na vibraciji; glasnoću podesite tipkama za glasnoću, a ovim prekidačem ih isključujete. Vrijede za ista dva načina unosa kao i vibracija. |
 | **Upozori pri prekoračenju** | Prikazuje upozorenje kad skenirate više od očekivane količine za stavku. |
@@ -403,9 +400,9 @@ Prikazuje tko je trenutno prijavljen i opciju **Odjavi se** (odmah, bez potvrde)
 
 ## 17. Prijava i odjava
 
-- Prijava se automatski traži prvi put kad aplikacija treba komunicirati s vanjskim sustavom (preuzimanje, slanje ili osvježavanje lokacija).
-- Vaše vjerodajnice čuvaju se šifrirane na uređaju i automatski istječu nakon zadanog razdoblja — tada ćete se samo morati ponovno prijaviti, ništa se ne gubi.
-- Za ručnu odjavu idite na **Postavke → Korisnički račun → Odjavi se iz vanjskog sustava**.
+- Prijavljujete se svaki put kad otvorite aplikaciju — vidi [§3](#3-prvo-pokretanje).
+- Vaš pristup vanjskom sustavu čuva se šifriran na uređaju i istječe nakon zadanog razdoblja. Nakon toga aplikacija ponovno traži lozinku sljedeći put kad joj treba vanjski sustav (preuzimanje, slanje, osvježavanje lokacija) — ništa se ne gubi.
+- Za odjavu idite na **Postavke → Korisnički račun → Odjavi se iz vanjskog sustava**. Time se vraćate na ekran za prijavu, spremni za sljedećeg operatera. Odjava nije moguća dok je prijenos još u tijeku — vidi [§18.2d](#182d-piše-da-je-prijenos-u-tijeku-i-ne-mogu-se-odjaviti).
 
 ---
 
@@ -426,9 +423,9 @@ Ništa se ne briše odjavom, time što kolega koristi uređaj ni istekom vaše l
 Nećete ga vidjeti, i to namjerno — na njima je da ga završe i pošalju. Vratite im uređaj ili ih zamolite da se prijave i pošalju.
 
 ### 18.2c „Ne mogu se prijaviti, piše da vanjski sustav nije dostupan”
-Dvije različite situacije:
-- **Već ste se prijavljivali na ovom uređaju** — vaša bi lozinka svejedno trebala raditi. Ako ne radi, lozinka vam je vjerojatno promijenjena u vanjskom sustavu; ta se promjena može preuzeti samo dok je sustav dostupan.
-- **Vanjski sustav je taj koji provjerava vašu lozinku, svaki put.** Dok nije dostupan, u aplikaciju se ne može ući — ni za koga, uključujući ljude koji ovaj uređaj koriste mjesecima. Ništa što ste skenirali u međuvremenu se ne gubi; ostaje na uređaju i čeka da se sustav vrati. Prijavite ispad umjesto da pokušavate drugu lozinku.
+**Vanjski sustav je taj koji provjerava vašu lozinku, svaki put.** Dok nije dostupan, u aplikaciju se ne može ući — ni za koga, uključujući ljude koji ovaj uređaj koriste mjesecima. Ništa što ste skenirali u međuvremenu se ne gubi; ostaje na uređaju i čeka da se sustav vrati. Prijavite ispad umjesto da pokušavate drugu lozinku.
+
+Ako je sustav *dostupan*, a lozinka se odbija, vjerojatno vam je promijenjena u vanjskom sustavu — prijavite se novom.
 
 ### 18.2d „Piše da je prijenos u tijeku i ne mogu se odjaviti”
 Nešto još ide prema vanjskom sustavu ili dolazi iz njega. Pričekajte da završi. Promjena operatera usred prijenosa zabilježila bi „ovo je poslano” na krivu osobu ili bi preuzete podatke spremila kod krive osobe.

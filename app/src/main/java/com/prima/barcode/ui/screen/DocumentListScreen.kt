@@ -32,7 +32,6 @@ import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.LineStatus
 import com.prima.barcode.data.model.bgColor
 import com.prima.barcode.data.model.color
-import com.prima.barcode.data.model.label
 import com.prima.barcode.data.model.scanStatus
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat

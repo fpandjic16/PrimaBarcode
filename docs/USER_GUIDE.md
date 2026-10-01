@@ -94,7 +94,7 @@ Two of you can work the same document at the same time. Each of you has your own
 
 When you first open the app:
 
-1. Sign in with your user name and password. Names already used on that device are listed, so you can tap yours instead of typing it. Type your name however you like — `alice`, `PRIMA\alice` and `alice@prima.hr` are all the same person to the app. **If you have a sign-in QR code, pull the trigger or tap *Scan QR code*** (on a scanner the button starts the scanner; the camera is used only on devices without one) — the sign-in screen listens for it, and there is a *Scan QR code* button for the camera on devices that have one. The code fills in both fields; you still tap the button to go in.
+1. Sign in with your user name and password. Names already used on that device are listed, so you can tap yours instead of typing it. Type your name however you like — `alice`, `PRIMA\alice` and `alice@prima.hr` are all the same person to the app. **If you have a sign-in QR code, pull the trigger or tap *Scan QR code*.** On a device with a scanner the button starts the scanner; only a device without one opens the camera. The code fills in both fields; you still tap the button to go in.
 2. Enter your **Username** and **Password**, then tap the button shown (its label changes depending on what triggered it — "Sign in", "Test connection", or "Sign in & Sync"). If your company has a Windows domain configured (Settings → External System Configuration), you just type your plain username — otherwise type it as `user@domain` or `DOMAIN\user`. Submitting actually verifies your credentials against the central system before signing you in — if they're rejected, you'll see why on the same screen and can correct and retry.
 3. Your session stays signed in for a configured period (commonly 24 hours, sometimes longer — named in the footer text below the button, e.g. *"Credentials stored encrypted with AES-256-GCM for 24 hours."*). After that period, you'll simply be asked to sign in again next time it's needed — your credentials are encrypted on the device the whole time.
 4. Pick your **Responsibility Center** and **Location** (see [§5](#5-choosing-your-location--responsibility-center)) — this tells the app which warehouse/store you're working from and filters everything you see to that scope.
@@ -105,7 +105,7 @@ When you first open the app:
 
 This is the home screen you land on every time you open the app.
 
-- **Top bar**: shows your name once signed in (or a prompt to sign in). A round avatar button top-left (your initials once signed in) opens your **User Info** — user ID, name, Responsibility Center, Location, and a sign-out button; tapping it while signed out opens the sign-in screen instead. A gear ⚙️ icon top-right opens **Settings**.
+- **Top bar**: shows your name. The round button top-left with your initials opens your **User Info** — user ID, name, Responsibility Center, Location, and a sign-out button. A gear ⚙️ icon top-right opens **Settings**.
 - **Today card** (tap it anywhere): a summary of today's activity — total lines scanned, and counts of Ready / Partial / Over / Error documents. Tapping this card opens the **Dashboard**.
 - **Location/RC bar**: two side-by-side pills showing your current Responsibility Center code and Location code. Tap **either one** to open the Location & RC picker and change them.
 - **Document type list**: one row per document type (Warehouse Shipment, Warehouse Receipt, Retail Shipment, Retail Whse. Receipt, Transport Sheet, Complaint, Inventory), each showing:
@@ -245,9 +245,6 @@ You can scan in three ways:
 **What happens when you scan:**
 - **Matches a line** → that line's scanned quantity goes up (usually by 1, or by whatever the document specifies per scan), and the line/document status updates live. **The list also jumps to that line and marks it** — its colour deepens for about five seconds and then fades back, so on a long document you can see at a glance what you just scanned instead of hunting for it. If the line was already on screen the list stays put; only the colour marks it.
 - **Doesn't match any line** → nothing is recorded. You'll see a "Barcode not found" message and the scan bar briefly flashes red so you know it didn't match a real line (see [§2.3](#23-unmatched-scans)).
-
-**Using both the camera and the hardware trigger on the same screen**: don't point the camera at a barcode and pull the physical trigger for the same item — each is a separate scan path, so doing both for what you intend as one scan can record it twice. Use one or the other for a given scan.
-
 ### 9.3 Editing a line manually
 
 Tap any line to open its detail view, where you can:
@@ -368,7 +365,7 @@ Open Settings via the gear icon on the Main Menu. **Settings are buffered** — 
 ### Scanning
 | Setting | What it does |
 |---|---|
-| **Debounce time** | How long the same barcode is ignored after it is read (200ms–2s; 200ms unless you change it). The hardware trigger and the camera can both be live at once, so without this one physical scan could be counted twice. |
+| **Debounce time** | How long the same barcode is ignored after it is read (200ms–2s; 200ms unless you change it). It stops one scan counting twice when the same code arrives again straight away — a double pull of the trigger, or the same label read twice in a row. To scan the same item again on purpose, pause at least this long. |
 | **Haptic feedback** | Vibrate on scan confirmation and errors — on document scanning and QR sign-in alike. |
 | **Scan sounds** | Two sounds, so you know without looking whether to check the screen: a **single beep** when a scan lands normally, and a **loud falling two-tone, played four times** ("dee-doo, dee-doo, dee-doo, dee-doo") whenever a scan brings up a warning — the barcode is not on the document, the scanned document number was not found, or the scan took a line over what the document expects (that last one only while the over-quantity warning is switched on). They follow the device's *media* volume, not its notification volume, so they still play when the scanner is on vibrate; use the volume keys for loudness and this switch to turn them off. Same two input paths as the vibration. |
 | **Warn on over-scan** | Show a warning when you scan more than the expected quantity for a line. |
@@ -401,9 +398,9 @@ Shows who's currently signed in, and a **Sign out** option (immediate, no confir
 
 ## 17. Signing In and Out
 
-- You're prompted to sign in automatically the first time the app needs to talk to the central system (download, upload, or refresh locations).
-- Your credentials are stored encrypted on the device and expire automatically after a set period — you'll just be asked to sign in again when that happens, nothing is lost.
-- To sign out manually, go to **Settings → Account → Sign out of External System**.
+- You sign in every time the app opens — see [§3](#3-first-time-setup).
+- Your access to the central system is stored encrypted on the device and expires after a set period. After that, the app asks for your password again the next time it needs the central system (download, upload, refreshing locations) — nothing is lost.
+- To sign out, go to **Settings → Account → Sign out of External System**. This takes you back to the sign-in screen, ready for the next operator. It is refused while a transfer is still running — see [§18.2d](#182d-it-says-a-transfer-is-in-progress-and-wont-let-me-sign-out).
 
 ---
 
@@ -424,9 +421,9 @@ Nothing is deleted by signing out, by a colleague using the device, or by your p
 You will not see it, and that is on purpose — it is theirs to finish and send. Hand the device back, or ask them to sign in and upload.
 
 ### 18.2c "It won't let me sign in and says the system can't be reached"
-Two different situations:
-- **You have signed in on this device before** — your password should work anyway. If it does not, your password was probably changed in the central system; that change can only be picked up while the system is reachable.
-- **The central system is what checks your password, every single time.** There is no way into the app while it cannot be reached — not for anyone, including people who have used this device for months. Nothing you have scanned is lost in the meantime; it stays on the device and is there when the system comes back. Report the outage rather than trying another password.
+**The central system is what checks your password, every single time.** There is no way into the app while it cannot be reached — not for anyone, including people who have used this device for months. Nothing you have scanned is lost in the meantime; it stays on the device and is there when the system comes back. Report the outage rather than trying another password.
+
+If the system *is* reachable and your password is refused, it has probably been changed in the central system — sign in with the new one.
 
 ### 18.2d "It says a transfer is in progress and won't let me sign out"
 Something is still going to or coming from the central system. Wait for it to finish. Changing operator mid-transfer would file "this was sent" against the wrong person's records, or drop a download into the wrong person's data.

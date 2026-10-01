@@ -40,13 +40,6 @@ val LineStatus.bgColor: Color
         LineStatus.OVER    -> PrimaStatus.OverBg
     }
 
-val LineStatus.label: String get() = when (this) {
-    LineStatus.EMPTY   -> "Empty"
-    LineStatus.PARTIAL -> "Partial"
-    LineStatus.EXACT   -> "Ready"
-    LineStatus.OVER    -> "Over-qty"
-}
-
 fun Document.scanStatus(): LineStatus {
     if (lines.isEmpty()) return LineStatus.EMPTY
     val s = lines.map { it.status }

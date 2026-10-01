@@ -132,7 +132,10 @@
     <string name="login_hide_password">Hide password</string>
     <string name="login_footer">Credentials stored encrypted with AES-256-GCM for %s.</string>
     <string name="login_username_hint">e.g. user@prima</string>
-    <string name="login_ttl_hours">%d hours</string>
+    <plurals name="login_ttl_hours">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
     <string name="login_ttl_days">%d days</string>
     <!-- User info -->
     <string name="user_info_title">User Info</string>
@@ -321,4 +324,26 @@
     <string name="profiles_delete_scans">%1$d scans across %2$d documents will be deleted.</string>
     <string name="profiles_delete_unsent">%1$d of them have never reached the external system and exist nowhere else.</string>
     <string name="profiles_delete_confirm">Remove</string>
+    <!-- External system messages and config hints, formerly English literals in code -->
+    <string name="ext_error_not_signed_in">Not signed in to the external system.</string>
+    <string name="ext_error_not_configured">The external system is not configured.</string>
+    <string name="ext_error_locations_url_missing">The locations URL is not configured.</string>
+    <string name="ext_error_document_lines_url_missing">The document lines URL is not configured.</string>
+    <string name="ext_error_client_not_ready">The connection to the external system is not set up yet.</string>
+    <string name="ext_error_no_challenge_ok">The server answered without asking for a Windows sign-in, so the password was not checked. Enable Windows Authentication on this NAV OData endpoint.</string>
+    <string name="ext_error_no_challenge">The server did not ask for a Windows sign-in (no NTLM challenge). Check that Windows Authentication is enabled on this NAV OData endpoint.</string>
+    <string name="ext_error_credentials_rejected">The external system rejected the user name or password. Check the user name (with its domain, e.g. DOMAIN\\name) and the password.</string>
+    <string name="ext_error_http_401">The external system refused the sign-in (HTTP 401). The password may have changed — sign out and sign in again.</string>
+    <string name="ext_error_unreachable">The external system cannot be reached. Check the network connection and the server address.</string>
+    <string name="ext_error_unknown_host">The server address could not be found. Check it in the external system configuration.</string>
+    <string name="ext_error_timeout">The external system did not answer in time. Try again; if it keeps happening, check the network and the server.</string>
+    <string name="ext_error_unknown">Unknown error</string>
+    <string name="ext_config_hint_document_lines">e.g. …/ODataV4/Company(\'Name\')/BarcodeAppEntries</string>
+    <string name="ext_config_hint_locations">e.g. …/ODataV4/Company(\'Name\')/LocationList</string>
+    <string name="ext_config_hint_recording_sync">e.g. …/ODataV4/Company(\'Name\')/BarcodeAppRecordings</string>
+    <string name="ext_config_hint_doc_type_code">e.g. WHSE_SHIP (max 20 chars)</string>
+    <string name="ext_config_ttl_hours_short">%d h</string>
+    <string name="ext_config_ttl_days_short">%d d</string>
+    <string name="settings_app_version_value">%1$s (build %2$d)</string>
+    <string name="settings_sdk_value">Min API %1$d (Android %2$s) · Target API %3$d (Android %4$s)</string>
 </resources>

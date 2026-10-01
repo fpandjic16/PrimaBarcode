@@ -589,7 +589,7 @@ fun SettingsScreen(
                                 ),
                             )
                             Text(
-                                BuildConfig.VERSION_NAME + " (build " + BuildConfig.VERSION_CODE + ")",
+                                stringResource(R.string.settings_app_version_value, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
                                 style = monoLabel.copy(color = PrimaPalette.Ink3),
                             )
                         }
@@ -636,7 +636,13 @@ fun SettingsScreen(
                                 ),
                             )
                             Text(
-                                "Min API " + ctx.applicationInfo.minSdkVersion + " (Android " + apiToAndroid(ctx.applicationInfo.minSdkVersion) + ") · Target API " + ctx.applicationInfo.targetSdkVersion + " (Android " + apiToAndroid(ctx.applicationInfo.targetSdkVersion) + ")",
+                                stringResource(
+                                    R.string.settings_sdk_value,
+                                    ctx.applicationInfo.minSdkVersion,
+                                    apiToAndroid(ctx.applicationInfo.minSdkVersion),
+                                    ctx.applicationInfo.targetSdkVersion,
+                                    apiToAndroid(ctx.applicationInfo.targetSdkVersion),
+                                ),
                                 style = monoLabel.copy(color = PrimaPalette.Ink3),
                             )
                         }
