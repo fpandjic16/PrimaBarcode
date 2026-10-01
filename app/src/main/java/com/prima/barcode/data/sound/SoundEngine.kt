@@ -32,7 +32,7 @@ private const val STREAM = AudioManager.STREAM_MUSIC
 private class Step(val hz: Int, val ms: Int)
 
 /**
- * The warning: high falling to lower, twice — "dee-doo, dee-doo".
+ * The warning: high falling to lower, four times — "dee-doo, dee-doo, dee-doo, dee-doo".
  *
  * The app's own sound rather than one of ToneGenerator's, because none of those fits. The double
  * beep this replaced was 400 Hz + 1200 Hz, heard on the floor as the device's bass "bloop": duller
@@ -44,14 +44,16 @@ private class Step(val hz: Int, val ms: Int)
  * - **2–3 kHz** is where a handheld's small speaker is most efficient and the ear most sensitive,
  *   so it is the loudest sound a given volume setting can make. Same register as the scanner's
  *   beep; the falling pitch is what says "no".
- * - **Twice**, because one pair is easy to miss in a loud warehouse and a longer sound is heard as
- *   a louder one. About two thirds of a second — the warning dialog stops the operator anyway.
+ * - **Four times**, about 1.4 s — two at first, doubled on request. One pair is easy to miss in a
+ *   loud warehouse, and a longer sound is heard as a louder one. The warning dialog stops the
+ *   operator anyway, so the length costs no time.
  *
  * Chosen on paper, not by ear on a device. These numbers are the place to tune it.
  */
 private val WARNING_PATTERN = listOf(
-    Step(2_900, 120), Step(1_900, 180),
-    Step(0, 70),
+    Step(2_900, 120), Step(1_900, 180), Step(0, 70),
+    Step(2_900, 120), Step(1_900, 180), Step(0, 70),
+    Step(2_900, 120), Step(1_900, 180), Step(0, 70),
     Step(2_900, 120), Step(1_900, 180),
 )
 
@@ -98,7 +100,7 @@ class SoundEngine {
     fun error() = play(ToneGenerator.TONE_PROP_NACK, 200)
 
     /**
-     * The loud falling "dee-doo, dee-doo" of [WARNING_PATTERN] — the scan brought up a warning: an
+     * The loud falling "dee-doo" ×4 of [WARNING_PATTERN] — the scan brought up a warning: an
      * over-scan, a barcode that is not on the document, or a document number that was not found.
      *
      * One signal for all three on purpose. Whether the scan counted or not, the operator's next
