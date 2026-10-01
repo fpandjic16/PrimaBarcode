@@ -103,6 +103,8 @@ fun LoginSheet(
     val hasCamera = remember {
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
     }
+    // Scanner first: where there is one, the button drives it and no camera is offered.
+    val hasScanner = remember { DataWedgeManager.isAvailable(context) }
     val hapticEngine = remember { HapticEngine(context) }
     val soundEngine = rememberSoundEngine()
 
@@ -220,15 +222,21 @@ fun LoginSheet(
                         enabled = !testing,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    if (hasCamera) {
+                    if (hasScanner || hasCamera) {
                         Spacer(Modifier.height(10.dp))
                         OutlinedButton(
                             onClick = {
                                 errorMessage = null
-                                val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
-                                    PackageManager.PERMISSION_GRANTED
-                                if (granted) cameraOpen = true
-                                else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                if (hasScanner) {
+                                    // Same read as a trigger pull; the result arrives through this
+                                    // sheet's scan receiver.
+                                    DataWedgeManager.startScan(context)
+                                } else {
+                                    val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                                        PackageManager.PERMISSION_GRANTED
+                                    if (granted) cameraOpen = true
+                                    else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                }
                             },
                             enabled = !testing,
                             modifier = Modifier.fillMaxWidth().height(48.dp),

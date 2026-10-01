@@ -94,7 +94,7 @@ Two of you can work the same document at the same time. Each of you has your own
 
 When you first open the app:
 
-1. Sign in with your user name and password. Names already used on that device are listed, so you can tap yours instead of typing it. Type your name however you like — `alice`, `PRIMA\alice` and `alice@prima.hr` are all the same person to the app. **If you have a sign-in QR code, just pull the trigger** — the sign-in screen listens for it, and there is a *Scan QR code* button for the camera on devices that have one. The code fills in both fields; you still tap the button to go in.
+1. Sign in with your user name and password. Names already used on that device are listed, so you can tap yours instead of typing it. Type your name however you like — `alice`, `PRIMA\alice` and `alice@prima.hr` are all the same person to the app. **If you have a sign-in QR code, pull the trigger or tap *Scan QR code*** (on a scanner the button starts the scanner; the camera is used only on devices without one) — the sign-in screen listens for it, and there is a *Scan QR code* button for the camera on devices that have one. The code fills in both fields; you still tap the button to go in.
 2. Enter your **Username** and **Password**, then tap the button shown (its label changes depending on what triggered it — "Sign in", "Test connection", or "Sign in & Sync"). If your company has a Windows domain configured (Settings → External System Configuration), you just type your plain username — otherwise type it as `user@domain` or `DOMAIN\user`. Submitting actually verifies your credentials against the central system before signing you in — if they're rejected, you'll see why on the same screen and can correct and retry.
 3. Your session stays signed in for a configured period (commonly 24 hours, sometimes longer — named in the footer text below the button, e.g. *"Credentials stored encrypted with AES-256-GCM for 24 hours."*). After that period, you'll simply be asked to sign in again next time it's needed — your credentials are encrypted on the device the whole time.
 4. Pick your **Responsibility Center** and **Location** (see [§5](#5-choosing-your-location--responsibility-center)) — this tells the app which warehouse/store you're working from and filters everything you see to that scope.
@@ -239,8 +239,8 @@ To review what you have scanned, line by line and scan by scan, use the **RECORD
 
 You can scan in three ways:
 1. **Hardware scanner trigger** (if your device has one) — just point and scan; it works anywhere on this screen.
-2. **Scan bar** at the bottom — tap the keyboard icon to type a barcode manually if needed, or the camera icon to scan visually.
-3. **Camera** — tap the camera icon in the scan bar; point your camera at the barcode. It beeps and vibrates on a successful read, then closes itself. The camera is the fallback input, so it always does one scan at a time; use the hardware trigger for a run of items.
+2. **Scan bar** at the bottom — tap the keyboard icon to type a barcode manually if needed.
+3. **Camera** — only on devices without a hardware scanner, where the scan bar shows a camera icon instead: tap it and point the camera at the barcode. It beeps and vibrates on a successful read, then closes itself. The camera is the fallback input, so it always does one scan at a time; use the hardware trigger for a run of items.
 
 **What happens when you scan:**
 - **Matches a line** → that line's scanned quantity goes up (usually by 1, or by whatever the document specifies per scan), and the line/document status updates live. **The list also jumps to that line and marks it** — its colour deepens for about five seconds and then fades back, so on a long document you can see at a glance what you just scanned instead of hunting for it. If the line was already on screen the list stays put; only the colour marks it.

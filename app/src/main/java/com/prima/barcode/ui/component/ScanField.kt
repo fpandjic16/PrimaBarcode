@@ -35,15 +35,19 @@ import androidx.core.widget.addTextChangedListener
 import com.prima.barcode.ui.theme.PrimaPalette
 
 /**
- * Scan input that captures the hardware scanner without ever auto-opening the
- * on-screen keyboard.
+ * Manual barcode entry, plus the camera fallback, without ever auto-opening the on-screen
+ * keyboard.
  *
- * Backed by a native [EditText] with `showSoftInputOnFocus = false`: it auto-focuses
- * and reliably receives Zebra/Honeywell wedge keystrokes, but the soft keyboard
- * stays hidden. The whole barcode arrives as a rapid burst, so input is auto-
- * submitted once it settles (and immediately on an Enter/Tab terminator if one is
- * sent). Tapping the keyboard icon shows the soft keyboard for manual entry; the
- * camera icon opens the CameraX fallback.
+ * On Zebra devices the scanner does **not** come through here. DataWedge delivers scans as an
+ * intent and has keystroke output switched off (see `DataWedgeManager.configure`); this field
+ * once received them as typed keystrokes too, which meant every scan arrived twice. The screens
+ * hosting it register the intent receiver themselves.
+ *
+ * Backed by a native [EditText] with `showSoftInputOnFocus = false`. A burst that arrives without
+ * the keyboard open — a keyboard-wedge scanner on a non-Zebra device — is still auto-submitted
+ * once it settles, or immediately on an Enter/Tab terminator. Tapping the keyboard icon shows the
+ * soft keyboard for manual entry; the camera icon, shown only on devices without a scanner, opens
+ * the CameraX fallback.
  */
 @Composable
 fun ScanField(

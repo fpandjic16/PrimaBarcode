@@ -7,6 +7,13 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
+    <!-- DataWedgeManager.isAvailable looks DataWedge up to decide scanner-or-camera. From
+         Android 11 another app's package is invisible without this, and every device would look
+         scanner-less. -->
+    <queries>
+        <package android:name="com.symbol.datawedge" />
+    </queries>
+
     <!-- allowBackup is off: these devices hold every operator’s unsent scans and their
          encrypted NAV credentials, and auto-backup would copy both into whatever Google
          account happens to be on a shared warehouse scanner. The restore could not work

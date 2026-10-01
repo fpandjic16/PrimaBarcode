@@ -1,7 +1,9 @@
 package com.prima.barcode.ui.screen
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -36,6 +38,7 @@ import com.prima.barcode.data.model.label
 import com.prima.barcode.data.model.scanStatus
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.prima.barcode.data.barcode.DataWedgeManager
 import com.prima.barcode.data.haptic.HapticEngine
 import com.prima.barcode.data.sound.rememberSoundEngine
 import com.prima.barcode.ui.component.CameraPreview
@@ -138,6 +141,8 @@ fun DocumentListScreen(
     val hasCamera = remember {
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
     }
+    // Scanner first, camera only for devices without one.
+    val hasScanner = remember { DataWedgeManager.isAvailable(context) }
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted -> if (granted) cameraOpen = true }
@@ -158,6 +163,22 @@ fun DocumentListScreen(
             if (soundEnabled) soundEngine.warning()
             docNotFoundError = barcode
         }
+    }
+
+    // The scanner's way in. This screen used to read the trigger only as keystrokes typed into the
+    // scan field; DataWedge no longer types, so it listens for the intent like every other screen
+    // that scans. The receiver calls through rememberUpdatedState so it always sees the current
+    // document list rather than the one from the first composition.
+    val latestDocScan = rememberUpdatedState(::handleDocScan)
+    DisposableEffect(Unit) {
+        val receiver = DataWedgeManager.createReceiver { barcode -> latestDocScan.value(barcode) }
+        if (Build.VERSION.SDK_INT >= 33) {
+            context.registerReceiver(receiver, DataWedgeManager.intentFilter(), Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            context.registerReceiver(receiver, DataWedgeManager.intentFilter())
+        }
+        onDispose { context.unregisterReceiver(receiver) }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -192,7 +213,7 @@ fun DocumentListScreen(
                             == PackageManager.PERMISSION_GRANTED) cameraOpen = true
                     else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                 },
-                showCamera = hasCamera,
+                showCamera = hasCamera && !hasScanner,
                 dark = true,
             )
         }

@@ -30,7 +30,7 @@ The app is fully wired end-to-end: Room DB + DAOs, Hilt-injected ViewModels, Kto
 | Networking | Ktor Client 2.3.12 over OkHttp, custom NTLMv2 `Authenticator` (no external NTLM lib) |
 | Local DB | Room 2.8.5 (KSP-generated DAOs) |
 | DI | Hilt/Dagger 2.60.1 |
-| Barcode | ML Kit 17.3.0 + CameraX 1.4.2 (fallback to hardware DataWedge scanning) |
+| Barcode | Zebra DataWedge hardware scanning, intent output only; ML Kit 17.3.0 + CameraX 1.4.2 **only on devices without a scanner** |
 | Secure storage | androidx.security:security-crypto (NAV credentials, TTL-bound) |
 | Logging | Timber |
 

@@ -129,6 +129,9 @@ fun RecordingScreen(
     val hasCamera = remember {
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
     }
+    // The scanner is how this app reads barcodes; the camera is only for devices without one.
+    // Offering both on a device that has a scanner invites the slow path for no reason.
+    val hasScanner = remember { DataWedgeManager.isAvailable(context) }
     var cameraOpen by remember { mutableStateOf(false) }
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -463,7 +466,7 @@ fun RecordingScreen(
                             == PackageManager.PERMISSION_GRANTED) cameraOpen = true
                     else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                 },
-                showCamera = hasCamera,
+                showCamera = hasCamera && !hasScanner,
                 containerColor = scanBarBg,
             )
         }

@@ -11,6 +11,9 @@ private const val DW_ACTION   = "com.symbol.datawedge.api.ACTION"
 private const val SCAN_ACTION = "com.prima.barcode.SCAN"
 private const val SCAN_EXTRA  = "com.symbol.datawedge.data_string"
 
+/** Present on every Zebra device that has a scan engine; its absence means there is no scanner. */
+private const val DATAWEDGE_PACKAGE = "com.symbol.datawedge"
+
 // DataWedge aim_type: single shot, one pull one scan. Pinned rather than inherited so the trigger
 // behaves the same on every device — a unit left in continuous read by another profile would
 // otherwise deliver a burst of scans the app has no reason to expect.
@@ -50,7 +53,24 @@ object DataWedgeManager {
                 putString("aim_type", AIM_TYPE_TRIGGER)
             })
         }
-        val pluginList = ArrayList<Bundle>().apply { add(intentPlugin); add(barcodePlugin) }
+        // Keystroke output off, so every scan reaches the app exactly once, as an intent.
+        //
+        // A new DataWedge profile starts with keystroke output on, and this one used to leave it
+        // that way. Every scan was then delivered twice: as the intent the screens listen for,
+        // and typed into whichever text field had focus. On the sign-in screen that typed a login
+        // code's ciphertext into the user-name field. On the recording screen it sent each scan
+        // through handleScan twice, once from the intent and once from the scan bar, and only the
+        // debounce stopped it being counted twice — an accident, not a design.
+        val keystrokePlugin = Bundle().apply {
+            putString("PLUGIN_NAME",  "KEYSTROKE")
+            putString("RESET_CONFIG", "true")
+            putBundle("PARAM_LIST", Bundle().apply {
+                putString("keystroke_output_enabled", "false")
+            })
+        }
+        val pluginList = ArrayList<Bundle>().apply {
+            add(intentPlugin); add(keystrokePlugin); add(barcodePlugin)
+        }
 
         context.sendBroadcast(Intent(DW_ACTION).apply {
             putExtra("com.symbol.datawedge.api.SET_CONFIG", Bundle().apply {
@@ -64,6 +84,29 @@ object DataWedgeManager {
         Timber.d("DataWedge profile configured")
     }
 
+
+    /**
+     * Whether this device has a hardware scanner the app can drive.
+     *
+     * Decides every "scan or photograph?" choice in the app: where a scanner exists it is the only
+     * way in and no camera is offered; the camera is the fallback for devices without one. Needs
+     * the `<queries>` entry for the package in the manifest — from Android 11, without it the
+     * package is invisible to this check and every device would look scanner-less.
+     */
+    fun isAvailable(context: Context): Boolean = runCatching {
+        context.packageManager.getPackageInfo(DATAWEDGE_PACKAGE, 0)
+        true
+    }.getOrDefault(false)
+
+    /**
+     * Starts a read, exactly as pulling the hardware trigger does. The result arrives through the
+     * same intent as a trigger pull, so no screen needs a second path for it.
+     */
+    fun startScan(context: Context) {
+        context.sendBroadcast(Intent(DW_ACTION).apply {
+            putExtra("com.symbol.datawedge.api.SOFT_SCAN_TRIGGER", "START_SCANNING")
+        })
+    }
 
     fun createReceiver(onScan: (String) -> Unit) = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {

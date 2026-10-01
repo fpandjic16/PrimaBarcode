@@ -102,6 +102,10 @@ fun SignInScreen(
     val hasCamera = remember {
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
     }
+    // Scanner first: where there is one, the button drives it and no camera is offered. The button
+    // used to exist only when there was a camera, so a camera-less MC3300 showed no way to scan a
+    // login code at all — the trigger worked, but nothing on the screen said so.
+    val hasScanner = remember { DataWedgeManager.isAvailable(context) }
     val hapticEngine = remember { HapticEngine(context) }
     val soundEngine = rememberSoundEngine()
 
@@ -212,14 +216,20 @@ fun SignInScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                if (hasCamera) {
+                if (hasScanner || hasCamera) {
                     OutlinedButton(
                         onClick = {
                             qrError = null
-                            val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
-                                PackageManager.PERMISSION_GRANTED
-                            if (granted) cameraOpen = true
-                            else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            if (hasScanner) {
+                                // Same read as a trigger pull; the result arrives through this
+                                // screen's scan receiver, so nothing else is needed here.
+                                DataWedgeManager.startScan(context)
+                            } else {
+                                val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                                    PackageManager.PERMISSION_GRANTED
+                                if (granted) cameraOpen = true
+                                else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            }
                         },
                         enabled = !busy,
                         shape = RoundedCornerShape(14.dp),
