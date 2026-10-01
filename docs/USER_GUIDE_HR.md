@@ -10,31 +10,30 @@ Nazivi gumba i ekrana navedeni su onako kako ih aplikacija prikazuje na hrvatsko
 
 ## Sadržaj
 
-1. [Što aplikacija radi](#s1)
-2. [Osnovni pojmovi koje ćete viđati posvuda](#s2)
-3. [Prvo pokretanje](#s3)
-4. [Glavni izbornik](#s4)
-5. [Odabir lokacije i centra odgovornosti](#s5)
-6. [Vrste dokumenata](#s6)
-7. [Popis dokumenata (Nalozi / Greške)](#s7)
-7a. [Odjeljak ZAPISI](#s7a)
-8. [Preuzimanje dokumenata](#s8)
-9. [Skeniranje dokumenta (ekran skeniranja)](#s9)
-10. [Upozorenja koja možete vidjeti](#s10)
-11. [Posebni format barkoda (Barkod\|JM\|Količina)](#s11)
-12. [Slanje dokumenata](#s12)
-13. [Rješavanje grešaka pri slanju](#s13)
-14. [Pregled dokumenata](#s14)
-15. [Filtriranje dokumenata](#s15)
-16. [Postavke — objašnjenje svake opcije](#s16)
-17. [Prijava i odjava](#s17)
-18. [Česte situacije i što učiniti](#s18)
-18a. [Uklanjanje operatera s uređaja](#s18a)
-19. [Pojmovnik](#s19)
+1. [Što aplikacija radi](#1-što-aplikacija-radi)
+2. [Osnovni pojmovi koje ćete viđati posvuda](#2-osnovni-pojmovi-koje-ćete-viđati-posvuda)
+3. [Prvo pokretanje](#3-prvo-pokretanje)
+4. [Glavni izbornik](#4-glavni-izbornik)
+5. [Odabir lokacije i centra odgovornosti](#5-odabir-lokacije-i-centra-odgovornosti)
+6. [Vrste dokumenata](#6-vrste-dokumenata)
+7. [Popis dokumenata (Nalozi / Greške)](#7-popis-dokumenata-nalozi--greške)
+7a. [Odjeljak ZAPISI](#7a-odjeljak-zapisi)
+8. [Preuzimanje dokumenata](#8-preuzimanje-dokumenata)
+9. [Skeniranje dokumenta (ekran skeniranja)](#9-skeniranje-dokumenta-ekran-skeniranja)
+10. [Upozorenja koja možete vidjeti](#10-upozorenja-koja-možete-vidjeti)
+11. [Posebni format barkoda (Barkod\|JM\|Količina)](#11-posebni-format-barkoda-barkodjmkoličina)
+12. [Slanje dokumenata](#12-slanje-dokumenata)
+13. [Rješavanje grešaka pri slanju](#13-rješavanje-grešaka-pri-slanju)
+14. [Pregled dokumenata](#14-pregled-dokumenata)
+15. [Filtriranje dokumenata](#15-filtriranje-dokumenata)
+16. [Postavke — objašnjenje svake opcije](#16-postavke--objašnjenje-svake-opcije)
+17. [Prijava i odjava](#17-prijava-i-odjava)
+18. [Česte situacije i što učiniti](#18-česte-situacije-i-što-učiniti)
+18a. [Uklanjanje operatera s uređaja](#18a-uklanjanje-operatera-s-uređaja)
+19. [Pojmovnik](#19-pojmovnik)
 
 ---
 
-<a id="s1"></a>
 ## 1. Što aplikacija radi
 
 PrimaBarcode je aplikacija za ručne terminale kojom se bilježi što je fizički izuzeto, zaprimljeno ili premješteno u skladištu ili trgovini. Kad završite, ti se podaci šalju u središnji poslovni sustav tvrtke (Dynamics NAV / Business Central). U aplikaciji se on zove **vanjski sustav**, pa ga tako zovemo i ovdje.
@@ -47,11 +46,10 @@ Svakodnevni rad izgleda ovako:
 3. SLANJE      — pošaljite završen (ili djelomičan) posao natrag u vanjski sustav
 ```
 
-Dokument uvijek morate preuzeti prije nego što po njemu skenirate — ne postoji skeniranje bez veze ili prije preuzimanja. Svaki skenirani barkod odmah se uspoređuje s očekivanim stavkama tog dokumenta, a sve što se ne poklapa odmah se odbija (vidi [§2.3](#s2-3)).
+Dokument uvijek morate preuzeti prije nego što po njemu skenirate — ne postoji skeniranje bez veze ili prije preuzimanja. Svaki skenirani barkod odmah se uspoređuje s očekivanim stavkama tog dokumenta, a sve što se ne poklapa odmah se odbija (vidi [§2.3](#23-neusklađena-skeniranja)).
 
 ---
 
-<a id="s2"></a>
 ## 2. Osnovni pojmovi koje ćete viđati posvuda
 
 ### 2.1 Četiri statusa skeniranja (jezik boja)
@@ -78,14 +76,12 @@ U pozadini svaki dokument tijekom rada prolazi kroz ove faze:
 
 Ako slanje ne uspije, dokument umjesto toga postaje **Slanje neuspješno**, prikazuje se na kartici **GREŠKE** i ostaje na uređaju dok ne pokušate ponovno (ili dok ured ne riješi uzrok problema).
 
-<a id="s2-3"></a>
 ### 2.3 Neusklađena skeniranja
 
 Ako skenirate barkod koji nije naveden kao očekivani artikl na trenutnom dokumentu, aplikacija ga **uopće ne bilježi**. Vidjet ćete poruku „Barkod nije pronađen”, traka za skeniranje kratko zatreperi crveno, a uređaj zavibrira. Ništa se nigdje ne dodaje; provjerite jeste li na pravom dokumentu i jeste li skenirali pravi artikl, pa pokušajte ponovno.
 
 ---
 
-<a id="s3"></a>
 ## 3. Prvo pokretanje
 
 **Prijavljujete se svaki put kad otvorite aplikaciju.** Svojim imenom i lozinkom; ništa drugo u aplikaciji nije dostupno dok se ne prijavite. Nije riječ samo o privatnosti — svako skeniranje bilježi tko ga je napravio, u trenutku kad ga napravite, pa aplikacija mora znati tko drži uređaj prije prvog skeniranja.
@@ -103,11 +99,10 @@ Kad prvi put otvorite aplikaciju:
 1. Prijavite se korisničkim imenom i lozinkom. Imena koja su se već koristila na tom uređaju su navedena, pa možete dodirnuti svoje umjesto da ga upisujete. Ime upišite kako god želite — `alice`, `PRIMA\alice` i `alice@prima.hr` za aplikaciju su ista osoba. **Ako imate QR kod za prijavu, pritisnite okidač ili dodirnite *Skeniraj QR kod*** (na uređaju sa skenerom gumb pokreće skener; kamera se koristi samo na uređajima bez skenera) — ekran za prijavu čeka taj kod, a na uređajima s kamerom gumb *Skeniraj QR kod* otvara kameru. Kod popuni oba polja; za ulazak i dalje dodirnete gumb.
 2. Upišite **Korisničko ime** i **Lozinku**, zatim dodirnite prikazani gumb. Natpis mu ovisi o tome odakle je prijava pozvana — „Prijavi se”, „Testiraj vezu” ili „Prijavi se i sinkroniziraj”. Ako je za vašu tvrtku postavljena Windows domena (Postavke → Konfiguracija vanjskog sustava), upisujete samo korisničko ime; inače ga upišite kao `korisnik@domena` ili `DOMENA\korisnik`. Prije nego što vas prijavi, aplikacija vaše podatke stvarno provjerava u vanjskom sustavu. Ako budu odbijeni, na istom ekranu vidjet ćete zašto, pa možete ispraviti i pokušati ponovno.
 3. Prijava ostaje aktivna zadano razdoblje (obično 24 sata, ponekad dulje — navedeno je u tekstu ispod gumba, npr. *„Vjerodajnice pohranjene šifrirano s AES-256-GCM za 24 sati.”*). Nakon tog razdoblja jednostavno ćete se morati ponovno prijaviti sljedeći put kad bude potrebno — vaše vjerodajnice cijelo su vrijeme šifrirane na uređaju.
-4. Odaberite **centar odgovornosti** i **lokaciju** (vidi [§5](#s5)). Time aplikacija zna iz kojeg skladišta ili trgovine radite i sve što vidite filtrira na to područje.
+4. Odaberite **centar odgovornosti** i **lokaciju** (vidi [§5](#5-odabir-lokacije-i-centra-odgovornosti)). Time aplikacija zna iz kojeg skladišta ili trgovine radite i sve što vidite filtrira na to područje.
 
 ---
 
-<a id="s4"></a>
 ## 4. Glavni izbornik
 
 Ovo je početni ekran na koji dolazite svaki put kad otvorite aplikaciju.
@@ -120,11 +115,10 @@ Ovo je početni ekran na koji dolazite svaki put kad otvorite aplikaciju.
   - tanku traku u bojama (ako ima aktivnosti) koja pokazuje omjer statusa dokumenata te vrste,
   - broj dokumenata te vrste koje trenutno imate.
   - Dodir na redak otvara **popis dokumenata** te vrste. Ako se vrsta još ne može otvoriti — nije odabrana lokacija ni centar odgovornosti — aplikacija vam to kaže umjesto da ne učini ništa.
-- **Redak ZAPISI**, pod vlastitim naslovom: otvara popis svih dokumenata u koje ste išta skenirali, svih vrsta. Kad niste ništa skenirali, pokazuje nulu. Vidi [§7a](#s7a).
+- **Redak ZAPISI**, pod vlastitim naslovom: otvara popis svih dokumenata u koje ste išta skenirali, svih vrsta. Kad niste ništa skenirali, pokazuje nulu. Vidi [§7a](#7a-odjeljak-zapisi).
 
 ---
 
-<a id="s5"></a>
 ## 5. Odabir lokacije i centra odgovornosti
 
 > **Nakon ažuriranja aplikacije najprije učinite ovo.** Popis lokacija ponovno se dohvaća umjesto da se prenese, a vaša se radna lokacija sada pamti po osobi, a ne po uređaju — pa oboje počinje prazno. Otvorite ovaj ekran, dodirnite **Osvježi** da dohvatite lokacije, pa odaberite svoju. Dok to ne učinite, traka na vrhu glavnog izbornika pokazuje `—`, a popisi dokumenata izgledat će krivo: neke vrste prikazat će sve bez filtriranja, druge će izgledati prazne. Sve što ste već skenirali cijelo vrijeme ostaje vidljivo.
@@ -139,7 +133,6 @@ Ovaj ekran otvarate dodirom na bilo koju od dvije oznake na glavnom izborniku.
 
 ---
 
-<a id="s6"></a>
 ## 6. Vrste dokumenata
 
 | Vrsta | Što predstavlja |
@@ -156,7 +149,6 @@ Koje od njih vidite (i filtriraju li se po lokaciji ili po centru odgovornosti) 
 
 ---
 
-<a id="s7"></a>
 ## 7. Popis dokumenata (Nalozi / Greške)
 
 Do njega dolazite dodirom na vrstu dokumenta na glavnom izborniku. Prikazuje sve dokumente te vrste, podijeljene u dvije kartice:
@@ -170,7 +162,7 @@ Do njega dolazite dodirom na vrstu dokumenta na glavnom izborniku. Prikazuje sve
 
 **Skeniranjem ili upisom broja dokumenta** u traku za skeniranje na vrhu odmah otvarate taj dokument, ako postoji. Ako ne postoji, vidjet ćete poruku da ga najprije treba preuzeti iz vanjskog sustava — dokument koji još nije službeno izdan ne može se izraditi niti se po njemu može skenirati.
 
-**Brisanje zapisa dokumenta** premješteno je u odjeljak **ZAPISI** na glavnom izborniku — vidi [§7a](#s7a).
+**Brisanje zapisa dokumenta** premješteno je u odjeljak **ZAPISI** na glavnom izborniku — vidi [§7a](#7a-odjeljak-zapisi).
 
 **Gumbi na dnu** mijenjaju se ovisno o kartici:
 - **Nalozi**: `PREUZMI` i `POŠALJI`.
@@ -178,11 +170,10 @@ Do njega dolazite dodirom na vrstu dokumenta na glavnom izborniku. Prikazuje sve
 
 `POŠALJI` je zasivljen i ne radi ništa kad nema ničega za slanje.
 
-Ikona lijevka (gore desno) postaje **koraljna/narančasta** kad je filtar aktivan — vidi [§15](#s15).
+Ikona lijevka (gore desno) postaje **koraljna/narančasta** kad je filtar aktivan — vidi [§15](#15-filtriranje-dokumenata).
 
 ---
 
-<a id="s7a"></a>
 ## 7a. Odjeljak ZAPISI
 
 Ispod vrsta dokumenata na glavnom izborniku, pod vlastitim naslovom **ZAPISI SKENIRANJA**, nalazi se jedan redak **ZAPISI**. On pokazuje koliko skeniranja nosite i, desno, na koliko dokumenata. Ostaje ondje i kad niste ništa skenirali, i tada jednostavno pokazuje nulu — a na kraju smjene korisno je to moći provjeriti.
@@ -213,7 +204,6 @@ Ako je vanjski sustav uklonio stavku *nakon* što ste je skenirali, ta se skenir
 
 ---
 
-<a id="s8"></a>
 ## 8. Preuzimanje dokumenata
 
 Na kartici **Nalozi** dodirnite **PREUZMI**.
@@ -230,7 +220,6 @@ Na kartici **Nalozi** dodirnite **PREUZMI**.
 
 ---
 
-<a id="s9"></a>
 ## 9. Skeniranje dokumenta (ekran skeniranja)
 
 Ovo je glavni ekran — otvarate ga dodirom na bilo koji dokument s popisa.
@@ -246,7 +235,7 @@ Vidjet ćete:
 
 **Promjenom lokacije skrivaju se dokumenti druge lokacije**, uključujući one u koje ste već skenirali — dokument za CS165 nije na popisu dok radite na CS175. Ništa nije izgubljeno: odjeljak **ZAPISI** prikazuje sve što ste igdje skenirali, bez obzira na kojoj ste lokaciji sada, pa ondje tražite posao koji ste ostavili na drugoj lokaciji.
 
-Za pregled onoga što ste skenirali, stavku po stavku i skeniranje po skeniranje, koristite odjeljak **ZAPISI** na glavnom izborniku ([§7a](#s7a)). On je zamijenio staru traku „zadnjih skeniranja”, koja je sve zaboravljala čim biste napustili ovaj ekran.
+Za pregled onoga što ste skenirali, stavku po stavku i skeniranje po skeniranje, koristite odjeljak **ZAPISI** na glavnom izborniku ([§7a](#7a-odjeljak-zapisi)). On je zamijenio staru traku „zadnjih skeniranja”, koja je sve zaboravljala čim biste napustili ovaj ekran.
 
 ### 9.2 Skeniranje
 
@@ -257,11 +246,10 @@ Skenirati možete na tri načina:
 
 **Što se događa kad skenirate:**
 - **Poklapa se sa stavkom** → skenirana količina te stavke raste (obično za 1 ili za onoliko koliko dokument određuje po skeniranju), a status stavke i dokumenta odmah se ažurira. **Popis također skoči na tu stavku i označi je** — boja joj se pojača oko pet sekundi, a zatim izblijedi natrag. Tako na dugom dokumentu na prvi pogled vidite što ste upravo skenirali, umjesto da to tražite. Ako je stavka već bila na ekranu, popis ostaje gdje jest i označava je samo boja.
-- **Ne poklapa se ni s jednom stavkom** → ništa se ne bilježi. Vidjet ćete poruku „Barkod nije pronađen”, a traka za skeniranje kratko zatreperi crveno, da znate da se nije poklopio ni s jednom stvarnom stavkom (vidi [§2.3](#s2-3)).
+- **Ne poklapa se ni s jednom stavkom** → ništa se ne bilježi. Vidjet ćete poruku „Barkod nije pronađen”, a traka za skeniranje kratko zatreperi crveno, da znate da se nije poklopio ni s jednom stvarnom stavkom (vidi [§2.3](#23-neusklađena-skeniranja)).
 
 **Kamera i hardverski okidač na istom ekranu**: za isti artikl nemojte i usmjeriti kameru na barkod i povući fizički okidač. To su dva odvojena puta skeniranja, pa ako za ono što smatrate jednim skeniranjem napravite oboje, može se zabilježiti dvaput. Za jedno skeniranje koristite jedno ili drugo.
 
-<a id="s9-3"></a>
 ### 9.3 Ručna izmjena stavke
 
 Dodirnite bilo koju stavku da otvorite njezin detaljni prikaz, gdje možete:
@@ -271,7 +259,7 @@ Dodirnite bilo koju stavku da otvorite njezin detaljni prikaz, gdje možete:
 
 Upisana ukupna količina **zamjenjuje** količinu stavke, ne dodaje joj se.
 
-**Što se događa s pojedinačnim zapisima.** Povećanje količine dodaje jedan novi zapis za razliku, točno kao što bi to učinilo skeniranje. Smanjenje poništava vaša **najnovija** skeniranja i tu staje — stariji zapisi ostaju točno kakvi su bili, sa svojim vremenom i imenom onoga tko ih je napravio. Ako stavku čine tri zasebna skeniranja po 1 i pritisnete −1, dva od ta tri ostaju netaknuta. Sve to možete vidjeti u stablu ZAPISA ([§7a](#s7a)).
+**Što se događa s pojedinačnim zapisima.** Povećanje količine dodaje jedan novi zapis za razliku, točno kao što bi to učinilo skeniranje. Smanjenje poništava vaša **najnovija** skeniranja i tu staje — stariji zapisi ostaju točno kakvi su bili, sa svojim vremenom i imenom onoga tko ih je napravio. Ako stavku čine tri zasebna skeniranja po 1 i pritisnete −1, dva od ta tri ostaju netaknuta. Sve to možete vidjeti u stablu ZAPISA ([§7a](#7a-odjeljak-zapisi)).
 
 **Što ne možete smanjiti.** Ako je dio ove stavke već poslan u vanjski sustav — što se događa kad je slanje prekinuto na pola puta — detaljni prikaz to kaže (*„3 već poslano”*) i količina neće pasti ispod tog broja. Gumb −1 tu staje, a upis manjeg broja odbija se uz objašnjenje.
 
@@ -283,24 +271,22 @@ Ako na dokumentu ima bilo kakvog skeniranja, u gornjoj traci pojavljuje se mali 
 
 ### 9.5 Napuštanje ekrana
 
-Dodir na natrag vraća vas izravno na popis dokumenata — napredak se sprema dok skenirate, pa nema što potvrđivati. Pošaljite zasebno kad budete spremni (vidi [§12](#s12)).
+Dodir na natrag vraća vas izravno na popis dokumenata — napredak se sprema dok skenirate, pa nema što potvrđivati. Pošaljite zasebno kad budete spremni (vidi [§12](#12-slanje-dokumenata)).
 
 ---
 
-<a id="s10"></a>
 ## 10. Upozorenja koja možete vidjeti
 
 | Upozorenje | Kada se pojavljuje | Što učiniti |
 |---|---|---|
 | **Prekoračeno** | Skenirali ste više od očekivane količine za stavku (ako je uključena postavka „Upozori pri prekoračenju”) | Samo informacija — dodirnite U redu. Višak je i dalje zabilježen (prikazuje se plavo, kao „Prekoračenje”). |
-| **Neusklađena jedinica mjere** | Koristili ste [posebni format barkoda](#s11), a skenirana jedinica mjere ne odgovara onoj koju dokument očekuje za taj artikl | Informacija — skeniranje je zabilježeno sa skeniranom količinom. Dodirnite U redu i javite uredu ako izgleda kao stvarna razlika. |
+| **Neusklađena jedinica mjere** | Koristili ste [posebni format barkoda](#11-posebni-format-barkoda-barkodjmkoličina), a skenirana jedinica mjere ne odgovara onoj koju dokument očekuje za taj artikl | Informacija — skeniranje je zabilježeno sa skeniranom količinom. Dodirnite U redu i javite uredu ako izgleda kao stvarna razlika. |
 | **Barkod nije pronađen** | Skenirali ste nešto što nije očekivani artikl na ovom dokumentu | Ništa nije zabilježeno — provjerite artikl i dokument, pa skenirajte ponovno. |
 
 Nijedno od ovih upozorenja ne blokira niti poništava vaše skeniranje — sva su to obavijesti „obratite pažnju”. Kad vidite dijalog, skeniranje je već zabilježeno.
 
 ---
 
-<a id="s11"></a>
 ## 11. Posebni format barkoda (Barkod\|JM\|Količina)
 
 Neke tiskane etikete kodiraju više od samog artikla — u barkodu mogu nositi i jedinicu mjere i količinu, odvojene okomitom crtom (`|`), na primjer:
@@ -319,7 +305,6 @@ To znači: barkod `NTR1234|M|5.6` (za uspoređivanje se koristi **cijeli niz**, 
 
 ---
 
-<a id="s12"></a>
 ## 12. Slanje dokumenata
 
 Dodirnite **POŠALJI** na bilo kojem popisu dokumenata (ili gumb za slanje na ekranu skeniranja). Time se vaša zabilježena skeniranja šalju natrag u vanjski sustav.
@@ -331,7 +316,6 @@ Dodirnite **POŠALJI** na bilo kojem popisu dokumenata (ili gumb za slanje na ek
 
 ---
 
-<a id="s13"></a>
 ## 13. Rješavanje grešaka pri slanju
 
 Otvorite karticu **Greške** (s popisa dokumenata ili iz Pregleda) i dodirnite neuspjeli dokument. Vidjet ćete:
@@ -345,7 +329,6 @@ Greške možete i skupno **obrisati** s kartice Greške na popisu dokumenata ili
 
 ---
 
-<a id="s14"></a>
 ## 14. Pregled dokumenata
 
 Do njega dolazite dodirom na karticu DANAS na glavnom izborniku. To je prikaz preko svih vrsta dokumenata, s tri kartice:
@@ -358,7 +341,6 @@ Prazna kartica umjesto praznog ekrana prikazuje zelenu kvačicu i „Nema proble
 
 ---
 
-<a id="s15"></a>
 ## 15. Filtriranje dokumenata
 
 Ikona lijevka (gore desno na popisu dokumenata ili u Pregledu) otvara ekran filtra kojim sužavate prikaz:
@@ -372,7 +354,6 @@ Dodirnite **Poništi** da sve obrišete ili **Primijeni** za potvrdu. Ikona lije
 
 ---
 
-<a id="s16"></a>
 ## 16. Postavke — objašnjenje svake opcije
 
 Postavke otvarate ikonom zupčanika na glavnom izborniku. **Promjene se spremaju tek pri izlasku** — ništa se ne sprema dok ne napustite ekran. Ako ste nešto promijenili, aplikacija pita **„Spremiti postavke prije izlaska?”**, uz **Da** (spremi) i **Ne** (odbaci sve što ste upravo promijenili).
@@ -409,7 +390,7 @@ Jedan redak, **„Poslužitelj i krajnje točke”**, koji otvara postavke veze 
 | **Izvezi podatke** | Sprema potpuni ispis svega što je na uređaju u datoteku — korisno ako IT podrška zatraži dijagnostičke podatke. |
 | **Umetni zadane postavke sustava** | Omogućuje IT-u ili konzultantima da učitaju, preuzmu ili uvezu početnu konfiguraciju veze s vanjskim sustavom. Preuzeta kopija namjerno ne sadrži ključ za prijavu QR kodom, pa ju je sigurno dijeliti; uvoz takve datoteke ne dira ključ koji je već na uređaju. U svakodnevnom radu to obično ne trebate. |
 | **Obriši predmemoriju** *(crveno — briše podatke)* | Briše **vašu** prijavu, dokumente i skeniranja. Drugi operateri na ovom uređaju i postava samog uređaja ostaju netaknuti. Traži potvrdu. Koristite samo kad vam to kaže podrška. |
-| **Operateri na ovom uređaju** | Pod Korisničkim računom. Prikazuje sve koji su se ikad ovdje prijavili i omogućuje uklanjanje pojedinog operatera — vidi [§18a](#s18a). |
+| **Operateri na ovom uređaju** | Pod Korisničkim računom. Prikazuje sve koji su se ikad ovdje prijavili i omogućuje uklanjanje pojedinog operatera — vidi [§18a](#18a-uklanjanje-operatera-s-uređaja). |
 | **Izbriši sve dokumente i zapise** *(crveno — briše podatke)* | Briše sve preuzete dokumente i skeniranja, ali **zadržava** vaše postavke i prijavu. Traži potvrdu. Koristite je kad želite potpuno očistiti radne podatke bez ponovne prijave. |
 
 ### Informacije o sustavu
@@ -420,7 +401,6 @@ Prikazuje tko je trenutno prijavljen i opciju **Odjavi se** (odmah, bez potvrde)
 
 ---
 
-<a id="s17"></a>
 ## 17. Prijava i odjava
 
 - Prijava se automatski traži prvi put kad aplikacija treba komunicirati s vanjskim sustavom (preuzimanje, slanje ili osvježavanje lokacija).
@@ -429,14 +409,13 @@ Prikazuje tko je trenutno prijavljen i opciju **Odjavi se** (odmah, bez potvrde)
 
 ---
 
-<a id="s18"></a>
 ## 18. Česte situacije i što učiniti
 
 ### 18.1 „Vrsta dokumenta zaključana je ikonom lokota”
-Vjerojatno nemate odabranu lokaciju ili vaša tvrtka još nije postavila tu vrstu dokumenta. Odaberite lokaciju ([§5](#s5)) i pokušajte ponovno; ako je i dalje zaključana, obratite se administratoru.
+Vjerojatno nemate odabranu lokaciju ili vaša tvrtka još nije postavila tu vrstu dokumenta. Odaberite lokaciju ([§5](#5-odabir-lokacije-i-centra-odgovornosti)) i pokušajte ponovno; ako je i dalje zaključana, obratite se administratoru.
 
 ### 18.2 „Skenirana je pogrešna količina”
-Dodirnite stavku pa upotrijebite −1/+1 ili dodirnite broj i izravno upišite točnu ukupnu količinu — ona zamjenjuje zabilježenu količinu stavke, ne dodaje joj se. Ne možete ići ispod onoga što je već poslano u vanjski sustav; vidi [§9.3](#s9-3).
+Dodirnite stavku pa upotrijebite −1/+1 ili dodirnite broj i izravno upišite točnu ukupnu količinu — ona zamjenjuje zabilježenu količinu stavke, ne dodaje joj se. Ne možete ići ispod onoga što je već poslano u vanjski sustav; vidi [§9.3](#93-ručna-izmjena-stavke).
 
 ### 18.2a „Ne mogu pronaći jučerašnji posao”
 Provjerite ime s kojim ste se prijavili. Vaši dokumenti i skeniranja pripadaju vama, pa prijava pod tuđim imenom prikazuje tuđi posao, ne vaš. Odjavite se, prijavite se kao vi i sve će biti ondje gdje ste ostavili.
@@ -458,7 +437,7 @@ Nešto još ide prema vanjskom sustavu ili dolazi iz njega. Pričekajte da zavr�
 Za odbijeno skeniranje nikad se ništa ne bilježi, pa nema što poništavati — samo otkrijte u čemu je razlika i skenirajte ponovno. Najčešći uzroci:
 - na krivom ste dokumentu (provjerite broj dokumenta u gornjoj traci),
 - barkod na etiketi ne odgovara znak po znak onome na dokumentu (ponovni ispis, druga simbologija ili suvišni znakovi),
-- ako je riječ o posebnoj etiketi `Barkod|JM|Količina`, vidi [§18.7](#s18-7).
+- ako je riječ o posebnoj etiketi `Barkod|JM|Količina`, vidi [§18.7](#187-barkod-se-skenirao-kao-besmislica-ili-s-krivim-znakovima).
 
 Ako ste sigurni da artikl doista pripada dokumentu, a i dalje se ne poklapa, javite uredu — podatke dokumenta možda treba ispraviti u vanjskom sustavu.
 
@@ -471,13 +450,11 @@ Otvorite dokument s kartice **Greške**, pročitajte točan razlog i dodirnite *
 ### 18.6 „Želim dokument početi potpuno ispočetka”
 Otvorite ga iz **ZAPISA** na glavnom izborniku, pritisnite i držite karticu sažetka na vrhu oko 5 sekundi i potvrdite. Time se brišu sva skeniranja koja još nisu poslana. Skeniranja koja je vanjski sustav već prihvatio ostaju — ondje su zabilježena, a potvrda vam kaže koliko ih je.
 
-<a id="s18-7"></a>
 ### 18.7 „Barkod se skenirao kao besmislica ili s krivim znakovima”
 Ako je riječ o posebnoj etiketi `Barkod|JM|Količina`, provjerite s uredom je li tiskana kao **Code 128** — starija simbologija Code 39 ne može ispravno prikazati znak `|` i skenira se kao besmislica.
 
 ---
 
-<a id="s18a"></a>
 ## 18a. Uklanjanje operatera s uređaja
 
 Kad netko ode ili se uređaj trajno preda drugome, njegovo se ime može ukloniti s uređaja: **Postavke → Korisnički račun → Operateri na ovom uređaju**, zatim crvena kanta pokraj imena.
@@ -496,7 +473,6 @@ Osoba uklonjena na ovaj način nije blokirana: može se ponovno prijaviti na taj
 
 ---
 
-<a id="s19"></a>
 ## 19. Pojmovnik
 
 | Pojam | Značenje |
