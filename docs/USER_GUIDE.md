@@ -90,7 +90,7 @@ Two of you can work the same document at the same time. Each of you has your own
 
 **Setting up a brand-new device comes before all of this.** A device fresh out of the box does not know where the central system is, and the sign-in screen cannot confirm a password without it. So the sign-in screen has an **External system setup** button that opens the connection settings without signing in — normally IT or a consultant picks the company there once, which fills in every address, and from then on everyone just signs in.
 
-**Every sign-in needs the central system** to be reachable, because only it can confirm your password. If it is down, nobody can open the app — including you, and including work you have already scanned. That work is not lost: it stays on the device and is waiting when the system answers again.
+**Every sign-in needs the central system to be reachable**, because only it can confirm your password. If it is down, nobody can open the app — including you, and including work you have already scanned. That work is not lost: it stays on the device and is waiting when the system answers again.
 
 When you first open the app:
 

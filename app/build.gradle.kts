@@ -17,8 +17,8 @@ android {
         applicationId = "com.prima.barcode"
         minSdk = 26
         targetSdk = 36
-        versionCode = 78
-        versionName = "3.6.3"
+        versionCode = 79
+        versionName = "3.6.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
