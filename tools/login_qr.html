@@ -39,17 +39,19 @@
   .hint { font-size: 12px; color: var(--ink3); margin-top: 6px; }
   .msg { font-size: 13px; margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: #fbeaea; color: var(--red); }
   #out { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 320px; }
-  #qr { max-width: 100%; height: auto; image-rendering: pixelated; }
-  #outUser { font: 600 16px ui-monospace, Consolas, monospace; margin-top: 8px; word-break: break-all; }
+  /* Smooth on screen, where the canvas is scaled down and the display name would break up under
+     nearest-neighbour scaling; pixelated in print, where the code's edges matter more. */
+  #qr { max-width: 100%; height: auto; }
+  #outUser { font: 13px ui-monospace, Consolas, monospace; color: var(--ink3); margin-top: 10px; word-break: break-all; }
   #outMeta { font-size: 12px; color: var(--ink3); margin-top: 4px; }
   .actions { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
   .empty { color: var(--ink3); font-size: 14px; }
   @media print {
-    header, #form, .actions, #outMeta { display: none !important; }
+    header, #form, .actions, #outUser, #outMeta { display: none !important; }
     body { background: #fff; }
     main { display: block; padding: 0; }
     .card { border: none; padding: 0; }
-    #qr { width: 7cm; }
+    #qr { width: 7cm; image-rendering: pixelated; }
   }
 </style>
 </head>
@@ -70,12 +72,16 @@
     <input id="user" type="text" autocomplete="off" spellcheck="false" placeholder="PRIMA-COMMERCE\ime">
     <div class="hint">Kao pri prijavi: <code>DOMENA\ime</code> ili <code>ime@domena</code>, s jednom kosom crtom.</div>
 
+    <label for="display">Ime za prikaz</label>
+    <input id="display" type="text" autocomplete="off" spellcheck="false">
+    <div class="hint">Natpis ispod QR koda na slici i pri ispisu; nije dio koda. Prati korisničko ime dok ga ne promijeniš, i ponovno kad nakon izrade koda upišeš sljedeće korisničko ime. Prazno polje znači sliku bez natpisa.</div>
+
     <label for="pass">Lozinka</label>
     <div class="field">
       <input id="pass" type="password" autocomplete="new-password" spellcheck="false">
       <button type="button" data-toggle="pass">Prikaži</button>
     </div>
-    <div class="hint">Razmaci na početku i na kraju dio su lozinke. Gumb Očisti briše ime i lozinku.</div>
+    <div class="hint">Razmaci na početku i na kraju dio su lozinke. Gumb Očisti briše korisničko ime, ime za prikaz i lozinku.</div>
 
     <button class="primary" id="make" type="button">Napravi QR kod</button>
     <div class="msg" id="msg" hidden></div>
@@ -452,19 +458,86 @@ function qrPenalty(modules) {
 const $ = function (id) { return document.getElementById(id); };
 const SCALE = 8, BORDER = 4; // same as the Python tool
 
-function drawQr(canvas, modules) {
+// The display name under the code, in canvas pixels. Sizes follow the module size, so a denser
+// code gets a proportionally larger name; it may take two lines before it starts to shrink.
+// Same rules as make_login_qr.py --name.
+const LABEL_MAX = 4 * SCALE, LABEL_MIN = 2 * SCALE, LABEL_MAX_LINES = 2;
+const LABEL_FAMILY = 'system-ui, "Segoe UI", Roboto, Arial, sans-serif';
+const measure = document.createElement('canvas').getContext('2d');
+
+function labelFont(size) { return '600 ' + size + 'px ' + LABEL_FAMILY; }
+
+// Greedy word wrap at the font currently set on `measure`. A single word wider than the line is
+// left whole; the caller sees that it does not fit and tries a smaller size.
+function wrapWords(text, maxWidth) {
+  const lines = [];
+  let line = '';
+  for (const word of text.split(/\s+/)) {
+    const candidate = line ? line + ' ' + word : word;
+    if (!line || measure.measureText(candidate).width <= maxWidth) line = candidate;
+    else { lines.push(line); line = word; }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+// Last resort, for a name that is too wide even at the smallest size: break wherever a line is full.
+function wrapChars(text, maxWidth) {
+  const lines = [];
+  let line = '';
+  for (const ch of text) {
+    if (line && measure.measureText(line + ch).width > maxWidth) {
+      lines.push(line.trimEnd());
+      line = ch.trim() ? ch : '';
+    } else {
+      line += ch;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+// The largest size, from LABEL_MAX down, at which the name fits on LABEL_MAX_LINES lines no wider
+// than the code itself.
+function layoutLabel(text, maxWidth) {
+  for (let size = LABEL_MAX; size >= LABEL_MIN; size -= 2) {
+    measure.font = labelFont(size);
+    const lines = wrapWords(text, maxWidth);
+    const fits = lines.every(function (l) { return measure.measureText(l).width <= maxWidth; });
+    if (fits && lines.length <= LABEL_MAX_LINES) return { size: size, lines: lines };
+  }
+  measure.font = labelFont(LABEL_MIN);
+  return { size: LABEL_MIN, lines: wrapChars(text, maxWidth) };
+}
+
+// Draws the code, and under it the display name when there is one, into the one canvas that is
+// shown, printed and saved, so all three are the same picture. The name goes below the code's
+// quiet zone, never into it: those four light modules around the code are what a scanner uses to
+// find its edge.
+function render() {
+  const canvas = $('qr');
+  const modules = currentModules;
   const n = modules.length;
-  const px = (n + BORDER * 2) * SCALE;
-  canvas.width = px;
-  canvas.height = px;
+  const side = (n + BORDER * 2) * SCALE;
+  const name = $('display').value.trim();
+  const label = name ? layoutLabel(name, n * SCALE) : null;
+  const lineHeight = label ? Math.round(label.size * 1.25) : 0;
+  canvas.width = side;
+  canvas.height = label ? side + label.lines.length * lineHeight + BORDER * SCALE : side;
   const g = canvas.getContext('2d');
   g.fillStyle = '#fff';
-  g.fillRect(0, 0, px, px);
+  g.fillRect(0, 0, canvas.width, canvas.height);
   g.fillStyle = '#000';
   for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
       if (modules[y][x]) g.fillRect((x + BORDER) * SCALE, (y + BORDER) * SCALE, SCALE, SCALE);
     }
+  }
+  if (label) {
+    g.font = labelFont(label.size);
+    g.textAlign = 'center';
+    g.textBaseline = 'top';
+    label.lines.forEach(function (line, i) { g.fillText(line, side / 2, side + i * lineHeight); });
   }
 }
 
@@ -479,6 +552,27 @@ function fileNameFor(username) {
 }
 
 let currentUser = '';
+let currentModules = null;  // the code on screen, or null when there is none
+// The display name follows the user name until someone edits it by hand; from then on it is their
+// text, until the next person's code starts — Očisti, or a new user name after a code was made.
+let displayLinked = true;
+const EMPTY_TEXT = $('empty').textContent;
+
+// A code on screen was made from the key, user name and password as they were then. Once any of
+// them changes it no longer matches them, and with the display name following the user name,
+// saving it would put one person's name under another person's code. So it goes, and has to be
+// made again. Editing the display name alone keeps the code: that is only its caption.
+function invalidate() {
+  if (!currentModules) return;
+  currentModules = null;
+  currentUser = '';
+  $('qr').hidden = true;
+  $('actions').hidden = true;
+  $('outUser').textContent = '';
+  $('outMeta').textContent = '';
+  $('empty').textContent = 'Podaci su promijenjeni. Napravi QR kod ponovno.';
+  $('empty').hidden = false;
+}
 
 async function make() {
   showError('');
@@ -499,12 +593,13 @@ async function make() {
   try {
     const payload = await encryptLogin(keyB64, username, password);
     const qr = encodeQr(payload);
-    drawQr($('qr'), qr.modules);
+    currentModules = qr.modules;
     currentUser = username;
+    render();
     $('qr').hidden = false;
     $('empty').hidden = true;
     $('actions').hidden = false;
-    $('outUser').textContent = username;
+    $('outUser').textContent = 'Korisničko ime u kodu: ' + username;
     $('outMeta').textContent = payload.length + ' znakova · QR verzija ' + qr.version + ' · ispravak pogrešaka H';
   } catch (e) {
     showError(e.message || String(e));
@@ -513,13 +608,17 @@ async function make() {
 
 function clearAll() {
   $('user').value = '';
+  $('display').value = '';
   $('pass').value = '';
+  displayLinked = true;
+  currentModules = null;
+  currentUser = '';
   $('qr').hidden = true;
   $('actions').hidden = true;
+  $('empty').textContent = EMPTY_TEXT;
   $('empty').hidden = false;
   $('outUser').textContent = '';
   $('outMeta').textContent = '';
-  currentUser = '';
   showError('');
   $('user').focus();
 }
@@ -534,6 +633,20 @@ document.querySelectorAll('[data-toggle]').forEach(function (btn) {
 });
 $('make').addEventListener('click', make);
 $('pass').addEventListener('keydown', function (e) { if (e.key === 'Enter') make(); });
+$('user').addEventListener('input', function () {
+  // A new user name once a code has been made is the next person's code. The display name
+  // follows it again rather than carrying the last person's name over: without this, a code made
+  // for one operator would be saved under the previous operator's name.
+  if (currentModules) displayLinked = true;
+  if (displayLinked) $('display').value = $('user').value.trim();
+  invalidate();
+});
+$('display').addEventListener('input', function () {
+  displayLinked = false;
+  if (currentModules) render();
+});
+$('key').addEventListener('input', invalidate);
+$('pass').addEventListener('input', invalidate);
 $('print').addEventListener('click', function () { window.print(); });
 $('clear').addEventListener('click', clearAll);
 $('save').addEventListener('click', function () {
