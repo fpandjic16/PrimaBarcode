@@ -114,14 +114,14 @@ Ovo je početni ekran na koji dolazite svaki put kad otvorite aplikaciju.
   - ikonu i naziv vrste,
   - tanku traku u bojama (ako ima aktivnosti) koja pokazuje omjer statusa dokumenata te vrste,
   - broj dokumenata te vrste koje trenutno imate.
-  - Dodir na redak otvara **popis dokumenata** te vrste. Ako se vrsta još ne može otvoriti — nije odabrana lokacija ni centar odgovornosti — aplikacija vam to kaže umjesto da ne učini ništa.
+  - Dodir na redak otvara **popis dokumenata** te vrste. Ako se vrsta još ne može otvoriti — nije odabrana lokacija ni centar odgovornosti — aplikacija vam to kaže umjesto da ne učini ništa. Reklamacija traži centar odgovornosti, a sve ostale vrste lokaciju.
 - **Redak ZAPISI**, pod vlastitim naslovom: otvara popis svih dokumenata u koje ste išta skenirali, svih vrsta. Kad niste ništa skenirali, pokazuje nulu. Vidi [§7a](#7a-odjeljak-zapisi).
 
 ---
 
 ## 5. Odabir lokacije i centra odgovornosti
 
-> **Nakon ažuriranja aplikacije najprije učinite ovo.** Popis lokacija ponovno se dohvaća umjesto da se prenese, a vaša se radna lokacija sada pamti po osobi, a ne po uređaju — pa oboje počinje prazno. Otvorite ovaj ekran, dodirnite **Osvježi** da dohvatite lokacije, pa odaberite svoju. Dok to ne učinite, traka na vrhu glavnog izbornika pokazuje `—`, a popisi dokumenata izgledat će krivo: neke vrste prikazat će sve bez filtriranja, druge će izgledati prazne. Sve što ste već skenirali cijelo vrijeme ostaje vidljivo.
+> **Nakon ažuriranja aplikacije najprije učinite ovo.** Popis lokacija ponovno se dohvaća umjesto da se prenese, a vaša se radna lokacija sada pamti po osobi, a ne po uređaju — pa oboje počinje prazno. Otvorite ovaj ekran, dodirnite **Osvježi** da dohvatite lokacije, pa odaberite svoju. Dok to ne učinite, traka na vrhu glavnog izbornika pokazuje `—` i nijedan se popis dokumenata ne otvara: dodir na vrstu dokumenta kaže da najprije odaberete lokaciju ili centar odgovornosti. Sve što ste već skenirali cijelo vrijeme ostaje vidljivo u **ZAPISIMA**.
 
 Ovaj ekran otvarate dodirom na bilo koju od dvije oznake na glavnom izborniku.
 
@@ -331,7 +331,7 @@ Greške možete i skupno **obrisati** s kartice Greške na popisu dokumenata ili
 Do njega dolazite dodirom na karticu DANAS na glavnom izborniku. To je prikaz preko svih vrsta dokumenata, s tri kartice:
 
 - **Greške** — svaki neuspjeli dokument, svih vrsta.
-- **Moja lokacija** — svaki dokument na vašoj trenutnoj lokaciji ili CC-u, svih vrsta.
+- **Moja lokacija** — svaki dokument na vašoj trenutnoj lokaciji i svaka reklamacija vašeg trenutnog centra odgovornosti. Prazno dok ništa nije odabrano.
 - **Sve** — svaki dokument na uređaju, bez filtriranja.
 
 Prazna kartica umjesto praznog ekrana prikazuje zelenu kvačicu i „Nema problema”. Ako na trenutnoj kartici ima dokumenata sa skeniranjima, na dnu se pojavljuje gumb **Pošalji** kojim ih šaljete sve odjednom.
@@ -408,8 +408,8 @@ Prikazuje tko je trenutno prijavljen i opciju **Odjavi se** (odmah, bez potvrde)
 
 ## 18. Česte situacije i što učiniti
 
-### 18.1 „Vrsta dokumenta zaključana je ikonom lokota”
-Vjerojatno nemate odabranu lokaciju ili vaša tvrtka još nije postavila tu vrstu dokumenta. Odaberite lokaciju ([§5](#5-odabir-lokacije-i-centra-odgovornosti)) i pokušajte ponovno; ako je i dalje zaključana, obratite se administratoru.
+### 18.1 „Dodir na vrstu dokumenta kaže da treba odabrati lokaciju”
+Svaka vrsta dokumenta traži da najprije nešto odaberete: **Reklamacija** centar odgovornosti, a sve ostale vrste lokaciju. Odaberite ih na ekranu lokacije i CC-a ([§5](#5-odabir-lokacije-i-centra-odgovornosti)) i pokušajte ponovno — odabirom lokacije postavlja se i njezin centar odgovornosti. Lokacija koje više nema na popisu računa se kao da nije odabrana, pa je odaberite ponovno. Ako nema lokacija za odabir, najprije na tom ekranu dodirnite **Osvježi**.
 
 ### 18.2 „Skenirana je pogrešna količina”
 Dodirnite stavku pa upotrijebite −1/+1 ili dodirnite broj i izravno upišite točnu ukupnu količinu — ona zamjenjuje zabilježenu količinu stavke, ne dodaje joj se. Ne možete ići ispod onoga što je već poslano u vanjski sustav; vidi [§9.3](#93-ručna-izmjena-stavke).

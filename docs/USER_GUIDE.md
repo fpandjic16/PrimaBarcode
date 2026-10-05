@@ -112,14 +112,14 @@ This is the home screen you land on every time you open the app.
   - An icon and the type's name.
   - A thin colored mini-bar (if there's any activity) previewing the mix of statuses across that type's documents.
   - A count of how many documents of that type you currently have.
-  - Tapping a row opens that type's **Document List**. If the type can't be opened yet — no location or responsibility centre selected — the tap tells you so instead of doing nothing.
+  - Tapping a row opens that type's **Document List**. If the type can't be opened yet — no location or responsibility centre selected — the tap tells you so instead of doing nothing. Complaint needs a responsibility centre; every other type needs a location.
 - **RECORDINGS row**, under its own heading: opens the list of every document you have scanned anything into, across all types. Reads zero when you have scanned nothing. See [§7a](#7a-the-recordings-section).
 
 ---
 
 ## 5. Choosing Your Location & Responsibility Center
 
-> **After an app update, do this first.** The list of locations is re-fetched rather than carried over, and your working location is now remembered per person rather than per device — so both start empty. Open this screen, tap **Refresh** to fetch the locations, then pick yours. Until you do, the strip at the top of the Main Menu shows `—`, and document lists will look wrong: some types will show everything unfiltered, others will look empty. Anything you have already scanned stays visible throughout.
+> **After an app update, do this first.** The list of locations is re-fetched rather than carried over, and your working location is now remembered per person rather than per device — so both start empty. Open this screen, tap **Refresh** to fetch the locations, then pick yours. Until you do, the strip at the top of the Main Menu shows `—` and no document list opens: tapping a document type tells you to choose a location or responsibility centre first. Anything you have already scanned stays visible in **RECORDINGS** throughout.
 
 Open this screen by tapping either pill on the Main Menu.
 
@@ -329,7 +329,7 @@ You can also **Clear Errors** in bulk from a document list's Errors tab or the D
 Reached by tapping the "Today" card on the Main Menu. A cross-document-type view with three tabs:
 
 - **Errors** — every failed document, across all types.
-- **My Location** — every document at your current location/RC, across all types.
+- **My Location** — every document at your current location, and every complaint at your current responsibility centre. Empty while nothing is selected.
 - **All** — every document on the device, no filtering.
 
 An empty tab shows a friendly green checkmark and "No issues" rather than a blank screen. If there's anything with scan progress on the current tab, an **Upload** button appears at the bottom to send it all at once.
@@ -406,8 +406,8 @@ Shows who's currently signed in, and a **Sign out** option (immediate, no confir
 
 ## 18. Common Situations & What To Do
 
-### 18.1 "The document type is locked with a padlock icon"
-You likely don't have a location selected, or your company hasn't configured that document type yet. Pick a location ([§5](#5-choosing-your-location--responsibility-center)) and try again; if it's still locked, contact your administrator.
+### 18.1 "Tapping a document type says I need a location"
+Every document type needs something selected first: **Complaint** a responsibility centre, every other type a location. Pick them on the location and RC screen ([§5](#5-choosing-your-location--responsibility-center)) and try again — choosing a location fills in its responsibility centre as well. A location that has since disappeared from the list counts as none, so pick again. If there are no locations to choose from, tap **Refresh** on that screen first.
 
 ### 18.2 "I scanned the wrong quantity"
 Tap into the line and either use −1/+1, or tap the number to type the correct total directly — this replaces the line's recorded quantity, it doesn't add to it. You cannot go below whatever has already been sent to the central system; see [§9.3](#93-editing-a-line-manually).

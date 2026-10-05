@@ -152,7 +152,7 @@ These map 1:1 to the User Guide's Settings section but framed for support/consul
 | "NTLM not enabled" / "credentials rejected" on Test Connection | Distinguishes ERP-side NTLM misconfiguration (phase 0 — no challenge issued at all) from genuinely wrong credentials (phase 2 + 401) | `NtlmAuthenticator.phaseReached`, surfaced in the Test Connection result dialog's message |
 | A document with real progress "disappeared" from Orders | Nothing but a successful upload removes it. Downloads never delete a document holding recordings | Check the RECORDINGS section on the main menu, and the Errors tab |
 | An operator cannot see work they left yesterday | They are signed in as a different profile, or typed a name that normalises differently | The RECORDINGS section is per operator; check the name on the sign-in screen |
-| Documents stopped being filtered by location/RC after an update, or vanished entirely | The device has no locations yet (`SharedDatabase` starts empty) or the operator has no location selected (`lastLocationCode` is personal and starts blank). `rc == null` passes everything; `location == null` passes nothing | Refresh on `LocationRcPickScreen`, then pick a location. The context strip on the main menu shows `—` while nothing is selected |
+| Every document type answers "choose a location first", e.g. after an update or for a new operator | The device has no locations yet (`SharedDatabase` starts empty), or the operator has nothing selected (`lastLocationCode` / `lastRcCode` are personal and start blank), or the selected code is no longer on the list. A location-scoped type needs a location, a centre-scoped one (Complaint) a responsibility centre | Refresh on `LocationRcPickScreen`, then pick a location (its centre comes with it). The context strip on the main menu shows `—` while nothing is selected |
 | "Could not sign in" and the server is down | Expected. The ERP checks the password on every sign-in and there is no local fallback | Restore the connection. Nothing on the device is lost meanwhile, but nobody can open the app |
 | Sign-in succeeds against a URL that is not really NAV | It cannot any more: a 2xx with `NtlmAuthenticator.phaseReached == 0` is refused, because OkHttp only invokes the authenticator on a 401 and an endpoint that never challenges never checks the password | Enable Windows Authentication on the OData endpoint |
 | Barcode with `|` scans as garbage | Printed with Code 39 symbology, which cannot encode `|` | Reprint the label as Code 128 |
@@ -227,14 +227,14 @@ Two databases, and which one a table lives in is the whole of the per-user isola
 
 **Upgrading a device therefore starts with no locations and no responsibility centres.** `MIGRATION_18_19` drops those two tables from `PrimaDatabase` and `SharedDatabase` is created empty; `upsertLocations` has exactly one caller, `realDownloadLocations`, and nothing calls it automatically. The operator gets them back through **Refresh** on `LocationRcPickScreen`, which is deliberate — nothing downloads behind their back.
 
-That empty state is what makes the document filter look broken, and the two modes fail in opposite directions (see `filteredDocs` in `MainActivity`):
+That empty state used to make the document filter look broken, because the two modes failed in opposite directions: with nothing selected, a missing centre passed **everything** while a missing location passed **nothing**. Both modes now require their selection (see `filteredDocs` in `MainActivity`):
 
 ```kotlin
 DocTypeFilterMode.LOCATION              -> location != null && doc.sourceCode == location.code
-DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
+DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc != null && doc.rcCode == rc.code
 ```
 
-With nothing selected, `rc == null` passes **everything** while `location == null` passes **nothing** — so the same missing data reads as "the filter stopped working" on one document type and "my documents vanished" on another.
+and a type whose selection is missing cannot be opened at all (§B.11.4), so nothing selected now reads the same for every type: the main menu says to pick a location or centre.
 
 The *selected* location is a separate thing from the *list*: `lastLocationCode` / `lastRcCode` are personal settings and moved to `app_settings_<profile id>` with the split, so they start blank for every operator. Nothing repairs a blank pair on its own — `LaunchedEffect(rcs, rcCode)` only acts when `rcCode` is non-blank, and the location effect only when `rc != null`. Each operator picks once, on `LocationRcPickScreen`.
 
@@ -742,7 +742,7 @@ val matchedLine = doc.lines.find { it.barcodeNo == barcode }
 ### `MainMenuScreen.kt`
 `data class DocTypeSummary(type, count, statusMini: List<LineStatus>, blocked: Boolean = false)`. Home screen: `PrimaTopBar` → `DocumentStatsDashboard` (tap → Dashboard) → RC/Location pill row (either cell → Location/RC pick) → "DOCUMENTS" `LazyColumn` of type rows (icon, label, mini `StatusProgressBar`, count badge) → **"RECORDINGS"** section.
 
-A blocked type is *not* dimmed: it stays tappable and the tap raises the "choose a location first" dialog. Greying it out only told the operator "no" without telling them why.
+A blocked type is *not* dimmed: it stays tappable and the tap raises the "choose a location first" dialog. Greying it out only told the operator "no" without telling them why. A type is blocked while what it is scoped by is not selected — a location, or for Complaint a responsibility centre (§B.11.4).
 
 The RECORDINGS entry is **one row under its own header**, not a list: title, the total number of scans behind it, and the number of documents as the trailing figure (greyed at zero), shaped like a document-type row because from the operator's side that is what it is. It opens `RecordingsListScreen`. It used to render the documents inline, which on a good shift is dozens of rows pushing the document types — what the menu exists for — off the top of the screen. The header (`main_recordings_section_header`) is what keeps it from reading as an eighth document type, and **both header and row stay visible at zero**, so the screen keeps one shape.
 
@@ -754,7 +754,7 @@ Two tabs — **Orders** (`Downloaded`/`InProgress`/`PendingUpload`/`UploadFailed
 The third tab, **Recordings**, was removed along with the 5-second long-press that lived on it: the tab listed documents Orders already held, and the thing it was really for — seeing what has been scanned — is now the main menu's RECORDINGS section, which shows individual scans rather than the documents carrying them. The long-press moved to `RecordingsTreeScreen`'s summary card.
 
 ### `DocumentOverviewScreen.kt` (the "Dashboard")
-Cross-type view, 3 tabs: **Errors**, **My Location** (per-type `DocTypeFilterMode` match), **All**. Opening the filter from the "My Location" tab locks source/RC to the current selection. Empty-state green checkmark + "No issues" shown on any empty tab, not just Errors.
+Cross-type view, 3 tabs: **Errors**, **My Location** (per-type `DocTypeFilterMode` match; with nothing selected it shows nothing, and complaints only once a centre is selected), **All**. Opening the filter from the "My Location" tab locks source/RC to the current selection. Empty-state green checkmark + "No issues" shown on any empty tab, not just Errors.
 
 ### `DocumentFilterScreen.kt`
 Generic filter editor shared by DocumentListScreen and DocumentOverviewScreen. Sections: Status (multi-select chips), Document Type (checkboxes, hidden if `showDocTypeFilter=false`), Document Date (from/to, cross-clamping date pickers), Destination/Source code, Responsibility Center (dropdown-only `ExposedDropdownMenuBox`, or locked/greyed field if `lockedSourceCode`/`lockedRcCode` passed). Reset / Apply footer.
@@ -948,13 +948,18 @@ The startup pass is deliberately narrow — it only fills a gap, never overrides
 Nothing stored used to mean "leave it to the device locale", which needed a separate `savedLanguageOrNull()` to tell "never chose" from "chose English". With Croatian as the default that distinction is gone on purpose: these handhelds usually ship in English, and the app is meant to start in Croatian regardless. Adopting `autoStoreLocales` instead would also fix the original bug, but would put a second persistence mechanism alongside `AppSettings.language`; keeping the app's own store authoritative avoids the two disagreeing.
 
 ### B.11.4 `DocTypeFilterMode` — full effect trace
-Configured per document type in `ExtSystemConfigScreen` (persists **immediately**, not buffered like the rest of that screen — writes straight through `onDocTypeFiltersChange` → `appVm.saveSettings`). Consumed identically in three places in `MainActivity.kt` (main-menu filtering, doc-type "blocked" computation, and the `docs` route's `typeDocs`):
+Configured per document type in `ExtSystemConfigScreen` (persists **immediately**, not buffered like the rest of that screen — writes straight through `onDocTypeFiltersChange` → `appVm.saveSettings`). Consumed in `MainActivity.kt` for main-menu filtering and the `docs` route's `typeDocs`:
 ```kotlin
-when (docTypeFilters[doc.type.key] ?: DocTypeFilterMode.LOCATION) {
+when (docTypeFilters[doc.type.key] ?: doc.type.defaultFilterMode) {
     LOCATION -> location != null && doc.sourceCode == location.code
-    RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
+    RESPONSIBILITY_CENTER -> rc != null && doc.rcCode == rc.code
 }
 ```
+`location` and `rc` are the *resolved* selections: null when nothing is selected, and equally null when the selected code is no longer on the fetched list.
+
+**A type cannot be opened without its selection.** The doc-type `blocked` flag is `location == null` for a location-scoped type and `rc == null` for a centre-scoped one. A blocked type stays tappable, and the tap shows the existing "choose a location first" dialog. The operator then goes to `LocationRcPickScreen` as usual; there is no shortcut button.
+
+The flag used to test the *list* instead (`locations.isEmpty()` / `rcs.isEmpty()`, and only when a locations URL was configured). Once any operator had refreshed locations, the next could open every list with nothing selected. Location-scoped types then showed nothing, and their download went out with no `Source_No` clause and fetched that type for every location: documents that landed on no list. A centre-scoped type showed every complaint in the company. The `download_filter` route repeats the check before sending anything and answers with the same text, as a second line behind the menu. The "My Location" tab of `DocumentOverviewScreen` follows the same rule: a blank code matches nothing. It used to match documents whose own code was blank.
 **No exemption for work already started.** This used to be OR'd with `doc.hasProgress`, so a document scanned into at one location bypassed the filter for good: move from CS165 to CS175 and CS165's documents were still listed, which made the filter meaningless as soon as a shift got going. The escape existed because in-progress work was otherwise unreachable from another location — the RECORDINGS section removed that reason, and `DocumentOverviewScreen`'s `atLocation` had never had the escape anyway, so dropping it made the rest of the app agree with the dashboard.
 
 Note the asymmetry that remains: LOCATION mode requires an explicit match (no location selected ⇒ nothing shows); RESPONSIBILITY_CENTER mode is permissive when nothing is selected (no RC selected ⇒ everything shows). Also drives which of Source/RC is fixed vs shown as a picker in `DownloadFilterScreen`, and gates `canCreateDoc` in the `docs` route.

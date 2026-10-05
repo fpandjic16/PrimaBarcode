@@ -80,11 +80,14 @@ fun DocumentOverviewScreen(
         }
     }
     val errors     = remember(filtered) { filtered.filter { it.state is DocState.UploadFailed } }
+    // The same rule as the document lists: nothing selected, nothing shown. A blank code used to
+    // match documents whose own code happened to be blank, so with no centre selected this tab
+    // showed exactly the complaints that had none.
     val atLocation = remember(filtered, locationCode, rcCode, docTypeFilters) {
         filtered.filter { doc ->
             when (docTypeFilters[doc.type.key] ?: doc.type.defaultFilterMode) {
-                DocTypeFilterMode.LOCATION -> doc.sourceCode == locationCode
-                DocTypeFilterMode.RESPONSIBILITY_CENTER -> doc.rcCode == rcCode
+                DocTypeFilterMode.LOCATION -> locationCode.isNotEmpty() && doc.sourceCode == locationCode
+                DocTypeFilterMode.RESPONSIBILITY_CENTER -> rcCode.isNotEmpty() && doc.rcCode == rcCode
             }
         }
     }

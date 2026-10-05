@@ -317,19 +317,29 @@ private fun PrimaBarcodeApp(
     //
     // `DocumentOverviewScreen`'s own `atLocation` has always been strict, so this brings the rest
     // of the app in line with the dashboard rather than inventing a rule.
+    //
+    // A type scoped by responsibility centre needs one selected, the same as a location-scoped
+    // type needs a location. No centre used to mean every centre, so an operator who had chosen
+    // nothing saw — and counted — every complaint in the company.
     val filteredDocs = documents.filter { doc ->
         when (docTypeFilters[doc.type.key] ?: doc.type.defaultFilterMode) {
             DocTypeFilterMode.LOCATION -> location != null && doc.sourceCode == location.code
-            DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
+            DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc != null && doc.rcCode == rc.code
         }
     }
 
-    val locationsManaged = extSystemConfig.locationsUrl.isNotBlank()
     val docTypes = DocumentType.entries.map { type ->
         val filterMode = docTypeFilters[type.key] ?: type.defaultFilterMode
-        val blocked = locationsManaged && when (filterMode) {
-            DocTypeFilterMode.LOCATION -> locations.isEmpty()
-            DocTypeFilterMode.RESPONSIBILITY_CENTER -> rcs.isEmpty()
+        // Blocked until the operator has selected what this type is scoped by — not merely until
+        // the device has a list to select from. The old test was the list: once any operator had
+        // refreshed locations, the next one could open every list with nothing selected. The
+        // location-scoped ones then showed nothing, and their download went out with no
+        // location at all and fetched every location's documents. `location` and `rc` are null
+        // both when nothing is selected and when the selected code is no longer on the list, and
+        // a list never fetched leaves nothing to select, so this one test covers all three.
+        val blocked = when (filterMode) {
+            DocTypeFilterMode.LOCATION -> location == null
+            DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null
         }
         DocTypeSummary(
             type = type,
@@ -715,7 +725,7 @@ private fun PrimaBarcodeApp(
                 doc.type == selectedDocType &&
                     when (docTypeFilters[selectedDocType.key] ?: selectedDocType.defaultFilterMode) {
                         DocTypeFilterMode.LOCATION -> location != null && doc.sourceCode == location.code
-                        DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc == null || doc.rcCode == rc.code
+                        DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc != null && doc.rcCode == rc.code
                     }
             }
             DocumentListScreen(
@@ -761,7 +771,9 @@ private fun PrimaBarcodeApp(
             val initialTab = backStackEntry.arguments?.getInt("tab") ?: 0
             DocumentOverviewScreen(
                 locationCode = location?.code ?: "",
-                rcCode = rcCode,
+                // The resolved centre, like the location above: a code no longer on the list is
+                // no selection at all, and "Moja lokacija" then has nothing to show.
+                rcCode = rc?.code ?: "",
                 documents = documents,
                 onBack = { nav.popBackStack() },
                 onDocTap = { selected -> nav.navigate("recording/${selected.documentNo}/${selected.type.key}") },
@@ -822,6 +834,15 @@ private fun PrimaBarcodeApp(
             val dlFilterMode = docTypeFilters[selectedDocType.key] ?: selectedDocType.defaultFilterMode
             // For the debugger's list of addresses; DocumentType.display is the English constant.
             val docTypeLabel = selectedDocType.localizedDisplay()
+            // A second line behind the main menu, which already blocks the list in front of this
+            // screen until a location or centre is selected. Kept for what it guards: with nothing
+            // selected the request goes out with no location or centre in it and fetches the type
+            // for every one of them — documents that then show on no list.
+            val scopeSelected = when (dlFilterMode) {
+                DocTypeFilterMode.LOCATION -> location != null
+                DocTypeFilterMode.RESPONSIBILITY_CENTER -> rc != null
+            }
+            val scopeMissingText = stringResource(R.string.main_blocked_text)
             DownloadFilterScreen(
                 hasCredentials  = appVm.hasCredentials(),
                 loginQrKey      = extSystemConfig.loginQrKey,
@@ -835,15 +856,21 @@ private fun PrimaBarcodeApp(
                 onTestConnection = ::testSignIn,
                 onConfirm = { filter, username, password ->
                     if (username != null && password != null) appVm.saveCredentials(username, password)
-                    val urls = appVm.buildDownloadUrls(filter, selectedDocType).map { (_, url) -> "$docTypeLabel: $url" }
-                    launchWithDebug(urls) {
-                        processingMessage = R.string.processing_downloading
-                        appVm.realDownloadDocuments(filter, docType = selectedDocType) { failures, errors ->
-                            processingMessage = null
-                            nav.popBackStack()
-                            if (failures > 0) {
-                                downloadErrorMessage = errors.firstOrNull() ?: ""
-                                showDownloadErrorDialog = true
+                    if (!scopeSelected) {
+                        nav.popBackStack()
+                        downloadErrorMessage = scopeMissingText
+                        showDownloadErrorDialog = true
+                    } else {
+                        val urls = appVm.buildDownloadUrls(filter, selectedDocType).map { (_, url) -> "$docTypeLabel: $url" }
+                        launchWithDebug(urls) {
+                            processingMessage = R.string.processing_downloading
+                            appVm.realDownloadDocuments(filter, docType = selectedDocType) { failures, errors ->
+                                processingMessage = null
+                                nav.popBackStack()
+                                if (failures > 0) {
+                                    downloadErrorMessage = errors.firstOrNull() ?: ""
+                                    showDownloadErrorDialog = true
+                                }
                             }
                         }
                     }
