@@ -1,0 +1,2654 @@
+OBJECT Table 50015 Transport Sheet Header
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09.09.26;
+    Time=[ 9:41:18];
+    Modified=Yes;
+    Version List=PRIMA;
+  }
+  PROPERTIES
+  {
+    OnDelete=VAR
+               TransportListLine@50000 : Record 50016;
+             BEGIN
+               IF NOT (Status = Status::Open) THEN
+                 ERROR(TextError001);
+
+               TransportListLine.SETRANGE("Document No.","Document No.");
+               TransportListLine.DELETEALL;
+             END;
+
+    LookupPageID=Page50042;
+    DrillDownPageID=Page50042;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Document No.        ;Code20        ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Document No.;
+                                                              HRV=Br. dokumenta];
+                                                   Editable=No }
+    { 10  ;   ;Status              ;Option        ;OnValidate=VAR
+                                                                BarcodeMgmt@50000 : Codeunit 50106;
+                                                                BEMFMgmt@50001 : Codeunit 50107;
+                                                                BarcodeAppMgmt@50002 : Codeunit 50112;
+                                                              BEGIN
+                                                                // <ZGNVSUPPCO-1246>
+                                                                IF Rec.Status = Rec.Status::"Shipped - Awaiting Receipt" THEN BEGIN
+                                                                  BEMFMgmt.FillTransportSheetBarcodeEntries(Rec,FALSE);
+                                                                  BarcodeAppMgmt.FillTransportSheetBarcodeEntries(Rec,FALSE)
+                                                                END ELSE IF Rec.Status = Rec.Status::"Partially Shipped" THEN BEGIN
+                                                                  BEMFMgmt.FillPartiallyTransportSheetBarcodeEntries(Rec,FALSE);
+                                                                  BarcodeAppMgmt.FillPartiallyTransportSheetBarcodeEntries(Rec,FALSE);
+                                                                END ELSE IF Rec.Status = Rec.Status::"Partially Received" THEN BEGIN
+                                                                  BEMFMgmt.FillPartiallyReceivedTransportSheetBarcodeEntries(Rec,FALSE);
+                                                                  BarcodeAppMgmt.FillPartiallyReceivedTransportSheetBarcodeEntries(Rec,FALSE);
+                                                                END;
+
+                                                                IF Rec.Status = Rec.Status::Received THEN BEGIN
+                                                                  BEMFMgmt.DeleteBarcodeEntries(Rec."Document No.",DocType::Transport);
+                                                                  BarcodeAppMgmt.DeleteBarcodeEntries(Rec."Document No.",DocType::Transport);
+                                                                END;
+                                                                // </ZGNVSUPPCO-1246>
+                                                              END;
+
+                                                   DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Status;
+                                                              HRV=Status];
+                                                   OptionCaptionML=[ENU=Open,Shipped,Shipped - Awaiting Receipt,Received,Partially Shipped,Partially Received;
+                                                                    HRV=Otvoren,Otpremljen,Otpremljen - Ÿeka zaprimanje,Zaprimljen,DjelomiŸno otpremljen,DjelomiŸno zaprimljen];
+                                                   OptionString=Open,Shipped,Shipped - Awaiting Receipt,Received,Partially Shipped,Partially Received;
+                                                   Editable=No }
+    { 20  ;   ;Receiving Location  ;Code10        ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Receiving Location;
+                                                              HRV=æifra lokacije zaprimanja];
+                                                   Editable=No }
+    { 30  ;   ;Creation Date       ;Date          ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Creation Date;
+                                                              HRV=Datum kreiranja];
+                                                   Editable=No }
+    { 40  ;   ;Created by User     ;Code50        ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Created by User;
+                                                              HRV=Kreirao korisnik];
+                                                   Editable=No }
+    { 50  ;   ;Destination No.     ;Code20        ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Destination No.;
+                                                              HRV=æifra odrediçta];
+                                                   Editable=No }
+    { 50000;  ;Posting Date        ;Date          ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Posting Date;
+                                                              HRV=Datum knji§enja];
+                                                   Description=ZGNVSUPPCO-504;
+                                                   Editable=No }
+    { 50001;  ;Barcode Status      ;Option        ;OnValidate=VAR
+                                                                BEMFMgmt@50000 : Codeunit 50107;
+                                                                BarcodeMgmt@50003 : Codeunit 50106;
+                                                                BemLocErr@50004 : TextConst 'ENU=You cannot change status if location is not BE-Mobile.;HRV=Nije dozvoljena promjena ako lokacija nije BE-Mobile.';
+                                                                TransportSheetLine@50001 : Record 50016;
+                                                                UserSetup@50002 : Record 91;
+                                                                BarcodeStatusLbl@50005 : TextConst 'ENU=It is not possible to change %1 if %2 is not %3.;HRV=Nije mogu†e promijeniti %1 ako %2 nije %3.';
+                                                                BarcodeAppMgmt@50006 : Codeunit 50112;
+                                                              BEGIN
+                                                                // <ZGNVSUPPCO-1246>
+                                                                IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocType::Transport) THEN
+                                                                  ERROR(BemLocErr);
+
+                                                                IF Rec.Status <> Rec.Status::"Shipped - Awaiting Receipt" THEN
+                                                                  ERROR(BarcodeStatusLbl,Rec.FIELDCAPTION("Barcode Status"),Rec.FIELDCAPTION(Status),Rec.Status::"Shipped - Awaiting Receipt");
+
+                                                                IF Rec."Barcode Status" = Rec."Barcode Status"::Processed THEN BEGIN
+                                                                  BEMFMgmt.DeleteBarcodeEntries(Rec."Document No.", DocType::Transport);
+                                                                  BarcodeAppMgmt.DeleteBarcodeEntries(Rec."Document No.",DocType::Transport);
+                                                                END;
+
+                                                                IF Rec."Barcode Status" = Rec."Barcode Status"::Blank THEN BEGIN
+                                                                  TransportSheetLine.SETRANGE("Document No.",Rec."Document No.");
+                                                                  IF NOT TransportSheetLine.ISEMPTY() THEN
+                                                                    TransportSheetLine.MODIFYALL("Scanned Quantity",0);
+                                                                  BEMFMgmt.CheckScannedEntries(Rec."Document No.",DocType::Transport);
+                                                                END;
+
+                                                                UserSetup.GET(USERID);
+                                                                UserSetup.TESTFIELD("Scanned Barcodes Admin",TRUE);
+                                                                // </ZGNVSUPPCO-1246>
+
+                                                                BEMFMgmt.InsertTransportBarcodeStatusLog(Rec); // <ZGNVSUPPCO-1246/>
+                                                              END;
+
+                                                   DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Barcode Status;
+                                                              HRV=Barkod status];
+                                                   OptionCaptionML=[ENU=" ,Synchronized,Processed";
+                                                                    HRV=" ,Sinkronizirano,Procesuirano";
+                                                                    SLV=" ,Synchronized,Processed"];
+                                                   OptionString=Blank,Synchronized,Processed;
+                                                   Description=ZGNVSUPPCO-1246 }
+  }
+  KEYS
+  {
+    {    ;Document No.                            ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      TextError001@50000 : TextConst 'ENU=Transport Sheet with Shipped or Received Status cannot be deleted.;HRV=Transportni list u statusu Otpremljen ili Zaprimljen se ne mo§e obrisati.';
+      DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt';
+      TransportSheetMgmt@50002 : Codeunit 50093;
+
+    PROCEDURE InitInsert@50000();
+    BEGIN
+      IF "Document No." = '' THEN
+        AssignDocNo;
+
+      VALIDATE("Created by User",USERID);
+      VALIDATE("Creation Date",WORKDATE);
+    END;
+
+    LOCAL PROCEDURE AssignDocNo@50001();
+    VAR
+      NoSeriesMgt@50000 : Codeunit 396;
+      WarehouseSetup@50001 : Record 5769;
+      oldNosCode@50002 : Code[20];
+      newNosCode@50003 : Code[20];
+    BEGIN
+      WarehouseSetup.GET;
+      NoSeriesMgt.InitSeries(WarehouseSetup."Transport List Nos.",oldNosCode,TODAY,"Document No.",newNosCode);
+    END;
+
+    PROCEDURE PostTransportSheetShipments@50002() : Boolean;
+    VAR
+      InventoryandLogisticsMgt@50000 : Codeunit 50025;
+    BEGIN
+      // <PRICO-2025-01>
+      TransportSheetMgmt.PostTransportSheetShipment(Rec);
+      //EXIT(InventoryandLogisticsMgt.PostTransportSheetShipment(Rec));
+      // </PRICO-2025-01>
+    END;
+
+    PROCEDURE PostAndPrintTransportSheet@50007();
+    VAR
+      InventoryandLogisticsMgt@50000 : Codeunit 50025;
+      TransportSheetPrint@50001 : Report 50040;
+    BEGIN
+      // <PRICO-2025-01>
+      TransportSheetMgmt.PostTransportSheetShipment(Rec);
+      //IF NOT InventoryandLogisticsMgt.PostTransportSheetShipment(Rec) THEN /// TODO
+        //EXIT;
+      // <PRICO-2025-01>
+
+      COMMIT;
+      // <PRICO-2025-01>
+      //TransportSheetPrint.SetHeaderNo("Document No.");
+      TransportSheetPrint.SetHeaderNo(Rec."Document No.");
+      // </PRICO-2025-01>
+      TransportSheetPrint.RUNMODAL;
+    END;
+
+    PROCEDURE CreateAndPostTransportSheetReceipts@50003();
+    VAR
+      InventoryandLogisticsMgt@50000 : Codeunit 50025;
+    BEGIN
+      // <PRICO-2025-01>
+      TransportSheetMgmt.PostTransportSheetReceiptTransfer(Rec);
+      //InventoryandLogisticsMgt.ReceiveTransportSheet(Rec);
+      // </PRICO-2025-01>
+    END;
+
+    PROCEDURE UpdateStatusAfterReceiving_OLD@50004();
+    BEGIN
+      ERROR('UpdateStatusAfterReceiving - redizajn'); // <PRICO-2025-01/>
+
+      IF QuantityEqualsQtyReceived_OLD THEN
+        VALIDATE(Status,Status::Received);
+    END;
+
+    LOCAL PROCEDURE QuantityEqualsQtyReceived_OLD@50006() : Boolean;
+    VAR
+      TransportSheetLine@50000 : Record 50016;
+    BEGIN
+      {
+      TransportSheetLine.SETRANGE("Document No.","Document No.");
+      IF TransportSheetLine.FINDSET THEN
+        REPEAT
+          TransportSheetLine.CALCFIELDS("Qty. Received (All)");
+          IF TransportSheetLine."Quantity to Ship" > TransportSheetLine."Qty. Received (All)" THEN
+            EXIT(FALSE);
+        UNTIL TransportSheetLine.NEXT = 0;
+
+      EXIT(TRUE);
+      }
+    END;
+
+    PROCEDURE UpdateStatusAfterShipping_OLD@50005();
+    VAR
+      Location@50001 : Record 14;
+    BEGIN
+      ERROR('UpdateStatusAfterShipping - redizajn'); // <PRICO-2025-01/>
+      IF NOT IsCompletelyShipped_OLD() THEN
+        EXIT;
+
+      {
+      IF "Receiving Location" = '' THEN
+        VALIDATE(Status,Status::Shipped)
+      ELSE BEGIN
+        IF Location.GET("Receiving Location") THEN BEGIN
+          IF Location."Require Receive" THEN
+            VALIDATE(Status,Status::"Shipped - Awaiting Receipt")
+          ELSE
+            VALIDATE(Status,Status::Shipped);
+
+        END ELSE
+          VALIDATE(Status,Status::Shipped);
+      END;
+      }
+
+      Location.SETRANGE(Code,"Destination No.");
+      IF Location.ISEMPTY THEN
+        VALIDATE(Status,Status::Shipped)
+      ELSE
+        VALIDATE(Status,Status::"Shipped - Awaiting Receipt");
+    END;
+
+    LOCAL PROCEDURE IsCompletelyShipped_OLD@50008() : Boolean;
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+    BEGIN
+      TransportSheetLine.SETRANGE("Document No.","Document No.");
+      IF NOT TransportSheetLine.FINDSET THEN
+        EXIT;
+
+      REPEAT
+        TransportSheetLine.CALCFIELDS("Qty. Shipped (All)");
+        IF TransportSheetLine."Quantity to Ship" > TransportSheetLine."Qty. Shipped (All)" THEN
+          EXIT(FALSE);
+
+      UNTIL TransportSheetLine.NEXT = 0;
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE PrintTransportSheet@50009(docNo@50001 : Code[20]);
+    VAR
+      TransportSheetPrint@50000 : Report 50040;
+    BEGIN
+      TransportSheetPrint.SetHeaderNo(docNo);
+      TransportSheetPrint.RUNMODAL;
+    END;
+
+    BEGIN
+    {
+      <PRIMA>
+        <ADHR.057096 range="*">8.8. Masovno kreiranje skladiçnih otpremnica (IS/D/STD)</ADHR.057096>
+        <ZGNVSUPPCO-504 range="50000">Datum knji§enja - transportni list</ZGNVSUPPCO-504>
+        <ZGNVSUPPCO-613 range="50010">Transportni listovi - a§uriranje u sluŸaju promjene u S-OTP</ZGNVSUPPCO-613>
+        <ZGNVSUPPCO-1246 range="50001">TRANSPORTNI LIST PRIMJENA BARKODA</ZGNVSUPPCO-1246>
+      </PRIMA>
+    }
+    END.
+  }
+}
+
+OBJECT Table 50016 Transport Sheet Line
+{
+  OBJECT-PROPERTIES
+  {
+    Date=13.07.26;
+    Time=14:31:45;
+    Modified=Yes;
+    Version List=PRIMA;
+  }
+  PROPERTIES
+  {
+    OnDelete=BEGIN
+               ClearWhseShipmentLink();
+             END;
+
+    LookupPageID=Page50041;
+    DrillDownPageID=Page50041;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Document No.        ;Code20        ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Document No.;
+                                                              HRV=Br. dokumenta];
+                                                   Editable=No }
+    { 2   ;   ;Line No.            ;Integer       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Line No.;
+                                                              HRV=Br. retka];
+                                                   Editable=No }
+    { 10  ;   ;Item No.            ;Code20        ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Item No.;
+                                                              HRV=Br. artikla];
+                                                   Editable=No }
+    { 15  ;   ;Item Description    ;Text150       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Item Description;
+                                                              HRV=Opis artikla];
+                                                   Editable=No }
+    { 20  ;   ;Location Code       ;Code10        ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Location Code;
+                                                              HRV=æifra izvoriçne lokacije];
+                                                   Editable=No }
+    { 30  ;   ;Source No.          ;Code20        ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Source No.;
+                                                              HRV=Br. izvora];
+                                                   Editable=No }
+    { 31  ;   ;Source Type         ;Option        ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Source Type;
+                                                              HRV=Vrsta izvora];
+                                                   OptionCaptionML=[ENU=" ,Sales Order,Transfer Order";
+                                                                    HRV=" ,Prodajna ponuda,Nalog za prijenos"];
+                                                   OptionString=[ ,Sales Order,Transfer Order] }
+    { 40  ;   ;Source Name         ;Text250       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Source Name;
+                                                              HRV=Naziv izvora];
+                                                   Editable=No }
+    { 50  ;   ;Source Line No.     ;Integer       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Source Line No.;
+                                                              HRV=Br. retka izvora];
+                                                   Editable=No }
+    { 60  ;   ;Whse. Shipment No.  ;Code20        ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Whse. Shipment No.;
+                                                              HRV=Br. skladiçne otpremnice];
+                                                   Editable=No }
+    { 65  ;   ;Quantity to Ship    ;Decimal       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Quantity to Ship;
+                                                              HRV=KoliŸina za otpremu];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 70  ;   ;Qty. to Ship 2      ;Decimal       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Qty. to Ship 2;
+                                                              HRV=KoliŸina za otpremu 2];
+                                                   DecimalPlaces=0:5 }
+    { 80  ;   ;Qty. Shipped (All)  ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Posted Whse. Shipment Line".Quantity WHERE (Source No.=FIELD(Source No.),
+                                                                                                                Source Line No.=FIELD(Source Line No.)));
+                                                   CaptionML=[ENU=Qty. Shipped (All);
+                                                              HRV=Otpremljena koliŸina (Ukupno)];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 90  ;   ;Qty. to Receive     ;Decimal       ;OnValidate=BEGIN
+                                                                // <PRICO-2025-01>
+                                                                //UpdateLinkedTransferLine;
+                                                                TransportSheetMgmt.UpdateQtyToReceiveOnLinkedTransferLine(Rec); // <PRICO-2025-01/>
+                                                                // </PRICO-2025-01>
+                                                              END;
+
+                                                   DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Qty. to Receive;
+                                                              HRV=KoliŸina za zaprimanje];
+                                                   DecimalPlaces=0:5 }
+    { 100 ;   ;Qty. Received (All) ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Transfer Receipt Line".Quantity WHERE (Transfer Order No.=FIELD(Source No.),
+                                                                                                           Line No.=FIELD(Source Line No.)));
+                                                   CaptionML=[ENU=Qty. Received (All);
+                                                              HRV=Zaprimljena koliŸina (Ukupno)];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 110 ;   ;Unit Volume         ;Decimal       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Unit Volume;
+                                                              HRV=JediniŸni volumen];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 120 ;   ;Weight              ;Decimal       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Weight;
+                                                              HRV=Te§ina];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 130 ;   ;Whse. Shipment Line No.;Integer    ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Whse. Shipment Line No.;
+                                                              HRV=Br. retka skladiçne otpremnice];
+                                                   Editable=No }
+    { 140 ;   ;Unit of Measure     ;Code10        ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Unit of Measure;
+                                                              HRV=Jedinica mjere];
+                                                   Editable=No }
+    { 150 ;   ;Qty. Shipped        ;Decimal       ;CaptionML=[ENU=Qty. Shipped;
+                                                              HRV=Otpremljena koliŸina];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 160 ;   ;Qty. Received       ;Decimal       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Qty. Received;
+                                                              HRV=Zaprimljena koliŸina];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 170 ;   ;Quantity            ;Decimal       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Quantity;
+                                                              HRV=KoliŸina];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 50000;  ;No. of Pallets      ;Integer       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=No. of Pallets;
+                                                              HRV=Broj paleta];
+                                                   MinValue=0;
+                                                   Description=ZGNVSUPPCO-508;
+                                                   Editable=No }
+    { 50001;  ;No. of Additional Packages;Integer ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=No. of Additional Packages;
+                                                              HRV=Broj dodatnih paketa];
+                                                   MinValue=0;
+                                                   Description=ZGNVSUPPCO-508;
+                                                   Editable=No }
+    { 50002;  ;No. of Pallets Add. Packages;Integer;
+                                                   DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=No. of Pallets With Additional Packages;
+                                                              HRV=Broj paleta sa dodatnim paketima];
+                                                   MinValue=0;
+                                                   Description=ZGNVSUPPCO-508;
+                                                   Editable=No }
+    { 50003;  ;Linked Whse. Shpt. No.;Code250     ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Linked Whse. Shpt. No.;
+                                                              HRV=Povezana S-OTP];
+                                                   Description=ZGNVSUPPCO-515;
+                                                   Editable=No }
+    { 50004;  ;Personal Pickup     ;Boolean       ;InitValue=Yes;
+                                                   DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Personal pickup;
+                                                              HRV=Osobno preuzimanje];
+                                                   Description=ZGNVSUPPCO-823;
+                                                   Editable=No }
+    { 50005;  ;Assembly            ;Boolean       ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Assembly YES/NO;
+                                                              HRV=Monta§a];
+                                                   Description=ZGNVSUPPCO-880 }
+    { 50006;  ;Promised/Updated Delivery Date;Date;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Promised/Updated Delivery Date;
+                                                              HRV=Obe†ani/A§urirani datum isporuke];
+                                                   Description=ZGNVSUPPCO-880 }
+    { 50007;  ;BE-Mobile Location  ;Boolean       ;FieldClass=FlowField;
+                                                   CalcFormula=Lookup(Location."Use in BE-Mobile (shipment)" WHERE (Code=FIELD(Location Code)));
+                                                   CaptionML=[ENU=BE-Mobile Location;
+                                                              HRV=BE-Mobile lokacija];
+                                                   Description=ZGNAIMPRRE-10;
+                                                   Editable=No }
+    { 50010;  ;Scanned Quantity    ;Decimal       ;OnValidate=VAR
+                                                                OrderStatus@1000 : Integer;
+                                                              BEGIN
+                                                              END;
+
+                                                   DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Scanned Quantity;
+                                                              HRV=Skenirana koliŸina];
+                                                   DecimalPlaces=0:5;
+                                                   MinValue=0;
+                                                   Description=ZGNVSUPPCO-1246;
+                                                   Editable=No }
+    { 50011;  ;Complaint Order Status;Option      ;DataClassification=ToBeClassified;
+                                                   CaptionML=[ENU=Complaint Note Status;
+                                                              HRV=Status reklamacijskog zapisnika prema kupcu];
+                                                   OptionCaptionML=[ENU=" ,Open,Closed";
+                                                                    HRV=" ,Otvoren,Zatvoren"];
+                                                   OptionString=[ ,Open,Closed];
+                                                   Editable=No }
+  }
+  KEYS
+  {
+    {    ;Document No.,Line No.                   ;Clustered=Yes }
+    {    ;Item Description                         }
+    {    ;Source Name                              }
+    {    ;Source No.,Source Line No.               }
+    {    ;Whse. Shipment No.                       }
+    {    ;Whse. Shipment No.,Item Description      }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      TextError001@50000 : TextConst 'ENU=Qty. to Receive cannot exceed the quantity that was shipped but not received (%1).;HRV=KoliŸina za zaprimanje ne mo§e premaçiti nezaprimljenu isporuŸenu koliŸinu (%1).';
+      TextError002@50002 : TextConst 'ENU=Qty. to Receive can only be changed for lines linked to Transfer Orders.;HRV=KoliŸina za zaprimanje se mo§e promijeniti samo za retke povezane s nalogom za prijenos.';
+      TextError003@50003 : TextConst 'ENU=Qty. to Ship cannot be changed when linked Warehouse Shipment Line does not exist.;HRV=KoliŸina za otpremu se ne mo§e promijeniti za retke Ÿija povezana stavka skladiçne otpremnice ne postoji.';
+      TextError004@50004 : TextConst 'ENU=You cannot increase the Qty. to Ship over the total quantity on the Warehouse Shipment (%1).;HRV=Ne mo§ete pove†ati koliŸinu za otpremu preko ukupne koliŸine na skladiçnoj otpremnici (%1).';
+      TextError005@50006 : TextConst 'ENU=Warehouse Shipment "%1" is already on a transport list "%2".;HRV=Skladiçna otpremnica "%1" se ve† nalazi na transportnom listu "%2".';
+      TextConfirm001@50005 : TextConst 'ENU=Changing the Qty. to Receive will also make changes to the linked Transfer Order Line. Are you sure you want to make the changes?;HRV=Menjanjem koliŸine za zaprimanje †e takoÐe promijeniti koliŸinu za zaprimanje na povezanom nalogu za prijenos. Da li §elite napraviti izmjene?';
+      TextConfirm002@50001 : TextConst 'ENU=Changing the Qty. to Ship will also make changes to the linked Warehouse Shipment Line. Are you sure you want to make the changes?;HRV=Menjanjem koliŸine za otpremu †e takoÐe promijeniti koliŸinu za otpremu na povezanom retku skladçne otpremnice. Da li §elite napraviti izmjene?';
+      AssemblyDeliveryDiscount@50008 : Record 50026;
+      TransportSheetMgmt@50007 : Codeunit 50093;
+
+    PROCEDURE ClearWhseShipmentLink@50005();
+    VAR
+      WhseShipHeader@50000 : Record 7320;
+      WarehouseShipmentLine@50001 : Record 7321;
+    BEGIN
+      IF WhseShipHeader.GET("Whse. Shipment No.") AND (WhseShipHeader."Transport Sheet No." <> '') THEN BEGIN
+        WhseShipHeader.VALIDATE("Transport Sheet No.",'');
+        WhseShipHeader.MODIFY;
+      END;
+
+      IF WarehouseShipmentLine.GET(Rec."Whse. Shipment No.",Rec."Whse. Shipment Line No.") AND WarehouseShipmentLine."Transport Sheet Posting" THEN BEGIN
+        WarehouseShipmentLine.VALIDATE("Transport Sheet Posting",FALSE);
+        WarehouseShipmentLine.MODIFY;
+      END;
+    END;
+
+    PROCEDURE CheckWhseShipmentLink@50012();
+    VAR
+      TransportSheetLine@50000 : Record 50016;
+    BEGIN
+      IF "Whse. Shipment No." = '' THEN
+        EXIT;
+
+      TransportSheetLine.SETRANGE("Whse. Shipment No.","Whse. Shipment No.");
+      TransportSheetLine.SETRANGE("Whse. Shipment Line No.","Whse. Shipment Line No.");
+      IF TransportSheetLine.FINDFIRST THEN
+        ERROR(TextError005,"Whse. Shipment No.",TransportSheetLine."Document No.");
+    END;
+
+    BEGIN
+    {
+      <PRIMA>
+        <ADHR.057096 range="*">8.8. Masovno kreiranje skladiçnih otpremnica (IS/D/STD)</ADHR.057096>
+        <ADHR.059473 range="40">Dodatni filteri na pregledu redaka za prijenos</ADHR.059473>
+        <ZGNVSUPPCO-207 range="150">Dodan filter çifra artikla</ZGNVSUPPCO-207>
+        <ZGNAIMPRRE-8>Transformacija internih procesa Ê cross dock
+          <TASK>Added key "Whse. Shipment No."</TASK>
+        </ZGNAIMPRRE-8>
+        <ZGNAIMPRRE-10 range="50007">Barkod funkcionalnost - 1. faza</ZGNAIMPRRE-10>
+        <ZGNVSUPPCO-508 range="50000.50002">Ispis transportnog lista - dodatni podaci</ZGNVSUPPCO-508>
+        <ZGNVSUPPCO-515 range="50003">Ispis TL, S-OTP, etiketa, promjena statusa otpreme</ZGNVSUPPCO-515>
+        <ZGNVSUPPCO-823 range="50004"> Personal pickup - additional field </ZGNVSUPPCO-823>
+        <ZGNVSUPPCO-880 range="50005..50006">Assembly, Promised/Updated Delivery Date - additional fields</ZGNVSUPPCO-880>
+        <ZGNVSUPPCO-1246 range="50010">TRANSPORTNI LIST PRIMJENA BARKODA</ZGNVSUPPCO-1246>
+      </PRIMA>
+    }
+    END.
+  }
+}
+
+OBJECT Codeunit 50093 Transport Sheet Mgmt
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09.09.26;
+    Time=12:33:12;
+    Modified=Yes;
+    Version List=PRIMA;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      TempSalesHeader@50000 : TEMPORARY Record 36;
+      SalesSetup@50001 : Record 311;
+      TextConfirm002@50034 : TextConst 'ENU=Do you want to ship the Transport Sheet?;HRV=¦elite li otpremiti transportni list?';
+      TextConfirm003@50033 : TextConst 'ENU=Do you want to receive the Transport Sheet?;HRV=¦elite li zaprimiti transportni list?';
+      TextError003@50028 : TextConst 'ENU=The Transport sheet does not have Receiving Location.;HRV=Transportni list nema lokaciju zaprimanja.';
+      TextError005@50026 : TextConst 'ENU=There is nothing to ship.;HRV=Nema se çto otpremiti.';
+      TextError007@50024 : TextConst 'ENU=You cannot add Warehouse Shipment Line that has a different Destination No. than the Transport Sheet. Warehouse Shipment "%1", Destination No. "%2".;HRV=Ne mo§ete dodati redak skladiçne otpremnice koji ima razliŸitu çifru odrediçta od transportnog lista. Skladiçna otpremnica "%1", çifra odrediçta "%2".';
+      TextError017@50014 : TextConst 'ENU=Location ''%1'' is not a part of Responsibility Center ''%2''.;HRV=Lokacija ''%1'' nije dio centra odgovornosti ''%2''.';
+      TextInfo001@50012 : TextConst 'ENU=%1 Transport Sheet Lines created.;HRV=Broj kreiranih redaka transportnog lista: %1.';
+      TextInfo003@50010 : TextConst 'ENU=Posted Warehouse Shipments: %1.;HRV=Proknji§eno skladiçnih otpremnica: %1.';
+      TextInfo004@50009 : TextConst 'ENU=Posted Transfer Order Receipts: %1.;HRV=Proknji§eno zaprimanja naloga za prijenos: %1.';
+      TextMultipleCustomers@50004 : TextConst 'ENU=Multiple Customers;HRV=Viçe kupaca';
+      AddedTransportSheetLines@50037 : Integer;
+      PostedWhseShipments@50038 : Integer;
+      TempErrorMessage@50041 : TEMPORARY Record 700;
+      PostedReceipts@50043 : Integer;
+      NonTransferLineForReceiptErr@50045 : TextConst 'ENU=There are lines for receipt that have a value in field %1, but cannot be received.;HRV=Postoje reci za zaprimanje koji imaju popunjeno polje %1, a koji se ne mogu zaprimiti.';
+      NothingForPostingShpt@50046 : TextConst 'ENU=There are no lines for posting. Check Quantity To Ship on source documents.;HRV=Ne postoje stavke za knji§enje. Provjerite koliŸinu za otpremu na izvornim dokumentima.';
+      DocumentNotInCorrectStatusErr@50047 : TextConst 'ENU=Document not in correct status for shipment posting.;HRV=Dokument nije u ispravnom statusu za knji§enje otpreme.';
+      NothingForPostingRcpt@50048 : TextConst 'ENU=There are no lines for posting. Check Quantity To Receive.;HRV=Ne postoje stavke za knji§enje. Provjerite koliŸinu za zaprimanje.';
+      ComplaintNoteExistErr@50050 : TextConst 'HRV=Reklamacijski zapisnik %1 povezan uz ovaj transportni list je u statusu %1 te ga je potrebno rijeçiti.';
+      PostingFailedTxt@50051 : TextConst 'HRV=Knji§enje dokumenta %1 nije uspjelo. Greçka pri knji§enju - %2';
+      PartialPostingErr@50052 : TextConst 'HRV=Proknji§eno je ukupno %1 dokumenata, dok odreÐeni dokumenti su imali greçku pri knji§enju.';
+      RcptPostingErr@50056 : TextConst 'ENU=It is not allowed to post receipt because %1 is not in status %2.;HRV=Nije dozvoljeno knji§enje jer %1 nije u statusu %2.';
+      RcptPostingConf@50055 : TextConst 'ENU=%1 is not in status %2. Do you still want to post receipt?;HRV=%1 nije u statusu %2. Da li svejedno §elite proknji§iti zaprimanje?';
+      UserSetup@50053 : Record 91;
+      RcptPostingQtyConf@50058 : TextConst 'ENU=Qty. to Receive is supposed to be changed only when %1 is in different status than %2, meaning it has linked Complaint Note. Do you still want to change quantity?;HRV=Kol. za zaprimanje se mijenja samo kada je %1 u razliŸitom statusu od , çto znaŸi da postoji povezani reklamacijski zapisnik za taj redak. Da li svejedno §elite promijeniti koliŸinu?';
+      TransferOrderNotExistErr@50059 : TextConst 'ENU=Transfer Order does not exist.;HRV=Ne postoji nalog za prijenos.';
+      QtyReceivedUpdatedMsg@50060 : TextConst 'ENU=Received quantity on Transport Sheet Line %1 %2 has been updated to the shipped quantity - "%3" because the Transfer Order no longer exists.;HRV=Zaprimljena koliŸina retka naloga za prijenos %1 %2 je a§urirana prema otpremljenoj koliŸini - "%3" jer nalog za prijenos viçe ne postoji.';
+      InvalidQtyMaxErr@50061 : TextConst 'ENU=Invalid quantity - you can enter a maximum of %1.;HRV=Neispravna koliŸina - mogu†e je unijeti maksimalno %1';
+      InvalidQtyToReceiveAfterPostingMsg@50062 : TextConst 'ENU=Transport Sheet Line %1 %2 has an invalid quantity to receive "%3" after posting. Please report to helpdesk.;HRV=Redak transportnog lista %1 %2 ima neispravnu koliŸinu za zaprimanje "%3" nakon knji§enja. Prijaviti na helpdesk.';
+      SourceTypeErr@50002 : TextConst 'ENU="Line %1 %2 has not value in field %3. Current Value = ""%4"".";HRV="Redak %1 %2 nema popunjeno polje %3. Trenutna vrijednost je = ""%4""."';
+      InvalidQtyToReceive@50003 : TextConst 'ENU=Invalid Qty. To Recieve on Transport Sheet %1, Line No. %2.;HRV=Neispravna koliŸina za zaprimanje na transportnom listu %1, retku %2.';
+      NoTransportSheetLineToReceive@50005 : TextConst 'ENU=There are no transport sheet lines to receive. Transport Sheet No. - "%1".;HRV=Ne postoje reci transportnog lista za zaprimanje. Br. transportnog lista - "%1".';
+      NoTransferLineToReceive@50006 : TextConst 'ENU=There are no transfer lines from transport sheet lines to receive. Transfer Line - "%1", "%2", Transport Sheet No. - "%3".;HRV=Ne postoje reci naloga za prijenos iz transportnog lista za zaprimanje. Br. naloga za prijenos - "%1", "%2", transportni list - "%3".';
+
+    PROCEDURE CreateTransportSheetsForWhseShipments@50087(VAR TempWhseDocList@50000 : TEMPORARY Record 7320;PostingDate@50006 : Date;TransportDocNo@50001 : Code[20]);
+    VAR
+      TransportSheetHeader@50002 : Record 50015;
+    BEGIN
+      SalesSetup.GET();
+
+      IF PostingDate = 0D THEN
+        PostingDate := WORKDATE;
+
+      IF TransportDocNo <> '' THEN
+        TransportSheetHeader.GET(TransportDocNo);
+
+      CreateTransportSheet(TempWhseDocList,TransportSheetHeader,PostingDate);
+
+      MESSAGE(TextInfo001,AddedTransportSheetLines);
+    END;
+
+    LOCAL PROCEDURE CreateTransportSheet@50089(VAR TempWhseDocList@50012 : TEMPORARY Record 7320;VAR TransportSheetHeader@50001 : Record 50015;PostingDate@50008 : Date);
+    VAR
+      WhseShptLine@50002 : Record 7321;
+      Location@50006 : Record 14;
+      LineNo@50003 : Integer;
+      WhseNo@50009 : Code[20];
+      ErrorText50000@50010 : TextConst 'ENU=Warehouse Shipment is already added to Transport Sheet No. %1.;HRV=Skladiçna otpremnica je ve† dodana na transportni list %1.';
+      WhseShptHdr@50011 : Record 7320;
+      BEMFMgmt@50000 : Codeunit 50107;
+      TransferHeader@50005 : Record 5740;
+      TransferLine@50013 : Record 5741;
+    BEGIN
+      LineNo := GetTransSheetLastLineNo(TransportSheetHeader."Document No.");
+
+      CLEAR(WhseNo);
+      TempSalesHeader.RESET;
+      TempSalesHeader.DELETEALL;
+
+      TempWhseDocList.RESET;
+      IF NOT TempWhseDocList.FINDSET THEN
+        EXIT
+      ELSE REPEAT
+        WhseShptLine.SETCURRENTKEY("No.","Destination No.");
+        WhseShptLine.SETRANGE("No.",TempWhseDocList."No.");
+        WhseShptLine.SETRANGE("Destination No.",TempWhseDocList."Destination No.");
+        WhseShptLine.SETFILTER(Quantity,'>%1',0);
+        IF WhseShptLine.FINDSET THEN REPEAT
+          IF WhseNo <> WhseShptLine."No." THEN BEGIN
+            WhseNo := WhseShptLine."No.";
+            WhseShptHdr.GET(WhseShptLine."No.");
+            IF WhseShptHdr."Transport Sheet No." <> '' THEN
+              ERROR(ErrorText50000,WhseShptHdr."Transport Sheet No.");
+
+            IF BEMFMgmt.IsCrossDockLocation(WhseShptHdr."Location Code") THEN BEGIN
+              WhseShptHdr.TESTFIELD("Barcode Status",WhseShptHdr."Barcode Status"::Processed);
+              WhseShptHdr.TESTFIELD("Cross-Dock Shipment Status",WhseShptHdr."Cross-Dock Shipment Status"::"Shipped from CD");
+            END;
+          END;
+
+          IF TransportSheetHeader."Document No." = '' THEN
+            CreateTransportSheetHeader(TransportSheetHeader,PostingDate)
+          ELSE IF TransportSheetHeader."Posting Date" = 0D THEN BEGIN
+            TransportSheetHeader.VALIDATE("Posting Date",PostingDate);
+            TransportSheetHeader.MODIFY;
+          END;
+
+          CheckTransSheetHeaderDestination(TransportSheetHeader,WhseShptLine);
+          CreateTransportSheetLine(WhseShptLine,TransportSheetHeader."Document No.",LineNo, WhseShptHdr);
+
+          MarkTransportSheetOnShipment(WhseShptLine,TransportSheetHeader."Document No.",WhseShptHdr);//v2
+        UNTIL WhseShptLine.NEXT = 0;
+      UNTIL TempWhseDocList.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE CreateTransportSheetHeader@50090(VAR TransportSheetHeader@50001 : Record 50015;PostingDate@50000 : Date);
+    BEGIN
+      TransportSheetHeader.INIT;
+      TransportSheetHeader.InitInsert;
+      TransportSheetHeader.VALIDATE(Status,TransportSheetHeader.Status::Open);
+      TransportSheetHeader.VALIDATE("Creation Date",WORKDATE);
+      TransportSheetHeader.VALIDATE("Created by User",USERID);
+      TransportSheetHeader.VALIDATE("Posting Date",PostingDate);
+
+      TransportSheetHeader.INSERT(TRUE);
+    END;
+
+    LOCAL PROCEDURE CreateTransportSheetLine@50091(WhseShipmentLine@50000 : Record 7321;TransportDocNo@50001 : Code[20];VAR LineNo@50003 : Integer;WhseShptHdr@50016 : Record 7320);
+    VAR
+      TransportSheetLine@50002 : Record 50016;
+    BEGIN
+      LineNo += 10000;
+
+      TransportSheetLine.INIT;
+      TransportSheetLine.VALIDATE("Document No.",TransportDocNo);
+      TransportSheetLine.VALIDATE("Line No.",LineNo);
+      TransportSheetLine.VALIDATE("Item No.",WhseShipmentLine."Item No.");
+      TransportSheetLine.VALIDATE("Item Description",WhseShipmentLine.Description + ' ' + WhseShipmentLine."Description 2");
+      TransportSheetLine.VALIDATE("Unit of Measure",WhseShipmentLine."Unit of Measure Code");
+      TransportSheetLine.VALIDATE("Location Code",WhseShipmentLine."Location Code");
+      TransportSheetLine.VALIDATE("Source No.",WhseShipmentLine."Source No.");
+      TransportSheetLine.VALIDATE("Source Line No.",WhseShipmentLine."Source Line No.");
+      TransportSheetLine.VALIDATE("Whse. Shipment No.",WhseShipmentLine."No.");
+      TransportSheetLine.VALIDATE("Whse. Shipment Line No.",WhseShipmentLine."Line No.");
+      TransportSheetLine.VALIDATE(Quantity,WhseShipmentLine.Quantity);
+      TransportSheetLine.VALIDATE("Quantity to Ship",WhseShipmentLine."Qty. to Ship");
+      TransportSheetLine."Qty. to Receive" := 0;
+      TransportSheetLine.VALIDATE("Unit Volume",WhseShipmentLine."Unit Volume");
+      TransportSheetLine.VALIDATE(Weight,WhseShipmentLine.Weight);
+      TransportSheetLine.VALIDATE("No. of Additional Packages",WhseShptHdr."No. of Additional Packages");
+      TransportSheetLine.VALIDATE("No. of Pallets",WhseShptHdr."No. of Pallets");
+      TransportSheetLine.VALIDATE("No. of Pallets Add. Packages",WhseShptHdr."No. of Pallets Add. Packages");
+      TransportSheetLine.VALIDATE("Linked Whse. Shpt. No.",WhseShptHdr."Linked Whse. Shpt. No.");
+
+      CASE WhseShipmentLine."Source Document" OF
+        WhseShipmentLine."Source Document"::"Sales Order":
+          TransportSheetLine.VALIDATE("Source Type",TransportSheetLine."Source Type"::"Sales Order");
+        WhseShipmentLine."Source Document"::"Outbound Transfer":
+          TransportSheetLine.VALIDATE("Source Type",TransportSheetLine."Source Type"::"Transfer Order");
+        ELSE
+          TransportSheetLine.TESTFIELD("Source Type");
+      END;
+
+      GetCustNameFromReservation(TransportSheetLine,WhseShipmentLine);
+      GetTransportSheetAdditionalData(WhseShipmentLine, TransportSheetLine);
+
+      TransportSheetLine.INSERT(TRUE);
+      AddedTransportSheetLines += 1;
+    END;
+
+    PROCEDURE PostTransportSheetShipment@50101(VAR TransportSheetHeader@50001 : Record 50015) : Boolean;
+    VAR
+      TransportSheetLine@50003 : Record 50016;
+      TempWhseShptHdrForPosting@50005 : TEMPORARY Record 7320;
+      Item@50011 : Record 27;
+      WhseShipmentLine@50010 : Record 7321;
+    BEGIN
+      IF NOT CONFIRM(TextConfirm002) THEN
+        EXIT(FALSE);
+
+      TransportSheetHeader.TESTFIELD("Destination No.");
+      IF NOT (TransportSheetHeader.Status IN [TransportSheetHeader.Status::Open,TransportSheetHeader.Status::"Partially Shipped"]) THEN
+        ERROR(DocumentNotInCorrectStatusErr);
+
+      CLEAR(PostedWhseShipments);
+      TempErrorMessage.ClearLog();
+
+      CheckSourceTypeOnShipment(TransportSheetHeader."Document No."); //v2
+      CheckRespCenterLocationsForTransSheet(TransportSheetHeader."Document No.");
+      GetWhseShptsForPostingShipment(TransportSheetHeader."Document No.",TempWhseShptHdrForPosting);
+      CheckTransportSheetQtyToShip(TransportSheetHeader."Document No.");
+
+      IF TempErrorMessage.HasErrors(TRUE) THEN
+        TempErrorMessage.ShowErrorMessages(TRUE);
+
+      TransportSheetHeader.Status := TransportSheetHeader.Status::"Partially Shipped";
+      COMMIT;
+
+      TempWhseShptHdrForPosting.RESET;
+      IF TempWhseShptHdrForPosting.FINDSET THEN REPEAT
+        WhseShipmentLine.SETFILTER("No.",TempWhseShptHdrForPosting."No.");
+        IF WhseShipmentLine.FINDSET THEN BEGIN
+          IF PostWhseShipments(WhseShipmentLine) THEN
+            UpdateTransportSheetShippedQty(WhseShipmentLine,TransportSheetHeader."Document No.")
+          ELSE
+            UpdateTransportSheetShippedQtyOnPartialShipment(WhseShipmentLine,TransportSheetHeader."Document No.");
+
+          COMMIT;
+        END;
+      UNTIL TempWhseShptHdrForPosting.NEXT = 0;
+
+      UpdateTransportStatusAfterPostingShipments(TransportSheetHeader);
+      COMMIT;
+
+      IF TempErrorMessage.HasWarnings(TRUE) THEN
+        TempErrorMessage.ShowErrorMessages(FALSE);
+
+      MESSAGE(TextInfo003, PostedWhseShipments);
+    END;
+
+    LOCAL PROCEDURE PostWhseShipments@50003(VAR WhseShipmentLine@50000 : Record 7321) : Boolean;
+    VAR
+      WhsePostShipment@50001 : Codeunit 5763;
+    BEGIN
+      CLEARLASTERROR;
+      WhsePostShipment.SetPostingSettings(FALSE);
+      WhsePostShipment.SetPrint(FALSE);
+      WhsePostShipment.SetSkipUpdateTransportSheetNo(TRUE);
+
+      IF NOT WhsePostShipment.RUN(WhseShipmentLine) THEN
+        TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Warning, STRSUBSTNO(PostingFailedTxt,WhseShipmentLine."No.",GETLASTERRORTEXT))
+      ELSE BEGIN
+        PostedWhseShipments += 1;
+        EXIT(TRUE);
+      END;
+
+      WhsePostShipment.SetSkipUpdateTransportSheetNo(FALSE);
+    END;
+
+    PROCEDURE PostTransportSheetReceiptTransfer@50005(VAR TransportSheetHeader@50000 : Record 50015);
+    VAR
+      Location@50001 : Record 14;
+      TempTransferHdrForPosting@50006 : TEMPORARY Record 5740;
+      PostWhseRcpt@50002 : Boolean;
+    BEGIN
+      //v3
+      PostWhseRcpt:= FALSE;
+      IF PostWhseRcpt THEN BEGIN
+        PostTransportSheetReceiptTransferWhseRcpt(TransportSheetHeader);
+        EXIT;
+      END;
+      //v3
+
+      IF NOT CONFIRM(TextConfirm003) THEN
+        EXIT;
+
+      IF NOT (TransportSheetHeader.Status IN[TransportSheetHeader.Status::"Shipped - Awaiting Receipt", TransportSheetHeader.Status::"Partially Received"]) THEN
+        TransportSheetHeader.FIELDERROR(Status);
+
+      Location.GET(TransportSheetHeader."Destination No.");
+      IF Location."Use in BE-Mobile (receipt)" AND (TransportSheetHeader."Barcode Status" <> TransportSheetHeader."Barcode Status"::Processed) THEN BEGIN
+        UserSetup.GET(USERID);
+        IF UserSetup."System Admin." THEN BEGIN
+          IF NOT CONFIRM(RcptPostingConf,TRUE,TransportSheetHeader.FIELDCAPTION("Barcode Status"),TransportSheetHeader."Barcode Status"::Processed) THEN
+            ERROR(RcptPostingErr,TransportSheetHeader.FIELDCAPTION("Barcode Status"),TransportSheetHeader."Barcode Status");
+        END ELSE
+          ERROR(RcptPostingErr,TransportSheetHeader.FIELDCAPTION("Barcode Status"),TransportSheetHeader."Barcode Status");
+      END;
+
+      TempErrorMessage.ClearLog();
+
+      CheckIfUserCanPostReceipt(Location.Code);
+      CheckSourceTypeOnReceipt(TransportSheetHeader."Document No."); //v2
+      //UpdateTransportQtyToReceiveOnTransferLines(TransportSheetHeader."Document No.");
+      UpdateTransportQtyToReceiveOnTransferLines_v2(TransportSheetHeader."Document No.");
+      GetTransferOrdersForPostingReceipt(TransportSheetHeader."Document No.",TempTransferHdrForPosting);
+
+      IF TempErrorMessage.HasErrors(TRUE) THEN
+        TempErrorMessage.ShowErrorMessages(TRUE);
+
+      COMMIT;
+
+      TempTransferHdrForPosting.RESET;
+      IF TempTransferHdrForPosting.FINDSET THEN REPEAT
+        ReceiveTransferOrders(TempTransferHdrForPosting,TransportSheetHeader."Document No.");
+
+        COMMIT;
+        CLEARLASTERROR;
+      UNTIL TempTransferHdrForPosting.NEXT = 0;
+
+      UpdateTransportStatusAfterPostingReceipts(TransportSheetHeader);
+      COMMIT;
+
+      IF TempErrorMessage.HasErrors(TRUE) THEN BEGIN
+        IF PostedReceipts > 0 THEN
+          TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Information,STRSUBSTNO(PartialPostingErr,PostedReceipts));
+        TempErrorMessage.ShowErrorMessages(TRUE);
+      END ELSE
+        MESSAGE(TextInfo004,PostedReceipts);
+    END;
+
+    LOCAL PROCEDURE UpdateTransportQtyToReceiveOnTransferLines@50079(TransportDocNo@50000 : Code[20]);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+      TransferLine@50003 : Record 5741;
+      SourceNo@50005 : Code[20];
+      TransferHeader@50002 : Record 5740;
+      PostedWhseShptLine@50004 : Record 7323;
+      DoModifyTransferHdr@50007 : Boolean;
+      TempTransHdr@50008 : TEMPORARY Record 5740;
+      TransportSheetLine2@50009 : Record 50016;
+      TotalTransQtyOnCurrentTransportSheet@50010 : Decimal;
+      DoModifyTransLine@50011 : Boolean;
+      TransportSheetHeader@50012 : Record 50015;
+    BEGIN
+      TransportSheetHeader.GET(TransportDocNo);
+
+      TransportSheetLine.SETRANGE("Document No.",TransportSheetHeader."Document No.");
+      TransportSheetLine.SETRANGE("Source Type",TransportSheetLine."Source Type"::"Transfer Order");
+      TransportSheetLine.SETFILTER("Qty. to Receive",'<>%1',0); // TODO
+      IF TransportSheetLine.FINDSET THEN REPEAT
+        //v2
+        IF NOT TempTransHdr.GET(TransportSheetLine."Source No.") THEN BEGIN
+          TempTransHdr.INIT;
+          TempTransHdr."No." := TransportSheetLine."Source No.";
+          TempTransHdr.INSERT;
+        END;
+        //v2
+
+        DoModifyTransferHdr := FALSE;
+        DoModifyTransLine := FALSE;
+
+        IF NOT TransferLine.GET(TransportSheetLine."Source No.",TransportSheetLine."Source Line No.") THEN BEGIN
+          IF TransportSheetLine."Qty. to Receive" <> 0 THEN
+            TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(InvalidQtyToReceive,TransportSheetLine."Document No.",TransportSheetLine."Line No."));
+        END ELSE BEGIN
+          IF TransportSheetLine."Qty. Shipped" < TransportSheetLine."Qty. to Receive" THEN
+            TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(InvalidQtyToReceive,TransportSheetLine."Document No.",TransportSheetLine."Line No."))
+          ELSE BEGIN
+            IF TransferLine."Qty. in Transit" < TransportSheetLine."Qty. to Receive" THEN
+              TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(InvalidQtyToReceive,TransportSheetLine."Document No.",TransportSheetLine."Line No."))
+            ELSE BEGIN
+              PostedWhseShptLine.SETRANGE("Whse. Shipment No.",TransportSheetLine."Whse. Shipment No.");
+              PostedWhseShptLine.SETRANGE("Whse Shipment Line No.",TransportSheetLine."Whse. Shipment Line No.");
+              PostedWhseShptLine.FINDLAST;
+              IF PostedWhseShptLine.Quantity <> TransportSheetLine."Qty. to Receive" THEN
+                IF PostedWhseShptLine.Quantity < TransportSheetLine."Qty. to Receive" THEN
+                  TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(InvalidQtyToReceive,TransportSheetLine."Document No.",TransportSheetLine."Line No."));
+
+              IF TransferLine."Qty. to Receive" <> TransportSheetLine."Qty. to Receive" THEN
+                IF TransferLine."Qty. in Transit" < TransportSheetLine."Qty. to Receive" THEN
+                  TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(InvalidQtyToReceive,TransportSheetLine."Document No.",TransportSheetLine."Line No."))
+                ELSE BEGIN
+                  //v2
+                  //get total transport line qty.
+                  TotalTransQtyOnCurrentTransportSheet := TransportSheetLine."Qty. to Receive";
+
+                  TransportSheetLine2.SETRANGE("Document No.",TransportSheetLine."Document No.");
+                  TransportSheetLine2.SETRANGE("Source Type",TransportSheetLine2."Source Type"::"Transfer Order");
+                  TransportSheetLine2.SETRANGE("Source No.",TransportSheetLine."Source No.");
+                  TransportSheetLine2.SETRANGE("Source Line No.",TransportSheetLine."Source Line No.");
+                  TransportSheetLine2.SETFILTER("Line No.",'<>%1',TransportSheetLine."Line No.");
+                  IF TransportSheetLine2.FINDSET THEN BEGIN
+                    REPEAT
+                      TotalTransQtyOnCurrentTransportSheet += TransportSheetLine2."Qty. to Receive";
+                    UNTIL TransportSheetLine2.NEXT = 0;
+                  END;
+
+                  IF TransferLine."Qty. to Receive" <> TotalTransQtyOnCurrentTransportSheet THEN BEGIN
+                    TransferLine.VALIDATE(TransferLine."Qty. to Receive",TotalTransQtyOnCurrentTransportSheet);
+                    DoModifyTransLine := TRUE;
+                  END;
+                  //v2
+                END;
+            END;
+          END;
+
+          //v2
+          IF TransferLine."Transport Sheet No." <> TransportSheetHeader."Document No." THEN BEGIN
+            TransferLine."Transport Sheet No." := TransportSheetHeader."Document No.";
+            DoModifyTransLine := TRUE;
+          END;
+
+          IF DoModifyTransLine THEN
+            TransferLine.MODIFY;
+          //v2
+
+          IF (SourceNo <> TransportSheetLine."Source No.") THEN
+            IF NOT TempErrorMessage.HasErrors(FALSE) THEN BEGIN
+              TransferHeader.GET(TransportSheetLine."Source No.");
+
+              TransferHeader.SetHideValidationDialog(TRUE);
+              IF NOT TransferHeader."Transport Sheet Posting" THEN BEGIN
+                TransferHeader.VALIDATE("Transport Sheet Posting",TRUE);
+                DoModifyTransferHdr := TRUE;
+              END;
+
+              IF TransferHeader."Posting Date" <> WORKDATE THEN BEGIN
+                TransferHeader.VALIDATE("Posting Date", WORKDATE);
+                DoModifyTransferHdr := TRUE;
+              END;
+
+              IF DoModifyTransferHdr THEN
+                TransferHeader.MODIFY;
+
+              TransferHeader.SetHideValidationDialog(FALSE);
+            END;
+
+          SourceNo := TransportSheetLine."Source No.";
+        END;
+      UNTIL TransportSheetLine.NEXT = 0
+      ELSE
+        TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(NoTransportSheetLineToReceive,TransportDocNo));
+
+      //v2
+      TempTransHdr.RESET;
+      TransportSheetLine.RESET;
+      IF TempTransHdr.FINDSET THEN REPEAT
+        TransferLine.RESET;
+        TransferLine.SETRANGE("Document No.",TempTransHdr."No.");
+        TransferLine.SETRANGE("Derived From Line No.",0);
+        IF TransferLine.FINDSET THEN REPEAT
+          DoModifyTransLine := FALSE;
+
+          TransportSheetLine.SETRANGE("Document No.",TransportSheetHeader."Document No.");
+          TransportSheetLine.SETRANGE("Source Type",TransportSheetLine."Source Type"::"Transfer Order");
+          TransportSheetLine.SETRANGE("Source No.",TransferLine."Document No.");
+          TransportSheetLine.SETRANGE("Source Line No.", TransferLine."Line No.");
+          IF NOT TransportSheetLine.FINDSET THEN BEGIN
+            IF TransferLine."Qty. to Receive" <> 0 THEN BEGIN
+              TransferLine.VALIDATE("Qty. to Receive",0);
+              DoModifyTransLine := TRUE;
+            END;
+
+            IF TransferLine."Transport Sheet No." <> '' THEN BEGIN
+              TransferLine."Transport Sheet No." := '';
+              DoModifyTransLine := TRUE;
+            END;
+
+            IF DoModifyTransLine THEN
+              TransferLine.MODIFY;
+          END;
+        UNTIL TransferLine.NEXT = 0
+        ELSE
+          TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(NoTransportSheetLineToReceive,TransportDocNo));
+      UNTIL TempTransHdr.NEXT = 0
+      ELSE
+        TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(NoTransferLineToReceive,TransferLine."Document No.",TransferLine."Line No.", TransportDocNo));
+
+      //v2
+    END;
+
+    LOCAL PROCEDURE UpdateTransportQtyToReceiveOnTransferLines_v2@50012(TransportDocNo@50000 : Code[20]);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+      TransferLine@50003 : Record 5741;
+      SourceNo@50005 : Code[20];
+      TransferHeader@50002 : Record 5740;
+      TempTransHdr@50008 : TEMPORARY Record 5740;
+      TransportSheetHeader@50006 : Record 50015;
+      DoModifyTransLine@50007 : Boolean;
+      DoModifyTransferHdr@50004 : Boolean;
+    BEGIN
+      TransportSheetHeader.GET(TransportDocNo);
+
+      TransportSheetLine.SETRANGE("Document No.",TransportSheetHeader."Document No.");
+      TransportSheetLine.SETRANGE("Source Type",TransportSheetLine."Source Type"::"Transfer Order");
+      TransportSheetLine.SETFILTER("Qty. to Receive",'<>%1',0); // TODO
+      IF TransportSheetLine.FINDSET THEN REPEAT
+        IF NOT TempTransHdr.GET(TransportSheetLine."Source No.") THEN BEGIN
+          TempTransHdr.INIT;
+          TempTransHdr."No." := TransportSheetLine."Source No.";
+          TempTransHdr.INSERT;
+        END;
+      UNTIL TransportSheetLine.NEXT = 0;
+
+      TempTransHdr.RESET;
+      IF TempTransHdr.FINDSET THEN
+        REPEAT
+          TransferLine.RESET;
+          TransferLine.SETRANGE("Document No.",TempTransHdr."No.");
+          TransferLine.SETRANGE("Derived From Line No.",0);
+          IF TransferLine.FINDSET THEN REPEAT
+            DoModifyTransLine := FALSE;
+
+            TransportSheetLine.RESET;
+            TransportSheetLine.SETRANGE("Document No.",TransportSheetHeader."Document No.");
+            TransportSheetLine.SETRANGE("Source Type",TransportSheetLine."Source Type"::"Transfer Order");
+            TransportSheetLine.SETRANGE("Source No.",TransferLine."Document No.");
+            TransportSheetLine.SETRANGE("Source Line No.", TransferLine."Line No.");
+            IF NOT TransportSheetLine.FINDSET THEN BEGIN
+              IF TransferLine."Qty. to Receive" <> 0 THEN BEGIN
+                TransferLine.VALIDATE("Qty. to Receive",0);
+                DoModifyTransLine := TRUE;
+              END;
+
+              IF TransferLine."Transport Sheet No." <> '' THEN BEGIN
+                TransferLine."Transport Sheet No." := '';
+                DoModifyTransLine := TRUE;
+              END;
+
+              IF DoModifyTransLine THEN
+                TransferLine.MODIFY;
+            END ELSE
+              UpdateTransportSheetQtyToReceive(TransferLine,TransportSheetLine);
+
+          IF (SourceNo <> TransportSheetLine."Source No.") THEN
+            IF NOT TempErrorMessage.HasErrors(FALSE) THEN BEGIN
+              TransferHeader.GET(TransportSheetLine."Source No.");
+
+              TransferHeader.SetHideValidationDialog(TRUE);
+              IF NOT TransferHeader."Transport Sheet Posting" THEN BEGIN
+                TransferHeader.VALIDATE("Transport Sheet Posting",TRUE);
+                DoModifyTransferHdr := TRUE;
+              END;
+
+              IF TransferHeader."Posting Date" <> WORKDATE THEN BEGIN
+                TransferHeader.VALIDATE("Posting Date", WORKDATE);
+                DoModifyTransferHdr := TRUE;
+              END;
+
+              IF DoModifyTransferHdr THEN
+                TransferHeader.MODIFY;
+
+              TransferHeader.SetHideValidationDialog(FALSE);
+            END;
+
+          SourceNo := TransportSheetLine."Source No.";
+        UNTIL TransferLine.NEXT = 0
+        ELSE
+          TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(NoTransportSheetLineToReceive,TransportDocNo));
+      UNTIL TempTransHdr.NEXT = 0
+      ELSE
+        TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(NoTransferLineToReceive,TransferLine."Document No.",TransferLine."Line No.", TransportDocNo));
+    END;
+
+    LOCAL PROCEDURE GetTransportSheetAdditionalData@50002(WhseShptLine@50000 : Record 7321;VAR TransportSheetLine@50001 : Record 50016);
+    VAR
+      TransferLine@50002 : Record 5741;
+      ReservationEntry@50003 : Record 337;
+      ReservationEntry2@50004 : Record 337;
+      SalesDocNo@50005 : Code[20];
+    BEGIN
+      CASE WhseShptLine."Source Document" OF
+        WhseShptLine."Source Document"::"Outbound Transfer": BEGIN
+          TransferLine.GET(WhseShptLine."Source No.", WhseShptLine."Source Line No.");
+          // TransportSheetLine."Qty. to Receive" := TransferLine."Qty. to Receive";
+          CLEAR(ReservationEntry);
+          ReservationEntry.SETRANGE("Source Type", DATABASE::"Transfer Line");
+          ReservationEntry.SETRANGE("Source ID", TransferLine."Document No.");
+          ReservationEntry.SETRANGE("Source Subtype", 1);
+          ReservationEntry.SETRANGE("Source Prod. Order Line", 0);
+          ReservationEntry.SETRANGE("Reservation Status", ReservationEntry."Reservation Status"::Reservation);
+          ReservationEntry.SETRANGE("Source Ref. No.", TransferLine."Line No.");
+          ReservationEntry.SETRANGE(Positive, TRUE);
+          IF ReservationEntry.FINDSET() THEN REPEAT
+            ReservationEntry2.GET(ReservationEntry."Entry No.", FALSE);
+            IF ReservationEntry2."Source Type" = DATABASE::"Sales Line" THEN BEGIN
+              IF (SalesDocNo <> '') AND (SalesDocNo <> ReservationEntry2."Source ID") THEN
+                TransportSheetLine.VALIDATE("Personal Pickup",TRUE)
+              ELSE BEGIN
+                SalesDocNo := ReservationEntry2."Source ID";
+                TempSalesHeader.RESET;
+                IF TempSalesHeader.GET(TempSalesHeader."Document Type"::Order, ReservationEntry2."Source ID") THEN BEGIN
+                  TransportSheetLine."Personal Pickup" := TempSalesHeader.Correction;
+                  TransportSheetLine.Assembly := TempSalesHeader."Get Shipment Used";
+                  TransportSheetLine."Promised/Updated Delivery Date" := TempSalesHeader."Updated Delivery Date";
+                END ELSE BEGIN
+                  CheckSalesLinesTransportAndAssembly(ReservationEntry2."Source ID", TransportSheetLine);
+                  GetPromisedUpdatedDeliveryDate(ReservationEntry2."Source ID", TransportSheetLine);
+
+                  TempSalesHeader.INIT;
+                  TempSalesHeader."Document Type" := TempSalesHeader."Document Type"::Order;
+                  TempSalesHeader."No." := ReservationEntry2."Source ID";
+                  TempSalesHeader.Correction := TransportSheetLine."Personal Pickup";
+                  TempSalesHeader."Get Shipment Used" := TransportSheetLine.Assembly;
+                  TempSalesHeader."Updated Delivery Date" := TransportSheetLine."Promised/Updated Delivery Date";
+                  IF TempSalesHeader.ISTEMPORARY THEN
+                    TempSalesHeader.INSERT;
+                END;
+              END;
+            END;
+          UNTIL ReservationEntry.NEXT = 0 ELSE BEGIN
+            TransportSheetLine."Personal Pickup" := TRUE;
+            TransportSheetLine.Assembly := FALSE;
+          END;
+        END;
+
+        WhseShptLine."Source Document"::"Sales Order":
+          IF TempSalesHeader.GET(TempSalesHeader."Document Type"::Order, WhseShptLine."Source No.") THEN BEGIN
+            TransportSheetLine."Personal Pickup" := TempSalesHeader.Correction;
+            TransportSheetLine.Assembly := TempSalesHeader."Get Shipment Used";
+            TransportSheetLine."Promised/Updated Delivery Date" := TempSalesHeader."Updated Delivery Date";
+          END ELSE BEGIN
+            CheckSalesLinesTransportAndAssembly(WhseShptLine."Source No.", TransportSheetLine);
+            GetPromisedUpdatedDeliveryDate(WhseShptLine."Source No.", TransportSheetLine);
+
+            TempSalesHeader.INIT;
+            TempSalesHeader."Document Type" := TempSalesHeader."Document Type"::Order;
+            TempSalesHeader."No." := WhseShptLine."Source No.";
+            TempSalesHeader.Correction := TransportSheetLine."Personal Pickup";
+            TempSalesHeader."Get Shipment Used" := TransportSheetLine.Assembly;
+            TempSalesHeader."Updated Delivery Date" := TransportSheetLine."Promised/Updated Delivery Date";
+            TempSalesHeader.INSERT;
+          END;
+      END;
+    END;
+
+    LOCAL PROCEDURE CheckTransSheetHeaderDestination@50202(VAR TransportSheetHeader@50000 : Record 50015;WhseShipLine@50001 : Record 7321);
+    VAR
+      Location@50002 : Record 14;
+    BEGIN
+      IF TransportSheetHeader."Destination No." = '' THEN BEGIN
+        TransportSheetHeader.VALIDATE("Destination No.",WhseShipLine."Destination No.");
+        IF WhseShipLine."Source Document" = WhseShipLine."Source Document"::"Outbound Transfer" THEN BEGIN
+          IF Location.GET(WhseShipLine."Destination No.") AND Location."Require Receive" THEN BEGIN
+            TransportSheetHeader.VALIDATE("Receiving Location",WhseShipLine."Destination No.");
+            TransportSheetHeader.MODIFY(TRUE);
+          END;
+        END;
+      END ELSE BEGIN
+        IF TransportSheetHeader."Destination No." <> WhseShipLine."Destination No." THEN
+          ERROR(TextError007,WhseShipLine."No.",WhseShipLine."Destination No.");
+      END;
+    END;
+
+    LOCAL PROCEDURE GetCustNameFromReservation@50004(VAR TransportSheetLine@50001 : Record 50016;WhseShptLine@50003 : Record 7321);
+    VAR
+      ReservEntry@50000 : Record 337;
+      ReservEntry2@50002 : Record 337;
+      TransferLine@50004 : Record 5741;
+      ShipToLocation@50005 : Record 14;
+      SalesHeader@50006 : Record 36;
+      Customer@50007 : Record 18;
+      Contact@50008 : Record 5050;
+      SourceName@50010 : Text;
+    BEGIN
+      ReservEntry.SETCURRENTKEY("Item No.","Source Type","Source Subtype","Reservation Status","Location Code","Variant Code");
+      ReservEntry.SETRANGE("Item No.",WhseShptLine."Item No.");
+      ReservEntry.SETRANGE("Source ID",WhseShptLine."Source No.");
+      ReservEntry.SETRANGE("Source Ref. No.",WhseShptLine."Source Line No.");
+
+      CASE WhseShptLine."Source Document" OF
+        WhseShptLine."Source Document"::"Sales Order":
+            ReservEntry.SETRANGE("Source Type",DATABASE::"Sales Line");
+        WhseShptLine."Source Document"::"Outbound Transfer":
+            ReservEntry.SETRANGE("Source Type",DATABASE::"Transfer Line");
+      END;
+
+      ReservEntry.SETRANGE("Source Subtype",1);
+      ReservEntry.SETRANGE("Reservation Status",ReservEntry."Reservation Status"::Reservation);
+      IF ReservEntry.FINDSET THEN REPEAT
+        SourceName := '';
+        ReservEntry2.GET(ReservEntry."Entry No.", NOT ReservEntry.Positive);
+        CASE ReservEntry2."Source Type" OF
+          DATABASE::"Transfer Line":
+            BEGIN
+              TransferLine.GET(ReservEntry2."Source ID",ReservEntry2."Source Ref. No.");
+              IF ShipToLocation.GET(TransferLine."Transfer-to Code") THEN
+                IF (TransportSheetLine."Source Name" <> '') AND (TransportSheetLine."Source Name" <> ShipToLocation.Name) THEN
+                  TransportSheetLine.VALIDATE("Source Name",TextMultipleCustomers)
+                ELSE
+                  TransportSheetLine.VALIDATE("Source Name",ShipToLocation.Name);
+            END;
+          DATABASE::"Sales Line":
+            BEGIN
+              SalesHeader.GET(SalesHeader."Document Type"::Order,ReservEntry2."Source ID");
+              IF Customer.GET(SalesHeader."Sell-to Customer No.") AND Customer."Retail Customer" THEN BEGIN
+                Contact.GET(SalesHeader."Sell-to Contact No.");
+                IF (TransportSheetLine."Source Name" <> '') AND (TransportSheetLine."Source Name" <> (Contact.Surname + ' ' + Contact."First Name")) THEN
+                  SourceName := TextMultipleCustomers
+                ELSE
+                  SourceName := Contact.Surname + ' ' + Contact."First Name";
+              END ELSE
+                IF (TransportSheetLine."Source Name" <> '') AND (TransportSheetLine."Source Name" <> Customer.Name) THEN
+                  SourceName := TextMultipleCustomers
+                ELSE
+                  SourceName := Customer.Name;
+
+              TransportSheetLine.VALIDATE("Source Name",SourceName);
+            END;
+        END;
+      UNTIL ReservEntry.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE UpdateTransportSheetShippedQty@50104(WhseShipmentLine@50003 : Record 7321;transportDocNo@50000 : Code[20]);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+      PostedWhseShptLine@50005 : Record 7323;
+    BEGIN
+      TransportSheetLine.SETRANGE("Document No.",transportDocNo);
+      TransportSheetLine.SETRANGE("Whse. Shipment No.",WhseShipmentLine."No.");
+      TransportSheetLine.SETFILTER("Quantity to Ship",'>%1',0);
+      IF TransportSheetLine.FINDSET(TRUE) THEN REPEAT
+        PostedWhseShptLine.SETRANGE("Whse. Shipment No.",TransportSheetLine."Whse. Shipment No.");
+        PostedWhseShptLine.SETRANGE("Whse Shipment Line No.",TransportSheetLine."Whse. Shipment Line No.");
+        IF PostedWhseShptLine.FINDLAST THEN BEGIN
+          TransportSheetLine."Qty. Shipped" += PostedWhseShptLine.Quantity;
+          TransportSheetLine."Quantity to Ship" := 0;
+
+          IF WhseShipmentLine."Source Document" = WhseShipmentLine."Source Document"::"Outbound Transfer" THEN
+            TransportSheetLine."Qty. to Receive" += PostedWhseShptLine.Quantity;
+
+          TransportSheetLine.MODIFY;
+        END;
+      UNTIL TransportSheetLine.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE UpdateTransportSheetShippedQtyOnPartialShipment@50011(WhseShipmentLine@50003 : Record 7321;transportDocNo@50000 : Code[20]);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+      PostedWhseShptLine@50005 : Record 7323;
+      WarehouseShipmentLine@50006 : Record 7321;
+    BEGIN
+      TransportSheetLine.SETRANGE("Document No.",transportDocNo);
+      TransportSheetLine.SETRANGE("Whse. Shipment No.",WhseShipmentLine."No.");
+      TransportSheetLine.SETFILTER("Quantity to Ship",'>%1',0);
+      IF TransportSheetLine.FINDSET(TRUE) THEN REPEAT
+        IF NOT WarehouseShipmentLine.GET(TransportSheetLine."Whse. Shipment No.",TransportSheetLine."Whse. Shipment Line No.") THEN BEGIN
+          PostedWhseShptLine.SETRANGE("Whse. Shipment No.",TransportSheetLine."Whse. Shipment No.");
+          PostedWhseShptLine.SETRANGE("Whse Shipment Line No.",TransportSheetLine."Whse. Shipment Line No.");
+          IF PostedWhseShptLine.FINDLAST THEN BEGIN
+            TransportSheetLine."Qty. Shipped" += PostedWhseShptLine.Quantity;
+            TransportSheetLine."Quantity to Ship" := 0;
+
+            IF WhseShipmentLine."Source Document" = WhseShipmentLine."Source Document"::"Outbound Transfer" THEN
+              TransportSheetLine."Qty. to Receive" += PostedWhseShptLine.Quantity;
+
+            TransportSheetLine.MODIFY;
+          END;
+        END;
+      UNTIL TransportSheetLine.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE UpdateTransportSheetTransferReceivedQty@50081(TransferHeader@50002 : Record 5740;TransportDocNo@50000 : Code[20]);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+      TransferReceiptLine@50003 : Record 5747;
+      TransportSheetLine2@50004 : Record 50016;
+      AdditionalTransLineQty@50005 : Decimal;
+    BEGIN
+      TransportSheetLine.SETRANGE("Document No.",TransportDocNo);
+      TransportSheetLine.SETRANGE("Source Type",TransportSheetLine."Source Type"::"Transfer Order");
+      TransportSheetLine.SETRANGE("Source No.",TransferHeader."No.");
+      TransportSheetLine.SETFILTER("Qty. to Receive",'<>%1',0);
+      IF TransportSheetLine.FINDSET THEN REPEAT
+        TransferReceiptLine.SETRANGE("Item No.",TransportSheetLine."Item No.");
+        TransferReceiptLine.SETRANGE("Transfer Order No.",TransportSheetLine."Source No.");
+        TransferReceiptLine.SETRANGE("Line No.",TransportSheetLine."Source Line No.");
+        IF TransferReceiptLine.FINDLAST THEN BEGIN
+          //v2
+          AdditionalTransLineQty := 0;
+
+          TransportSheetLine2.SETRANGE("Document No.",TransportDocNo);
+          TransportSheetLine2.SETRANGE("Source Type",TransportSheetLine2."Source Type"::"Transfer Order");
+          TransportSheetLine2.SETRANGE("Source No.",TransferHeader."No.");
+          TransportSheetLine2.SETRANGE("Source Line No.",TransportSheetLine."Source Line No.");
+          TransportSheetLine2.SETFILTER("Line No.",'<>%1',TransportSheetLine."Line No.");
+          TransportSheetLine2.SETFILTER("Qty. to Receive",'<>%1',0);
+          IF TransportSheetLine2.FINDSET THEN BEGIN
+            // isti redak NPR-a u viçe redaka transportnog
+            REPEAT
+              AdditionalTransLineQty += TransportSheetLine2."Qty. to Receive";
+            UNTIL TransportSheetLine2.NEXT = 0;
+
+            IF AdditionalTransLineQty <> 0 THEN
+              AdditionalTransLineQty := AdditionalTransLineQty - TransportSheetLine."Qty. to Receive"
+            ELSE
+              AddedTransportSheetLines := TransportSheetLine."Qty. to Receive";
+
+            TransportSheetLine."Qty. Received" += AdditionalTransLineQty;
+            TransportSheetLine."Qty. to Receive" -= AdditionalTransLineQty;
+            TransportSheetLine.MODIFY;
+          END ELSE BEGIN
+            TransportSheetLine."Qty. Received" += TransferReceiptLine.Quantity;
+            TransportSheetLine."Qty. to Receive" -= TransferReceiptLine.Quantity;
+            TransportSheetLine.MODIFY;
+          END;
+        END;
+
+        IF TransportSheetLine."Qty. to Receive" < 0 THEN
+          MESSAGE(InvalidQtyToReceiveAfterPostingMsg,TransportSheetLine."Document No.",TransportSheetLine."Line No.",TransportSheetLine."Qty. to Receive");
+      UNTIL TransportSheetLine.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE CheckTransportSheetQtyToShip@50105(TransportSheetNo@50001 : Code[20]);
+    VAR
+      TransportSheetLine@50000 : Record 50016;
+    BEGIN
+      TransportSheetLine.SETRANGE("Document No.",TransportSheetNo);
+      TransportSheetLine.SETFILTER("Quantity to Ship",'>0');
+      IF TransportSheetLine.ISEMPTY THEN
+        TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,TextError005);
+    END;
+
+    LOCAL PROCEDURE ReceiveTransferOrders@50125(VAR TempTransferHdrForPosting@50006 : TEMPORARY Record 5740;TransportDocNo@50003 : Code[20]);
+    VAR
+      TransferPostReceipt@50002 : Codeunit 5705;
+      TransferHeader@50001 : Record 5740;
+    BEGIN
+      CLEAR(TransferPostReceipt);
+      TransferPostReceipt.SetHideValidationDialog(TRUE);
+      TransferPostReceipt.SetSkipUpdateTransportSheetNo(TRUE); //v2 update header and lines
+      TransferHeader.GET(TempTransferHdrForPosting."No.");
+
+      COMMIT;
+      IF NOT TransferPostReceipt.RUN(TransferHeader) THEN BEGIN
+        IF NOT TransferHeader.GET(TempTransferHdrForPosting."No.") THEN BEGIN
+          UpdateTransportSheetTransferReceivedQty(TransferHeader,TransportDocNo);
+          PostedReceipts += 1;
+        END ELSE
+          TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,GETLASTERRORTEXT());
+      END ELSE BEGIN
+        UpdateTransportSheetTransferReceivedQty(TransferHeader,TransportDocNo);
+        PostedReceipts += 1;
+      END;
+    END;
+
+    LOCAL PROCEDURE GetPromisedUpdatedDeliveryDate@50139(SourceNo@50000 : Code[20];VAR TransportSheetLine@50001 : Record 50016);
+    VAR
+      SalesHeader@50002 : Record 36;
+    BEGIN
+      IF NOT SalesHeader.GET(SalesHeader."Document Type"::Order,SourceNo) THEN
+        EXIT;
+
+      IF SalesHeader."Updated Delivery Date" <> 0D THEN
+        TransportSheetLine."Promised/Updated Delivery Date" := SalesHeader."Updated Delivery Date"
+      ELSE
+        TransportSheetLine."Promised/Updated Delivery Date" := SalesHeader."Promised Delivery Date";
+    END;
+
+    LOCAL PROCEDURE CheckSalesLinesTransportAndAssembly@50149(SourceNo@50001 : Code[20];VAR TransportSheetLine@50002 : Record 50016);
+    VAR
+      SalesLine@50000 : Record 37;
+    BEGIN
+      SalesLine.SETRANGE("Document Type", SalesLine."Document Type"::Order);
+      SalesLine.SETRANGE("Document No.", SourceNo);
+      SalesLine.SETRANGE(Type,SalesLine.Type::Item);
+      SalesLine.SETFILTER("No.",'%1|%2',SalesSetup."Additional Delivery Item",SalesSetup."Transport Item No.");
+      IF SalesLine.FINDSET THEN
+        TransportSheetLine."Personal Pickup" := FALSE
+      ELSE
+        TransportSheetLine."Personal Pickup" := TRUE;
+
+      SalesLine.SETFILTER("No.",'%1|%2',SalesSetup."Assembly Item No.",SalesSetup."Additional Assembly Item");
+      IF SalesLine.FINDSET THEN
+          TransportSheetLine.Assembly := TRUE
+      ELSE
+        TransportSheetLine.Assembly := FALSE;
+    END;
+
+    PROCEDURE AddPickedWhseShipToTransSheet@50200(VAR TempWhseShpt@50006 : TEMPORARY Record 7320;VAR TransportSheetHeader@50005 : Record 50015;VAR LineNo@50004 : Integer);
+    VAR
+      WhseShipLine@50000 : Record 7321;
+      WhseShptHdr@50007 : Record 7320;
+    BEGIN
+      TempWhseShpt.RESET;
+      IF TempWhseShpt.FINDSET THEN REPEAT
+        WhseShipLine.SETFILTER("No.",TempWhseShpt."No.");
+        WhseShipLine.SETFILTER("Qty. to Ship",'>%1',0);
+        IF WhseShipLine.FINDSET THEN REPEAT
+          IF WhseShptHdr."No." <> WhseShipLine."No." THEN
+            WhseShptHdr.GET(WhseShipLine."No.");
+
+          CheckTransSheetHeaderDestination(TransportSheetHeader,WhseShipLine);
+          CreateTransportSheetLine(WhseShipLine,TransportSheetHeader."Document No.",LineNo,WhseShptHdr);
+        UNTIL WhseShipLine.NEXT = 0;
+      UNTIL TempWhseShpt.NEXT = 0;
+    END;
+
+    PROCEDURE GetTransSheetLastLineNo@50201(TransportSheetNo@50000 : Code[20]) : Integer;
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+    BEGIN
+      TransportSheetLine.SETRANGE("Document No.",TransportSheetNo);
+      IF TransportSheetLine.FINDLAST THEN
+        EXIT(TransportSheetLine."Line No.");
+    END;
+
+    LOCAL PROCEDURE CheckRespCenterLocationsForTransSheet@50463(TransportSheetNo@50000 : Code[20]);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+      ResponsibilityCenterLocation@50003 : Record 50009;
+      UserSetup@50004 : Record 91;
+      TempLocation@50002 : TEMPORARY Record 14;
+    BEGIN
+      UserSetup.GET(USERID);
+      IF UserSetup."Sales Resp. Ctr. Filter" = '' THEN
+        EXIT;
+
+      ResponsibilityCenterLocation.SETRANGE("Responsibility Center",UserSetup."Sales Resp. Ctr. Filter");
+      IF ResponsibilityCenterLocation.FINDSET THEN
+        REPEAT
+          IF NOT TempLocation.GET(ResponsibilityCenterLocation."Location Code") THEN BEGIN
+            TempLocation.INIT;
+            TempLocation.Code := ResponsibilityCenterLocation."Location Code";
+            IF TempLocation.ISTEMPORARY THEN
+              TempLocation.INSERT;
+          END;
+        UNTIL ResponsibilityCenterLocation.NEXT = 0;
+
+      TransportSheetLine.SETRANGE("Document No.",TransportSheetNo);
+      IF TransportSheetLine.FINDSET THEN REPEAT
+        IF NOT TempLocation.GET(TransportSheetLine."Location Code") THEN
+          TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(TextError017,TransportSheetLine."Location Code",UserSetup."Sales Resp. Ctr. Filter"));
+      UNTIL TransportSheetLine.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE GetWhseShptsForPostingShipment@50000(TransportDocNo@50000 : Code[20];VAR TempWhseShptHdrForPosting@50002 : TEMPORARY Record 7320);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+      WhseShptLine@50003 : Record 7321;
+      WarehouseShipmentHeader@50004 : Record 7320;
+      TransportSheetHeader@50005 : Record 50015;
+      TempTransHdr@50006 : TEMPORARY Record 5740;
+      TransferLine@50007 : Record 5741;
+      DoModifyTransLine@50008 : Boolean;
+    BEGIN
+      TransportSheetHeader.GET(TransportDocNo);
+
+      TransportSheetLine.SETRANGE("Document No.",TransportSheetHeader."Document No.");
+      IF NOT TransportSheetLine.FINDSET THEN
+        TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,NothingForPostingShpt);
+
+      REPEAT
+        //v2
+        IF NOT TempTransHdr.GET(TransportSheetLine."Source No.") THEN BEGIN
+          TempTransHdr.INIT;
+          TempTransHdr."No." := TransportSheetLine."Source No.";
+          TempTransHdr.INSERT;
+        END;
+        //v2
+
+        IF NOT WhseShptLine.GET(TransportSheetLine."Whse. Shipment No.",TransportSheetLine."Whse. Shipment Line No.") THEN BEGIN
+          IF TransportSheetLine."Quantity to Ship" <> 0 THEN BEGIN
+            TransportSheetLine."Quantity to Ship" := 0;
+            TransportSheetLine.MODIFY;
+          END;
+        END ELSE BEGIN
+          IF WhseShptLine."Qty. to Ship" <> TransportSheetLine."Quantity to Ship" THEN BEGIN
+            TransportSheetLine."Quantity to Ship" := WhseShptLine."Qty. to Ship";
+            TransportSheetLine.MODIFY;
+          END;
+
+          IF TransportSheetLine."Source Type" = TransportSheetLine."Source Type"::"Transfer Order" THEN
+            MarkTransportSheetOnShipment(WhseShptLine,TransportSheetLine."Document No.",WarehouseShipmentHeader); //v2
+
+          IF NOT TempWhseShptHdrForPosting.GET(TransportSheetLine."Whse. Shipment No.") THEN BEGIN
+            TempWhseShptHdrForPosting.INIT;
+            TempWhseShptHdrForPosting."No." := TransportSheetLine."Whse. Shipment No.";
+            IF TempWhseShptHdrForPosting.ISTEMPORARY THEN
+              TempWhseShptHdrForPosting.INSERT;
+          END;
+        END;
+      UNTIL TransportSheetLine.NEXT = 0;
+
+      //v2
+      TempTransHdr.RESET;
+      TransportSheetLine.RESET;
+      IF TempTransHdr.FINDSET THEN REPEAT
+        TransferLine.RESET;
+        TransferLine.SETRANGE("Document No.",TempTransHdr."No.");
+        IF TransferLine.FINDSET THEN REPEAT
+          DoModifyTransLine := FALSE;
+
+          TransportSheetLine.SETRANGE("Document No.",TransportSheetHeader."Document No.");
+          TransportSheetLine.SETRANGE("Source Type",TransportSheetLine."Source Type"::"Transfer Order");
+          TransportSheetLine.SETRANGE("Source Line No.", TransferLine."Line No.");
+          IF NOT TransportSheetLine.FINDFIRST THEN
+            IF TransferLine."Transport Sheet No." <> '' THEN BEGIN
+              TransferLine."Transport Sheet No." := '';
+              TransferLine.MODIFY;
+            END;
+        UNTIL TransferLine.NEXT = 0
+        ELSE
+          TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(NoTransportSheetLineToReceive,TransportDocNo));
+      UNTIL TempTransHdr.NEXT = 0
+      ELSE
+        TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(NoTransferLineToReceive,TransferLine."Document No.",TransferLine."Line No.", TransportDocNo));
+
+      //v2
+    END;
+
+    LOCAL PROCEDURE GetTransferOrdersForPostingReceipt@50013(TransportDocNo@50000 : Code[20];VAR TempTransferHdrForPosting@50002 : TEMPORARY Record 5740);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+      TransferHeader@50004 : Record 5740;
+    BEGIN
+      TransportSheetLine.SETRANGE("Document No.",TransportDocNo);
+      TransportSheetLine.SETRANGE("Source Type",TransportSheetLine."Source Type"::"Transfer Order");
+      TransportSheetLine.SETFILTER("Qty. to Receive",'>%1',0);
+      IF NOT TransportSheetLine.FINDSET THEN
+        TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,NothingForPostingRcpt)
+      ELSE REPEAT
+        IF TransportSheetLine."Source Type" = TransportSheetLine."Source Type"::"Sales Order" THEN
+          TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(NonTransferLineForReceiptErr,TransportSheetLine.FIELDCAPTION("Qty. to Receive")))
+        ELSE IF NOT TransferHeader.GET(TransportSheetLine."Source No.") THEN
+          TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(NonTransferLineForReceiptErr,TransportSheetLine.FIELDCAPTION("Qty. to Receive")))
+        ELSE IF NOT TempTransferHdrForPosting.GET(TransportSheetLine."Source No.") THEN BEGIN
+          TempTransferHdrForPosting.INIT;
+          TempTransferHdrForPosting."No." := TransportSheetLine."Source No.";
+          IF TempTransferHdrForPosting.ISTEMPORARY THEN
+            TempTransferHdrForPosting.INSERT;
+        END;
+      UNTIL TransportSheetLine.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE UpdateTransportStatusAfterPostingShipments@50042(VAR TransportSheetHeader@50000 : Record 50015);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+    BEGIN
+      IF PostedWhseShipments = 0 THEN
+        EXIT;
+
+      TransportSheetLine.SETRANGE("Document No.",TransportSheetHeader."Document No.");
+      TransportSheetLine.SETFILTER("Quantity to Ship",'>0');
+      IF TransportSheetLine.ISEMPTY() THEN BEGIN
+        IF TransportSheetHeader."Receiving Location" <> '' THEN
+          TransportSheetHeader.VALIDATE(Status, TransportSheetHeader.Status::"Shipped - Awaiting Receipt")
+        ELSE
+          TransportSheetHeader.VALIDATE(Status,TransportSheetHeader.Status::Shipped);
+      END ELSE
+        TransportSheetHeader.VALIDATE(Status,TransportSheetHeader.Status::"Partially Shipped");
+
+      TransportSheetHeader.MODIFY;
+    END;
+
+    LOCAL PROCEDURE UpdateTransportStatusAfterPostingReceipts@50053(VAR TransportSheetHeader@50000 : Record 50015);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+      PartialReceipt@50002 : Boolean;
+    BEGIN
+      IF PostedReceipts = 0 THEN
+        EXIT;
+
+      TransportSheetLine.SETRANGE("Document No.",TransportSheetHeader."Document No.");
+      IF TransportSheetLine.FINDSET THEN REPEAT
+        IF (TransportSheetLine."Qty. Shipped" <> TransportSheetLine."Qty. Received") OR (TransportSheetLine."Qty. Shipped" = 0) THEN
+          PartialReceipt := TRUE;
+      UNTIL (TransportSheetLine.NEXT = 0) OR PartialReceipt;
+
+      IF PartialReceipt THEN
+        TransportSheetHeader.VALIDATE(Status,TransportSheetHeader.Status::"Partially Received")
+      ELSE
+        TransportSheetHeader.VALIDATE(Status,TransportSheetHeader.Status::Received);
+      TransportSheetHeader.MODIFY;
+    END;
+
+    LOCAL PROCEDURE CheckIfUserCanPostReceipt@50064(LocationCode@50000 : Code[20]);
+    VAR
+      UserSetup@50001 : Record 91;
+      ResponsibilityCenterLocation@50002 : Record 50009;
+    BEGIN
+      UserSetup.GET(USERID);
+      IF UserSetup."Sales Resp. Ctr. Filter" = '' THEN
+        EXIT;
+
+      ResponsibilityCenterLocation.SETRANGE("Responsibility Center",UserSetup."Sales Resp. Ctr. Filter");
+      ResponsibilityCenterLocation.SETRANGE("Location Code",LocationCode);
+      IF ResponsibilityCenterLocation.ISEMPTY THEN
+        TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(TextError017,LocationCode,UserSetup."Sales Resp. Ctr. Filter"));
+    END;
+
+    PROCEDURE UpdateQtyToReceiveOnLinkedTransferLine@50017(VAR Rec@50001 : Record 50016);
+    VAR
+      TransferLine@50002 : Record 5741;
+      TransportSheetHeader@50000 : Record 50015;
+      Location@50003 : Record 14;
+      ComplaintPrima@50004 : Record 50020;
+    BEGIN
+      IF Rec."Complaint Order Status" = Rec."Complaint Order Status"::" " THEN BEGIN
+        UserSetup.GET(USERID);
+        IF UserSetup."System Admin." THEN BEGIN
+          IF NOT CONFIRM(STRSUBSTNO(RcptPostingQtyConf,Rec.FIELDCAPTION("Complaint Order Status"),FORMAT(Rec."Complaint Order Status")),TRUE) THEN
+            Rec.FIELDERROR("Complaint Order Status");
+        END ELSE
+          Rec.FIELDERROR("Complaint Order Status");
+      END;
+
+      TempErrorMessage.ClearLog();
+
+      IF Rec."Complaint Order Status" = Rec."Complaint Order Status"::Open THEN BEGIN
+        ComplaintPrima.SETRANGE("Document Type",ComplaintPrima."Document Type"::"Transport Sheet");
+        ComplaintPrima.SETRANGE("Document No.", Rec."Document No.");
+        ComplaintPrima.SETRANGE("Source Line No.",Rec."Line No.");
+        ComplaintPrima.SETFILTER("Customer Complaint Status",'%1',ComplaintPrima."Customer Complaint Status"::Inactive);
+        IF ComplaintPrima.FINDSET THEN
+          REPEAT
+            TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(ComplaintNoteExistErr,ComplaintPrima."No."));
+          UNTIL ComplaintPrima.NEXT = 0;
+
+        IF TempErrorMessage.HasErrors(TRUE) THEN
+          TempErrorMessage.ShowErrorMessages(TRUE);
+      END;
+
+      TransportSheetHeader.GET(Rec."Document No.");
+
+      IF NOT Location.GET(TransportSheetHeader."Receiving Location") THEN
+        ERROR(TextError003);
+
+      IF NOT TransferLine.GET(Rec."Source No.",Rec."Source Line No.") THEN BEGIN
+        IF Rec."Qty. to Receive" <> 0 THEN
+          ERROR(TransferOrderNotExistErr)
+        ELSE BEGIN
+          Rec."Qty. Received" := Rec."Qty. Shipped";
+          MESSAGE(QtyReceivedUpdatedMsg,Rec."Source No.",Rec."Source Line No.",Rec."Qty. Shipped");
+          EXIT;
+        END;
+      END;
+
+      IF TransferLine."Qty. to Receive" = Rec."Qty. to Receive" THEN
+        EXIT;
+
+      IF TransferLine."Qty. in Transit" < Rec."Qty. to Receive" THEN
+        ERROR(InvalidQtyMaxErr,TransferLine."Qty. in Transit");
+
+      IF Rec."Qty. to Receive" > (Rec."Qty. Shipped" - Rec."Qty. Received") THEN
+        ERROR(InvalidQtyMaxErr,(Rec."Qty. Shipped" - Rec."Qty. Received"));
+
+      TransferLine.VALIDATE("Qty. to Receive",Rec."Qty. to Receive");
+      TransferLine.MODIFY;
+    END;
+
+    PROCEDURE ShowLinkedDocument@50001(TransportSheetLine@50000 : Record 50016);
+    VAR
+      DocTypeLbl@50001 : TextConst 'ENU=Source Document,Warehouse Shipment,Complaint Note;HRV=Izvorni dokument,Skladiçnu otpremnicu,Reklamacijski zapisnik';
+      OptionNo@50002 : Integer;
+      WhseShipHeader@50003 : Record 7320;
+      WarehouseShipment@50004 : Page 7335;
+      SalesHeader@50011 : Record 36;
+      TransferHeader@50010 : Record 5740;
+      Customer@50009 : Record 18;
+      TransferOrder@50008 : Page 5740;
+      SalesOrder@50007 : Page 42;
+      RetailSalesOrder@50006 : Page 10000870;
+      retailCustomer@50005 : Boolean;
+      DocumentNotFoundErr@50012 : TextConst 'ENU=Document ''%1'' is not found.;HRV=Dokument ''%1'' nije pronaden.';
+      ComplaintPrima@50013 : Record 50020;
+      ComplaintPrimaList@50014 : Page 50031;
+    BEGIN
+      OptionNo := STRMENU(DocTypeLbl,1);
+
+      CASE OptionNo OF
+        1:
+          BEGIN
+            IF TransportSheetLine."Source No." = '' THEN
+              EXIT;
+
+            IF TransferHeader.GET(TransportSheetLine."Source No.") THEN BEGIN
+              TransferOrder.SETRECORD(TransferHeader);
+              TransferOrder.RUN;
+              EXIT;
+            END;
+
+            SalesHeader.SETRANGE("No.",TransportSheetLine."Source No.");
+            IF SalesHeader.FINDFIRST THEN BEGIN
+              IF Customer.GET(SalesHeader."Sell-to Customer No.") THEN
+                retailCustomer := Customer."Retail Customer";
+
+              IF retailCustomer THEN BEGIN
+                RetailSalesOrder.SETRECORD(SalesHeader);
+                RetailSalesOrder.RUN;
+              END ELSE BEGIN
+                SalesOrder.SETRECORD(SalesHeader);
+                SalesOrder.RUN;
+              END;
+
+              EXIT;
+            END;
+
+            ERROR(DocumentNotFoundErr,TransportSheetLine."Source No.");
+          END;
+        2:
+          BEGIN
+            IF NOT WhseShipHeader.GET(TransportSheetLine."Whse. Shipment No.") THEN
+              ERROR(DocumentNotFoundErr,TransportSheetLine."Source No.");
+
+            WarehouseShipment.SETRECORD(WhseShipHeader);
+            WarehouseShipment.RUN;
+          END;
+        3:
+          BEGIN
+            ComplaintPrima.SETRANGE("Document Type",ComplaintPrima."Document Type"::"Transport Sheet");
+            ComplaintPrima.SETRANGE("Document No.", TransportSheetLine."Document No.");
+            ComplaintPrima.SETRANGE("Source Line No.",TransportSheetLine."Line No.");
+            IF NOT ComplaintPrima.FINDSET THEN
+              ERROR(DocumentNotFoundErr,TransportSheetLine."Source No.");
+
+            ComplaintPrimaList.SETTABLEVIEW(ComplaintPrima);
+            ComplaintPrimaList.RUN;
+          END;
+      END;
+    END;
+
+    LOCAL PROCEDURE CheckSourceTypeOnShipment@50008(DocNo@50000 : Code[20]);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+    BEGIN
+      TransportSheetLine.SETRANGE("Document No.",DocNo);
+      TransportSheetLine.SETRANGE("Source Type",TransportSheetLine."Source Type"::" ");
+      IF TransportSheetLine.FINDSET() THEN REPEAT
+        TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(SourceTypeErr,TransportSheetLine."Document No.",TransportSheetLine."Line No."
+                                          ,TransportSheetLine.FIELDCAPTION("Source Type"),TransportSheetLine."Source Type"));
+      UNTIL TransportSheetLine.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE CheckSourceTypeOnReceipt@50009(DocNo@50001 : Code[20]);
+    VAR
+      TransportSheetLine@50000 : Record 50016;
+    BEGIN
+      TransportSheetLine.SETRANGE("Document No.",DocNo);
+      TransportSheetLine.SETFILTER("Source Type",'<>%1',TransportSheetLine."Source Type"::"Transfer Order");
+      IF TransportSheetLine.FINDSET() THEN REPEAT
+        TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(SourceTypeErr,TransportSheetLine."Document No.",TransportSheetLine."Line No."
+                                          ,TransportSheetLine.FIELDCAPTION("Source Type"),TransportSheetLine."Source Type"));
+      UNTIL TransportSheetLine.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE MarkTransportSheetOnShipment@50007(VAR WhseShptLine@50000 : Record 7321;TransportDocNo@50003 : Code[20];VAR WarehouseShipmentHeader@50004 : Record 7320);
+    VAR
+      TransferLine@50001 : Record 5741;
+      TransferHeader@50002 : Record 5740;
+    BEGIN
+      //v2
+      IF NOT WhseShptLine."Transport Sheet Posting" THEN BEGIN
+        WhseShptLine."Transport Sheet Posting" := TRUE;
+        WhseShptLine.MODIFY;
+      END;
+
+      TransferHeader.GET(WhseShptLine."Source No.");
+      IF NOT TransferHeader."Transport Sheet Posting" THEN BEGIN
+        TransferHeader."Transport Sheet Posting" := TRUE;
+        TransferHeader.MODIFY;
+      END;
+
+      TransferLine.GET(WhseShptLine."Source No.",WhseShptLine."Source Line No.");
+      IF TransferLine."Transport Sheet No." <>  TransportDocNo THEN BEGIN
+        TransferLine."Transport Sheet No." := TransportDocNo;
+        TransferLine.MODIFY;
+      END;
+
+      WarehouseShipmentHeader.GET(WhseShptLine."No."); //modify on after insert transport sheet line
+      IF WarehouseShipmentHeader."Transport Sheet No." = '' THEN BEGIN
+        WarehouseShipmentHeader."Transport Sheet No." := TransportDocNo;
+        WarehouseShipmentHeader.MODIFY;
+      END;
+    END;
+
+    PROCEDURE PostTransportSheetReceiptTransferWhseRcpt@50006(VAR TransportSheetHeader@50000 : Record 50015);
+    VAR
+      Location@50001 : Record 14;
+      TempTransferHdrForPosting@50006 : TEMPORARY Record 5740;
+      PostWhseRcpt@50002 : Boolean;
+    BEGIN
+      // TODO
+
+      IF NOT CONFIRM(TextConfirm003) THEN
+        EXIT;
+
+      IF NOT (TransportSheetHeader.Status IN[TransportSheetHeader.Status::"Shipped - Awaiting Receipt", TransportSheetHeader.Status::"Partially Received"]) THEN
+        TransportSheetHeader.FIELDERROR(Status);
+
+      Location.GET(TransportSheetHeader."Destination No.");
+      IF Location."Use in BE-Mobile (receipt)" AND (TransportSheetHeader."Barcode Status" <> TransportSheetHeader."Barcode Status"::Processed) THEN BEGIN
+        UserSetup.GET(USERID);
+        IF UserSetup."System Admin." THEN BEGIN
+          IF NOT CONFIRM(RcptPostingConf,TRUE,TransportSheetHeader.FIELDCAPTION("Barcode Status"),TransportSheetHeader."Barcode Status"::Processed) THEN
+            ERROR(RcptPostingErr,TransportSheetHeader.FIELDCAPTION("Barcode Status"),TransportSheetHeader."Barcode Status");
+        END ELSE
+          ERROR(RcptPostingErr,TransportSheetHeader.FIELDCAPTION("Barcode Status"),TransportSheetHeader."Barcode Status");
+      END;
+
+      TempErrorMessage.ClearLog();
+
+      CheckIfUserCanPostReceipt(Location.Code);
+      CheckSourceTypeOnReceipt(TransportSheetHeader."Document No."); //v2
+      UpdateTransportQtyToReceiveOnTransferLines(TransportSheetHeader."Document No.");
+      GetTransferOrdersForPostingReceipt(TransportSheetHeader."Document No.",TempTransferHdrForPosting);
+      //CreateWhseRcptHeaderLine(TempTransferHdrForPosting);
+
+      IF TempErrorMessage.HasErrors(TRUE) THEN
+        TempErrorMessage.ShowErrorMessages(TRUE);
+
+      COMMIT;
+
+      TempTransferHdrForPosting.RESET;
+      IF TempTransferHdrForPosting.FINDSET THEN REPEAT
+        ReceiveTransferOrders(TempTransferHdrForPosting,TransportSheetHeader."Document No.");
+
+        COMMIT;
+        CLEARLASTERROR;
+      UNTIL TempTransferHdrForPosting.NEXT = 0;
+
+      UpdateTransportStatusAfterPostingReceipts(TransportSheetHeader);
+      COMMIT;
+
+      IF TempErrorMessage.HasErrors(TRUE) THEN BEGIN
+        IF PostedReceipts > 0 THEN
+          TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Information,STRSUBSTNO(PartialPostingErr,PostedReceipts));
+        TempErrorMessage.ShowErrorMessages(TRUE);
+      END ELSE
+        MESSAGE(TextInfo004,PostedReceipts);
+    END;
+
+    LOCAL PROCEDURE CreateWhseRcptHeaderLine@50010(VAR TempTransferHdrForPosting@50000 : Record 5740);
+    VAR
+      TransferHeader@50001 : Record 5740;
+    BEGIN
+      TempTransferHdrForPosting.RESET;
+      IF TempTransferHdrForPosting.FINDSET THEN REPEAT
+        TransferHeader.GET(TempTransferHdrForPosting."No.");
+        {
+        GetSourceDocInbound.SetCreatedByTransportSheet(TRUE);
+        GetSourceDocInbound.CreateFromInbndTransferOrderHideDialog(TransferHeader);
+        IF UpdateWhseReceiptsForTransport(qtyToReceiveMap,transportDocNo,TransferHeader."No.") THEN BEGIN
+          TransferHeader.SetHideValidationDialog(TRUE);
+          TransferHeader.VALIDATE("Transport Sheet Posting",TRUE);
+          TransferHeader.MODIFY;
+        END;
+        }
+
+
+      {
+      REPEAT
+        CreateIntDecimalDotNetDictionary(qtyToReceiveMap);
+
+        GetSourceDocInbound.SetCreatedByTransportSheet(TRUE);
+        GetSourceDocInbound.CreateFromInbndTransferOrderHideDialog(TransferHeader);
+        IF UpdateWhseReceiptsForTransport(qtyToReceiveMap,transportDocNo,TransferHeader."No.") THEN BEGIN
+          TransferHeader.SetHideValidationDialog(TRUE);
+          TransferHeader.VALIDATE("Transport Sheet Posting",TRUE);
+          TransferHeader.MODIFY;
+
+        END;
+      UNTIL TransferHeader.NEXT = 0;
+      }
+
+      UNTIL TempTransferHdrForPosting.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE UpdateTransportSheetQtyToReceive@50015(TransferLine@50001 : Record 5741;TransportSheetLine@50000 : Record 50016);
+    VAR
+      DoModifyTransferHdr@50006 : Boolean;
+      TransportSheetLine2@50005 : Record 50016;
+      TotalTransQtyOnCurrentTransportSheet@50004 : Decimal;
+      DoModifyTransLine@50003 : Boolean;
+      TransportSheetHeader2@50002 : Record 50015;
+      PostedWhseShptLine@50007 : Record 7323;
+      SourceNo@50008 : Code[20];
+      TransferHeader@50009 : Record 5740;
+    BEGIN
+      //v2
+      DoModifyTransferHdr := FALSE;
+      DoModifyTransLine := FALSE;
+
+      IF NOT TransferLine.GET(TransportSheetLine."Source No.",TransportSheetLine."Source Line No.") THEN BEGIN
+        IF TransportSheetLine."Qty. to Receive" <> 0 THEN
+          TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(InvalidQtyToReceive,TransportSheetLine."Document No.",TransportSheetLine."Line No."));
+      END ELSE BEGIN
+        IF TransportSheetLine."Qty. to Receive" = 0 THEN BEGIN
+          IF TransferLine."Qty. to Receive" <> 0 THEN BEGIN
+            TransferLine.VALIDATE("Qty. to Receive", 0);
+            DoModifyTransLine := TRUE;
+          END;
+        END ELSE IF TransportSheetLine."Qty. Shipped" < TransportSheetLine."Qty. to Receive" THEN
+          TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(InvalidQtyToReceive,TransportSheetLine."Document No.",TransportSheetLine."Line No."))
+        ELSE BEGIN
+          IF TransferLine."Qty. in Transit" < TransportSheetLine."Qty. to Receive" THEN
+            TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(InvalidQtyToReceive,TransportSheetLine."Document No.",TransportSheetLine."Line No."))
+          ELSE BEGIN
+            PostedWhseShptLine.SETRANGE("Whse. Shipment No.",TransportSheetLine."Whse. Shipment No.");
+            PostedWhseShptLine.SETRANGE("Whse Shipment Line No.",TransportSheetLine."Whse. Shipment Line No.");
+            PostedWhseShptLine.FINDLAST;
+            IF PostedWhseShptLine.Quantity <> TransportSheetLine."Qty. to Receive" THEN
+              IF PostedWhseShptLine.Quantity < TransportSheetLine."Qty. to Receive" THEN
+                TempErrorMessage.LogSimpleMessage(TempErrorMessage."Message Type"::Error,STRSUBSTNO(InvalidQtyToReceive,TransportSheetLine."Document No.",TransportSheetLine."Line No."));
+
+            IF TransferLine."Qty. to Receive" <> TransportSheetLine."Qty. to Receive" THEN BEGIN
+              //get total transport line qty.
+              TotalTransQtyOnCurrentTransportSheet := TransportSheetLine."Qty. to Receive";
+
+              TransportSheetLine2.SETRANGE("Document No.",TransportSheetLine."Document No.");
+              TransportSheetLine2.SETRANGE("Source Type",TransportSheetLine2."Source Type"::"Transfer Order");
+              TransportSheetLine2.SETRANGE("Source No.",TransportSheetLine."Source No.");
+              TransportSheetLine2.SETRANGE("Source Line No.",TransportSheetLine."Source Line No.");
+              TransportSheetLine2.SETFILTER("Line No.",'<>%1',TransportSheetLine."Line No.");
+              IF TransportSheetLine2.FINDSET THEN BEGIN
+                REPEAT
+                  TotalTransQtyOnCurrentTransportSheet += TransportSheetLine2."Qty. to Receive";
+                UNTIL TransportSheetLine2.NEXT = 0;
+              END;
+
+              IF TransferLine."Qty. to Receive" <> TotalTransQtyOnCurrentTransportSheet THEN BEGIN
+                TransferLine.VALIDATE(TransferLine."Qty. to Receive",TotalTransQtyOnCurrentTransportSheet);
+                DoModifyTransLine := TRUE;
+              END;
+            END;
+          END;
+        END;
+
+        IF TransferLine."Transport Sheet No." <> TransportSheetLine."Document No." THEN BEGIN
+          TransferLine."Transport Sheet No." := TransportSheetLine."Document No.";
+          DoModifyTransLine := TRUE;
+        END;
+
+        IF DoModifyTransLine THEN
+          TransferLine.MODIFY;
+      END;
+      //v2
+    END;
+
+    BEGIN
+    {
+      <PC>
+        <PRICO-2025-01 range="*">Redizajn transportnog lista</PRICO-2025-01>
+        <PRICO-2025-03>UnapreÐenje reklamacija</PRICO-2025-03>
+      <PC>
+    }
+    END.
+  }
+}
+
+OBJECT Page 50040 Transport Sheet
+{
+  OBJECT-PROPERTIES
+  {
+    Date=29.08.25;
+    Time=[ 8:00:46];
+    Modified=Yes;
+    Version List=PRIMA;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Transport List;
+               HRV=Transportni list];
+    SourceTable=Table50015;
+    PageType=Document;
+    OnOpenPage=BEGIN
+                 BeMobileLocation := BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocumentType::Transport); // <ZGNVSUPPCO-1246/>
+               END;
+
+    OnNewRecord=BEGIN
+                  InitInsert;
+                END;
+
+    OnAfterGetCurrRecord=BEGIN
+                           // <ZGNVSUPPCO-1246>
+                           IF Rec.Status = Rec.Status::Received THEN
+                             EXIT;
+
+                           BarcodeStatusEnabled := Rec.Status = Rec.Status::"Shipped - Awaiting Receipt";
+                           UserSetup.GET(USERID);
+                           BarcodeAdmin := UserSetup."Scanned Barcodes Admin";
+
+                           IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocumentType::Transport) THEN
+                             EXIT;
+
+                           IF NOT BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::Transport,FALSE) THEN //IF not all scanned items Compleated
+                             EXIT;
+                           // </ZGNVSUPPCO-1246>
+                         END;
+
+    ActionList=ACTIONS
+    {
+      { 50009   ;    ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 50010   ;1   ;ActionGroup }
+      { 50011   ;2   ;Action    ;
+                      Name=Ship;
+                      CaptionML=[ENU=Ship;
+                                 HRV=Otpremi];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=PostedShipment;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 PostTransportSheetShipments;
+                                 CurrPage.UPDATE;
+                               END;
+                                }
+      { 50012   ;2   ;Action    ;
+                      Name=Ship and Print;
+                      CaptionML=[ENU=Ship and Print;
+                                 HRV=Otpremi i ispiçi];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=PostPrint;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 TransportSheet@50000 : Report 50040;
+                                 docNo@50001 : Code[20];
+                                 runPrint@50002 : Boolean;
+                               BEGIN
+                                 docNo := "Document No.";
+
+                                 runPrint := PostTransportSheetShipments;
+                                 CurrPage.UPDATE(TRUE);
+                                 COMMIT;
+
+                                 IF runPrint THEN
+                                   PrintTransportSheet(docNo);
+                               END;
+                                }
+      { 50013   ;2   ;Action    ;
+                      Name=Receive;
+                      CaptionML=[ENU=Receive;
+                                 HRV=Zaprimi];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=ReceiptLines;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 CreateAndPostTransportSheetReceipts;
+                                 CurrPage.UPDATE;
+                               END;
+                                }
+      { 50007   ;2   ;Action    ;
+                      Name=Print;
+                      CaptionML=[ENU=Print;
+                                 HRV=Ispiçi];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=Print;
+                      PromotedCategory=Report;
+                      OnAction=BEGIN
+                                 PrintTransportSheet("Document No.");
+                               END;
+                                }
+      { 50014   ;2   ;Action    ;
+                      Name=AddWarehouseShipments;
+                      CaptionML=[ENU=Add Warehouse Shipments;
+                                 HRV=Dodaj skladiçne otpremnice];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=Add;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 OpenWhseShipLineAdding;
+                               END;
+                                }
+      { 50016   ;2   ;Action    ;
+                      Name=ShowLinkedComplaints;
+                      CaptionML=[ENU=Show Linked Complaints;
+                                 HRV=Prika§i povezane reklamacijske zapisnike];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=LineReserve;
+                      PromotedCategory=Category5;
+                      PromotedOnly=Yes;
+                      OnAction=VAR
+                                 ComplaintandInteractionMgt@50000 : Codeunit 50026;
+                               BEGIN
+                                 ComplaintandInteractionMgt.ShowLinkedComplaintsFromTransportSheet(Rec); // <PRICO-2025-01/>
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 50000;0  ;Container ;
+                ContainerType=ContentArea }
+
+    { 50001;1  ;Group     ;
+                Name=General;
+                CaptionML=[ENU=General;
+                           HRV=Op†e];
+                GroupType=Group }
+
+    { 50002;2  ;Field     ;
+                SourceExpr="Document No." }
+
+    { 50003;2  ;Field     ;
+                SourceExpr=Status }
+
+    { 50015;2  ;Field     ;
+                SourceExpr="Destination No." }
+
+    { 50005;2  ;Field     ;
+                SourceExpr="Creation Date" }
+
+    { 50006;2  ;Field     ;
+                SourceExpr="Created by User" }
+
+    { 50004;2  ;Field     ;
+                SourceExpr="Posting Date" }
+
+    { 50017;2  ;Field     ;
+                SourceExpr="Barcode Status";
+                Enabled=BarcodeStatusEnabled OR BarcodeAdmin }
+
+    { 50008;1  ;Part      ;
+                CaptionML=[ENU=Lines;
+                           HRV=Reci];
+                SubPageLink=Document No.=FIELD(Document No.);
+                PagePartID=Page50041;
+                PartType=Page }
+
+    { 50018;1  ;Part      ;
+                ApplicationArea=#Warehouse;
+                SubPageView=SORTING(Document Type,Document No.,Line No.,Document Line No.);
+                SubPageLink=Document No.=FIELD(Document No.),
+                            Document Type=CONST(Transport);
+                PagePartID=Page50110;
+                Visible=BeMobileLocation;
+                PartType=Page;
+                UpdatePropagation=Both }
+
+  }
+  CODE
+  {
+    VAR
+      TextError001@50000 : TextConst 'ENU=You cannot add lines if Document No. is empty.;HRV=Ne mo§ete dodati linije skladiçne otpremnice dok broj dokumenta nije popunjen.';
+      TextError002@50001 : TextConst 'ENU=Document Status must be Open.;HRV=Status dokumenta mora biti Otvoren.';
+      DocumentType@50006 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport';
+      BeMobileLocation@50005 : Boolean;
+      BarcodeAdmin@50004 : Boolean;
+      UserSetup@50003 : Record 91;
+      BarcodeMgmt@50002 : Codeunit 50106;
+      BarcodeStatusEnabled@50007 : Boolean;
+
+    LOCAL PROCEDURE OpenWhseShipLineAdding@50000();
+    VAR
+      WhseShipmentToTransSheet@50000 : Page 50044;
+    BEGIN
+      IF Rec."Document No." = '' THEN
+        ERROR(TextError001);
+
+      IF Rec.Status <> Rec.Status::Open THEN
+        ERROR(TextError002);
+
+      IF Rec.INSERT THEN;
+
+      COMMIT;
+
+      WhseShipmentToTransSheet.LOOKUPMODE(TRUE);
+      WhseShipmentToTransSheet.SetTransportSheetNo(Rec);
+      WhseShipmentToTransSheet.RUNMODAL;
+      CurrPage.UPDATE;
+    END;
+
+    BEGIN
+    {
+      <PRIMA>
+        <ADHR.057096 range="*">8.8. Masovno kreiranje skladiçnih otpremnica (IS/D/STD)</ADHR.057096>
+        <ZGNVSUPPCO-504 range="50004">Datum knji§enja - transportni list</ZGNVSUPPCO-504>
+        <ZGNVSUPPCO-613 range="50016">Transportni listovi - a§uriranje u sluŸaju promjene u S-OTP</ZGNVSUPPCO-613>
+      </PRIMA>
+    }
+    END.
+  }
+}
+
+OBJECT Page 50041 Transport Sheet Subpage
+{
+  OBJECT-PROPERTIES
+  {
+    Date=20.07.26;
+    Time=14:04:09;
+    Modified=Yes;
+    Version List=PRIMA;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Transport Sheet Subpage;
+               HRV=Podstranica transportnog lista];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table50016;
+    PageType=ListPart;
+    ActionList=ACTIONS
+    {
+      { 50017   ;    ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 50010   ;1   ;Action    ;
+                      Name=DeleteLinesForSameShipment;
+                      CaptionML=[ENU=Delete Lines For Selected Shipment;
+                                 HRV=Obriçi retke za odabranu skladiçnu otpremnicu];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=Delete;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 IF "Whse. Shipment No." = '' THEN
+                                   EXIT;
+
+                                 IF CONFIRM(TextConfirm001,FALSE,"Whse. Shipment No.") THEN
+                                   RemoveWhseShipLines;
+                               END;
+                                }
+      { 50032   ;1   ;Action    ;
+                      Name=ShowDocument;
+                      CaptionML=[ENU=Show Linked Document;
+                                 HRV=Prika§i povezani dokument];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=View;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 TransportSheetMgmt@50000 : Codeunit 50093;
+                               BEGIN
+                                 TransportSheetMgmt.ShowLinkedDocument(Rec);
+                               END;
+                                }
+      { 50012   ;1   ;Action    ;
+                      Name=ShowWarehouseShipment;
+                      CaptionML=[ENU=Show Warehouse Shipment;
+                                 HRV=Prika§i skladiçnu otpremnicu];
+                      Promoted=Yes;
+                      Visible=FALSE;
+                      Enabled=FALSE;
+                      PromotedIsBig=Yes;
+                      Image=View;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 WarehouseShipment@50000 : Page 7335;
+                                 WhseShipHeader@50001 : Record 7320;
+                               BEGIN
+                                 WhseShipHeader.GET("Whse. Shipment No.");
+                                 WarehouseShipment.SETRECORD(WhseShipHeader);
+                                 WarehouseShipment.RUN;
+                               END;
+                                }
+      { 50021   ;1   ;Action    ;
+                      Name=ShowSourceDocument;
+                      CaptionML=[ENU=Show Source Document;
+                                 HRV=Prika§i izvorni dokument];
+                      Promoted=Yes;
+                      Visible=FALSE;
+                      Enabled=FALSE;
+                      PromotedIsBig=Yes;
+                      Image=Document;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 SalesHeader@50000 : Record 36;
+                                 TransferHeader@50001 : Record 5740;
+                                 Customer@50005 : Record 18;
+                                 TransferOrder@50004 : Page 5740;
+                                 SalesOrder@50003 : Page 42;
+                                 RetailSalesOrder@50002 : Page 10000870;
+                                 retailCustomer@50006 : Boolean;
+                               BEGIN
+                                 // <ADHR.059473>
+                                 IF "Source No." = '' THEN
+                                   EXIT;
+
+                                 IF TransferHeader.GET("Source No.") THEN BEGIN
+                                   TransferOrder.SETRECORD(TransferHeader);
+                                   TransferOrder.RUN;
+                                   EXIT;
+                                 END;
+
+                                 SalesHeader.SETRANGE("No.","Source No.");
+                                 IF SalesHeader.FINDFIRST THEN BEGIN
+                                   IF Customer.GET(SalesHeader."Sell-to Customer No.") THEN
+                                     retailCustomer := Customer."Retail Customer";
+
+                                   IF retailCustomer THEN BEGIN
+                                     RetailSalesOrder.SETRECORD(SalesHeader);
+                                     RetailSalesOrder.RUN;
+                                   END ELSE BEGIN
+                                     SalesOrder.SETRECORD(SalesHeader);
+                                     SalesOrder.RUN;
+                                   END;
+
+                                   EXIT;
+                                 END;
+
+                                 MESSAGE(TextError002,"Source No.");
+                                 // </ADHR.059473>
+                               END;
+                                }
+      { 50034   ;1   ;Action    ;
+                      Name=CreateComplaintNote;
+                      CaptionML=[ENU=Create Complaint Note;
+                                 HRV=Kreiraj reklamacijski zapisnik];
+                      Promoted=Yes;
+                      Image=CopyToTask;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 ComplaintandInteractionMgt@50000 : Codeunit 50026;
+                               BEGIN
+                                 ComplaintandInteractionMgt.CreateComplaintNoteFromTransportLine(Rec,FALSE);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 50000;0  ;Container ;
+                ContainerType=ContentArea }
+
+    { 50001;1  ;Group     ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 50035;2  ;Field     ;
+                SourceExpr="Line No." }
+
+    { 50004;2  ;Field     ;
+                SourceExpr="Item No." }
+
+    { 50002;2  ;Field     ;
+                SourceExpr="Item Description" }
+
+    { 50005;2  ;Field     ;
+                SourceExpr="Location Code" }
+
+    { 50029;2  ;Field     ;
+                SourceExpr="BE-Mobile Location" }
+
+    { 50036;2  ;Field     ;
+                SourceExpr="Source Type";
+                Editable=FALSE }
+
+    { 50006;2  ;Field     ;
+                SourceExpr="Source No." }
+
+    { 50007;2  ;Field     ;
+                SourceExpr="Source Name" }
+
+    { 50008;2  ;Field     ;
+                SourceExpr="Source Line No." }
+
+    { 50009;2  ;Field     ;
+                SourceExpr="Whse. Shipment No." }
+
+    { 50003;2  ;Field     ;
+                SourceExpr="Unit of Measure" }
+
+    { 50020;2  ;Field     ;
+                SourceExpr=Quantity }
+
+    { 50016;2  ;Field     ;
+                SourceExpr="Quantity to Ship";
+                OnValidate=BEGIN
+                             UserSetup.GET(USERID());
+                             UserSetup.TESTFIELD("System Admin.",TRUE);
+
+                             IF Rec."Quantity to Ship" > (Rec.Quantity - Rec."Qty. Shipped") THEN
+                               Rec.FIELDERROR("Quantity to Ship");
+                           END;
+                            }
+
+    { 50031;2  ;Field     ;
+                SourceExpr="Qty. to Receive" }
+
+    { 50018;2  ;Field     ;
+                SourceExpr="Qty. Shipped";
+                Editable=TRUE;
+                OnValidate=BEGIN
+                             UserSetup.GET(USERID());
+                             UserSetup.TESTFIELD("System Admin.",TRUE);
+
+                             IF Rec.Quantity < Rec."Qty. Shipped" THEN
+                               Rec.FIELDERROR("Qty. Shipped");
+                           END;
+                            }
+
+    { 50011;2  ;Field     ;
+                SourceExpr="Qty. Shipped (All)" }
+
+    { 50019;2  ;Field     ;
+                SourceExpr="Qty. Received" }
+
+    { 50013;2  ;Field     ;
+                SourceExpr="Qty. Received (All)" }
+
+    { 50014;2  ;Field     ;
+                SourceExpr="Unit Volume" }
+
+    { 50015;2  ;Field     ;
+                SourceExpr=Weight }
+
+    { 50022;2  ;Field     ;
+                SourceExpr="No. of Pallets" }
+
+    { 50025;2  ;Field     ;
+                SourceExpr="Linked Whse. Shpt. No." }
+
+    { 50023;2  ;Field     ;
+                SourceExpr="No. of Additional Packages" }
+
+    { 50024;2  ;Field     ;
+                SourceExpr="No. of Pallets Add. Packages" }
+
+    { 50026;2  ;Field     ;
+                SourceExpr="Personal Pickup" }
+
+    { 50027;2  ;Field     ;
+                SourceExpr=Assembly }
+
+    { 50028;2  ;Field     ;
+                SourceExpr="Promised/Updated Delivery Date" }
+
+    { 50030;2  ;Field     ;
+                SourceExpr="Scanned Quantity" }
+
+    { 50033;2  ;Field     ;
+                SourceExpr="Complaint Order Status" }
+
+  }
+  CODE
+  {
+    VAR
+      TextError001@50000 : TextConst 'ENU=Document Status must be Open.;HRV=Status dokumenta mora biti Otvoren.';
+      TextError002@50021 : TextConst 'ENU=Document ''%1'' is not found.;HRV=Dokument ''%1'' nije pronaÐen.';
+      TextConfirm001@50001 : TextConst 'ENU=Are you sure you want to delete the Transport Sheet lines for Warehouse Shipment %1?;HRV=Jeste li sigurni da §elite izbrisati retke transportnog lista za skladiçnu otpremnicu %1?';
+      UserSetup@50002 : Record 91;
+
+    LOCAL PROCEDURE RemoveWhseShipLines@50000();
+    VAR
+      TransportSheetHeader@50001 : Record 50015;
+      TransportSheetLine@50000 : Record 50016;
+    BEGIN
+      // <PRICO-2025-01>
+      IF Rec."Whse. Shipment No." = '' THEN
+        EXIT;
+      // <PRICO-2025-01>
+      TransportSheetHeader.GET(Rec."Document No.");
+      IF TransportSheetHeader.Status <> TransportSheetHeader.Status::Open THEN
+        ERROR(TextError001);
+
+      TransportSheetLine.SETRANGE("Document No.",TransportSheetHeader."Document No.");
+      TransportSheetLine.SETRANGE("Whse. Shipment No.",Rec."Whse. Shipment No.");
+      IF NOT TransportSheetLine.FINDSET THEN
+        EXIT;
+
+      REPEAT
+        TransportSheetLine.DELETE(TRUE);
+      UNTIL TransportSheetLine.NEXT = 0;
+
+      TransportSheetLine.SETRANGE("Whse. Shipment No.");
+      IF TransportSheetLine.ISEMPTY THEN BEGIN
+        TransportSheetHeader."Destination No." := '';
+        TransportSheetHeader.MODIFY;
+      END;
+      {
+      headerNo := Rec."Document No.";
+      TransportSheetHeader.GET(headerNo);
+
+      IF TransportSheetHeader.Status <> TransportSheetHeader.Status::Open THEN
+        ERROR(TextError001);
+
+      SETRANGE("Whse. Shipment No.","Whse. Shipment No.");
+      IF NOT FINDSET THEN
+        EXIT;
+
+      REPEAT
+        DELETE(TRUE);
+      UNTIL NEXT = 0;
+
+      SETRANGE("Whse. Shipment No.");
+
+      IF ISEMPTY THEN BEGIN
+        TransportSheetHeader."Destination No." := '';
+        TransportSheetHeader.MODIFY;
+      END;
+      }
+      // </PRICO-2025-01>
+    END;
+
+    BEGIN
+    {
+      <PRIMA>
+        <ADHR.057096 range="*">8.8. Masovno kreiranje skladiçnih otpremnica (IS/D/STD)</ADHR.057096>
+        <ADHR.059473 range="50021">Dodatni filteri na pregledu redaka za prijenos</ADHR.059473>
+        <ZGNVSUPPCO-508 range="50022..50024">Ispis transportnog lista - dodatni podaci</ZGNVSUPPCO-508>
+        <ZGNVSUPPCO-515 range="50025">Ispis TL, S-OTP, etiketa, promjena statusa otpreme</ZGNVSUPPCO-515>
+        <ZGNVSUPPCO-823> Personal pickup - additional field </ZGNVSUPPCO-823>
+        <ZGNVSUPPCO-880>Assembly, Promised/Updated Delivery Date - additional fields</ZGNVSUPPCO-880>
+      </PRIMA>
+    }
+    END.
+  }
+}
+
+OBJECT Page 50042 Transport Sheet List
+{
+  OBJECT-PROPERTIES
+  {
+    Date=26.08.25;
+    Time=15:46:45;
+    Modified=Yes;
+    Version List=PRIMA;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Transport Sheet List;
+               HRV=Popis transportnih listova];
+    InsertAllowed=No;
+    SourceTable=Table50015;
+    PageType=List;
+    CardPageID=Transport Sheet;
+    OnOpenPage=BEGIN
+                 // <ZGNVSUPPCO-963>
+                 IF NOT SkipFilter THEN
+                   Rec.SETFILTER(Status,'%1|%2|%3|%4',Rec.Status::Open,Rec.Status::"Shipped - Awaiting Receipt",Rec.Status::"Partially Shipped",Rec.Status::"Partially Received");
+                 // </ZGNVSUPPCO-963>
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 50008   ;    ;ActionContainer;
+                      Name=General;
+                      CaptionML=[ENU=General;
+                                 HRV=Op†enito];
+                      ActionContainerType=NewDocumentItems }
+      { 50009   ;1   ;Action    ;
+                      Name=UpdateBarcodeStatus;
+                      CaptionML=[ENU=Update Barcode Status;
+                                 HRV=A§uriraj barkod status];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=BarCode;
+                      PromotedCategory=Process;
+                      PromotedOnly=Yes;
+                      OnAction=VAR
+                                 TransportSheetHeader@50000 : Record 50015;
+                                 BEMFMgmt@50001 : Codeunit 50107;
+                               BEGIN
+                                 // <ZGNVSUPPCO-1246>
+                                 CurrPage.SETSELECTIONFILTER(TransportSheetHeader);
+                                 BEMFMgmt.BulkTransportSheetStatusUpdate(TransportSheetHeader);
+                                 CurrPage.UPDATE;
+                                 // </ZGNVSUPPCO-1246>
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 50000;0  ;Container ;
+                ContainerType=ContentArea }
+
+    { 50001;1  ;Group     ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 50002;2  ;Field     ;
+                SourceExpr="Document No." }
+
+    { 50003;2  ;Field     ;
+                SourceExpr=Status }
+
+    { 50007;2  ;Field     ;
+                SourceExpr="Destination No." }
+
+    { 50005;2  ;Field     ;
+                SourceExpr="Creation Date" }
+
+    { 50006;2  ;Field     ;
+                SourceExpr="Created by User" }
+
+    { 50004;2  ;Field     ;
+                SourceExpr="Posting Date" }
+
+    { 50010;2  ;Field     ;
+                SourceExpr="Barcode Status" }
+
+  }
+  CODE
+  {
+    VAR
+      SkipFilter@50005 : Boolean;
+
+    PROCEDURE SetSkipFilter@50005(NewSkipFilter@50000 : Boolean);
+    BEGIN
+      SkipFilter := NewSkipFilter; // <ZGNVSUPPCO-963/>
+    END;
+
+    BEGIN
+    {
+      <PRIMA>
+        <ADHR.057096 range="*">8.8. Masovno kreiranje skladiçnih otpremnica (IS/D/STD)</ADHR.057096>
+        <ZGNVSUPPCO-504 range="50004">Datum knji§enja - transportni list</ZGNVSUPPCO-504>
+        <ZGNVSUPPCO-963 range="50005">RAZVOJ NA REKLAMACIJAMA- VRSTA REKLAMACIJE</ZGNVSUPPCO-963>
+        <ZGNVSUPPCO-1246 range="50009">TRANSPORTNI LIST PRIMJENA BARKODA</ZGNVSUPPCO-1246>
+      </PRIMA>
+    }
+    END.
+  }
+}
+
