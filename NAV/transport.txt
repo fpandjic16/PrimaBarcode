@@ -2,8 +2,8 @@ OBJECT Table 50015 Transport Sheet Header
 {
   OBJECT-PROPERTIES
   {
-    Date=09.09.26;
-    Time=[ 9:41:18];
+    Date=06.10.26;
+    Time=10:28:28;
     Modified=Yes;
     Version List=PRIMA;
   }
@@ -41,6 +41,7 @@ OBJECT Table 50015 Transport Sheet Header
                                                                   BEMFMgmt.FillPartiallyTransportSheetBarcodeEntries(Rec,FALSE);
                                                                   BarcodeAppMgmt.FillPartiallyTransportSheetBarcodeEntries(Rec,FALSE);
                                                                 END ELSE IF Rec.Status = Rec.Status::"Partially Received" THEN BEGIN
+                                                                  BarcodeAppMgmt.StartNextTransportReceipt(Rec); // <PRICO-2025-67/>
                                                                   BEMFMgmt.FillPartiallyReceivedTransportSheetBarcodeEntries(Rec,FALSE);
                                                                   BarcodeAppMgmt.FillPartiallyReceivedTransportSheetBarcodeEntries(Rec,FALSE);
                                                                 END;
@@ -93,7 +94,10 @@ OBJECT Table 50015 Transport Sheet Header
                                                                 IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocType::Transport) THEN
                                                                   ERROR(BemLocErr);
 
-                                                                IF Rec.Status <> Rec.Status::"Shipped - Awaiting Receipt" THEN
+                                                                // <PRICO-2025-67>
+                                                                //IF Rec.Status <> Rec.Status::"Shipped - Awaiting Receipt" THEN
+                                                                IF NOT (Rec.Status IN [Rec.Status::"Shipped - Awaiting Receipt",Rec.Status::"Partially Shipped",Rec.Status::"Partially Received"]) THEN
+                                                                // </PRICO-2025-67>
                                                                   ERROR(BarcodeStatusLbl,Rec.FIELDCAPTION("Barcode Status"),Rec.FIELDCAPTION(Status),Rec.Status::"Shipped - Awaiting Receipt");
 
                                                                 IF Rec."Barcode Status" = Rec."Barcode Status"::Processed THEN BEGIN
@@ -108,8 +112,17 @@ OBJECT Table 50015 Transport Sheet Header
                                                                   BEMFMgmt.CheckScannedEntries(Rec."Document No.",DocType::Transport);
                                                                 END;
 
+                                                                // <PRICO-2025-67>
+                                                                {
                                                                 UserSetup.GET(USERID);
                                                                 UserSetup.TESTFIELD("Scanned Barcodes Admin",TRUE);
+                                                                }
+                                                                // Scanning sets the status itself when it completes; only a change by hand needs the barcode admin
+                                                                IF NOT CalledFromScanning THEN BEGIN
+                                                                  UserSetup.GET(USERID);
+                                                                  UserSetup.TESTFIELD("Scanned Barcodes Admin",TRUE);
+                                                                END;
+                                                                // </PRICO-2025-67>
                                                                 // </ZGNVSUPPCO-1246>
 
                                                                 BEMFMgmt.InsertTransportBarcodeStatusLog(Rec); // <ZGNVSUPPCO-1246/>
@@ -137,6 +150,7 @@ OBJECT Table 50015 Transport Sheet Header
       TextError001@50000 : TextConst 'ENU=Transport Sheet with Shipped or Received Status cannot be deleted.;HRV=Transportni list u statusu Otpremljen ili Zaprimljen se ne mo§e obrisati.';
       DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt';
       TransportSheetMgmt@50002 : Codeunit 50093;
+      CalledFromScanning@50003 : Boolean;
 
     PROCEDURE InitInsert@50000();
     BEGIN
@@ -276,6 +290,11 @@ OBJECT Table 50015 Transport Sheet Header
     BEGIN
       TransportSheetPrint.SetHeaderNo(docNo);
       TransportSheetPrint.RUNMODAL;
+    END;
+
+    PROCEDURE SetCalledFromScanning@50010(NewCalledFromScanning@50000 : Boolean);
+    BEGIN
+      CalledFromScanning := NewCalledFromScanning; // <PRICO-2025-67/>
     END;
 
     BEGIN
@@ -562,8 +581,8 @@ OBJECT Codeunit 50093 Transport Sheet Mgmt
 {
   OBJECT-PROPERTIES
   {
-    Date=09.09.26;
-    Time=12:33:12;
+    Date=06.10.26;
+    Time=13:23:19;
     Modified=Yes;
     Version List=PRIMA;
   }
@@ -638,6 +657,7 @@ OBJECT Codeunit 50093 Transport Sheet Mgmt
       ErrorText50000@50010 : TextConst 'ENU=Warehouse Shipment is already added to Transport Sheet No. %1.;HRV=Skladiçna otpremnica je ve† dodana na transportni list %1.';
       WhseShptHdr@50011 : Record 7320;
       BEMFMgmt@50000 : Codeunit 50107;
+      BarcodeAppMgmt@50014 : Codeunit 50112;
       TransferHeader@50005 : Record 5740;
       TransferLine@50013 : Record 5741;
     BEGIN
@@ -662,7 +682,10 @@ OBJECT Codeunit 50093 Transport Sheet Mgmt
             IF WhseShptHdr."Transport Sheet No." <> '' THEN
               ERROR(ErrorText50000,WhseShptHdr."Transport Sheet No.");
 
-            IF BEMFMgmt.IsCrossDockLocation(WhseShptHdr."Location Code") THEN BEGIN
+            // <PRICO-2025-67>
+            //IF BEMFMgmt.IsCrossDockLocation(WhseShptHdr."Location Code") THEN BEGIN
+            IF BarcodeAppMgmt.IsCrossDockLocation(WhseShptHdr."Location Code") THEN BEGIN
+            // </PRICO-2025-67>
               WhseShptHdr.TESTFIELD("Barcode Status",WhseShptHdr."Barcode Status"::Processed);
               WhseShptHdr.TESTFIELD("Cross-Dock Shipment Status",WhseShptHdr."Cross-Dock Shipment Status"::"Shipped from CD");
             END;
@@ -1994,8 +2017,8 @@ OBJECT Page 50040 Transport Sheet
 {
   OBJECT-PROPERTIES
   {
-    Date=29.08.25;
-    Time=[ 8:00:46];
+    Date=06.10.26;
+    Time=10:28:28;
     Modified=Yes;
     Version List=PRIMA;
   }
@@ -2006,7 +2029,10 @@ OBJECT Page 50040 Transport Sheet
     SourceTable=Table50015;
     PageType=Document;
     OnOpenPage=BEGIN
-                 BeMobileLocation := BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocumentType::Transport); // <ZGNVSUPPCO-1246/>
+                 // <PRICO-2025-67>
+                 //BeMobileLocation := BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocumentType::Transport); // <ZGNVSUPPCO-1246/>
+                 BeMobileLocation := BarcodeAppMgmt.IsBarcodeAppDocument(Rec."Document No.",DocumentType::Transport);
+                 // </PRICO-2025-67>
                END;
 
     OnNewRecord=BEGIN
@@ -2022,10 +2048,16 @@ OBJECT Page 50040 Transport Sheet
                            UserSetup.GET(USERID);
                            BarcodeAdmin := UserSetup."Scanned Barcodes Admin";
 
-                           IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocumentType::Transport) THEN
+                           // <PRICO-2025-67>
+                           //IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocumentType::Transport) THEN
+                           IF NOT BarcodeAppMgmt.IsBarcodeAppDocument(Rec."Document No.",DocumentType::Transport) THEN
+                           // </PRICO-2025-67>
                              EXIT;
 
-                           IF NOT BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::Transport,FALSE) THEN //IF not all scanned items Compleated
+                           // <PRICO-2025-67>
+                           //IF NOT BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::Transport,FALSE) THEN //IF not all scanned items Compleated
+                           IF NOT BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."Document No.",DocumentType::Transport,FALSE) THEN //IF not all scanned items Compleated
+                           // </PRICO-2025-67>
                              EXIT;
                            // </ZGNVSUPPCO-1246>
                          END;
@@ -2186,6 +2218,7 @@ OBJECT Page 50040 Transport Sheet
       BarcodeAdmin@50004 : Boolean;
       UserSetup@50003 : Record 91;
       BarcodeMgmt@50002 : Codeunit 50106;
+      BarcodeAppMgmt@50008 : Codeunit 50112;
       BarcodeStatusEnabled@50007 : Boolean;
 
     LOCAL PROCEDURE OpenWhseShipLineAdding@50000();
@@ -2548,8 +2581,8 @@ OBJECT Page 50042 Transport Sheet List
 {
   OBJECT-PROPERTIES
   {
-    Date=26.08.25;
-    Time=15:46:45;
+    Date=06.10.26;
+    Time=16:19:40;
     Modified=Yes;
     Version List=PRIMA;
   }
@@ -2588,10 +2621,14 @@ OBJECT Page 50042 Transport Sheet List
                       OnAction=VAR
                                  TransportSheetHeader@50000 : Record 50015;
                                  BEMFMgmt@50001 : Codeunit 50107;
+                                 BarcodeAppMgmt@50002 : Codeunit 50112;
                                BEGIN
                                  // <ZGNVSUPPCO-1246>
                                  CurrPage.SETSELECTIONFILTER(TransportSheetHeader);
-                                 BEMFMgmt.BulkTransportSheetStatusUpdate(TransportSheetHeader);
+                                 // <PRICO-2025-67>
+                                 //BEMFMgmt.BulkTransportSheetStatusUpdate(TransportSheetHeader);
+                                 BarcodeAppMgmt.BulkTransportSheetStatusUpdate(TransportSheetHeader);
+                                 // </PRICO-2025-67>
                                  CurrPage.UPDATE;
                                  // </ZGNVSUPPCO-1246>
                                END;

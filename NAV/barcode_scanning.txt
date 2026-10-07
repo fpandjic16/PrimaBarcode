@@ -2165,8 +2165,8 @@ OBJECT Codeunit 50107 BEMF Mgmt
 {
   OBJECT-PROPERTIES
   {
-    Date=09.09.26;
-    Time=[ 9:43:51];
+    Date=06.10.26;
+    Time=16:27:14;
     Modified=Yes;
     Version List=PRIMA;
   }
@@ -4064,10 +4064,13 @@ OBJECT Codeunit 50107 BEMF Mgmt
     PROCEDURE AutoUpdateBarcodeStatusOnSync@50043();
     VAR
       BarcodeMgmt@50000 : Codeunit 50106;
+      BarcodeAppMgmt@50004 : Codeunit 50112;
       BarcodeSyncRecord@50001 : Record 50161;
       DocType@50002 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
       TempProcessedRecord@50003 : TEMPORARY Record 50161;
     BEGIN
+      // <PRICO-2025-67>
+      {
       // <ZGNVSUPPCO-1245>
       BarcodeMgmt.SetIsBulkUpdate(TRUE);
 
@@ -4111,17 +4114,24 @@ OBJECT Codeunit 50107 BEMF Mgmt
         BarcodeSyncRecord.MODIFY;
       UNTIL BarcodeSyncRecord.NEXT = 0;
       // </ZGNVSUPPCO-1245>
+      }
+      // Moved to Barcode App Mgmt; kept so job queue entries that run this codeunit keep working
+      BarcodeAppMgmt.AutoUpdateBarcodeStatusOnSync;
+      // </PRICO-2025-67>
     END;
 
     PROCEDURE BulkWhseShptStatusUpdate@50034(VAR WarehouseShipmentHeader@50000 : Record 7320);
     VAR
       BarcodeStatusLbl@50001 : TextConst 'ENU=Do you want to update Barcode Status on %1 Warehouse Shipments?;HRV=¦elite li a§urirati barkod status na %1 skladiçnih otpremnica?';
       BarcodeMgmt@50002 : Codeunit 50106;
+      BarcodeAppMgmt@50007 : Codeunit 50112;
       WhseCount@50004 : Integer;
       UpdateLbl@50005 : TextConst 'ENU=There is nothing for update.;HRV=Ne postoji niçta za a§uriranje.';
       isCompleatedStatus@50006 : Boolean;
       DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
     BEGIN
+      // <PRICO-2025-67>
+      {
       // <ZGNVSUPPCO-1245>
       WhseCount := WarehouseShipmentHeader.COUNT;
       IF WhseCount = 0 THEN BEGIN
@@ -4143,17 +4153,24 @@ OBJECT Codeunit 50107 BEMF Mgmt
         BarcodeMgmt.OnOpenBufferPage(WarehouseShipmentHeader."No.",DocType::WHCDSHFROM,TRUE);
       UNTIL WarehouseShipmentHeader.NEXT = 0;
       // </ZGNVSUPPCO-1245>
+      }
+      // Moved to Barcode App Mgmt; kept for callers outside these objects
+      BarcodeAppMgmt.BulkWhseShptStatusUpdate(WarehouseShipmentHeader);
+      // </PRICO-2025-67>
     END;
 
     PROCEDURE BulkWhseReceiptStatusUpdate@50033(VAR WarehouseReceiptHeader@50000 : Record 7316);
     VAR
       BarcodeStatusLbl@50001 : TextConst 'ENU=Do you want to update Barcode Status on %1 Warehouse Receipts?;HRV=¦elite li a§urirati barkod status na %1 skladiçnih primki?';
       BarcodeMgmt@50002 : Codeunit 50106;
+      BarcodeAppMgmt@50007 : Codeunit 50112;
       WhseCount@50004 : Integer;
       UpdateLbl@50005 : TextConst 'ENU=There is nothing for update.;HRV=Ne postoji niçta za a§uriranje.';
       isCompleatedStatus@50006 : Boolean;
       DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
     BEGIN
+      // <PRICO-2025-67>
+      {
       // <ZGNVSUPPCO-1059>
       WhseCount := WarehouseReceiptHeader.COUNT;
       IF WhseCount = 0 THEN BEGIN
@@ -4171,17 +4188,24 @@ OBJECT Codeunit 50107 BEMF Mgmt
         BarcodeMgmt.OnOpenBufferPage(WarehouseReceiptHeader."No.",DocType::Receipt,TRUE);
       UNTIL WarehouseReceiptHeader.NEXT = 0;
       // </ZGNVSUPPCO-1245>
+      }
+      // Moved to Barcode App Mgmt; kept for callers outside these objects
+      BarcodeAppMgmt.BulkWhseReceiptStatusUpdate(WarehouseReceiptHeader);
+      // </PRICO-2025-67>
     END;
 
     PROCEDURE BulkTransportSheetStatusUpdate@50035(VAR TransportSheetHeader@50000 : Record 50015);
     VAR
       BarcodeStatusLbl@50001 : TextConst 'ENU=Do you want to update Barcode Status on %1 Warehouse Receipts?;HRV=¦elite li a§urirati barkod status na %1 skladiçnih primki?';
       BarcodeMgmt@50002 : Codeunit 50106;
+      BarcodeAppMgmt@50007 : Codeunit 50112;
       TransportCount@50004 : Integer;
       UpdateLbl@50005 : TextConst 'ENU=There is nothing for update.;HRV=Ne postoji niçta za a§uriranje.';
       isCompleatedStatus@50006 : Boolean;
       DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
     BEGIN
+      // <PRICO-2025-67>
+      {
       // <ZGNVSUPPCO-1245>
       TransportCount := TransportSheetHeader.COUNT;
       IF TransportCount = 0 THEN BEGIN
@@ -4199,18 +4223,25 @@ OBJECT Codeunit 50107 BEMF Mgmt
         BarcodeMgmt.OnOpenBufferPage(TransportSheetHeader."Document No.",DocType::Transport,TRUE);
       UNTIL TransportSheetHeader.NEXT = 0;
       // </ZGNVSUPPCO-1245>
+      }
+      // Moved to Barcode App Mgmt; kept for callers outside these objects
+      BarcodeAppMgmt.BulkTransportSheetStatusUpdate(TransportSheetHeader);
+      // </PRICO-2025-67>
     END;
 
     PROCEDURE BulkComplaintSheetStatusUpdate@50040(VAR ComplaintShipment@50000 : Record 50021);
     VAR
       BarcodeStatusLbl@50001 : TextConst 'ENU=Do you want to update Barcode Status on %1 Warehouse Receipts?;HRV=¦elite li a§urirati barkod status na %1 skladiçnih primki?';
       BarcodeMgmt@50002 : Codeunit 50106;
+      BarcodeAppMgmt@50008 : Codeunit 50112;
       ComplaintCount@50004 : Integer;
       UpdateLbl@50005 : TextConst 'ENU=There is nothing for update.;HRV=Ne postoji niçta za a§uriranje.';
       isCompleatedStatus@50006 : Boolean;
       DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
       ResponsibilityCenter@50007 : Record 5714;
     BEGIN
+      // <PRICO-2025-67>
+      {
       // <ZGNVSUPPCO-1245>
       ComplaintCount := ComplaintShipment.COUNT;
       IF ComplaintCount = 0 THEN BEGIN
@@ -4230,6 +4261,10 @@ OBJECT Codeunit 50107 BEMF Mgmt
         BarcodeMgmt.OnOpenBufferPage(ComplaintShipment."Document No.",DocType::CPCDSHFROM,TRUE);
       UNTIL ComplaintShipment.NEXT = 0;
       // </ZGNVSUPPCO-1245>
+      }
+      // Moved to Barcode App Mgmt; kept for callers outside these objects
+      BarcodeAppMgmt.BulkComplaintSheetStatusUpdate(ComplaintShipment);
+      // </PRICO-2025-67>
     END;
 
     PROCEDURE CreateLocationRespCenterDialog@50032(FusionBuilder_PC@50003 : Codeunit 5401801;VAR BEMFInput_PX@50000 : XMLport 5401800;VAR BEMFState_PX@50001 : XMLport 5401800;VAR BEMFPage_PX@50002 : XMLport 5401801;SetupName@50005 : Text;WebServiceName@50009 : Text;ApplyMethodName@50010 : Text);
@@ -4406,14 +4441,17 @@ OBJECT Codeunit 50112 Barcode App Mgmt
 {
   OBJECT-PROPERTIES
   {
-    Date=23.09.26;
-    Time=14:13:40;
+    Date=06.10.26;
+    Time=16:27:14;
     Modified=Yes;
     Version List=PRIMA;
   }
   PROPERTIES
   {
     OnRun=BEGIN
+            // <PRICO-2025-67>
+            IF NOT AutoUpdateBarcodeStatusOnSync THEN;
+            // </PRICO-2025-67>
           END;
 
   }
@@ -4423,6 +4461,7 @@ OBJECT Codeunit 50112 Barcode App Mgmt
       LineNo@50000 : Integer;
       ResponsibilityCenterLocation@50001 : Record 50009;
       BarcodeMgmt@50002 : Codeunit 50106;
+      IsBulkUpdate@50003 : Boolean;
 
     [EventSubscriber(Table,50180,OnBeforeModifyEvent)]
     LOCAL PROCEDURE BarcodeAppRecordings_OnBeforeModify@50001(VAR Rec@50000 : Record 50180;VAR xRec@50001 : Record 50180;RunTrigger@50002 : Boolean);
@@ -4667,7 +4706,10 @@ OBJECT Codeunit 50112 Barcode App Mgmt
       // <PRICO-2025-67>
       CLEAR(LineNo);
 
-      IF NOT BarcodeMgmt.IsBeMobileLocation(WarehouseShipmentHeader."No.",DocTypeLoc::Shipment) THEN
+      // <PRICO-2025-67>
+      //IF NOT BarcodeMgmt.IsBeMobileLocation(WarehouseShipmentHeader."No.",DocTypeLoc::Shipment) THEN
+      IF NOT IsBarcodeAppDocument(WarehouseShipmentHeader."No.",DocTypeLoc::Shipment) THEN
+      // </PRICO-2025-67>
         EXIT;
 
       IF WarehouseShipmentHeader.Status = WarehouseShipmentHeader.Status::Released THEN
@@ -4734,7 +4776,10 @@ OBJECT Codeunit 50112 Barcode App Mgmt
       // <PRICO-2025-67>
       CLEAR(LineNo);
 
-      IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocTypeLoc::Receipt) THEN
+      // <PRICO-2025-67>
+      //IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocTypeLoc::Receipt) THEN
+      IF NOT IsBarcodeAppDocument(Rec."No.",DocTypeLoc::Receipt) THEN
+      // </PRICO-2025-67>
         EXIT;
 
       IF Rec.Status = Rec.Status::Released THEN
@@ -4797,6 +4842,7 @@ OBJECT Codeunit 50112 Barcode App Mgmt
       DocTypeLoc@50009 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
     BEGIN
       // <PRICO-2025-67>
+      {
       CLEAR(LineNo);
 
       IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocTypeLoc::Transport) THEN
@@ -4845,7 +4891,13 @@ OBJECT Codeunit 50112 Barcode App Mgmt
             InsertBarcodeAppLineEntry(Rec."Document No.",DocTypeLoc::Transport,TransportSheetLine."Line No.",FALSE,BOMComponent,BarcodeNo,FALSE,Rec."Posting Date",0);
         END;
       UNTIL TransportSheetLine.NEXT = 0;
-      // <PRICO-2025-67>
+      }
+      IF Rec.Status <> Rec.Status::"Shipped - Awaiting Receipt" THEN
+        IF NOT SkipRelease THEN
+          EXIT;
+
+      CreateTransportSheetEntries(Rec);
+      // </PRICO-2025-67>
     END;
 
     PROCEDURE FillPartiallyTransportSheetBarcodeEntries@50039(Rec@50000 : Record 50015;SkipRelease@50006 : Boolean);
@@ -4857,6 +4909,7 @@ OBJECT Codeunit 50112 Barcode App Mgmt
       DocTypeLoc@50009 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
     BEGIN
       // <PRICO-2025-67>
+      {
       CLEAR(LineNo);
 
       IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocTypeLoc::Transport) THEN
@@ -4906,7 +4959,13 @@ OBJECT Codeunit 50112 Barcode App Mgmt
             InsertBarcodeAppLineEntry(Rec."Document No.",DocTypeLoc::Transport,TransportSheetLine."Line No.",FALSE,BOMComponent,BarcodeNo,FALSE,Rec."Posting Date",TransportSheetLine."Qty. to Ship 2");
         END;
       UNTIL TransportSheetLine.NEXT = 0;
-      // <PRICO-2025-67>
+      }
+      IF Rec.Status <> Rec.Status::"Partially Shipped" THEN
+        IF NOT SkipRelease THEN
+          EXIT;
+
+      CreateTransportSheetEntries(Rec);
+      // </PRICO-2025-67>
     END;
 
     PROCEDURE FillPartiallyReceivedTransportSheetBarcodeEntries@50002(Rec@50000 : Record 50015;SkipRelease@50006 : Boolean);
@@ -4918,6 +4977,7 @@ OBJECT Codeunit 50112 Barcode App Mgmt
       DocTypeLoc@50009 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
     BEGIN
       // <PRICO-2025-67>
+      {
       CLEAR(LineNo);
 
       IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."Document No.",DocTypeLoc::Transport) THEN
@@ -4967,7 +5027,70 @@ OBJECT Codeunit 50112 Barcode App Mgmt
             InsertBarcodeAppLineEntry(Rec."Document No.",DocTypeLoc::Transport,TransportSheetLine."Line No.",FALSE,BOMComponent,BarcodeNo,FALSE,Rec."Posting Date",TransportSheetLine."Qty. to Ship 2");
         END;
       UNTIL TransportSheetLine.NEXT = 0;
+      }
+      IF Rec.Status <> Rec.Status::"Partially Received" THEN
+        IF NOT SkipRelease THEN
+          EXIT;
+
+      CreateTransportSheetEntries(Rec);
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE CreateTransportSheetEntries@50233(TransportSheetHeader@50000 : Record 50015);
+    VAR
+      BOMComponent@50001 : Record 90;
+      UnitofMeasure@50002 : Record 204;
+      BarcodeNo@50003 : Text[200];
+      TransportSheetLine@50004 : Record 50016;
+      DocTypeLoc@50005 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+    BEGIN
       // <PRICO-2025-67>
+      // Every receiving status offers what has been shipped and not yet received, which is what the receipt posts
+      CLEAR(LineNo);
+
+      IF NOT IsBarcodeAppDocument(TransportSheetHeader."Document No.",DocTypeLoc::Transport) THEN
+        EXIT;
+
+      IF TransportSheetHeader."Barcode Status" = TransportSheetHeader."Barcode Status"::Processed THEN
+        EXIT;
+
+      DeleteBarcodeEntries(TransportSheetHeader."Document No.",DocTypeLoc::Transport);
+
+      ResponsibilityCenterLocation.RESET;
+      ResponsibilityCenterLocation.SETRANGE("Location Code",TransportSheetHeader."Receiving Location");
+      IF NOT ResponsibilityCenterLocation.FINDFIRST THEN
+        ResponsibilityCenterLocation.INIT;
+
+      TransportSheetLine.SETRANGE("Document No.",TransportSheetHeader."Document No.");
+      TransportSheetLine.SETFILTER("Qty. to Receive",'>0');
+      IF NOT TransportSheetLine.FINDSET THEN
+        EXIT;
+
+      REPEAT
+        BOMComponent.RESET;
+        BOMComponent.SETRANGE("Parent Item No.",TransportSheetLine."Item No.");
+        BOMComponent.SETRANGE(Type,BOMComponent.Type::Item);
+        IF BOMComponent.FINDSET THEN BEGIN
+          REPEAT
+            LineNo += 10000;
+            BarcodeNo := GetItemBarcode(BOMComponent."No.",BOMComponent."Unit of Measure Code",BOMComponent."Variant Code");
+            IF UnitofMeasure.GET(BOMComponent."Unit of Measure Code") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+              BarcodeNo += '|' + BOMComponent."Unit of Measure Code" + '|' + FORMAT(BOMComponent."Quantity per");
+              InsertSplitBEMFEntries(TransportSheetHeader."Document No.",DocTypeLoc::Transport,TransportSheetLine."Line No.",TRUE,BOMComponent,BarcodeNo,FALSE,TransportSheetHeader."Posting Date",TransportSheetLine."Qty. to Receive")
+            END ELSE
+              InsertBarcodeAppLineEntry(TransportSheetHeader."Document No.",DocTypeLoc::Transport,TransportSheetLine."Line No.",TRUE,BOMComponent,BarcodeNo,FALSE,TransportSheetHeader."Posting Date",TransportSheetLine."Qty. to Receive");
+          UNTIL BOMComponent.NEXT = 0;
+        END ELSE BEGIN //normal items
+          LineNo += 10000;
+          BarcodeNo := GetItemBarcode(TransportSheetLine."Item No.",TransportSheetLine."Unit of Measure",'');
+          IF UnitofMeasure.GET(TransportSheetLine."Unit of Measure") AND UnitofMeasure."Insert Qty Barcode" THEN BEGIN
+            BarcodeNo += '|' + TransportSheetLine."Unit of Measure" + '|' + FORMAT(TransportSheetLine."Qty. to Receive");
+            InsertSplitBEMFEntries(TransportSheetHeader."Document No.",DocTypeLoc::Transport,TransportSheetLine."Line No.",FALSE,BOMComponent,BarcodeNo,FALSE,TransportSheetHeader."Posting Date",TransportSheetLine."Qty. to Receive")
+          END ELSE
+            InsertBarcodeAppLineEntry(TransportSheetHeader."Document No.",DocTypeLoc::Transport,TransportSheetLine."Line No.",FALSE,BOMComponent,BarcodeNo,FALSE,TransportSheetHeader."Posting Date",TransportSheetLine."Qty. to Receive");
+        END;
+      UNTIL TransportSheetLine.NEXT = 0;
+      // </PRICO-2025-67>
     END;
 
     PROCEDURE FillComplaintBarcodeEntries@50024(Rec@50000 : Record 50021;SkipRelease@50006 : Boolean;DocTypeLoc@50005 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM');
@@ -5167,8 +5290,15 @@ OBJECT Codeunit 50112 Barcode App Mgmt
               BarcodeQty := 1;
               BarcodeUoM := 'KOM';
               // todo
+              // <PRICO-2025-67>
+              {
               IF Item.GET(BarcodeItem) THEN
                 DescriptionValue := Item."Full Description";
+              }
+              IF STRLEN(BarcodeItem) <= MAXSTRLEN(Item."No.") THEN
+                IF Item.GET(BarcodeItem) THEN
+                  DescriptionValue := Item."Full Description";
+              // </PRICO-2025-67>
               // todo
             END ;
           DocType::CPCDSHIP,DocType::CPCDREC,DocType::CPCDSHFROM:
@@ -5177,8 +5307,15 @@ OBJECT Codeunit 50112 Barcode App Mgmt
               BarcodeItem := BarcodeAppRecordings.Barcode;
               BarcodeQty := BarcodeAppRecordings."Scanned Quantity";
               // todo
+              // <PRICO-2025-67>
+              {
               IF Item.GET(BarcodeItem) THEN
                 DescriptionValue := Item."Full Description";
+              }
+              IF STRLEN(BarcodeItem) <= MAXSTRLEN(Item."No.") THEN
+                IF Item.GET(BarcodeItem) THEN
+                  DescriptionValue := Item."Full Description";
+              // </PRICO-2025-67>
               // todo
             END;
           ELSE BEGIN
@@ -5213,20 +5350,38 @@ OBJECT Codeunit 50112 Barcode App Mgmt
       Barcodes@50002 : Record 99001451;
       Item@50003 : Record 27;
       BarcodeNo@50000 : Text[40];
+      BarcodeCode@50007 : Text;
     BEGIN
       CLEAR(BarcodeItem);
       CLEAR(BarcodeUoM);
       CLEAR(BarcodeQty);
+      // <PRICO-2025-67>
+      // Kept even when the barcode is unknown, so the scan still shows up as surplus
+      BarcodeQty := BarcodeAppRecordings."Scanned Quantity";
+      // </PRICO-2025-67>
       BarcodeNo := CONVERTSTR(BarcodeAppRecordings.Barcode,',','.');
 
       IF STRPOS(BarcodeNo,'|') <> 0 THEN BEGIN
+        // <PRICO-2025-67>
+        {
         BarcodeItem := COPYSTR(BarcodeNo,1,STRPOS(BarcodeNo,'|')-1);
         BarcodeNo := COPYSTR(BarcodeNo,STRLEN(BarcodeItem)+2,STRLEN(BarcodeNo));
         BarcodeUoM := COPYSTR(BarcodeNo,1,STRPOS(BarcodeNo,'|')-1);
         BarcodeQty := BarcodeAppRecordings."Scanned Quantity";
+        }
+        // BARCODE|UOM|QTY: BARCODE is a barcode or an item number, the unit of measure is the printed one
+        BarcodeCode := COPYSTR(BarcodeNo,1,STRPOS(BarcodeNo,'|') - 1);
+        BarcodeNo := COPYSTR(BarcodeNo,STRPOS(BarcodeNo,'|') + 1);
+        IF STRPOS(BarcodeNo,'|') <> 0 THEN
+          BarcodeNo := COPYSTR(BarcodeNo,1,STRPOS(BarcodeNo,'|') - 1);
+        BarcodeItem := FindItemNoForBarcode(BarcodeCode);
+        BarcodeUoM := BarcodeNo;
+        // </PRICO-2025-67>
         EXIT;
       END;
 
+      // <PRICO-2025-67>
+      {
       IF Barcodes.GET(BarcodeAppRecordings.Barcode) THEN BEGIN
         BarcodeItem := Barcodes."Item No.";
         BarcodeUoM := Barcodes."Unit of Measure Code";
@@ -5236,6 +5391,20 @@ OBJECT Codeunit 50112 Barcode App Mgmt
         BarcodeUoM := Item."Base Unit of Measure";
         BarcodeQty := BarcodeAppRecordings."Scanned Quantity";
       END;
+      }
+      IF STRLEN(BarcodeAppRecordings.Barcode) <= MAXSTRLEN(Barcodes."Barcode No.") THEN
+        IF Barcodes.GET(BarcodeAppRecordings.Barcode) THEN BEGIN
+          BarcodeItem := Barcodes."Item No.";
+          BarcodeUoM := Barcodes."Unit of Measure Code";
+          EXIT;
+        END;
+
+      IF STRLEN(BarcodeAppRecordings.Barcode) <= MAXSTRLEN(Item."No.") THEN
+        IF Item.GET(BarcodeAppRecordings.Barcode) THEN BEGIN
+          BarcodeItem := Item."No.";
+          BarcodeUoM := Item."Base Unit of Measure";
+        END;
+      // </PRICO-2025-67>
     END;
 
     PROCEDURE DeleteBarcodeEntries@50005(DocNo@50000 : Code[20];DocTypeLoc@50009 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM,RetailShpt');
@@ -5569,6 +5738,1158 @@ OBJECT Codeunit 50112 Barcode App Mgmt
       // <PRICO-2025-67>
     END;
 
+    [External]
+    PROCEDURE CreateScanningEntriesOnDocument@50200(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';RunChangeDocStatus@50002 : Boolean) IsCompletedStatus : Boolean;
+    VAR
+      TempScan@50003 : TEMPORARY Record 50111;
+      TempDocLine@50004 : TEMPORARY Record 50113;
+      TempComponentLine@50005 : TEMPORARY Record 50113;
+    BEGIN
+      // <PRICO-2025-67>
+      // Replaces BarcodeMgmt.OnOpenBufferPage. The buffer is computed in memory and written once.
+      IF NOT IsBarcodeAppDocument(DocNo,DocType) THEN
+        EXIT(FALSE);
+
+      DeleteBufferLines(DocNo,DocType);
+
+      FindScannedEntries(DocNo,DocType);
+
+      IF NOT LoadScans(DocNo,DocType,TempScan) THEN
+        EXIT(FALSE);
+
+      CreateDocumentLines(DocNo,DocType,TempDocLine,TempComponentLine);
+      AllocateExactQtyScans(TempDocLine,TempComponentLine,TempScan);
+      AllocateScans(TempDocLine,TempComponentLine,TempScan);
+      // Whatever no line could take is surplus, including items that are not on the document at all
+      CreateSurplusLines(DocNo,DocType,TempDocLine,TempScan);
+      InsertBufferLines(TempDocLine,TempComponentLine);
+
+      IsCompletedStatus := ChangeDocumentStatus(DocNo,DocType,RunChangeDocStatus);
+      IF IsCompletedStatus THEN
+        DeleteBarcodeEntries(DocNo,DocType);
+      // </PRICO-2025-67>
+    END;
+
+    PROCEDURE SetIsBulkUpdate@50201(NewIsBulkUpdate@50000 : Boolean);
+    BEGIN
+      IsBulkUpdate := NewIsBulkUpdate; // <PRICO-2025-67/>
+    END;
+
+    PROCEDURE IsBarcodeAppDocument@50202(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM') : Boolean;
+    VAR
+      Location@50002 : Record 14;
+      WarehouseShipmentHeader@50003 : Record 7320;
+      WarehouseReceiptHeader@50004 : Record 7316;
+      TransportSheetHeader@50005 : Record 50015;
+      ComplaintShpt@50006 : Record 50021;
+    BEGIN
+      // <PRICO-2025-67>
+      CASE DocType OF
+        DocType::Shipment:
+          IF WarehouseShipmentHeader.GET(DocNo) THEN
+            IF Location.GET(WarehouseShipmentHeader."Location Code") THEN
+              EXIT(Location."Use in BE-Mobile (shipment)");
+        DocType::Receipt:
+          IF WarehouseReceiptHeader.GET(DocNo) THEN
+            IF Location.GET(WarehouseReceiptHeader."Location Code") THEN
+              EXIT(Location."Use in BE-Mobile (receipt)");
+        DocType::Transport:
+          IF TransportSheetHeader.GET(DocNo) THEN
+            IF Location.GET(TransportSheetHeader."Receiving Location") THEN
+              EXIT(Location."Use in BE-Mobile (receipt)");
+        DocType::WHCDSHIP,DocType::WHCDREC,DocType::WHCDSHFROM:
+          IF WarehouseShipmentHeader.GET(DocNo) THEN
+            EXIT(IsCrossDockLocation(WarehouseShipmentHeader."Location Code"));
+        DocType::CPCDSHIP,DocType::CPCDREC,DocType::CPCDSHFROM:
+          IF ComplaintShpt.GET(DocNo) THEN
+            EXIT(IsCrossDockRespCenter(ComplaintShpt."Store Responsible Center"));
+      END;
+
+      EXIT(FALSE);
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE DeleteBufferLines@50203(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM');
+    VAR
+      BufferLine@50002 : Record 50113;
+    BEGIN
+      // <PRICO-2025-67>
+      BufferLine.SETRANGE("Document Type",DocType);
+      BufferLine.SETRANGE("Document No.",DocNo);
+      IF NOT BufferLine.ISEMPTY THEN
+        BufferLine.DELETEALL;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE LoadScans@50204(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';VAR TempScan@50002 : TEMPORARY Record 50111) : Boolean;
+    VAR
+      ScannedDocumentLines@50003 : Record 50111;
+    BEGIN
+      // <PRICO-2025-67>
+      TempScan.RESET;
+      TempScan.DELETEALL;
+
+      ScannedDocumentLines.SETCURRENTKEY("Document Type","Document No.","Item No.");
+      ScannedDocumentLines.SETRANGE("Document Type",DocType);
+      ScannedDocumentLines.SETRANGE("Document No.",DocNo);
+      ScannedDocumentLines.SETFILTER("Scanned Quantity",'>0');
+      IF NOT ScannedDocumentLines.FINDSET THEN
+        EXIT(FALSE);
+
+      REPEAT
+        TempScan := ScannedDocumentLines;
+        // Rows imported before GetBarcodeFields resolved BARCODE|UOM|QTY to an item have no item yet
+        IF TempScan."Item No." = '' THEN
+          TempScan."Item No." := FindItemNoForBarcode(TempScan."Full Barcode Value");
+        TempScan.INSERT;
+      UNTIL ScannedDocumentLines.NEXT = 0;
+
+      EXIT(TRUE);
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE FindItemNoForBarcode@50205(FullBarcodeValue@50000 : Text) : Code[20];
+    VAR
+      Barcodes@50001 : Record 99001451;
+      Item@50002 : Record 27;
+      BarcodeNo@50003 : Text;
+    BEGIN
+      // <PRICO-2025-67>
+      BarcodeNo := FullBarcodeValue;
+      IF STRPOS(BarcodeNo,'|') > 0 THEN
+        BarcodeNo := COPYSTR(BarcodeNo,1,STRPOS(BarcodeNo,'|') - 1);
+      IF BarcodeNo = '' THEN
+        EXIT('');
+
+      IF STRLEN(BarcodeNo) <= MAXSTRLEN(Barcodes."Barcode No.") THEN
+        IF Barcodes.GET(BarcodeNo) THEN
+          EXIT(Barcodes."Item No.");
+
+      IF STRLEN(BarcodeNo) <= MAXSTRLEN(Item."No.") THEN
+        IF Item.GET(BarcodeNo) THEN
+          EXIT(Item."No.");
+
+      EXIT('');
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE CreateDocumentLines@50206(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';VAR TempDocLine@50002 : TEMPORARY Record 50113;VAR TempComponentLine@50003 : TEMPORARY Record 50113);
+    BEGIN
+      // <PRICO-2025-67>
+      CASE DocType OF
+        DocType::Shipment:
+          CreateWhseShipmentLines(DocNo,DocType,TempDocLine,TempComponentLine);
+        DocType::Receipt:
+          CreateWhseReceiptLines(DocNo,DocType,TempDocLine,TempComponentLine);
+        DocType::Transport:
+          CreateTransportSheetLines(DocNo,DocType,TempDocLine,TempComponentLine);
+        DocType::WHCDSHIP,DocType::WHCDREC,DocType::WHCDSHFROM:
+          CreateCrossDockPackageLines(DocNo,DocType,TempDocLine,TempComponentLine);
+        DocType::CPCDSHIP,DocType::CPCDREC,DocType::CPCDSHFROM:
+          CreateComplaintShipmentLines(DocNo,DocType,TempDocLine,TempComponentLine);
+      END;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE CreateWhseShipmentLines@50207(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';VAR TempDocLine@50002 : TEMPORARY Record 50113;VAR TempComponentLine@50003 : TEMPORARY Record 50113);
+    VAR
+      WarehouseShipmentLine@50004 : Record 7321;
+    BEGIN
+      // <PRICO-2025-67>
+      // Buffer lines are numbered in shipment date order, so scans fill the earliest due lines first
+      WarehouseShipmentLine.SETCURRENTKEY("Shipment Date");
+      WarehouseShipmentLine.SETRANGE("No.",DocNo);
+      IF WarehouseShipmentLine.FINDSET THEN
+        REPEAT
+          InsertDocumentLine(TempDocLine,TempComponentLine,DocNo,DocType,WarehouseShipmentLine."Line No.",WarehouseShipmentLine."Item No.",WarehouseShipmentLine."Full Item Description",WarehouseShipmentLine."Qty. to Ship",WarehouseShipmentLine."Unit of Measure Code",WarehouseShipmentLine."Location Code",TRUE);
+        UNTIL WarehouseShipmentLine.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE CreateWhseReceiptLines@50208(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';VAR TempDocLine@50002 : TEMPORARY Record 50113;VAR TempComponentLine@50003 : TEMPORARY Record 50113);
+    VAR
+      WarehouseReceiptLine@50004 : Record 7317;
+    BEGIN
+      // <PRICO-2025-67>
+      WarehouseReceiptLine.SETRANGE("No.",DocNo);
+      IF WarehouseReceiptLine.FINDSET THEN
+        REPEAT
+          InsertDocumentLine(TempDocLine,TempComponentLine,DocNo,DocType,WarehouseReceiptLine."Line No.",WarehouseReceiptLine."Item No.",WarehouseReceiptLine."Full Item Description",WarehouseReceiptLine."Qty. to Receive",WarehouseReceiptLine."Unit of Measure Code",WarehouseReceiptLine."Location Code",TRUE);
+        UNTIL WarehouseReceiptLine.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE CreateTransportSheetLines@50209(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';VAR TempDocLine@50002 : TEMPORARY Record 50113;VAR TempComponentLine@50003 : TEMPORARY Record 50113);
+    VAR
+      TransportSheetLine@50004 : Record 50016;
+    BEGIN
+      // <PRICO-2025-67>
+      // Shipped and not yet received: the quantity the app was given and the receipt posts
+      TransportSheetLine.SETRANGE("Document No.",DocNo);
+      TransportSheetLine.SETFILTER("Qty. to Receive",'>0');
+      IF TransportSheetLine.FINDSET THEN
+        REPEAT
+          InsertDocumentLine(TempDocLine,TempComponentLine,DocNo,DocType,TransportSheetLine."Line No.",TransportSheetLine."Item No.",COPYSTR(TransportSheetLine."Item Description",1,110),TransportSheetLine."Qty. to Receive",TransportSheetLine."Unit of Measure",TransportSheetLine."Location Code",TRUE);
+        UNTIL TransportSheetLine.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE CreateCrossDockPackageLines@50210(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';VAR TempDocLine@50002 : TEMPORARY Record 50113;VAR TempComponentLine@50003 : TEMPORARY Record 50113);
+    VAR
+      WhseShpt@50004 : Record 7320;
+      NoOfPallets@50005 : Integer;
+      PackageLineNo@50006 : Integer;
+      PalletDescription@50007 : Text[110];
+      i@50008 : Integer;
+    BEGIN
+      // <PRICO-2025-67>
+      IF NOT WhseShpt.GET(DocNo) THEN
+        EXIT;
+      IF (WhseShpt."No. of Pallets" = 0) AND (WhseShpt."No. of Additional Packages" = 0) AND (WhseShpt."No. of Pallets Add. Packages" = 0) AND (WhseShpt."Linked Whse. Shpt. No." = '') THEN
+        EXIT;
+
+      // The same packages FillWhseShptBarcodeEntriesCrossDock offers the app, or its scans could never match
+      IF WhseShpt."Linked Whse. Shpt. No." <> '' THEN
+        NoOfPallets := 1
+      ELSE
+        NoOfPallets := WhseShpt."No. of Pallets";
+
+      FOR i := 1 TO NoOfPallets DO BEGIN
+        PackageLineNo += 10000;
+        PalletDescription := GetWhseShptCrossDockBarcode(WhseShpt."No.",i,NoOfPallets,2);
+        IF WhseShpt."Linked Whse. Shpt. No." <> '' THEN
+          PalletDescription := PalletDescription + ' - ' + WhseShpt."Linked Whse. Shpt. No.";
+        InsertDocumentLine(TempDocLine,TempComponentLine,DocNo,DocType,PackageLineNo,GetWhseShptCrossDockBarcode(WhseShpt."No.",i,NoOfPallets,1),PalletDescription,1,'',WhseShpt."Location Code",FALSE);
+      END;
+
+      FOR i := 1 TO WhseShpt."No. of Additional Packages" DO BEGIN
+        PackageLineNo += 10000;
+        InsertDocumentLine(TempDocLine,TempComponentLine,DocNo,DocType,PackageLineNo,GetWhseShptCrossDockBarcode(WhseShpt."No.",i,WhseShpt."No. of Additional Packages",3),GetWhseShptCrossDockBarcode(WhseShpt."No.",i,WhseShpt."No. of Additional Packages",4),1,'',WhseShpt."Location Code",FALSE);
+      END;
+
+      FOR i := 1 TO WhseShpt."No. of Pallets Add. Packages" DO BEGIN
+        PackageLineNo += 10000;
+        InsertDocumentLine(TempDocLine,TempComponentLine,DocNo,DocType,PackageLineNo,GetWhseShptCrossDockBarcode(WhseShpt."No.",i,WhseShpt."No. of Pallets Add. Packages",5),GetWhseShptCrossDockBarcode(WhseShpt."No.",i,WhseShpt."No. of Pallets Add. Packages",6),1,'',WhseShpt."Location Code",FALSE);
+      END;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE CreateComplaintShipmentLines@50211(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';VAR TempDocLine@50002 : TEMPORARY Record 50113;VAR TempComponentLine@50003 : TEMPORARY Record 50113);
+    VAR
+      ComplaintShipmentLine@50004 : Record 50022;
+    BEGIN
+      // <PRICO-2025-67>
+      ComplaintShipmentLine.SETRANGE("Document No.",DocNo);
+      IF ComplaintShipmentLine.FINDSET THEN
+        REPEAT
+          InsertDocumentLine(TempDocLine,TempComponentLine,DocNo,DocType,ComplaintShipmentLine."Line No.",ComplaintShipmentLine."Complaint No.",ComplaintShipmentLine."Customer No" + ' - ' + ComplaintShipmentLine."Document No.",ComplaintShipmentLine."Package Quantity",'','',FALSE);
+        UNTIL ComplaintShipmentLine.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE InsertDocumentLine@50212(VAR TempDocLine@50000 : TEMPORARY Record 50113;VAR TempComponentLine@50001 : TEMPORARY Record 50113;DocNo@50002 : Code[20];DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';DocumentLineNo@50004 : Integer;ItemNo@50005 : Code[40];ItemDescription@50006 : Text[110];Qty@50007 : Decimal;UomCode@50008 : Code[10];LocationCode@50009 : Code[10];ExpandBOM@50010 : Boolean);
+    VAR
+      BOMComponent@50011 : Record 90;
+      BufferLineNo@50012 : Integer;
+      ComponentLineNo@50013 : Integer;
+    BEGIN
+      // <PRICO-2025-67>
+      TempDocLine.RESET;
+      IF TempDocLine.FINDLAST THEN
+        BufferLineNo := TempDocLine."Line No." + 10000
+      ELSE
+        BufferLineNo := 10000;
+
+      TempDocLine.INIT;
+      TempDocLine."Document Type" := DocType;
+      TempDocLine."Document No." := DocNo;
+      TempDocLine."Line No." := BufferLineNo;
+      TempDocLine."Document Line No." := DocumentLineNo;
+      TempDocLine.Version := 1;
+      TempDocLine."Parent Line No." := BufferLineNo;
+      TempDocLine.Indentation := 0;
+      TempDocLine."Item No." := ItemNo;
+      TempDocLine."Item Description" := ItemDescription;
+      TempDocLine.Quantity := Qty;
+      TempDocLine."Quantity on Document" := Qty;
+      TempDocLine."Unit of Measure" := UomCode;
+      TempDocLine."Location Code" := LocationCode;
+      TempDocLine."Shipment No." := DocNo;
+      TempDocLine.INSERT;
+
+      IF NOT ExpandBOM THEN
+        EXIT;
+
+      // Components are numbered right after their parent, which keeps them under it in the page tree
+      ComponentLineNo := BufferLineNo;
+      BOMComponent.SETRANGE("Parent Item No.",ItemNo);
+      BOMComponent.SETRANGE(Type,BOMComponent.Type::Item);
+      IF BOMComponent.FINDSET THEN
+        REPEAT
+          ComponentLineNo += 1;
+          TempComponentLine.INIT;
+          TempComponentLine."Document Type" := DocType;
+          TempComponentLine."Document No." := DocNo;
+          TempComponentLine."Line No." := ComponentLineNo;
+          TempComponentLine."Document Line No." := 0;
+          TempComponentLine.Version := 1;
+          TempComponentLine."Parent Line No." := BufferLineNo;
+          TempComponentLine."Parent Item No." := ItemNo;
+          TempComponentLine.Indentation := 1;
+          TempComponentLine."Item No." := BOMComponent."No.";
+          TempComponentLine."Item Description" := BOMComponent."Full Item Description";
+          TempComponentLine."Qty per" := BOMComponent."Quantity per";
+          TempComponentLine.Quantity := Qty * BOMComponent."Quantity per";
+          TempComponentLine."Quantity on Document" := TempComponentLine.Quantity;
+          TempComponentLine."Unit of Measure" := BOMComponent."Unit of Measure Code";
+          TempComponentLine."Location Code" := LocationCode;
+          TempComponentLine."Shipment No." := DocNo;
+          TempComponentLine.INSERT;
+        UNTIL BOMComponent.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE AllocateExactQtyScans@50213(VAR TempDocLine@50000 : TEMPORARY Record 50113;VAR TempComponentLine@50001 : TEMPORARY Record 50113;VAR TempScan@50002 : TEMPORARY Record 50111);
+    BEGIN
+      // <PRICO-2025-67>
+      // A quantity barcode (BARCODE|UOM|QTY) carries one line's exact quantity. Such a scan goes to that
+      // line before the FIFO pass, which would otherwise spread it over every line of the same item.
+      TempDocLine.RESET;
+      IF TempDocLine.FINDSET THEN
+        REPEAT
+          IF (TempDocLine.Quantity > 0) AND IsQtyBarcodeUoM(TempDocLine."Unit of Measure") THEN
+            IF NOT HasComponentLines(TempDocLine."Line No.",TempComponentLine) THEN BEGIN
+              TempScan.RESET;
+              TempScan.SETCURRENTKEY("Document Type","Document No.","Item No.");
+              TempScan.SETRANGE("Item No.",TempDocLine."Item No.");
+              TempScan.SETRANGE("Scanned Quantity",TempDocLine.Quantity);
+              IF TempScan.FINDFIRST THEN
+                TakeScanQty(TempDocLine,TempScan,TempDocLine.Quantity);
+            END;
+        UNTIL TempDocLine.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE AllocateScans@50214(VAR TempDocLine@50000 : TEMPORARY Record 50113;VAR TempComponentLine@50001 : TEMPORARY Record 50113;VAR TempScan@50002 : TEMPORARY Record 50111);
+    BEGIN
+      // <PRICO-2025-67>
+      // A BOM parent is never scanned itself: its components take the scans and it counts complete sets
+      TempDocLine.RESET;
+      IF TempDocLine.FINDSET THEN
+        REPEAT
+          TempComponentLine.RESET;
+          TempComponentLine.SETRANGE("Parent Line No.",TempDocLine."Line No.");
+          IF TempComponentLine.FINDSET THEN BEGIN
+            REPEAT
+              AllocateScansToLine(TempComponentLine,TempScan);
+            UNTIL TempComponentLine.NEXT = 0;
+            UpdateBOMParentLine(TempDocLine,TempComponentLine);
+          END ELSE
+            AllocateScansToLine(TempDocLine,TempScan);
+        UNTIL TempDocLine.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE AllocateScansToLine@50215(VAR TempBufferLine@50000 : TEMPORARY Record 50113;VAR TempScan@50001 : TEMPORARY Record 50111);
+    VAR
+      RemainingQty@50002 : Decimal;
+      TakeQty@50003 : Decimal;
+    BEGIN
+      // <PRICO-2025-67>
+      RemainingQty := TempBufferLine.Quantity - TempBufferLine."Scanned Quantity";
+      IF RemainingQty > 0 THEN BEGIN
+        TempScan.RESET;
+        TempScan.SETCURRENTKEY("Document Type","Document No.","Item No.");
+        TempScan.SETRANGE("Item No.",TempBufferLine."Item No.");
+        IF TempScan.FINDSET THEN
+          REPEAT
+            IF TempScan."Scanned Quantity" > 0 THEN BEGIN
+              TakeQty := TempScan."Scanned Quantity";
+              IF TakeQty > RemainingQty THEN
+                TakeQty := RemainingQty;
+              TakeScanQty(TempBufferLine,TempScan,TakeQty);
+              RemainingQty := RemainingQty - TakeQty;
+            END;
+          UNTIL (RemainingQty <= 0) OR (TempScan.NEXT = 0);
+      END;
+
+      SetLineStatus(TempBufferLine);
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE TakeScanQty@50216(VAR TempBufferLine@50000 : TEMPORARY Record 50113;VAR TempScan@50001 : TEMPORARY Record 50111;Qty@50002 : Decimal);
+    BEGIN
+      // <PRICO-2025-67>
+      TempBufferLine."Scanned Quantity" := TempBufferLine."Scanned Quantity" + Qty;
+      IF TempScan."Creation DateTime" >= TempBufferLine."Scanning Time" THEN BEGIN
+        TempBufferLine."Scanning Time" := TempScan."Creation DateTime";
+        TempBufferLine."User ID" := TempScan."User ID";
+      END;
+      TempBufferLine.MODIFY;
+
+      TempScan."Scanned Quantity" := TempScan."Scanned Quantity" - Qty;
+      TempScan.MODIFY;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE SetLineStatus@50217(VAR TempBufferLine@50000 : TEMPORARY Record 50113);
+    BEGIN
+      // <PRICO-2025-67>
+      IF TempBufferLine."Scanned Quantity" >= TempBufferLine.Quantity THEN
+        TempBufferLine.Status := TempBufferLine.Status::Complete
+      ELSE
+        IF TempBufferLine."Scanned Quantity" = 0 THEN
+          TempBufferLine.Status := TempBufferLine.Status::Missing
+        ELSE
+          TempBufferLine.Status := TempBufferLine.Status::Incomplete;
+      TempBufferLine.MODIFY;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE UpdateBOMParentLine@50218(VAR TempDocLine@50000 : TEMPORARY Record 50113;VAR TempComponentLine@50001 : TEMPORARY Record 50113);
+    VAR
+      CompleteSets@50002 : Decimal;
+      ComponentSets@50003 : Decimal;
+      AllComponentsComplete@50004 : Boolean;
+      AnyComponentScanned@50005 : Boolean;
+    BEGIN
+      // <PRICO-2025-67>
+      // A set is complete only when every component is there, so the scarcest component decides
+      AllComponentsComplete := TRUE;
+      CompleteSets := TempDocLine.Quantity;
+
+      TempComponentLine.RESET;
+      TempComponentLine.SETRANGE("Parent Line No.",TempDocLine."Line No.");
+      IF TempComponentLine.FINDSET THEN
+        REPEAT
+          IF TempComponentLine.Status <> TempComponentLine.Status::Complete THEN
+            AllComponentsComplete := FALSE;
+          IF TempComponentLine."Scanned Quantity" > 0 THEN
+            AnyComponentScanned := TRUE;
+          IF TempComponentLine."Qty per" <> 0 THEN BEGIN
+            ComponentSets := ROUND(TempComponentLine."Scanned Quantity" / TempComponentLine."Qty per",1,'<');
+            IF ComponentSets < CompleteSets THEN
+              CompleteSets := ComponentSets;
+          END;
+          IF TempComponentLine."Scanning Time" > TempDocLine."Scanning Time" THEN BEGIN
+            TempDocLine."Scanning Time" := TempComponentLine."Scanning Time";
+            TempDocLine."User ID" := TempComponentLine."User ID";
+          END;
+        UNTIL TempComponentLine.NEXT = 0;
+
+      IF AllComponentsComplete THEN BEGIN
+        TempDocLine."Scanned Quantity" := TempDocLine.Quantity;
+        TempDocLine.Status := TempDocLine.Status::Complete;
+      END ELSE BEGIN
+        TempDocLine."Scanned Quantity" := CompleteSets;
+        IF AnyComponentScanned THEN
+          TempDocLine.Status := TempDocLine.Status::Incomplete
+        ELSE
+          TempDocLine.Status := TempDocLine.Status::Missing;
+      END;
+      TempDocLine.MODIFY;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE HasComponentLines@50219(ParentLineNo@50000 : Integer;VAR TempComponentLine@50001 : TEMPORARY Record 50113) : Boolean;
+    BEGIN
+      // <PRICO-2025-67>
+      TempComponentLine.RESET;
+      TempComponentLine.SETRANGE("Parent Line No.",ParentLineNo);
+      EXIT(NOT TempComponentLine.ISEMPTY);
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE IsQtyBarcodeUoM@50220(UomCode@50000 : Code[10]) : Boolean;
+    VAR
+      UnitofMeasure@50001 : Record 204;
+    BEGIN
+      // <PRICO-2025-67>
+      IF UomCode = '' THEN
+        EXIT(FALSE);
+      IF NOT UnitofMeasure.GET(UomCode) THEN
+        EXIT(FALSE);
+      EXIT(UnitofMeasure."Insert Qty Barcode");
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE CreateSurplusLines@50221(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';VAR TempDocLine@50002 : TEMPORARY Record 50113;VAR TempScan@50003 : TEMPORARY Record 50111);
+    VAR
+      LastLineNo@50004 : Integer;
+    BEGIN
+      // <PRICO-2025-67>
+      TempDocLine.RESET;
+      IF TempDocLine.FINDLAST THEN
+        LastLineNo := TempDocLine."Line No.";
+
+      // One surplus line per item and unit of measure; an unknown barcode gets a line of its own
+      TempScan.RESET;
+      IF TempScan.FINDSET THEN
+        REPEAT
+          IF TempScan."Scanned Quantity" > 0 THEN BEGIN
+            TempDocLine.RESET;
+            TempDocLine.SETRANGE(Status,TempDocLine.Status::Surplus);
+            TempDocLine.SETRANGE("Item No.",TempScan."Item No.");
+            TempDocLine.SETRANGE("Unit of Measure",TempScan."Unit of Measure");
+            IF TempScan."Item No." = '' THEN
+              TempDocLine.SETRANGE("Full Barcode Value",TempScan."Full Barcode Value");
+            IF NOT TempDocLine.FINDFIRST THEN BEGIN
+              LastLineNo += 10000;
+              TempDocLine.INIT;
+              TempDocLine."Document Type" := DocType;
+              TempDocLine."Document No." := DocNo;
+              TempDocLine."Line No." := LastLineNo;
+              // Not a document line: the status sync must never match it to one
+              TempDocLine."Document Line No." := 0;
+              TempDocLine.Version := 1;
+              TempDocLine."Parent Line No." := LastLineNo;
+              TempDocLine.Indentation := 0;
+              TempDocLine."Item No." := TempScan."Item No.";
+              TempDocLine."Item Description" := GetSurplusDescription(TempScan."Item No.",TempScan."Item Description",TempScan."Full Barcode Value");
+              TempDocLine."Unit of Measure" := TempScan."Unit of Measure";
+              TempDocLine.Barcode := TempScan.Barcode;
+              TempDocLine."Full Barcode Value" := TempScan."Full Barcode Value";
+              TempDocLine."Shipment No." := DocNo;
+              TempDocLine.Status := TempDocLine.Status::Surplus;
+              TempDocLine.INSERT;
+            END;
+            TakeScanQty(TempDocLine,TempScan,TempScan."Scanned Quantity");
+          END;
+        UNTIL TempScan.NEXT = 0;
+
+      TempDocLine.RESET;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE GetSurplusDescription@50222(ItemNo@50000 : Code[40];ScanDescription@50001 : Text[110];FullBarcodeValue@50002 : Text[50]) : Text[110];
+    VAR
+      Item@50003 : Record 27;
+      UnknownBarcodeTxt@50004 : TextConst 'ENU=Unknown barcode: %1;HRV=Nepoznat barkod: %1;SLV=Neznana Ÿrtna koda: %1';
+    BEGIN
+      // <PRICO-2025-67>
+      IF ItemNo = '' THEN
+        EXIT(COPYSTR(STRSUBSTNO(UnknownBarcodeTxt,FullBarcodeValue),1,110));
+      IF ScanDescription <> '' THEN
+        EXIT(ScanDescription);
+      IF STRLEN(ItemNo) <= MAXSTRLEN(Item."No.") THEN
+        IF Item.GET(ItemNo) THEN
+          EXIT(Item."Full Description");
+      EXIT('');
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE InsertBufferLines@50223(VAR TempDocLine@50000 : TEMPORARY Record 50113;VAR TempComponentLine@50001 : TEMPORARY Record 50113);
+    VAR
+      BufferLine@50002 : Record 50113;
+    BEGIN
+      // <PRICO-2025-67>
+      TempDocLine.RESET;
+      IF TempDocLine.FINDSET THEN
+        REPEAT
+          BufferLine := TempDocLine;
+          BufferLine.INSERT;
+        UNTIL TempDocLine.NEXT = 0;
+
+      TempComponentLine.RESET;
+      IF TempComponentLine.FINDSET THEN
+        REPEAT
+          BufferLine := TempComponentLine;
+          BufferLine.INSERT;
+        UNTIL TempComponentLine.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    PROCEDURE ChangeDocumentStatus@50224(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';RunChangeDocStatus@50002 : Boolean) : Boolean;
+    BEGIN
+      // <PRICO-2025-67>
+      CASE DocType OF
+        DocType::Shipment:
+          EXIT(ChangeWhseShipmentStatus(DocNo,DocType,RunChangeDocStatus));
+        DocType::Receipt:
+          EXIT(ChangeWhseReceiptStatus(DocNo,DocType,RunChangeDocStatus));
+        DocType::Transport:
+          EXIT(ChangeTransportSheetStatus(DocNo,DocType,RunChangeDocStatus));
+        DocType::WHCDSHIP,DocType::WHCDREC,DocType::WHCDSHFROM:
+          EXIT(ChangeWhseShipmentStatusCD(DocNo,DocType,RunChangeDocStatus));
+        DocType::CPCDSHIP,DocType::CPCDREC,DocType::CPCDSHFROM:
+          EXIT(ChangeComplaintShipmentStatusCD(DocNo,DocType,RunChangeDocStatus));
+      END;
+
+      EXIT(FALSE);
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE ChangeWhseShipmentStatus@50225(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';RunChangeDocStatus@50002 : Boolean) : Boolean;
+    VAR
+      WarehouseShipmentHeader@50003 : Record 7320;
+      WarehouseShipmentLine@50004 : Record 7321;
+      BufferLine@50005 : Record 50113;
+      TotalLines@50006 : Integer;
+      CompletedLines@50007 : Integer;
+      MissingLines@50008 : Integer;
+      SurplusLines@50009 : Integer;
+    BEGIN
+      // <PRICO-2025-67>
+      IF NOT WarehouseShipmentHeader.GET(DocNo) THEN
+        EXIT(FALSE);
+      IF WarehouseShipmentHeader."Barcode Status" = WarehouseShipmentHeader."Barcode Status"::Processed THEN
+        EXIT(FALSE);
+      IF WarehouseShipmentHeader."Barcode Status" <> WarehouseShipmentHeader."Barcode Status"::Synchronized THEN BEGIN
+        WarehouseShipmentHeader.VALIDATE("Barcode Status",WarehouseShipmentHeader."Barcode Status"::Synchronized);
+        WarehouseShipmentHeader.MODIFY;
+      END;
+
+      CountBufferLines(DocNo,DocType,TotalLines,CompletedLines,MissingLines,SurplusLines);
+      IF CompletedLines <> TotalLines THEN BEGIN
+        IF NOT RunChangeDocStatus THEN
+          EXIT(FALSE);
+        IF NOT ConfirmSyncWithDiscrepancies(MissingLines,SurplusLines) THEN
+          EXIT(FALSE);
+      END;
+
+      BufferLine.SETRANGE("Document Type",DocType);
+      BufferLine.SETRANGE("Document No.",DocNo);
+      BufferLine.SETRANGE(Indentation,0);
+      BufferLine.SETFILTER("Document Line No.",'<>0');
+      IF BufferLine.FINDSET THEN
+        REPEAT
+          IF WarehouseShipmentLine.GET(DocNo,BufferLine."Document Line No.") THEN
+            IF (WarehouseShipmentLine."Scanned Quantity" <> BufferLine."Scanned Quantity") OR (WarehouseShipmentLine."Qty. to Ship" <> BufferLine."Scanned Quantity") THEN BEGIN
+              WarehouseShipmentLine."Scanned Quantity" := BufferLine."Scanned Quantity";
+              IF WarehouseShipmentLine."Qty. Outstanding" <= BufferLine."Scanned Quantity" THEN
+                WarehouseShipmentLine.VALIDATE("Qty. to Ship",WarehouseShipmentLine."Qty. Outstanding")
+              ELSE
+                WarehouseShipmentLine.VALIDATE("Qty. to Ship",BufferLine."Scanned Quantity");
+              WarehouseShipmentLine.MODIFY(FALSE);
+            END;
+        UNTIL BufferLine.NEXT = 0;
+
+      WarehouseShipmentHeader.GET(DocNo);
+      IF WarehouseShipmentHeader."Barcode Status" <> WarehouseShipmentHeader."Barcode Status"::Processed THEN BEGIN
+        WarehouseShipmentHeader.VALIDATE("Barcode Status",WarehouseShipmentHeader."Barcode Status"::Processed);
+        WarehouseShipmentHeader.MODIFY(FALSE);
+      END;
+
+      EXIT(TRUE);
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE ChangeWhseReceiptStatus@50226(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';RunChangeDocStatus@50002 : Boolean) : Boolean;
+    VAR
+      WarehouseReceiptHeader@50003 : Record 7316;
+      WarehouseReceiptLine@50004 : Record 7317;
+      BufferLine@50005 : Record 50113;
+      TotalLines@50006 : Integer;
+      CompletedLines@50007 : Integer;
+      MissingLines@50008 : Integer;
+      SurplusLines@50009 : Integer;
+    BEGIN
+      // <PRICO-2025-67>
+      IF NOT WarehouseReceiptHeader.GET(DocNo) THEN
+        EXIT(FALSE);
+      IF WarehouseReceiptHeader."Barcode Status" = WarehouseReceiptHeader."Barcode Status"::Processed THEN
+        EXIT(FALSE);
+      IF WarehouseReceiptHeader."Barcode Status" <> WarehouseReceiptHeader."Barcode Status"::Synchronized THEN BEGIN
+        WarehouseReceiptHeader.VALIDATE("Barcode Status",WarehouseReceiptHeader."Barcode Status"::Synchronized);
+        WarehouseReceiptHeader.MODIFY;
+      END;
+
+      CountBufferLines(DocNo,DocType,TotalLines,CompletedLines,MissingLines,SurplusLines);
+      IF CompletedLines <> TotalLines THEN BEGIN
+        IF NOT RunChangeDocStatus THEN
+          EXIT(FALSE);
+        IF NOT ConfirmSyncWithDiscrepancies(MissingLines,SurplusLines) THEN
+          EXIT(FALSE);
+      END;
+
+      BufferLine.SETRANGE("Document Type",DocType);
+      BufferLine.SETRANGE("Document No.",DocNo);
+      BufferLine.SETRANGE(Indentation,0);
+      BufferLine.SETFILTER("Document Line No.",'<>0');
+      IF BufferLine.FINDSET THEN
+        REPEAT
+          IF WarehouseReceiptLine.GET(DocNo,BufferLine."Document Line No.") THEN
+            IF (WarehouseReceiptLine."Scanned Quantity" <> BufferLine."Scanned Quantity") OR (WarehouseReceiptLine."Qty. to Receive" <> BufferLine."Scanned Quantity") THEN BEGIN
+              WarehouseReceiptLine."Scanned Quantity" := BufferLine."Scanned Quantity";
+              IF WarehouseReceiptLine."Qty. Outstanding" <= BufferLine."Scanned Quantity" THEN
+                WarehouseReceiptLine.VALIDATE("Qty. to Receive",WarehouseReceiptLine."Qty. Outstanding")
+              ELSE
+                WarehouseReceiptLine.VALIDATE("Qty. to Receive",BufferLine."Scanned Quantity");
+              WarehouseReceiptLine.MODIFY(FALSE);
+            END;
+        UNTIL BufferLine.NEXT = 0;
+
+      WarehouseReceiptHeader.GET(DocNo);
+      IF WarehouseReceiptHeader."Barcode Status" <> WarehouseReceiptHeader."Barcode Status"::Processed THEN BEGIN
+        WarehouseReceiptHeader.VALIDATE("Barcode Status",WarehouseReceiptHeader."Barcode Status"::Processed);
+        WarehouseReceiptHeader.MODIFY(FALSE);
+      END;
+
+      EXIT(TRUE);
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE ChangeTransportSheetStatus@50227(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';RunChangeDocStatus@50002 : Boolean) : Boolean;
+    VAR
+      TransportSheetHeader@50003 : Record 50015;
+      TransportSheetLine@50004 : Record 50016;
+      BufferLine@50005 : Record 50113;
+      TotalLines@50006 : Integer;
+      CompletedLines@50007 : Integer;
+      MissingLines@50008 : Integer;
+      SurplusLines@50009 : Integer;
+    BEGIN
+      // <PRICO-2025-67>
+      IF NOT TransportSheetHeader.GET(DocNo) THEN
+        EXIT(FALSE);
+      // Scanning sets the status itself; the barcode-admin check is for a change by hand
+      TransportSheetHeader.SetCalledFromScanning(TRUE);
+      IF TransportSheetHeader."Barcode Status" = TransportSheetHeader."Barcode Status"::Processed THEN
+        EXIT(TRUE);
+      IF TransportSheetHeader."Barcode Status" <> TransportSheetHeader."Barcode Status"::Synchronized THEN BEGIN
+        TransportSheetHeader.VALIDATE("Barcode Status",TransportSheetHeader."Barcode Status"::Synchronized);
+        TransportSheetHeader.MODIFY;
+      END;
+
+      // A transport sheet line takes its scanned quantity even before the sheet is complete
+      BufferLine.SETRANGE("Document Type",DocType);
+      BufferLine.SETRANGE("Document No.",DocNo);
+      BufferLine.SETRANGE(Indentation,0);
+      BufferLine.SETFILTER("Document Line No.",'<>0');
+      IF BufferLine.FINDSET THEN
+        REPEAT
+          IF TransportSheetLine.GET(DocNo,BufferLine."Document Line No.") THEN
+            IF TransportSheetLine."Scanned Quantity" <> BufferLine."Scanned Quantity" THEN BEGIN
+              TransportSheetLine."Scanned Quantity" := BufferLine."Scanned Quantity";
+              TransportSheetLine.MODIFY(FALSE);
+            END;
+        UNTIL BufferLine.NEXT = 0;
+
+      // Its receipt cannot be posted while part of it is still to ship, so scanning cannot finish it yet
+      IF TransportSheetHeader.Status = TransportSheetHeader.Status::"Partially Shipped" THEN
+        EXIT(FALSE);
+
+      CountBufferLines(DocNo,DocType,TotalLines,CompletedLines,MissingLines,SurplusLines);
+      IF CompletedLines <> TotalLines THEN BEGIN
+        IF NOT RunChangeDocStatus THEN
+          EXIT(FALSE);
+        IF NOT ConfirmSyncWithDiscrepancies(MissingLines,SurplusLines) THEN
+          EXIT(FALSE);
+      END;
+
+      TransportSheetHeader.GET(DocNo);
+      TransportSheetHeader.SetCalledFromScanning(TRUE);
+      IF TransportSheetHeader."Barcode Status" <> TransportSheetHeader."Barcode Status"::Processed THEN BEGIN
+        TransportSheetHeader.VALIDATE("Barcode Status",TransportSheetHeader."Barcode Status"::Processed);
+        TransportSheetHeader.MODIFY(FALSE);
+      END;
+
+      EXIT(TRUE);
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE ChangeWhseShipmentStatusCD@50228(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';RunChangeDocStatus@50002 : Boolean) IsCompleted : Boolean;
+    VAR
+      WhseShpt@50003 : Record 7320;
+      TotalLines@50004 : Integer;
+      CompletedLines@50005 : Integer;
+      MissingLines@50006 : Integer;
+      SurplusLines@50007 : Integer;
+    BEGIN
+      // <PRICO-2025-67>
+      IF NOT WhseShpt.GET(DocNo) THEN
+        EXIT(FALSE);
+
+      IF NOT RunChangeDocStatus THEN
+        EXIT(FALSE);
+
+      IF IsBulkUpdate THEN
+        WhseShpt.SetHideValidationDialog(TRUE);
+
+      CountBufferLines(DocNo,DocType,TotalLines,CompletedLines,MissingLines,SurplusLines);
+      IsCompleted := CompletedLines = TotalLines;
+
+      CASE DocType OF
+        DocType::WHCDSHIP:
+          BEGIN
+            IF NOT IsCompleted THEN BEGIN
+              IF WhseShpt."Cross-Dock Shipment Status" = WhseShpt."Cross-Dock Shipment Status"::"Ready for CD Shipment" THEN BEGIN
+                WhseShpt.VALIDATE("Cross-Dock Shipment Status",WhseShpt."Cross-Dock Shipment Status"::"Shipped to CD (sync)");
+                WhseShpt.MODIFY(FALSE);
+              END;
+            END ELSE BEGIN
+              IF (WhseShpt."Cross-Dock Shipment Status" = WhseShpt."Cross-Dock Shipment Status"::"Shipped to CD (sync)") OR (WhseShpt."Cross-Dock Shipment Status" = WhseShpt."Cross-Dock Shipment Status"::"Ready for CD Shipment") THEN BEGIN
+                WhseShpt.VALIDATE("Cross-Dock Shipment Status",WhseShpt."Cross-Dock Shipment Status"::"Shipped to CD");
+                WhseShpt.MODIFY(FALSE);
+              END;
+            END;
+          END;
+
+        DocType::WHCDREC:
+          BEGIN
+            IF WhseShpt."Cross-Dock Shipment Status" = WhseShpt."Cross-Dock Shipment Status"::" " THEN
+              EXIT(IsCompleted);
+
+            IF NOT IsCompleted THEN BEGIN
+              IF WhseShpt."Cross-Dock Shipment Status" < WhseShpt."Cross-Dock Shipment Status"::"Received on CD (sync)" THEN BEGIN
+                WhseShpt.VALIDATE("Cross-Dock Shipment Status",WhseShpt."Cross-Dock Shipment Status"::"Received on CD (sync)");
+                WhseShpt.MODIFY(FALSE);
+              END;
+            END ELSE BEGIN
+              IF WhseShpt."Cross-Dock Shipment Status" < WhseShpt."Cross-Dock Shipment Status"::"Received on CD" THEN BEGIN
+                WhseShpt.VALIDATE("Cross-Dock Shipment Status",WhseShpt."Cross-Dock Shipment Status"::"Received on CD");
+                WhseShpt.MODIFY(FALSE);
+              END;
+            END;
+          END;
+
+        DocType::WHCDSHFROM:
+          BEGIN
+            IF WhseShpt."Cross-Dock Shipment Status" = WhseShpt."Cross-Dock Shipment Status"::" " THEN
+              EXIT(IsCompleted);
+
+            IF NOT IsCompleted THEN BEGIN
+              IF WhseShpt."Cross-Dock Shipment Status" < WhseShpt."Cross-Dock Shipment Status"::"Shipped from CD (sync)" THEN BEGIN
+                WhseShpt.VALIDATE("Cross-Dock Shipment Status",WhseShpt."Cross-Dock Shipment Status"::"Shipped from CD (sync)");
+                WhseShpt.MODIFY(FALSE);
+              END;
+            END ELSE BEGIN
+              IF WhseShpt."Cross-Dock Shipment Status" < WhseShpt."Cross-Dock Shipment Status"::"Shipped from CD" THEN BEGIN
+                WhseShpt.VALIDATE("Cross-Dock Shipment Status",WhseShpt."Cross-Dock Shipment Status"::"Shipped from CD");
+                WhseShpt.MODIFY(FALSE);
+              END;
+            END;
+          END;
+      END;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE ChangeComplaintShipmentStatusCD@50229(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';RunChangeDocStatus@50002 : Boolean) IsCompleted : Boolean;
+    VAR
+      ComplaintShptHdr@50003 : Record 50021;
+      TotalLines@50004 : Integer;
+      CompletedLines@50005 : Integer;
+      MissingLines@50006 : Integer;
+      SurplusLines@50007 : Integer;
+    BEGIN
+      // <PRICO-2025-67>
+      IF NOT ComplaintShptHdr.GET(DocNo) THEN
+        EXIT(FALSE);
+
+      IF NOT RunChangeDocStatus THEN
+        EXIT(FALSE);
+
+      IF IsBulkUpdate THEN
+        ComplaintShptHdr.SetHideValidationDialog(TRUE);
+
+      CountBufferLines(DocNo,DocType,TotalLines,CompletedLines,MissingLines,SurplusLines);
+      IsCompleted := CompletedLines = TotalLines;
+
+      CASE DocType OF
+        DocType::CPCDSHIP:
+          BEGIN
+            IF NOT IsCompleted THEN BEGIN
+              IF ComplaintShptHdr."Cross-Dock Shipment Status" = ComplaintShptHdr."Cross-Dock Shipment Status"::"Ready For Shipment" THEN BEGIN
+                ComplaintShptHdr.VALIDATE("Cross-Dock Shipment Status",ComplaintShptHdr."Cross-Dock Shipment Status"::"Shipped to CD (sync)");
+                ComplaintShptHdr.MODIFY(FALSE);
+              END;
+            END ELSE BEGIN
+              IF (ComplaintShptHdr."Cross-Dock Shipment Status" = ComplaintShptHdr."Cross-Dock Shipment Status"::"Shipped to CD (sync)") OR (ComplaintShptHdr."Cross-Dock Shipment Status" = ComplaintShptHdr."Cross-Dock Shipment Status"::"Ready For Shipment") THEN BEGIN
+                ComplaintShptHdr.VALIDATE("Cross-Dock Shipment Status",ComplaintShptHdr."Cross-Dock Shipment Status"::"Shipped to CD");
+                ComplaintShptHdr.MODIFY(FALSE);
+              END;
+            END;
+          END;
+
+        DocType::CPCDREC:
+          BEGIN
+            IF ComplaintShptHdr."Cross-Dock Shipment Status" = ComplaintShptHdr."Cross-Dock Shipment Status"::" " THEN
+              EXIT(IsCompleted);
+
+            IF NOT IsCompleted THEN BEGIN
+              IF ComplaintShptHdr."Cross-Dock Shipment Status" < ComplaintShptHdr."Cross-Dock Shipment Status"::"Received on CD (sync)" THEN BEGIN
+                ComplaintShptHdr.VALIDATE("Cross-Dock Shipment Status",ComplaintShptHdr."Cross-Dock Shipment Status"::"Received on CD (sync)");
+                ComplaintShptHdr.MODIFY(FALSE);
+              END;
+            END ELSE BEGIN
+              IF ComplaintShptHdr."Cross-Dock Shipment Status" < ComplaintShptHdr."Cross-Dock Shipment Status"::"Received on CD" THEN BEGIN
+                ComplaintShptHdr.VALIDATE("Cross-Dock Shipment Status",ComplaintShptHdr."Cross-Dock Shipment Status"::"Received on CD");
+                ComplaintShptHdr.MODIFY(FALSE);
+              END;
+            END;
+          END;
+
+        DocType::CPCDSHFROM:
+          BEGIN
+            IF ComplaintShptHdr."Cross-Dock Shipment Status" = ComplaintShptHdr."Cross-Dock Shipment Status"::" " THEN
+              EXIT(IsCompleted);
+
+            IF NOT IsCompleted THEN BEGIN
+              IF ComplaintShptHdr."Cross-Dock Shipment Status" < ComplaintShptHdr."Cross-Dock Shipment Status"::"Shipped from CD (sync)" THEN BEGIN
+                ComplaintShptHdr.VALIDATE("Cross-Dock Shipment Status",ComplaintShptHdr."Cross-Dock Shipment Status"::"Shipped from CD (sync)");
+                ComplaintShptHdr.MODIFY(FALSE);
+              END;
+            END ELSE BEGIN
+              IF ComplaintShptHdr."Cross-Dock Shipment Status" < ComplaintShptHdr."Cross-Dock Shipment Status"::"Shipped from CD" THEN BEGIN
+                ComplaintShptHdr.VALIDATE("Cross-Dock Shipment Status",ComplaintShptHdr."Cross-Dock Shipment Status"::"Shipped from CD");
+                ComplaintShptHdr.MODIFY(FALSE);
+              END;
+            END;
+          END;
+      END;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE CountBufferLines@50230(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';VAR TotalLines@50002 : Integer;VAR CompletedLines@50003 : Integer;VAR MissingLines@50004 : Integer;VAR SurplusLines@50005 : Integer);
+    VAR
+      BufferLine@50006 : Record 50113;
+    BEGIN
+      // <PRICO-2025-67>
+      BufferLine.SETRANGE("Document Type",DocType);
+      BufferLine.SETRANGE("Document No.",DocNo);
+      TotalLines := BufferLine.COUNT;
+
+      BufferLine.SETRANGE(Status,BufferLine.Status::Complete);
+      CompletedLines := BufferLine.COUNT;
+
+      BufferLine.SETFILTER(Status,'%1|%2',BufferLine.Status::Incomplete,BufferLine.Status::Missing);
+      MissingLines := BufferLine.COUNT;
+
+      BufferLine.SETRANGE(Status,BufferLine.Status::Surplus);
+      SurplusLines := BufferLine.COUNT;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE ConfirmSyncWithDiscrepancies@50231(MissingLines@50000 : Integer;SurplusLines@50001 : Integer) : Boolean;
+    VAR
+      UserSetup@50002 : Record 91;
+      MissingDialogMessage@50003 : TextConst 'ENU=There are discrepancies in the scanned items, please check on the "Scanned Doc. Lines" page. If you have already checked and want to sync quantities select yes.;HRV=Postoje nepodudaranja u skeniranim stavkama, molim provjerite skenirane stavke. Ako ste sigurni da §elite a§urirati koliŸine na dokumentu odaberite Da.;SLV=There are discrepancies in the scanned items, please check on the "Scanned Doc. Lines" page. If you have already checked and want to sync quantities select yes.';
+    BEGIN
+      // <PRICO-2025-67>
+      IF IsBulkUpdate OR NOT GUIALLOWED THEN
+        EXIT(FALSE);
+      IF (MissingLines = 0) AND (SurplusLines = 0) THEN
+        EXIT(FALSE);
+      IF NOT CONFIRM(MissingDialogMessage,FALSE) THEN
+        EXIT(FALSE);
+
+      UserSetup.GET(USERID);
+      UserSetup.TESTFIELD("Scanned Barcodes Admin",TRUE);
+      EXIT(TRUE);
+      // </PRICO-2025-67>
+    END;
+
+    PROCEDURE StartNextTransportReceipt@50232(VAR TransportSheetHeader@50000 : Record 50015);
+    VAR
+      TransportSheetLine@50001 : Record 50016;
+      DocTypeLoc@50002 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+    BEGIN
+      // <PRICO-2025-67>
+      // A posted receipt closes its round of scanning. What is still to receive is scanned from zero, and that
+      // round has to be able to reach Processed again, because the next receipt posting requires it.
+      IF NOT IsBarcodeAppDocument(TransportSheetHeader."Document No.",DocTypeLoc::Transport) THEN
+        EXIT;
+
+      ArchiveScannedEntries(TransportSheetHeader."Document No.",DocTypeLoc::Transport);
+      DeleteBufferLines(TransportSheetHeader."Document No.",DocTypeLoc::Transport);
+
+      TransportSheetLine.SETRANGE("Document No.",TransportSheetHeader."Document No.");
+      TransportSheetLine.SETFILTER("Scanned Quantity",'<>0');
+      IF NOT TransportSheetLine.ISEMPTY THEN
+        TransportSheetLine.MODIFYALL("Scanned Quantity",0);
+
+      // Assigned, not validated: this runs inside the receipt posting's own status validation, and the
+      // field's validation is written for a change by hand on the card
+      TransportSheetHeader."Barcode Status" := TransportSheetHeader."Barcode Status"::Blank;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE ArchiveScannedEntries@50234(DocNo@50000 : Code[20];DocType@50001 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM');
+    VAR
+      ScannedDocumentLines@50002 : Record 50111;
+      ScannedDocumentLinesArchive@50003 : Record 50112;
+      ArchiveVersion@50004 : Integer;
+    BEGIN
+      // <PRICO-2025-67>
+      ScannedDocumentLines.SETRANGE("Document Type",DocType);
+      ScannedDocumentLines.SETRANGE("Document No.",DocNo);
+      IF NOT ScannedDocumentLines.FINDSET THEN
+        EXIT;
+
+      REPEAT
+        // Versioned the same way as the archive written when a scan is changed or deleted by hand
+        ScannedDocumentLinesArchive.RESET;
+        ScannedDocumentLinesArchive.SETRANGE("Document Type",DocType);
+        ScannedDocumentLinesArchive.SETRANGE("Document No.",DocNo);
+        ArchiveVersion := ScannedDocumentLinesArchive.COUNT;
+        IF ScannedDocumentLinesArchive.FINDLAST THEN
+          IF ScannedDocumentLinesArchive.Version > ArchiveVersion THEN
+            ArchiveVersion := ScannedDocumentLinesArchive.Version;
+
+        ScannedDocumentLinesArchive.INIT;
+        ScannedDocumentLinesArchive.TRANSFERFIELDS(ScannedDocumentLines);
+        ScannedDocumentLinesArchive.Version := ArchiveVersion + 1;
+        ScannedDocumentLinesArchive.ArchiveDateTime := CURRENTDATETIME;
+        ScannedDocumentLinesArchive."Arcived by User" := USERID;
+        ScannedDocumentLinesArchive.INSERT;
+      UNTIL ScannedDocumentLines.NEXT = 0;
+
+      // Without the trigger, so the delete subscriber in BarcodeMgmt does not archive them a second time
+      ScannedDocumentLines.DELETEALL;
+      // </PRICO-2025-67>
+    END;
+
+    PROCEDURE BulkWhseShptStatusUpdate@50235(VAR WarehouseShipmentHeader@50000 : Record 7320);
+    VAR
+      BarcodeAppMgmt@50001 : Codeunit 50112;
+      DocType@50002 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+      BarcodeStatusQst@50003 : TextConst 'ENU=Do you want to update Barcode Status on %1 Warehouse Shipments?;HRV=¦elite li a§urirati barkod status na %1 skladiçnih otpremnica?';
+    BEGIN
+      // <PRICO-2025-67>
+      IF NOT ConfirmBulkUpdate(WarehouseShipmentHeader.COUNT,BarcodeStatusQst) THEN
+        EXIT;
+
+      // A separate instance, so the bulk flag ends with this run
+      BarcodeAppMgmt.SetIsBulkUpdate(TRUE);
+      IF WarehouseShipmentHeader.FINDSET(TRUE) THEN
+        REPEAT
+          BarcodeAppMgmt.CreateScanningEntriesOnDocument(WarehouseShipmentHeader."No.",DocType::Shipment,TRUE);
+          BarcodeAppMgmt.CreateScanningEntriesOnDocument(WarehouseShipmentHeader."No.",DocType::WHCDSHIP,TRUE);
+          BarcodeAppMgmt.CreateScanningEntriesOnDocument(WarehouseShipmentHeader."No.",DocType::WHCDREC,TRUE);
+          BarcodeAppMgmt.CreateScanningEntriesOnDocument(WarehouseShipmentHeader."No.",DocType::WHCDSHFROM,TRUE);
+        UNTIL WarehouseShipmentHeader.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    PROCEDURE BulkWhseReceiptStatusUpdate@50236(VAR WarehouseReceiptHeader@50000 : Record 7316);
+    VAR
+      BarcodeAppMgmt@50001 : Codeunit 50112;
+      DocType@50002 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+      BarcodeStatusQst@50003 : TextConst 'ENU=Do you want to update Barcode Status on %1 Warehouse Receipts?;HRV=¦elite li a§urirati barkod status na %1 skladiçnih primki?';
+    BEGIN
+      // <PRICO-2025-67>
+      IF NOT ConfirmBulkUpdate(WarehouseReceiptHeader.COUNT,BarcodeStatusQst) THEN
+        EXIT;
+
+      BarcodeAppMgmt.SetIsBulkUpdate(TRUE);
+      IF WarehouseReceiptHeader.FINDSET THEN
+        REPEAT
+          BarcodeAppMgmt.CreateScanningEntriesOnDocument(WarehouseReceiptHeader."No.",DocType::Receipt,TRUE);
+        UNTIL WarehouseReceiptHeader.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    PROCEDURE BulkTransportSheetStatusUpdate@50237(VAR TransportSheetHeader@50000 : Record 50015);
+    VAR
+      BarcodeAppMgmt@50001 : Codeunit 50112;
+      DocType@50002 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+      BarcodeStatusQst@50003 : TextConst 'ENU=Do you want to update Barcode Status on %1 Transport Sheets?;HRV=¦elite li a§urirati barkod status na %1 transportnih listova?';
+    BEGIN
+      // <PRICO-2025-67>
+      IF NOT ConfirmBulkUpdate(TransportSheetHeader.COUNT,BarcodeStatusQst) THEN
+        EXIT;
+
+      BarcodeAppMgmt.SetIsBulkUpdate(TRUE);
+      IF TransportSheetHeader.FINDSET THEN
+        REPEAT
+          BarcodeAppMgmt.CreateScanningEntriesOnDocument(TransportSheetHeader."Document No.",DocType::Transport,TRUE);
+        UNTIL TransportSheetHeader.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    PROCEDURE BulkComplaintSheetStatusUpdate@50238(VAR ComplaintShipment@50000 : Record 50021);
+    VAR
+      BarcodeAppMgmt@50001 : Codeunit 50112;
+      DocType@50002 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+      BarcodeStatusQst@50003 : TextConst 'ENU=Do you want to update Barcode Status on %1 Complaint Shipments?;HRV=¦elite li a§urirati barkod status na %1 otprema reklamacija?';
+    BEGIN
+      // <PRICO-2025-67>
+      IF NOT ConfirmBulkUpdate(ComplaintShipment.COUNT,BarcodeStatusQst) THEN
+        EXIT;
+
+      BarcodeAppMgmt.SetIsBulkUpdate(TRUE);
+      IF ComplaintShipment.FINDSET THEN
+        REPEAT
+          BarcodeAppMgmt.CreateScanningEntriesOnDocument(ComplaintShipment."Document No.",DocType::CPCDSHIP,TRUE);
+          BarcodeAppMgmt.CreateScanningEntriesOnDocument(ComplaintShipment."Document No.",DocType::CPCDREC,TRUE);
+          BarcodeAppMgmt.CreateScanningEntriesOnDocument(ComplaintShipment."Document No.",DocType::CPCDSHFROM,TRUE);
+        UNTIL ComplaintShipment.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
+    LOCAL PROCEDURE ConfirmBulkUpdate@50239(DocCount@50000 : Integer;ConfirmQst@50001 : Text) : Boolean;
+    VAR
+      NothingToUpdateMsg@50002 : TextConst 'ENU=There is nothing for update.;HRV=Ne postoji niçta za a§uriranje.';
+    BEGIN
+      // <PRICO-2025-67>
+      IF DocCount = 0 THEN BEGIN
+        IF GUIALLOWED THEN
+          MESSAGE(NothingToUpdateMsg);
+        EXIT(FALSE);
+      END;
+
+      IF GUIALLOWED THEN
+        IF NOT CONFIRM(STRSUBSTNO(ConfirmQst,DocCount),TRUE) THEN
+          EXIT(FALSE);
+
+      EXIT(TRUE);
+      // </PRICO-2025-67>
+    END;
+
+    [TryFunction]
+    PROCEDURE AutoUpdateBarcodeStatusOnSync@50240();
+    VAR
+      BarcodeAppMgmt@50000 : Codeunit 50112;
+      BarcodeSyncRecord@50001 : Record 50161;
+      TempProcessedRecord@50002 : TEMPORARY Record 50161;
+      DocType@50003 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport,Receipt,WHCDSHIP,WHCDREC,WHCDSHFROM,CPCDSHIP,CPCDREC,CPCDSHFROM';
+    BEGIN
+      // <PRICO-2025-67>
+      // Job queue: every document synced more than five minutes ago is updated once, without dialogs
+      BarcodeAppMgmt.SetIsBulkUpdate(TRUE);
+
+      BarcodeSyncRecord.SETRANGE("Entry Processed",FALSE);
+      BarcodeSyncRecord.SETFILTER("Syncronization DateTime",'..%1',CURRENTDATETIME - (5 * 60 * 1000));
+      IF BarcodeSyncRecord.FINDSET(TRUE) THEN
+        REPEAT
+          TempProcessedRecord.SETRANGE("Document No.",BarcodeSyncRecord."Document No.");
+          TempProcessedRecord.SETRANGE("Document Type",BarcodeSyncRecord."Document Type");
+          IF NOT TempProcessedRecord.FINDFIRST THEN BEGIN
+            TempProcessedRecord.INIT;
+            TempProcessedRecord.TRANSFERFIELDS(BarcodeSyncRecord);
+            TempProcessedRecord.INSERT;
+
+            CASE TempProcessedRecord."Document Type" OF
+              UPPERCASE(FORMAT(DocType::Shipment)):
+                BarcodeAppMgmt.CreateScanningEntriesOnDocument(TempProcessedRecord."Document No.",DocType::Shipment,TRUE);
+              UPPERCASE(FORMAT(DocType::Prereceipt)):
+                BarcodeAppMgmt.CreateScanningEntriesOnDocument(TempProcessedRecord."Document No.",DocType::Prereceipt,TRUE);
+              UPPERCASE(FORMAT(DocType::Receipt)):
+                BarcodeAppMgmt.CreateScanningEntriesOnDocument(TempProcessedRecord."Document No.",DocType::Receipt,TRUE);
+              UPPERCASE(FORMAT(DocType::Transport)):
+                BarcodeAppMgmt.CreateScanningEntriesOnDocument(TempProcessedRecord."Document No.",DocType::Transport,TRUE);
+              UPPERCASE(FORMAT(DocType::WHCDSHIP)):
+                BarcodeAppMgmt.CreateScanningEntriesOnDocument(TempProcessedRecord."Document No.",DocType::WHCDSHIP,TRUE);
+              UPPERCASE(FORMAT(DocType::WHCDREC)):
+                BarcodeAppMgmt.CreateScanningEntriesOnDocument(TempProcessedRecord."Document No.",DocType::WHCDREC,TRUE);
+              UPPERCASE(FORMAT(DocType::WHCDSHFROM)):
+                BarcodeAppMgmt.CreateScanningEntriesOnDocument(TempProcessedRecord."Document No.",DocType::WHCDSHFROM,TRUE);
+              UPPERCASE(FORMAT(DocType::CPCDSHIP)):
+                BarcodeAppMgmt.CreateScanningEntriesOnDocument(TempProcessedRecord."Document No.",DocType::CPCDSHIP,TRUE);
+              UPPERCASE(FORMAT(DocType::CPCDREC)):
+                BarcodeAppMgmt.CreateScanningEntriesOnDocument(TempProcessedRecord."Document No.",DocType::CPCDREC,TRUE);
+              UPPERCASE(FORMAT(DocType::CPCDSHFROM)):
+                BarcodeAppMgmt.CreateScanningEntriesOnDocument(TempProcessedRecord."Document No.",DocType::CPCDSHFROM,TRUE);
+            END;
+            COMMIT;
+          END;
+
+          BarcodeSyncRecord."Entry Processed" := TRUE;
+          BarcodeSyncRecord.MODIFY;
+        UNTIL BarcodeSyncRecord.NEXT = 0;
+      // </PRICO-2025-67>
+    END;
+
     BEGIN
     END.
   }
@@ -5822,8 +7143,8 @@ OBJECT Page 50110 Scanned Document Lines Buffer
 {
   OBJECT-PROPERTIES
   {
-    Date=16.05.25;
-    Time=12:23:34;
+    Date=06.10.26;
+    Time=10:28:28;
     Modified=Yes;
     Version List=PRIMA;
   }
@@ -5852,6 +7173,7 @@ OBJECT Page 50110 Scanned Document Lines Buffer
     OnQueryClosePage=VAR
                        WarehouseShipmentHeader@50001 : Record 7320;
                        BarcodeMgmt@50002 : Codeunit 50106;
+                       BarcodeAppMgmt@50004 : Codeunit 50112;
                        WarehouseReceiptHeader@50003 : Record 7316;
                      BEGIN
                        //<ZGNAIMPRRE-10>Barcode
@@ -5862,7 +7184,10 @@ OBJECT Page 50110 Scanned Document Lines Buffer
                           //</ZGNVSUPPCO-1059>
                              WarehouseShipmentHeader.GET(Rec."Document No.");
                              IF NOT (WarehouseShipmentHeader."Barcode Status" = WarehouseShipmentHeader."Barcode Status"::Processed) THEN
-                               IF NOT BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",Rec."Document Type",FALSE) THEN //IF not all scanned items Compleated
+                               // <PRICO-2025-67>
+                               //IF NOT BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",Rec."Document Type",FALSE) THEN //IF not all scanned items Compleated
+                               IF NOT BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."Document No.",Rec."Document Type",FALSE) THEN //IF not all scanned items Compleated
+                               // </PRICO-2025-67>
                                  EXIT;
                              END;
                        //</ZGNAIMPRRE-10>
@@ -5870,7 +7195,10 @@ OBJECT Page 50110 Scanned Document Lines Buffer
                             Rec."Document Type"::Receipt: BEGIN
                              WarehouseReceiptHeader.GET(Rec."Document No.");
                              IF NOT (WarehouseReceiptHeader."Barcode Status" = WarehouseReceiptHeader."Barcode Status"::Processed) THEN
-                               IF NOT BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",Rec."Document Type",FALSE) THEN //IF not all scanned items Compleated
+                               // <PRICO-2025-67>
+                               //IF NOT BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",Rec."Document Type",FALSE) THEN //IF not all scanned items Compleated
+                               IF NOT BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."Document No.",Rec."Document Type",FALSE) THEN //IF not all scanned items Compleated
+                               // </PRICO-2025-67>
                                  EXIT;
                              END;
                            END;
@@ -5893,6 +7221,7 @@ OBJECT Page 50110 Scanned Document Lines Buffer
                       PromotedCategory=Process;
                       OnAction=VAR
                                  BarcodeMgmt@50001 : Codeunit 50106;
+                                 BarcodeAppMgmt@50007 : Codeunit 50112;
                                  DocumentType@50000 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport Order,Receipt';
                                  WarehouseShipmentHeader@50002 : Record 7320;
                                  BarcodeStatusErr@50003 : TextConst 'ENU=Barcode status of document %1 must not be %2.;HRV=Barkod status dokumenta %1 ne smije biti %2.';
@@ -5909,7 +7238,10 @@ OBJECT Page 50110 Scanned Document Lines Buffer
                                      WarehouseShipmentHeader.GET(Rec."Document No.");
                                      IF WarehouseShipmentHeader."Barcode Status" = WarehouseShipmentHeader."Barcode Status"::Processed THEN
                                        ERROR(STRSUBSTNO(BarcodeStatusErr,WarehouseShipmentHeader."No.",WarehouseShipmentHeader."Barcode Status"::Processed));
-                                     BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::Shipment,TRUE);
+                                     // <PRICO-2025-67>
+                                     //BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::Shipment,TRUE);
+                                     BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."Document No.",DocumentType::Shipment,TRUE);
+                                     // </PRICO-2025-67>
                                      CurrPage.UPDATE;
                                      //</ZGNAIMPRRE-10>
                                      //<ZGNVSUPPCO-1059>
@@ -5919,7 +7251,10 @@ OBJECT Page 50110 Scanned Document Lines Buffer
                                      WarehouseReceiptHeader.GET(Rec."Document No.");
                                      IF WarehouseReceiptHeader."Barcode Status" = WarehouseReceiptHeader."Barcode Status"::Processed THEN
                                        ERROR(STRSUBSTNO(BarcodeStatusErr,WarehouseReceiptHeader."No.",WarehouseReceiptHeader."Barcode Status"::Processed));
-                                     BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::Receipt,TRUE);
+                                     // <PRICO-2025-67>
+                                     //BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::Receipt,TRUE);
+                                     BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."Document No.",DocumentType::Receipt,TRUE);
+                                     // </PRICO-2025-67>
                                      CurrPage.UPDATE;
                                      END;
                                    Rec."Document Type"::Transport:
@@ -5927,7 +7262,10 @@ OBJECT Page 50110 Scanned Document Lines Buffer
                                      TransportSheetHeader.GET(Rec."Document No.");
                                      IF TransportSheetHeader."Barcode Status" = TransportSheetHeader."Barcode Status"::Processed THEN
                                        ERROR(STRSUBSTNO(BarcodeStatusErr,TransportSheetHeader."Document No.",TransportSheetHeader."Barcode Status"::Processed));
-                                     BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::"Transport Order",TRUE);
+                                     // <PRICO-2025-67>
+                                     //BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::"Transport Order",TRUE);
+                                     BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."Document No.",DocumentType::"Transport Order",TRUE);
+                                     // </PRICO-2025-67>
                                      CurrPage.UPDATE;
                                      END;
                                    ELSE

@@ -2,8 +2,8 @@ OBJECT Page 5768 Warehouse Receipt
 {
   OBJECT-PROPERTIES
   {
-    Date=30.01.25;
-    Time=18:44:35;
+    Date=06.10.26;
+    Time=11:09:34;
     Modified=Yes;
     Version List=NAVW111.00.00.19846,NAVAD7.00,NAVAE7.00,PRIMA;
   }
@@ -33,7 +33,10 @@ OBJECT Page 5768 Warehouse Receipt
     OnOpenPage=BEGIN
                  ErrorIfUserIsNotWhseEmployee;
 
-                 BeMobileLocation := BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocumentType::Receipt); // <ZGNVSUPPCO-1059/>
+                 // <PRICO-2025-67>
+                 //BeMobileLocation := BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocumentType::Receipt); // <ZGNVSUPPCO-1059/>
+                 BeMobileLocation := BarcodeAppMgmt.IsBarcodeAppDocument(Rec."No.",DocumentType::Receipt);
+                 // </PRICO-2025-67>
                END;
 
     OnFindRecord=BEGIN
@@ -48,10 +51,16 @@ OBJECT Page 5768 Warehouse Receipt
                            // <ZGNVSUPPCO-1059>
                            UserSetup.GET(USERID);
                            BarcodeAdmin := UserSetup."Scanned Barcodes Admin";
-                           IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocumentType::Receipt) THEN
+                           // <PRICO-2025-67>
+                           //IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocumentType::Receipt) THEN
+                           IF NOT BarcodeAppMgmt.IsBarcodeAppDocument(Rec."No.",DocumentType::Receipt) THEN
+                           // </PRICO-2025-67>
                              EXIT;
 
-                           IF NOT BarcodeMgmt.OnOpenBufferPage(Rec."No.",DocumentType::Receipt,FALSE) THEN //IF not all scanned items Compleated
+                           // <PRICO-2025-67>
+                           //IF NOT BarcodeMgmt.OnOpenBufferPage(Rec."No.",DocumentType::Receipt,FALSE) THEN //IF not all scanned items Compleated
+                           IF NOT BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."No.",DocumentType::Receipt,FALSE) THEN //IF not all scanned items Compleated
+                           // </PRICO-2025-67>
                              EXIT;
                            // </ZGNVSUPPCO-1059>
                          END;
@@ -530,6 +539,7 @@ OBJECT Page 5768 Warehouse Receipt
       IsVisiblePharmaData@13054606 : Boolean;
       text0001@50000 : TextConst 'HRV=Ispiçi primku nabave?;ENI=Print purchase reciept?';
       BarcodeMgmt@50003 : Codeunit 50106;
+      BarcodeAppMgmt@50006 : Codeunit 50112;
       DocumentType@50002 : 'Shipment,Transfer Order,Inventory,Prereceipt,Transport Order,Receipt';
       BeMobileLocation@50001 : Boolean;
       BarcodeAdmin@50004 : Boolean;
@@ -622,8 +632,8 @@ OBJECT Page 7332 Warehouse Receipts
 {
   OBJECT-PROPERTIES
   {
-    Date=04.09.25;
-    Time=[ 9:41:12];
+    Date=06.10.26;
+    Time=16:19:40;
     Modified=Yes;
     Version List=NAVW111.00.00.19846,NAVAD7.10,PRIMA;
   }
@@ -719,11 +729,15 @@ OBJECT Page 7332 Warehouse Receipts
                       OnAction=VAR
                                  WarehouseReceiptHeader@50000 : Record 7316;
                                  BEMFMgmt@50001 : Codeunit 50107;
+                                 BarcodeAppMgmt@50002 : Codeunit 50112;
                                BEGIN
                                  // <ZGNVSUPPCO-1059>
                                  CurrPage.SETSELECTIONFILTER(WarehouseReceiptHeader);
                                  WarehouseReceiptHeader.SETFILTER("Barcode Status",'%1|%2',WarehouseReceiptHeader."Barcode Status"::Blank,WarehouseReceiptHeader."Barcode Status"::Synchronized);
-                                 BEMFMgmt.BulkWhseReceiptStatusUpdate(WarehouseReceiptHeader);
+                                 // <PRICO-2025-67>
+                                 //BEMFMgmt.BulkWhseReceiptStatusUpdate(WarehouseReceiptHeader);
+                                 BarcodeAppMgmt.BulkWhseReceiptStatusUpdate(WarehouseReceiptHeader);
+                                 // </PRICO-2025-67>
                                  CurrPage.UPDATE;
                                  // </ZGNVSUPPCO-1059>
                                END;
@@ -956,8 +970,8 @@ OBJECT Page 7335 Warehouse Shipment
 {
   OBJECT-PROPERTIES
   {
-    Date=27.05.25;
-    Time=11:17:43;
+    Date=06.10.26;
+    Time=13:23:19;
     Modified=Yes;
     Version List=NAVW111.00.00.19846,NAVAD7.00,NAVAE7.00,PRIMA;
   }
@@ -979,8 +993,14 @@ OBJECT Page 7335 Warehouse Shipment
     OnOpenPage=BEGIN
                  ErrorIfUserIsNotWhseEmployee;
 
-                 BeMobileLocation := BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocumentType::Shipment); // <ZGNAIMPRRE-10/>
-                 CrossDockLocation := BEMFMgmt.IsCrossDockLocation(Rec."Location Code"); // <ZGNVSUPPCO-1245/>
+                 // <PRICO-2025-67>
+                 //BeMobileLocation := BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocumentType::Shipment); // <ZGNAIMPRRE-10/>
+                 BeMobileLocation := BarcodeAppMgmt.IsBarcodeAppDocument(Rec."No.",DocumentType::Shipment);
+                 // </PRICO-2025-67>
+                 // <PRICO-2025-67>
+                 //CrossDockLocation := BEMFMgmt.IsCrossDockLocation(Rec."Location Code"); // <ZGNVSUPPCO-1245/>
+                 CrossDockLocation := BarcodeAppMgmt.IsCrossDockLocation(Rec."Location Code");
+                 // </PRICO-2025-67>
                END;
 
     OnFindRecord=BEGIN
@@ -1002,9 +1022,15 @@ OBJECT Page 7335 Warehouse Shipment
                            // <ZGNAIMPRRE-10>
                            UserSetup.GET(USERID);
                            BarcodeAdmin := UserSetup."Scanned Barcodes Admin";
-                           CrossDockLocation := BEMFMgmt.IsCrossDockLocation(Rec."Location Code"); // <ZGNVSUPPCO-1245/>
+                           // <PRICO-2025-67>
+                           //CrossDockLocation := BEMFMgmt.IsCrossDockLocation(Rec."Location Code"); // <ZGNVSUPPCO-1245/>
+                           CrossDockLocation := BarcodeAppMgmt.IsCrossDockLocation(Rec."Location Code");
+                           // </PRICO-2025-67>
 
-                           IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocumentType::Shipment) THEN
+                           // <PRICO-2025-67>
+                           //IF NOT BarcodeMgmt.IsBeMobileLocation(Rec."No.",DocumentType::Shipment) THEN
+                           IF NOT BarcodeAppMgmt.IsBarcodeAppDocument(Rec."No.",DocumentType::Shipment) THEN
+                           // </PRICO-2025-67>
                              EXIT;
 
                            // <ZGNVSUPPCO-1245>
@@ -1012,14 +1038,24 @@ OBJECT Page 7335 Warehouse Shipment
                              //EXIT;
                            // </ZGNAIMPRRE-10>
 
-                           BarcodeMgmt.OnOpenBufferPage(Rec."No.",DocumentType::Shipment,FALSE);
+                           // <PRICO-2025-67>
+                           //BarcodeMgmt.OnOpenBufferPage(Rec."No.",DocumentType::Shipment,FALSE);
+                           BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."No.",DocumentType::Shipment,FALSE);
+                           // </PRICO-2025-67>
 
                            IF NOT CrossDockLocation THEN
                              EXIT;
 
+                           // <PRICO-2025-67>
+                           {
                            BarcodeMgmt.OnOpenBufferPage(Rec."No.",DocumentType::WHCDSHIP,TRUE);
                            BarcodeMgmt.OnOpenBufferPage(Rec."No.",DocumentType::WHCDREC,TRUE);
                            BarcodeMgmt.OnOpenBufferPage(Rec."No.",DocumentType::WHCDSHFROM,TRUE);
+                           }
+                           BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."No.",DocumentType::WHCDSHIP,TRUE);
+                           BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."No.",DocumentType::WHCDREC,TRUE);
+                           BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."No.",DocumentType::WHCDSHFROM,TRUE);
+                           // </PRICO-2025-67>
                            // <ZGNVSUPPCO-1245>
                          END;
 
@@ -1314,7 +1350,10 @@ OBJECT Page 7335 Warehouse Shipment
                                  NextStatusIndex@50003 : Integer;
                                BEGIN
                                  // <ZGNVSUPPCO-1245>
-                                 IF NOT BEMFMgmt.IsCrossDockLocation(Rec."Location Code") THEN
+                                 // <PRICO-2025-67>
+                                 //IF NOT BEMFMgmt.IsCrossDockLocation(Rec."Location Code") THEN
+                                 IF NOT BarcodeAppMgmt.IsCrossDockLocation(Rec."Location Code") THEN
+                                 // </PRICO-2025-67>
                                    ERROR(NotCdLocationErr,Rec."Location Code");
                                  // </ZGNVSUPPCO-1245>
 
@@ -1708,6 +1747,7 @@ OBJECT Page 7335 Warehouse Shipment
       UserSetup@50006 : Record 91;
       CrossDockLocation@50007 : Boolean;
       BEMFMgmt@50008 : Codeunit 50107;
+      BarcodeAppMgmt@50009 : Codeunit 50112;
 
     LOCAL PROCEDURE AutofillQtyToHandle@1();
     BEGIN
@@ -1766,8 +1806,8 @@ OBJECT Page 7339 Warehouse Shipment List
 {
   OBJECT-PROPERTIES
   {
-    Date=21.08.26;
-    Time=13:04:55;
+    Date=06.10.26;
+    Time=16:19:40;
     Modified=Yes;
     Version List=NAVW111.00.00.19846,NAVAE10.0,PRIMA;
   }
@@ -2022,10 +2062,14 @@ OBJECT Page 7339 Warehouse Shipment List
                       OnAction=VAR
                                  WarehouseShipmentHeader@50000 : Record 7320;
                                  BEMFMgmt@50001 : Codeunit 50107;
+                                 BarcodeAppMgmt@50002 : Codeunit 50112;
                                BEGIN
                                  // <ZGNAIMPRRE-10>
                                  CurrPage.SETSELECTIONFILTER(WarehouseShipmentHeader);
-                                 BEMFMgmt.BulkWhseShptStatusUpdate(WarehouseShipmentHeader);
+                                 // <PRICO-2025-67>
+                                 //BEMFMgmt.BulkWhseShptStatusUpdate(WarehouseShipmentHeader);
+                                 BarcodeAppMgmt.BulkWhseShptStatusUpdate(WarehouseShipmentHeader);
+                                 // </PRICO-2025-67>
                                  CurrPage.UPDATE;
                                  // </ZGNAIMPRRE-10>
                                END;
@@ -3732,8 +3776,8 @@ OBJECT Page 50033 Complaint Shipment Prima List
 {
   OBJECT-PROPERTIES
   {
-    Date=23.06.26;
-    Time=14:32:08;
+    Date=06.10.26;
+    Time=16:19:40;
     Modified=Yes;
     Version List=PRIMA;
   }
@@ -3806,10 +3850,14 @@ OBJECT Page 50033 Complaint Shipment Prima List
                       OnAction=VAR
                                  ComplaintShipment@50000 : Record 50021;
                                  BEMFMgmt@50001 : Codeunit 50107;
+                                 BarcodeAppMgmt@50002 : Codeunit 50112;
                                BEGIN
                                  // <ZGNVSUPPCO-1246>
                                  CurrPage.SETSELECTIONFILTER(ComplaintShipment);
-                                 BEMFMgmt.BulkComplaintSheetStatusUpdate(ComplaintShipment);
+                                 // <PRICO-2025-67>
+                                 //BEMFMgmt.BulkComplaintSheetStatusUpdate(ComplaintShipment);
+                                 BarcodeAppMgmt.BulkComplaintSheetStatusUpdate(ComplaintShipment);
+                                 // </PRICO-2025-67>
                                  CurrPage.UPDATE;
                                  // </ZGNVSUPPCO-1246>
                                END;
@@ -3888,8 +3936,8 @@ OBJECT Page 50034 Complaint Shipment Prima Card
 {
   OBJECT-PROPERTIES
   {
-    Date=03.07.26;
-    Time=19:05:59;
+    Date=06.10.26;
+    Time=13:23:19;
     Modified=Yes;
     Version List=PRIMA;
   }
@@ -3911,13 +3959,23 @@ OBJECT Page 50034 Complaint Shipment Prima Card
                            // <ZGNVSUPPCO-1245>
                            UserSetup.GET(USERID);
                            BarcodeAdmin := UserSetup."Scanned Barcodes Admin";
-                           IsCrossDockRespCenter := BEMFMgmt.IsCrossDockRespCenter(Rec."Store Responsible Center");
+                           // <PRICO-2025-67>
+                           //IsCrossDockRespCenter := BEMFMgmt.IsCrossDockRespCenter(Rec."Store Responsible Center");
+                           IsCrossDockRespCenter := BarcodeAppMgmt.IsCrossDockRespCenter(Rec."Store Responsible Center");
+                           // </PRICO-2025-67>
                            IF NOT IsCrossDockRespCenter THEN
                              EXIT;
 
+                           // <PRICO-2025-67>
+                           {
                            BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::CPCDSHIP,TRUE);
                            BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::CPCDREC,TRUE);
                            BarcodeMgmt.OnOpenBufferPage(Rec."Document No.",DocumentType::CPCDSHFROM,TRUE);
+                           }
+                           BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."Document No.",DocumentType::CPCDSHIP,TRUE);
+                           BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."Document No.",DocumentType::CPCDREC,TRUE);
+                           BarcodeAppMgmt.CreateScanningEntriesOnDocument(Rec."Document No.",DocumentType::CPCDSHFROM,TRUE);
+                           // </PRICO-2025-67>
                            // <ZGNVSUPPCO-1245>
                          END;
 
@@ -4021,7 +4079,10 @@ OBJECT Page 50034 Complaint Shipment Prima Card
                                  NextStatusIndex@50003 : Integer;
                                BEGIN
                                  // <ZGNVSUPPCO-1245>
-                                 IF NOT BEMFMgmt.IsCrossDockRespCenter(Rec."Store Responsible Center") THEN
+                                 // <PRICO-2025-67>
+                                 //IF NOT BEMFMgmt.IsCrossDockRespCenter(Rec."Store Responsible Center") THEN
+                                 IF NOT BarcodeAppMgmt.IsCrossDockRespCenter(Rec."Store Responsible Center") THEN
+                                 // </PRICO-2025-67>
                                    ERROR(NotCdRespCenterErr,Rec."Store Responsible Center");
 
                                  ShipmentStatusAction := DIALOG.STRMENU(ShipmentStatusActionText);
@@ -4186,6 +4247,7 @@ OBJECT Page 50034 Complaint Shipment Prima Card
       IsCrossDockRespCenter@50004 : Boolean;
       BarcodeMgmt@50009 : Codeunit 50106;
       BEMFMgmt@50010 : Codeunit 50107;
+      BarcodeAppMgmt@50011 : Codeunit 50112;
 
     BEGIN
     {
@@ -4444,8 +4506,8 @@ OBJECT Page 50042 Transport Sheet List
 {
   OBJECT-PROPERTIES
   {
-    Date=26.08.25;
-    Time=15:46:45;
+    Date=06.10.26;
+    Time=16:19:40;
     Modified=Yes;
     Version List=PRIMA;
   }
@@ -4484,10 +4546,14 @@ OBJECT Page 50042 Transport Sheet List
                       OnAction=VAR
                                  TransportSheetHeader@50000 : Record 50015;
                                  BEMFMgmt@50001 : Codeunit 50107;
+                                 BarcodeAppMgmt@50002 : Codeunit 50112;
                                BEGIN
                                  // <ZGNVSUPPCO-1246>
                                  CurrPage.SETSELECTIONFILTER(TransportSheetHeader);
-                                 BEMFMgmt.BulkTransportSheetStatusUpdate(TransportSheetHeader);
+                                 // <PRICO-2025-67>
+                                 //BEMFMgmt.BulkTransportSheetStatusUpdate(TransportSheetHeader);
+                                 BarcodeAppMgmt.BulkTransportSheetStatusUpdate(TransportSheetHeader);
+                                 // </PRICO-2025-67>
                                  CurrPage.UPDATE;
                                  // </ZGNVSUPPCO-1246>
                                END;
@@ -4667,8 +4733,8 @@ OBJECT Page 50145 Retail Warehouse Receipt
 {
   OBJECT-PROPERTIES
   {
-    Date=23.09.26;
-    Time=14:15:02;
+    Date=06.10.26;
+    Time=16:19:40;
     Modified=Yes;
     Version List=PRIMA;
   }
@@ -4767,11 +4833,15 @@ OBJECT Page 50145 Retail Warehouse Receipt
                       OnAction=VAR
                                  WarehouseReceiptHeader@50000 : Record 7316;
                                  BEMFMgmt@50002 : Codeunit 50107;
+                                 BarcodeAppMgmt@50003 : Codeunit 50112;
                                BEGIN
                                  // <ZGNVSUPPCO-1059>
                                  CurrPage.SETSELECTIONFILTER(WarehouseReceiptHeader);
                                  WarehouseReceiptHeader.SETFILTER("Barcode Status",'%1|%2',WarehouseReceiptHeader."Barcode Status"::Blank,WarehouseReceiptHeader."Barcode Status"::Synchronized);
-                                 BEMFMgmt.BulkWhseReceiptStatusUpdate(WarehouseReceiptHeader);
+                                 // <PRICO-2025-67>
+                                 //BEMFMgmt.BulkWhseReceiptStatusUpdate(WarehouseReceiptHeader);
+                                 BarcodeAppMgmt.BulkWhseReceiptStatusUpdate(WarehouseReceiptHeader);
+                                 // </PRICO-2025-67>
                                  CurrPage.UPDATE;
                                  // </ZGNVSUPPCO-1059>
                                END;
@@ -4956,8 +5026,8 @@ OBJECT Page 50146 Retail Warehouse Shipment
 {
   OBJECT-PROPERTIES
   {
-    Date=23.09.26;
-    Time=14:14:43;
+    Date=06.10.26;
+    Time=16:19:40;
     Modified=Yes;
     Version List=PRIMA;
   }
@@ -5193,11 +5263,15 @@ OBJECT Page 50146 Retail Warehouse Shipment
                       OnAction=VAR
                                  WarehouseShipmentHeader@50000 : Record 7320;
                                  BEMFMgmt@50001 : Codeunit 50107;
+                                 BarcodeAppMgmt@50002 : Codeunit 50112;
                                BEGIN
                                  // <ZGNAIMPRRE-10>
                                  CurrPage.SETSELECTIONFILTER(WarehouseShipmentHeader);
                                  WarehouseShipmentHeader.SETFILTER("Barcode Status",'%1|%2',WarehouseShipmentHeader."Barcode Status"::Blank,WarehouseShipmentHeader."Barcode Status"::Synchronized);
-                                 BEMFMgmt.BulkWhseShptStatusUpdate(WarehouseShipmentHeader);
+                                 // <PRICO-2025-67>
+                                 //BEMFMgmt.BulkWhseShptStatusUpdate(WarehouseShipmentHeader);
+                                 BarcodeAppMgmt.BulkWhseShptStatusUpdate(WarehouseShipmentHeader);
+                                 // </PRICO-2025-67>
                                  CurrPage.UPDATE;
                                  // </ZGNAIMPRRE-10>
                                END;
