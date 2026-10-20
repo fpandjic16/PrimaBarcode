@@ -90,7 +90,7 @@ Ako skenirate barkod koji nije naveden kao očekivani artikl na trenutnom dokume
 
 Dvoje vas može istovremeno raditi na istom dokumentu. Svatko ima svoju kopiju sa svojim skeniranjima, oboje ide u vanjski sustav i ondje se količine zbrajaju — a to i želite kad dijelite jedan posao.
 
-**Postavljanje potpuno novog uređaja dolazi prije svega ovoga.** Uređaj tek izvađen iz kutije ne zna gdje je vanjski sustav, a ekran za prijavu bez njega ne može provjeriti lozinku. Zato ekran za prijavu ima gumb **Postava vanjskog sustava**, koji otvara postavke veze bez prijave. Obično IT ili konzultant ondje jednom odabere tvrtku, čime se popune sve adrese, a od tada se svi samo prijavljuju.
+**Postavljanje potpuno novog uređaja dolazi prije svega ovoga.** Uređaj tek izvađen iz kutije ne zna gdje je vanjski sustav, a ekran za prijavu bez njega ne može provjeriti lozinku. Zato ekran za prijavu ima gumb **Postava vanjskog sustava**, koji otvara postavke veze bez prijave. Obično IT ili konzultant ondje jednom odabere tvrtku, čime se popune sve adrese, a od tada se svi samo prijavljuju. Uz njega je gumb **O aplikaciji**, koji također bez prijave prikazuje podatke o aplikaciji (vidi [§16](#16-postavke--objašnjenje-svake-opcije), Informacije o sustavu).
 
 **Svaka prijava traži da je vanjski sustav dostupan**, jer samo on može potvrditi vašu lozinku. Ako ne radi, nitko ne može ući u aplikaciju — ni vi, pa ni do posla koji ste već skenirali. Taj posao nije izgubljen: ostaje na uređaju i čeka da sustav ponovno odgovori.
 
@@ -391,7 +391,7 @@ Jedan redak, **„Poslužitelj i krajnje točke”**, koji otvara postavke veze 
 | **Izbriši sve dokumente i zapise** *(crveno — briše podatke)* | Briše sve preuzete dokumente i skeniranja, ali **zadržava** vaše postavke i prijavu. Traži potvrdu. Koristite je kad želite potpuno očistiti radne podatke bez ponovne prijave. |
 
 ### Informacije o sustavu
-Tehnički podaci samo za čitanje (verzija aplikacije, verzija Androida, verzija baze podataka) — korisni kad prijavljujete grešku podršci.
+Podaci samo za čitanje — verzija aplikacije, verzija Androida, SDK, verzija baze podataka, za koji je sustav uređaj postavljen (Test ili Produkcija) i za koju tvrtku — korisni kad prijavljujete grešku podršci. Isti podaci nalaze se i na ekranu za prijavu pod **O aplikaciji**, za slučaj kad se ne možete prijaviti.
 
 ### Korisnički račun
 Prikazuje tko je trenutno prijavljen i opciju **Odjavi se** (odmah, bez potvrde).

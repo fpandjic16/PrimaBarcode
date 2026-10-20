@@ -6,6 +6,12 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
+ * The schema version of [PrimaDatabase], written once. The app info shows this value; it used to
+ * show a constant of its own, "7.0.0", that nobody updated while the schema went on to 19.
+ */
+const val PRIMA_DB_VERSION = 19
+
+/**
  * One operator's work: their documents, lines and recordings.
  *
  * There is one of these files per profile, opened by [com.prima.barcode.data.db.DatabaseProvider].
@@ -23,7 +29,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         DocumentLineEntity::class,
         RecordingEntity::class,
     ],
-    version = 19,
+    version = PRIMA_DB_VERSION,
     exportSchema = true,
 )
 abstract class PrimaDatabase : RoomDatabase() {

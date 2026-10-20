@@ -39,15 +39,11 @@ import com.prima.barcode.ui.component.verticalScrollbar
 import com.prima.barcode.ui.theme.PrimaPalette
 import com.prima.barcode.ui.theme.Language
 import com.prima.barcode.ui.theme.TextSize
-import android.os.Build
 import androidx.compose.ui.platform.LocalContext
-import com.prima.barcode.BuildConfig
 import com.prima.barcode.ui.theme.monoLabel
 import com.prima.barcode.ui.theme.uppercased
 import androidx.compose.ui.res.stringResource
 import com.prima.barcode.R
-
-private const val DB_SCHEMA_VERSION = "7.0.0"
 
 // The enum can't hold a resource lookup, so the label is resolved here instead — same
 // pattern as DocumentType.localizedDisplay() on the other screens.
@@ -79,6 +75,9 @@ fun SettingsScreen(
     onOpenProfiles: () -> Unit = {},
     onSignOut: () -> Unit,
     onSignInTap: () -> Unit = {},
+    // For the System info block: which ERP this device talks to.
+    environment: ExtSystemEnvironment? = null,
+    companyName: String? = null,
 ) {
     var textSize by remember { mutableStateOf(initial.textSize) }
     var uppercaseText by remember { mutableStateOf(initial.uppercaseText) }
@@ -570,108 +569,8 @@ fun SettingsScreen(
             // System info
             item { SectionHeader(stringResource(R.string.settings_sec_system_info)) }
 
-            item {
-                Column(modifier = Modifier.fillMaxWidth().background(Color.White)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        SettingsIcon(Icons.Outlined.Info)
-                        Spacer(Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                stringResource(R.string.settings_app_version),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = PrimaPalette.Ink,
-                                    fontWeight = FontWeight.Normal,
-                                ),
-                            )
-                            Text(
-                                stringResource(R.string.settings_app_version_value, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
-                                style = monoLabel.copy(color = PrimaPalette.Ink3),
-                            )
-                        }
-                    }
-                    SettingsDivider()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        SettingsIcon(Icons.Outlined.PhoneAndroid)
-                        Spacer(Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                stringResource(R.string.settings_android),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = PrimaPalette.Ink,
-                                    fontWeight = FontWeight.Normal,
-                                ),
-                            )
-                            Text(
-                                "Android " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")",
-                                style = monoLabel.copy(color = PrimaPalette.Ink3),
-                            )
-                        }
-                    }
-                    SettingsDivider()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        val ctx = LocalContext.current
-                        SettingsIcon(Icons.Outlined.Code)
-                        Spacer(Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                stringResource(R.string.settings_sdk),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = PrimaPalette.Ink,
-                                    fontWeight = FontWeight.Normal,
-                                ),
-                            )
-                            Text(
-                                stringResource(
-                                    R.string.settings_sdk_value,
-                                    ctx.applicationInfo.minSdkVersion,
-                                    apiToAndroid(ctx.applicationInfo.minSdkVersion),
-                                    ctx.applicationInfo.targetSdkVersion,
-                                    apiToAndroid(ctx.applicationInfo.targetSdkVersion),
-                                ),
-                                style = monoLabel.copy(color = PrimaPalette.Ink3),
-                            )
-                        }
-                    }
-                    SettingsDivider()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        SettingsIcon(Icons.Outlined.Storage)
-                        Spacer(Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                stringResource(R.string.settings_db_schema),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = PrimaPalette.Ink,
-                                    fontWeight = FontWeight.Normal,
-                                ),
-                            )
-                            Text(
-                                "Room v" + DB_SCHEMA_VERSION,
-                                style = monoLabel.copy(color = PrimaPalette.Ink3),
-                            )
-                        }
-                    }
-                }
-            }
+            // The same block the sign-in screen shows on its own screen — see AppInfo.kt.
+            item { AppInfoCard(environment, companyName) }
 
             item { SectionHeader(stringResource(R.string.settings_sec_account)) }
 
@@ -973,7 +872,7 @@ private fun SectionHeader(title: String) {
 }
 
 @Composable
-private fun SettingsIcon(icon: ImageVector) {
+internal fun SettingsIcon(icon: ImageVector) {
     Box(
         modifier = Modifier
             .size(40.dp)
@@ -986,7 +885,7 @@ private fun SettingsIcon(icon: ImageVector) {
 }
 
 @Composable
-private fun SettingsDivider() {
+internal fun SettingsDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(start = 74.dp),
         color = Color(0x0A000000),
@@ -1056,19 +955,3 @@ private fun ToggleRow(
     }
 }
 
-private fun apiToAndroid(api: Int): String = when (api) {
-    24 -> "7.0"
-    25 -> "7.1"
-    26 -> "8.0"
-    27 -> "8.1"
-    28 -> "9"
-    29 -> "10"
-    30 -> "11"
-    31 -> "12"
-    32 -> "12L"
-    33 -> "13"
-    34 -> "14"
-    35 -> "15"
-    36 -> "16"
-    else -> "?"
-}

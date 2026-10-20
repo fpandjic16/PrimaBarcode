@@ -2,6 +2,7 @@ package com.prima.barcode.data.auth
 
 import com.prima.barcode.data.model.DocTypeFilterMode
 import com.prima.barcode.data.model.DocumentType
+import java.net.URLDecoder
 
 /**
  * Which ERP a device is talking to.
@@ -37,6 +38,25 @@ data class ExtSystemConfig(
 ) {
     fun docTypeCodeFor(type: DocumentType): String = documentTypeCodes[type] ?: ""
     val isConfigured: Boolean get() = serverBaseUrl.isNotBlank()
+
+    /**
+     * The NAV company the endpoints address, read from `Company('…')` in the document lines URL;
+     * null when there is none.
+     *
+     * Read from the address rather than stored beside it: this is the company the device actually
+     * talks to, and a separate field could say one thing while the URL said another. OData doubles
+     * an apostrophe inside the name, and the name is percent-encoded (`Prima%20Commerce`).
+     */
+    val companyName: String?
+        get() {
+            val raw = COMPANY_IN_URL.find(documentLinesUrl)?.groupValues?.get(1) ?: return null
+            val decoded = runCatching { URLDecoder.decode(raw.replace("+", "%2B"), "UTF-8") }.getOrDefault(raw)
+            return decoded.replace("''", "'").takeIf { it.isNotBlank() }
+        }
+
+    private companion object {
+        val COMPANY_IN_URL = Regex("""Company\('((?:[^']|'')*)'\)""")
+    }
 }
 
 data class ExtSystemCredentials(

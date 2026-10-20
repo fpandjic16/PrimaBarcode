@@ -347,4 +347,9 @@
     <string name="ext_config_ttl_days_short">%d d</string>
     <string name="settings_app_version_value">%1$s (izdanje %2$d)</string>
     <string name="settings_sdk_value">Najmanji API %1$d (Android %2$s) · Ciljni API %3$d (Android %4$s)</string>
+    <!-- App info: Settings > System info, and its own screen before sign-in -->
+    <string name="app_info_title">O aplikaciji</string>
+    <string name="app_info_environment">Sustav</string>
+    <string name="app_info_company">Tvrtka</string>
+    <string name="app_info_not_set">Nije postavljeno</string>
 </resources>

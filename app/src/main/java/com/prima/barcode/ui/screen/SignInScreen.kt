@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Visibility
@@ -75,6 +76,9 @@ fun SignInScreen(
     // and a device out of the box has no server URL to ask, so without a way through from here
     // a fresh install could never be configured and so could never be signed into either.
     onOpenConfig: (() -> Unit)? = null,
+    // Opens the app info (version, Android, ERP system and company) without signing in; null
+    // hides the button. What support asks first, and often of someone who cannot sign in.
+    onOpenAppInfo: (() -> Unit)? = null,
     // Blank on an install that has not loaded a configuration carrying one, which switches QR
     // sign-in off: every code then fails to decode and is reported as unreadable.
     loginQrKey: String = "",
@@ -264,6 +268,26 @@ fun SignInScreen(
                         Spacer(Modifier.width(10.dp))
                         Text(
                             stringResource(R.string.signin_open_config),
+                            style = monoLabel.copy(color = PrimaPalette.Ink),
+                        )
+                    }
+                }
+
+                onOpenAppInfo?.let { open ->
+                    OutlinedButton(
+                        onClick = open,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                    ) {
+                        Icon(
+                            Icons.Outlined.Info,
+                            contentDescription = null,
+                            tint = PrimaPalette.Ink3,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            stringResource(R.string.app_info_title),
                             style = monoLabel.copy(color = PrimaPalette.Ink),
                         )
                     }

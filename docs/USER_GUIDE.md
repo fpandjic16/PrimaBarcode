@@ -88,7 +88,7 @@ If you scan a barcode that isn't listed as an expected item on the current docum
 
 Two of you can work the same document at the same time. Each of you has your own copy with your own scans, and both go to the central system, where the quantities add up — which is what you want when you are splitting one job.
 
-**Setting up a brand-new device comes before all of this.** A device fresh out of the box does not know where the central system is, and the sign-in screen cannot confirm a password without it. So the sign-in screen has an **External system setup** button that opens the connection settings without signing in — normally IT or a consultant picks the company there once, which fills in every address, and from then on everyone just signs in.
+**Setting up a brand-new device comes before all of this.** A device fresh out of the box does not know where the central system is, and the sign-in screen cannot confirm a password without it. So the sign-in screen has an **External system setup** button that opens the connection settings without signing in — normally IT or a consultant picks the company there once, which fills in every address, and from then on everyone just signs in. Beside it, **About the app** shows the app's details (see [§16](#16-settings--every-option-explained), System Info), also without signing in.
 
 **Every sign-in needs the central system to be reachable**, because only it can confirm your password. If it is down, nobody can open the app — including you, and including work you have already scanned. That work is not lost: it stays on the device and is waiting when the system answers again.
 
@@ -389,7 +389,7 @@ A single row, **"Server & endpoints"**, that opens the connection settings for t
 | **Delete all documents and recordings** *(red — destructive)* | Deletes all downloaded documents and scans, but **keeps** your settings and sign-in. Requires confirmation. Use this to fully reset your working data without having to sign in again. |
 
 ### System Info
-Read-only technical details (app version, Android version, database version) — useful when reporting a bug to support.
+Read-only details — app version, Android version, SDK, database version, which system the device is set up for (Test or Production) and which company — useful when reporting a bug to support. The same details are on the sign-in screen under **About the app**, for when you cannot sign in.
 
 ### Account
 Shows who's currently signed in, and a **Sign out** option (immediate, no confirmation needed).

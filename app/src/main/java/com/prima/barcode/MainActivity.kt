@@ -60,6 +60,7 @@ import com.prima.barcode.data.model.DocumentType
 import com.prima.barcode.data.model.LineStatus
 import com.prima.barcode.data.model.scanStatus
 import com.prima.barcode.data.model.User
+import com.prima.barcode.ui.screen.AppInfoScreen
 import com.prima.barcode.ui.screen.DocTypeSummary
 import com.prima.barcode.ui.screen.ExtSystemConfigScreen
 import com.prima.barcode.ui.screen.DocumentOverviewScreen
@@ -461,6 +462,7 @@ private fun PrimaBarcodeApp(
     var signingIn   by remember { mutableStateOf(false) }
     var signInError by remember { mutableStateOf<String?>(null) }
     var configuringAtSignIn by remember { mutableStateOf(false) }
+    var appInfoAtSignIn by remember { mutableStateOf(false) }
 
     val activeProfile = profile
     if (activeProfile == null) {
@@ -498,8 +500,18 @@ private fun PrimaBarcodeApp(
             )
             return
         }
+        // The second door out of the gate: read-only, and nothing in it is personal or secret.
+        if (appInfoAtSignIn) {
+            AppInfoScreen(
+                environment = extSystemConfig.environment,
+                companyName = extSystemConfig.companyName,
+                onBack = { appInfoAtSignIn = false },
+            )
+            return
+        }
         SignInScreen(
             onOpenConfig = { configuringAtSignIn = true },
+            onOpenAppInfo = { appInfoAtSignIn = true },
             loginQrKey = extSystemConfig.loginQrKey,
             hapticEnabled = hapticEnabled,
             soundEnabled = soundEnabled,
@@ -715,6 +727,8 @@ private fun PrimaBarcodeApp(
                 onOpenProfiles = { nav.navigate("profiles") },
                 onSignOut = { requestSignOut() },
                 onSignInTap = { requireCredentials {} },
+                environment = extSystemConfig.environment,
+                companyName = extSystemConfig.companyName,
             )
         }
         composable("docs") {
