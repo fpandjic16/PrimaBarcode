@@ -562,7 +562,7 @@ return failures
 
 Two things about these files that are assumptions rather than facts, and are worth checking against NAV before a device goes live:
 
-- **All four `_test` files point at the same company**, `Prima Commerce d.o.o.`, including Mebel, Mobilis and Pohštvo. Loading "Prima Mebel" on test works on Commerce's data. It may be that only Commerce exists on the test instance; it is recorded here because it looks like a mistake.
+- **Each `_test` file points at its own company**, as its `_prod` file does. Until 2026-10 all four test files addressed `Prima Commerce d.o.o.`, so loading "Prima Mebel" on test worked on Commerce's data. The company the endpoints address is what the app info shows (`ExtSystemConfig.companyName`), which is how it surfaced.
 - **The production company segment is each file's `companyName`, URL-encoded.** That is certain for Commerce, where the test file's `Company(...)` is exactly its `companyName`, and assumed for the other three. A wrong one passes sign-in — `testConnection` only hits `serverBaseUrl` — and fails at the first download.
 
 `domain` is set only for Commerce (`PRIMA-COMMERCE`). The production files carry the **same `loginQrKey` as the test files**, by decision: the login codes already printed were made with that key and have to work on production. The cost is that production codes are protected exactly as test ones are — obfuscation-grade, the key being in the APK and in git. A device configured from the production files before the key was added has none; loading the production defaults again picks it up, since a file with a key sets it:
